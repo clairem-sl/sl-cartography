@@ -91,7 +91,7 @@ class MapValidator(object):
         return coord, datum
 
     async def validate_tile(self, tile: MapTile) -> bool:
-        gs_datum = await self.fetch_gs_data(tile.coord)
+        _, gs_datum = await self.fetch_gs_data(tile.coord)
         if tile.is_void and gs_datum is GridSurvey_NotRegion:
             return True
         if not tile.is_void and gs_datum:
