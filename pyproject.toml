@@ -1,0 +1,58 @@
+[project]
+name = "sl-cartography"
+version = "0.9"
+requires-python = ">=3.11"
+description = "Libraries and tools for performing Second Life Cartography"
+keywords = ["sl", "secondlife", "second life", "cartography"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved",
+    "License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)",
+    "Natural Language :: English",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Games/Entertainment",
+    "Topic :: Games/Entertainment :: Multi-User Dungeons (MUD)",
+    "Topic :: Games/Entertainment :: Simulation",
+    "Topic :: Multimedia :: Graphics :: Capture",
+    "Topic :: Utilities",
+]
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [
+    {name = "Claire Morgenthau", email = "claire_morgenthau@outlook.com"}
+]
+dependencies = [
+    "pillow",
+    "httpx",
+    "httpx[http2]",
+    'uvloop; platform_system == "Linux" and platform_python_implementation == "CPython"',
+    "colorthief",
+    "msgpack",
+    "appdirs",
+]
+
+[build-system]
+requires = [
+    "pillow",
+    "httpx",
+    "httpx[http2]",
+    'uvloop; platform_system == "Linux" and platform_python_implementation == "CPython"',
+    "colorthief",
+    "msgpack",
+    "appdirs",
+    #
+    "black",
+    "isort",
+    "pytest",
+    #
+    "setuptools>=40.8.0",
+    "wheel",
+]
+
+[tool.isort]
+profile = "black"
+
+[tool.black]
+line-length = 120
