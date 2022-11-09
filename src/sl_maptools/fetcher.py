@@ -8,32 +8,14 @@ import io
 import random
 import time
 from pathlib import Path
-from typing import (
-    Optional,
-    Set,
-    Dict,
-    List,
-    Protocol,
-    Callable,
-    Union,
-    FrozenSet,
-    Any,
-)
+from typing import Any, Callable, Dict, FrozenSet, List, Optional, Protocol, Set, Union
 
 import httpx
 from PIL import Image
 
 from sl_maptools import MapCoord, MapTile
 from sl_maptools.knowns import VERIFIED_VOIDS
-
-
-class QuietablePrint:
-    def __init__(self, quiet: bool = False):
-        self.quiet = quiet
-
-    def __call__(self, *args, **kwargs):
-        if not self.quiet:
-            print(*args, **kwargs)
+from sl_maptools.utils import QuietablePrint
 
 
 class MapConnectionError(ConnectionError):

@@ -1,6 +1,7 @@
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
+from __future__ import annotations
 
 import shutil
 from pathlib import Path
@@ -18,3 +19,12 @@ def make_backup(the_file: Path, levels: int = 2):
         if prev_b.exists():
             prev_n.unlink(missing_ok=True)
             prev_b.rename(prev_n)
+
+
+class QuietablePrint:
+    def __init__(self, quiet: bool = False):
+        self.quiet = quiet
+
+    def __call__(self, *args, **kwargs):
+        if not self.quiet:
+            print(*args, **kwargs)
