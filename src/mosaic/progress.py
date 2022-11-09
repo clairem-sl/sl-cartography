@@ -4,12 +4,18 @@
 import multiprocessing as MP
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, Set
+from typing import Dict, Iterable, Set, Tuple, TypedDict
 
 import msgpack
 
 from mosaic.color_processing import DominantColors
 from sl_maptools import MapCoord
+
+
+class MosaicProgressSerialized(TypedDict):
+    __regions: Iterable[Tuple[Tuple[int], Dict[str, Tuple[int, int, int]]]]
+    __seen: Iterable[Tuple[int, int]]
+    __fails: Iterable[int]
 
 
 @dataclass
@@ -41,7 +47,7 @@ class MosaicProgress:
 
     @classmethod
     def new_from_stream(cls, stream):
-        encoded = msgpack.unpack(stream)
+        encoded: MosaicProgressSerialized = msgpack.unpack(stream)
         regions = {
             MapCoord(*coord): DominantColors.from_serialized(domc_raw)
             for coord, domc_raw in encoded["__regions"]
