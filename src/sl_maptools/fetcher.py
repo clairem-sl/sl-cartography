@@ -22,9 +22,9 @@ class MapConnectionError(ConnectionError):
     def __init__(
         self, *args, internal_errors: List[Exception] = None, coord: MapCoord = None
     ):
+        super(MapConnectionError, self).__init__(*args)
         self.internal_errors = internal_errors or []
         self.coord = coord
-        super(MapConnectionError, self).__init__(*args)
 
     def __str__(self):
         return f"MapConnectionError({self.coord.x}, {self.coord.y}): {self.internal_errors}"
