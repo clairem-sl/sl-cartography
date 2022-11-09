@@ -23,16 +23,14 @@ def build_mosaic(
     mo_subtile_sz = 2
     mo_subtile_boxsz = MapCoord(mo_subtile_sz, mo_subtile_sz)
 
-    def subtile(color):
-        return Image.new("RGBA", mo_subtile_boxsz, color=color)
-
     def paste_subtiles(target: Image.Image, size: int, subtile_colors: List[Tuple[int, int, int]]):
         assert len(subtile_colors) == (size * size)
         sx, sy = 0, 0
         smax = size * mo_subtile_sz
         for color in subtile_colors:
             loc = (sx, sy)
-            target.paste(subtile(color=color), loc)
+            subtile = Image.new("RGBA", mo_subtile_boxsz, color=color)
+            target.paste(subtile, loc)
             sx += mo_subtile_sz
             if sx >= smax:
                 sx = 0
