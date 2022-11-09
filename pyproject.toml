@@ -44,6 +44,7 @@ requires = [
     "appdirs",
     #
     "black",
+    "black[d]",
     "isort",
     "pytest",
     #
