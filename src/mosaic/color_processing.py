@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import functools
-from typing import Dict, Tuple, Iterable
+from typing import Dict, Iterable, Tuple
 
-from PIL import Image
 from colorthief import ColorThief
+from PIL import Image
 
 from sl_maptools import MapCoord, MapTile
 

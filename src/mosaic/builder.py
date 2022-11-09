@@ -3,7 +3,7 @@
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 import time
 from pathlib import Path
-from typing import Dict, Set, List, Tuple
+from typing import Dict, List, Set, Tuple
 
 from PIL import Image, ImageDraw
 

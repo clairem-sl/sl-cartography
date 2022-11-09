@@ -2,6 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
+# isort: off
 # fmt: off
 import platform
 import asyncio
@@ -13,14 +14,16 @@ if platform.system() == "Linux" and platform.python_implementation() == "CPython
 else:
     uvloop = None
 # fmt: on
+# isort: on
 
 import time
 from pathlib import Path
-from typing import Set, Iterable, Dict
+from typing import Dict, Iterable, Set
 
 import httpx
-from sl_maptools.fetcher import MapFetcher, MapCanvas, MapConnectionError
-from sl_maptools import MapCoord, MapTile, MapBounds
+
+from sl_maptools import MapBounds, MapCoord, MapTile
+from sl_maptools.fetcher import MapCanvas, MapConnectionError, MapFetcher
 from sl_maptools.knowns import KNOWN_AREAS
 
 SAVE_DIR = Path("~/Pictures/SLMap/Carto").expanduser()

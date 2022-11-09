@@ -3,6 +3,7 @@
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 # fmt: off
+# isort: off
 import sys
 import platform
 import asyncio
@@ -13,6 +14,7 @@ if platform.system() == "Linux" and platform.python_implementation() == "CPython
     asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 else:
     uvloop = None
+# isort: on
 # fmt: on
 
 import argparse
@@ -20,17 +22,17 @@ import time
 from dataclasses import dataclass, field
 from pathlib import Path
 from pprint import PrettyPrinter
+from typing import Callable, FrozenSet, Set, Union
 
 import appdirs
 import httpx
-from typing import Set, Callable, Union, FrozenSet
 
+from mosaic.builder import build_mosaic
 from mosaic.progress import MosaicProgress
 from mosaic.tiles_processors import TileProcessorGang
-from mosaic.builder import build_mosaic
-from sl_maptools.utils import make_backup
-from sl_maptools.fetcher import MapFetcher
 from sl_maptools import MapCoord, MapTile
+from sl_maptools.fetcher import MapFetcher
+from sl_maptools.utils import make_backup
 
 X_MIN_DEFA = 0
 X_MAX_DEFA = 2000
