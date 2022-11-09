@@ -1,0 +1,76 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/
+
+# build tools artifacts
+**/*.egg-info/*
+build/
+
+# IDEs / editors
+.idea/
+.vscode/
+.history/
+
+# vim
+[._]*.s[a-v][a-z]
+!*.svg  # comment out if you don't need vector files
+[._]*.sw[a-p]
+[._]s[a-rt-v][a-z]
+[._]ss[a-gi-z]
+[._]sw[a-p]
+Session.vim
+Sessionx.vim
+*~
+[._]*.un~
+
+# Workspace files are user-specific
+*.sublime-workspace
+
+# SlickEdit workspace and project files are ignored by default because
+# typically they are considered to be developer-specific and not part of a
+# project.
+*.vpw
+*.vpj
+
+# SlickEdit workspace history and tag files always contain user-specific
+# data so they should not be stored in a repository.
+*.vpwhistu
+*.vpwhist
+*.vtg
+
+# Windows thumbnail cache files
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+
+# Folder config file
+[Dd]esktop.ini
+
+# Recycle Bin used on file shares
+$RECYCLE.BIN/
+
+## Other files that may accidentally be created
+*.png
+*.msgp
