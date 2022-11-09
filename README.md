@@ -74,6 +74,19 @@ A library of functions and classes used by the rest of the SL-Cartography packag
 
 Not executable.
 
+
+## Contributing
+
+Create an issue and/or a Pull Requests.
+
+As previously mentioned: Pull Requests whose purpose are _solely_ for
+backward-compatibility with Python<3.11 _will be outright rejected_.
+
+Also, please follow these guidelines:
+
+* Code MUST be formatted using **Black** with the configuration as stated in `pyproject.toml`
+* In addition, imports MUST be formatted using **isort** with the configuration as set in `pyproject.toml`
+
 ## Licenses
 
 Mostly MPL-2.0, with some exceptions. Please see the `LICENSE` file for details.
