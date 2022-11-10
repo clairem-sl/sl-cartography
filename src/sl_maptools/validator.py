@@ -60,7 +60,7 @@ class GridSurveyError(object):
 GridSurvey_NotRegion = GridSurveyError()
 
 
-class MapValidator(object):
+class MapValidatorGridSurvey(object):
     GRIDSURVEY_API = "http://api.gridsurvey.com/simquery.php?xy={x},{y}"
 
     def __init__(self, a_session: httpx.AsyncClient):
