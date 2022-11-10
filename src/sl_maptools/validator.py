@@ -9,9 +9,11 @@ from itertools import islice
 import uuid
 
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Dict, Union, Tuple
 
 import httpx
+import msgpack
 
 from sl_maptools import MapTile, MapCoord
 
@@ -52,6 +54,17 @@ class GridSurveyDatum(object):
             kvp[uk] = uuid.UUID(kvp[uk])
         return cls(**kvp)
 
+    def encode(self) -> str:
+        return (
+            f"status {self.status} x {self.x} y {self.y} access {self.access} "
+            f"estate {self.estate} firstseen {self.firstseen.strftime('%Y-%m-%d')} "
+            f"lastseen {self.lastseen.strftime('%Y-%m-%d')} "
+            f"objects_uuid {self.objects_uuid} terrain_uuid {self.terrain_uuid} "
+            f"incidents {self.incidents} updated {self.updated.strftime('%Y-%m-%d')} "
+            f"region_uuid {self.region_uuid} "
+            f"name {urllib.parse.quote_plus(self.name)}"
+        )
+
 
 class GridSurveyError(object):
     pass
@@ -63,9 +76,18 @@ GridSurvey_NotRegion = GridSurveyError()
 class MapValidatorGridSurvey(object):
     GRIDSURVEY_API = "http://api.gridsurvey.com/simquery.php?xy={x},{y}"
 
-    def __init__(self, a_session: httpx.AsyncClient):
+    def __init__(self, a_session: httpx.AsyncClient, cache_file: Path = None):
         self.session = a_session
-        self.cache: Dict[MapCoord, GridSurveyDatum] = {}
+        self.cache_file = cache_file
+        if cache_file is None or not cache_file.exists():
+            self.cache: Dict[MapCoord, GridSurveyDatum] = {}
+            return
+        with cache_file.open("rb") as fin:
+            cac = msgpack.unpack(fin)
+        self.cache = {
+            MapCoord(*coord): GridSurveyDatum.from_str(datum_str)
+            for coord, datum_str in cac
+        }
 
     async def fetch_gs_data(
         self, coord: MapCoord, use_cache: bool = True
@@ -88,6 +110,9 @@ class MapValidatorGridSurvey(object):
 
         datum = GridSurveyDatum.from_str(response.text)
         self.cache[coord] = datum
+        if self.cache_file:
+            with self.cache_file.open("wb") as fout:
+                msgpack.pack(fout, [(tuple(coord), d.encode()) for coord, d in self.cache.items()])
         return coord, datum
 
     async def validate_tile(self, tile: MapTile) -> bool:
