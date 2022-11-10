@@ -1,10 +1,13 @@
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
-
+import asyncio
 # This source file uses data & API provided by Tyche Shepherd & gridsurvey.com
 
 import datetime
+import random
+import re
+import urllib.parse
 from itertools import islice
 import uuid
 
@@ -126,3 +129,39 @@ class MapValidatorGridSurvey(object):
     async def coord_is_region(self, coord: MapCoord) -> bool:
         gs_datum = await self.fetch_gs_data(coord)
         return gs_datum is not GridSurvey_NotRegion
+
+
+"""var slRegionName = {'error' : true };"""
+RE_ERROR = re.compile(r"=\s*\{\s*'error'\s+:\s+true\s*}")
+"""var slRegionName='Da Boom';"""
+
+
+class MapValidator(object):
+    UUID = "b713fe80-283b-4585-af4d-a3b7d9a32492"
+    URL = "https://cap.secondlife.com/cap/0/{uuid}?var=slRegionName&grid_x={x}&grid_y={y}"
+
+    def __init__(self, a_session: httpx.AsyncClient, retries: int = 5):
+        self.a_session = a_session
+        self.retries = retries
+
+    async def is_region(self, coord: MapCoord) -> Tuple[MapCoord, bool]:
+        delay = 0.5
+        url = self.URL.format(uuid=self.UUID, x=coord.x, y=coord.y)
+        for _ in range(self.retries):
+            await asyncio.sleep(random.random() * 2.0)
+            # noinspection PyBroadException
+            try:
+                resp = await self.a_session.get(url)
+            except Exception:
+                await asyncio.sleep(delay)
+                delay *= 2
+            else:
+                if resp.status_code == 200:
+                    return coord, not RE_ERROR.search(resp.text)
+        raise ConnectionError()
+
+    async def validate_tile(self, tile: MapTile) -> Tuple[MapTile, bool]:
+        _, is_reg = await self.is_region(tile.coord)
+        is_void: bool = tile.is_void
+        # Both are bool so we can use bitwise-xor
+        return tile, is_reg ^ is_void
