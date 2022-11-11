@@ -74,3 +74,5 @@ $RECYCLE.BIN/
 ## Other files that may accidentally be created
 *.png
 *.msgp
+*.pickle
+*.pkl
