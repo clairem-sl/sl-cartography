@@ -38,9 +38,24 @@ class WorkerState(IntEnum):
     READY = 2
     BUSY = 3
     DEAD = -1
+    DYING = 4
 
 
-class TileProcessorWorker(Process):
+class ProcessWithState(Process):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._state: MPValueProtocol = MP.Value("l", 0)
+
+    @property
+    def state(self):
+        return self._state.value
+
+    @state.setter
+    def state(self, value: int):
+        self._state.value = value
+
+
+class TileProcessorWorker(ProcessWithState):
     def __init__(
         self,
         tile_queue: MP.Queue,
@@ -56,26 +71,21 @@ class TileProcessorWorker(Process):
         self.errqueue = errqueue
         self.failqueue = failqueue
 
-        self._state: MPValueProtocol = MP.Value("l", 0)
-
-    @property
-    def state(self) -> int:
-        return self._state.value
-
     def run(self):
-        self._state.value = WorkerState.SETUP
+        self.state = WorkerState.SETUP
         count = 0
         tile = None
         try:
             while True:
-                self._state.value = WorkerState.READY
+                self.state = WorkerState.READY
                 tile = self.tile_queue.get()
 
                 if tile == "DIE":
+                    self.state = WorkerState.DYING
                     print("X", end="", flush=True)
                     break
 
-                self._state.value = WorkerState.BUSY
+                self.state = WorkerState.BUSY
 
                 if tile == "ROW" or tile == "SAVE":
                     self.outgoing_queue.put("SAVE")
@@ -107,7 +117,7 @@ class TileProcessorWorker(Process):
         finally:
             # noinspection PyBroadException
             try:
-                self._state.value = WorkerState.DEAD
+                self.state = WorkerState.DEAD
                 self.tile_queue.close()
                 self.outgoing_queue.close()
                 self.errqueue.close()
@@ -117,7 +127,7 @@ class TileProcessorWorker(Process):
                 pass
 
 
-class TileProcessorRecorder(Process):
+class TileProcessorRecorder(ProcessWithState):
     MIN_SAVE_DISTANCE = 200
 
     def __init__(
@@ -138,11 +148,6 @@ class TileProcessorRecorder(Process):
         self.progress_file = progress_file
         self.flushqueue = flushqueue
         self.failqueue = failqueue
-        self._state: MPValueProtocol = MP.Value("l", 0)
-
-    @property
-    def state(self) -> int:
-        return self._state.value
 
     def _save(self, regions: Dict[MapCoord, DominantColors], seen: Set[MapCoord]):
         MosaicProgress(
@@ -152,21 +157,21 @@ class TileProcessorRecorder(Process):
         ).write_to_path(self.progress_file)
 
     def run(self) -> None:
-        self._state.value = WorkerState.SETUP
+        self.state = WorkerState.SETUP
         regions = dict(self.regions_dict)
         seen_set: Set[MapCoord] = set(self.seen_dict)
         tile: Optional[MapTile] = None
         count_between_saves = 0
         try:
             while True:
-                self._state.value = WorkerState.READY
+                self.state = WorkerState.READY
                 job = self.incoming.get()
 
                 if job == "DIE":
                     print("Z", end="", flush=True)
                     break
 
-                self._state.value = WorkerState.BUSY
+                self.state = WorkerState.BUSY
 
                 if job == "SAVE":
                     if (
@@ -205,7 +210,7 @@ class TileProcessorRecorder(Process):
         finally:
             # noinspection PyBroadException
             try:
-                self._state.value = WorkerState.DEAD
+                self.state = WorkerState.DEAD
                 self.incoming.close()
                 self.failqueue.close()
                 time.sleep(1.0)
