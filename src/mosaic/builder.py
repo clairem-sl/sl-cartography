@@ -171,12 +171,12 @@ def build_mosaic(
     start_t = time.monotonic()
 
     nightlights_path.parent.mkdir(parents=True, exist_ok=True)
-    canvas_nightlights.save(nightlights_path)
+    canvas_nightlights.save(nightlights_path, optimize=True)
 
     mosaic_path.parent.mkdir(parents=True, exist_ok=True)
-    canvas_mosaic_1x1.save(mosaic_path.with_suffix(".1x1.png"))
-    canvas_mosaic_2x2.save(mosaic_path.with_suffix(".2x2.png"))
-    canvas_mosaic_3x3.save(mosaic_path.with_suffix(".3x3.png"))
+    canvas_mosaic_1x1.save(mosaic_path.with_suffix(".1x1.png"), optimize=True)
+    canvas_mosaic_2x2.save(mosaic_path.with_suffix(".2x2.png"), optimize=True)
+    canvas_mosaic_3x3.save(mosaic_path.with_suffix(".3x3.png"), optimize=True)
 
     elapsed_t = time.monotonic() - start_t
     print(f"{elapsed_t:,.2f} seconds")

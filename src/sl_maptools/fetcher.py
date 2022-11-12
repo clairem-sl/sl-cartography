@@ -296,11 +296,14 @@ class MapCanvas(object):
         canv_y = (self._max_y - tile_y) * self.tile_size
         self.canvas.paste(tile.image, (canv_x, canv_y))
 
-    def save_to(self, dest: Union[Path | io.IOBase], image_format: str = None):
+    def save_to(self, dest: Union[Path | io.IOBase], image_format: str = None, optimize: bool = True):
         if isinstance(dest, io.IOBase):
             if not image_format:
                 raise ValueError("image_format must be specified if dest is a stream")
-        self.canvas.save(dest, format=image_format)
+        if image_format.casefold() == "png" or dest.suffix == ".png":
+            self.canvas.save(dest, format=image_format, optimize=optimize)
+        else:
+            self.canvas.save(dest, format=image_format)
 
     @property
     def size(self):
