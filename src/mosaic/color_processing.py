@@ -67,7 +67,7 @@ class DominantColors:
                 (y_offset + subreg_sz) * subtile_size,
             )
 
-        # Quarters: Split region into 2x2 subregions
+        # Quarters: Split region into 2x2 subtiles and 2x2 subregions (each subregion = 1x1 subtile)
         getbox_q = functools.partial(getbox, 2, 1)
         # Ninths: Split region into 3x3 _overlapping_ subregions
         #         We first split the tile into 16x16 subtiles
