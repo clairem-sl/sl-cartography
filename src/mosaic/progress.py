@@ -41,9 +41,16 @@ class MosaicProgress:
         }
         msgpack.pack(encoded, stream)
 
-    def write_to_path(self, path: Path):
-        with path.open("wb") as fout:
-            self.write_to_stream(fout)
+    def write_to_path(self, path: Path, with_temp: bool = True):
+        if not with_temp:
+            with path.open("wb") as fout:
+                self.write_to_stream(fout)
+        else:
+            suff = path.suffix
+            temp = path.with_suffix(".temp" + suff)
+            with temp.open("wb") as fout:
+                self.write_to_stream(fout)
+            temp.replace(path)
 
     @classmethod
     def new_from_stream(cls, stream):
