@@ -49,7 +49,7 @@ DEFA_MOSAIC = "world-mosaic-2.png"
 
 STATE_DIR = Path(appdirs.site_data_dir("sl-cartography"))
 PROGRESS_FILE = STATE_DIR / "mosaic_progress_2.msgp"
-WORKER_COUNT = 10
+DEFA_WORKERS = 10
 
 # noinspection PySetFunctionToLiteral
 FORCE_REDO_ROWS = set([])
@@ -116,6 +116,7 @@ def main(
     backup_level: int = 3,
     nightlights_name: str = DEFA_NIGHTLIGHTS,
     mosaic_name: str = DEFA_MOSAIC,
+    workers: int = DEFA_WORKERS,
 ):
     PROGRESS_FILE.parent.mkdir(parents=True, exist_ok=True)
     print(
@@ -135,10 +136,10 @@ def main(
     )
 
     print("Preparing workers ... ", end="", flush=True)
-    work_force = TileProcessorGang(WORKER_COUNT, progress, PROGRESS_FILE)
+    work_force = TileProcessorGang(workers, progress, PROGRESS_FILE)
     work_force.prime()
 
-    print(f"\nWaiting for {WORKER_COUNT} workers to be ready...")
+    print(f"\nWaiting for {workers} workers to be ready...")
     work_force.wait_ready()
 
     start_t = time.monotonic()
@@ -237,6 +238,7 @@ def get_options():
     parser.add_argument("--xmax", type=int, default=X_MAX_DEFA, help="Maximum X coord")
     parser.add_argument("--ymin", type=int, default=Y_MIN_DEFA, help="Minimum Y coord")
     parser.add_argument("--ymax", type=int, default=Y_MAX_DEFA, help="Maximum Y coord")
+    parser.add_argument("--workers", type=int, default=DEFA_WORKERS, help="How many workers to spawn")
     parser.add_argument(
         "--refresh", action="store_true", default=False, help="Forget seen tiles"
     )
