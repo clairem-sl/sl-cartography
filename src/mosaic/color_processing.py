@@ -49,12 +49,12 @@ class DominantColors:
 
     @classmethod
     def from_tile(cls, tile: MapTile) -> DominantColors:
-        def getbox(splits: int, mult: int, x_offset: int, y_offset: int):
+        def getbox(splits: int, subreg_sz: int, x_offset: int, y_offset: int):
             """
             Returns proper box tuple for image cropping
 
             :param splits: Split tile to how many subtile per dimension (we'll get splits x splits number of subtiles)
-            :param mult: How many subtiles per subregion (mult x mult subtiles per subregion)
+            :param subreg_sz: How many subtiles per subregion (subreg_sz x subreg_sz subtiles per subregion)
             :param x_offset: Subtile offset from left
             :param y_offset: Subtile offset from top
             :return: Box tuple suitable for pillow's Image.crop()
@@ -63,8 +63,8 @@ class DominantColors:
             return (
                 x_offset * subtile_size,
                 y_offset * subtile_size,
-                (x_offset + mult) * subtile_size,
-                (y_offset + mult) * subtile_size,
+                (x_offset + subreg_sz) * subtile_size,
+                (y_offset + subreg_sz) * subtile_size,
             )
 
         # Quarters: Split region into 2x2 subregions
