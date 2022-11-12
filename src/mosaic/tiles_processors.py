@@ -307,8 +307,7 @@ class TileProcessorGang:
             time.sleep(1.0)
         self.progress.regions.update(self.mpm_flushqueue.get())
         self.progress.seen.update(self.mpm_flushqueue.get())
-        self.progress.last_fail_rows = {coord.y for coord, ex in self.drain_failqueue()}
-
+        self.progress.last_fail_rows.update(coord.y for coord, ex in self.drain_failqueue())
         errs = [err for err in self.drain_errsqueue()]
 
         # Shutting down the manager before ending the workers prevents GetOverlappedResult err/warning
