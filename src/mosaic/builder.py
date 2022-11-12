@@ -80,6 +80,13 @@ def build_mosaic(
                 return False
         return True
 
+    # IMPORTANT NOTE:
+    # Even on a full-sized map with 2000x2000 tiles, this process takes less than 10 seconds
+    # So, please do NOT even consider of parallelizing this; it will be effort wasted for minimal
+    # performance improvement.
+    # Remember: premature optimization is the root of all evils
+    # Focus the optimizations elsewhere.
+
     print(f"Processing world tiles... ", end="", flush=True)
     count = 0
     coord: MapCoord
