@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import time
 import multiprocessing as MP
+from enum import IntEnum
 from multiprocessing import Process
 from typing import (
     Dict,
@@ -16,6 +17,7 @@ from typing import (
     Protocol,
     ContextManager,
     Set,
+    Optional,
 )
 from pathlib import Path
 
@@ -31,32 +33,28 @@ class MPValueProtocol(Protocol):
         ...
 
 
-class TileProcessorWorker(Process):
-    STATE_SETUP = 1
-    STATE_READY = 2
-    STATE_BUSY = 3
-    STATE_DEAD = -1
+class WorkerState(IntEnum):
+    SETUP = 1
+    READY = 2
+    BUSY = 3
+    DEAD = -1
 
+
+class TileProcessorWorker(Process):
     def __init__(
         self,
         tile_queue: MP.Queue,
-        regions_dict: Dict[MapCoord, DominantColors],
-        seen_dict: Dict[MapCoord, None],
-        proglock: MP.Lock,
+        outgoing_queue: MP.Queue,
         errqueue: MP.Queue,
         failqueue: MP.Queue,
-        progress_file: Path,
         *args,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
         self.tile_queue = tile_queue
-        self.regions_dict = regions_dict
-        self.seen_dict = seen_dict
-        self.proglock = proglock
+        self.outgoing_queue = outgoing_queue
         self.errqueue = errqueue
         self.failqueue = failqueue
-        self.progress_file = progress_file
 
         self._state: MPValueProtocol = MP.Value("l", 0)
 
@@ -65,42 +63,32 @@ class TileProcessorWorker(Process):
         return self._state.value
 
     def run(self):
-        self._state.value = self.STATE_SETUP
+        self._state.value = WorkerState.SETUP
         count = 0
         tile = None
         try:
             while True:
-                self._state.value = self.STATE_READY
+                self._state.value = WorkerState.READY
                 tile = self.tile_queue.get()
 
                 if tile == "DIE":
                     print("X", end="", flush=True)
                     break
 
-                self._state.value = self.STATE_BUSY
+                self._state.value = WorkerState.BUSY
 
                 if tile == "ROW" or tile == "SAVE":
+                    self.outgoing_queue.put("SAVE")
                     print("~", end="", flush=True)
-                    for _ in range(0, 3):
-                        try:
-                            wprogress = MosaicProgress(
-                                regions=dict(self.regions_dict),
-                                seen=set(self.seen_dict.keys()),
-                            )
-                            with self.proglock:
-                                wprogress.write_to_path(self.progress_file)
-                            break
-                        except (PermissionError, IOError):
-                            time.sleep(1.0)
                     continue
 
                 assert isinstance(tile, MapTile)
                 try:
                     if not tile.is_void:
-                        self.regions_dict[tile.coord] = DominantColors.from_tile(tile)
-                    elif tile.coord in self.regions_dict:
-                        del self.regions_dict[tile.coord]
-                    self.seen_dict[tile.coord] = None
+                        domc = DominantColors.from_tile(tile)
+                    else:
+                        domc = None
+                    self.outgoing_queue.put((tile.coord, domc))
                 except Exception as ew:
                     errmess = f"ERR[{type(ew)}:{ew}]({tile.coord.x},{tile.coord.y})"
                     print(errmess, end="", flush=True)
@@ -119,9 +107,102 @@ class TileProcessorWorker(Process):
         finally:
             # noinspection PyBroadException
             try:
-                self._state.value = self.STATE_DEAD
+                self._state.value = WorkerState.DEAD
                 self.tile_queue.close()
+                self.outgoing_queue.close()
                 self.errqueue.close()
+                self.failqueue.close()
+                time.sleep(1.0)
+            except Exception:
+                pass
+
+
+class TileProcessorRecorder(Process):
+    MIN_SAVE_DISTANCE = 200
+
+    def __init__(
+        self,
+        incoming: MP.Queue,
+        regions_dict: Dict[MapCoord, DominantColors],
+        seen_dict: Set[MapCoord],
+        progress_file: Path,
+        flushqueue: MP.Queue,
+        failqueue: MP.Queue,
+        *args,
+        **kwargs,
+    ):
+        super().__init__(*args, **kwargs)
+        self.incoming = incoming
+        self.regions_dict = regions_dict
+        self.seen_dict = seen_dict
+        self.progress_file = progress_file
+        self.flushqueue = flushqueue
+        self.failqueue = failqueue
+        self._state: MPValueProtocol = MP.Value("l", 0)
+
+    @property
+    def state(self) -> int:
+        return self._state.value
+
+    def _save(self, regions: Dict[MapCoord, DominantColors], seen: Set[MapCoord]):
+        MosaicProgress(regions=regions, seen=seen).write_to_path(self.progress_file)
+
+    def run(self) -> None:
+        self._state.value = WorkerState.SETUP
+        regions = dict(self.regions_dict)
+        seen_set: Set[MapCoord] = set(self.seen_dict)
+        tile: Optional[MapTile] = None
+        count_between_saves = 0
+        try:
+            while True:
+                self._state.value = WorkerState.READY
+                job = self.incoming.get()
+
+                if job == "DIE":
+                    print("Z", end="", flush=True)
+                    break
+
+                self._state.value = WorkerState.BUSY
+
+                if job == "SAVE":
+                    if (
+                        count_between_saves < self.MIN_SAVE_DISTANCE
+                        and not self.incoming.empty()
+                    ):
+                        continue
+                    count_between_saves = 0
+                    print("V", end="", flush=True)
+                    self._save(regions, seen_set)
+                    continue
+
+                if job == "FLUSH":
+                    self.flushqueue.put(regions)
+                    self.flushqueue.put(seen_set)
+                    continue
+
+                assert isinstance(job, tuple)
+                assert len(job) == 2
+                count_between_saves += 1
+                coord: MapCoord = job[0]
+                domc: Optional[DominantColors] = job[1]
+
+                seen_set.add(coord)
+                if domc is None:
+                    if coord in regions:
+                        del regions[coord]
+                    continue
+                else:
+                    regions[coord] = domc
+        except (KeyboardInterrupt, Exception) as ee:
+            if isinstance(tile, MapTile):
+                self.failqueue.put((tile.coord, ee))
+            if not isinstance(ee, KeyboardInterrupt):
+                raise
+        finally:
+            # noinspection PyBroadException
+            try:
+                self._state.value = WorkerState.DEAD
+                self.incoming.close()
                 self.failqueue.close()
                 time.sleep(1.0)
             except Exception:
@@ -130,46 +211,54 @@ class TileProcessorWorker(Process):
 
 class TileProcessorGang:
     SAFED_STATES: Set[int] = {
-        TileProcessorWorker.STATE_READY,
-        TileProcessorWorker.STATE_DEAD,
+        WorkerState.READY,
+        WorkerState.DEAD,
     }
 
     def __init__(self, count: int, progress: MosaicProgress, progress_file: Path):
         self.count = count
+        self.progress = progress
         self.progress_file = progress_file
 
         self.mgr = MP.Manager()
         mgr = self.mgr
-        self.mpm_regions, self.mpm_seen = progress.get_managed(mgr)
-        self.mpm_proglock = mgr.Lock()
+        # self.mpm_regions = mgr.dict(progress.regions)
+        # self.mpm_seen = mgr.dict({k: None for k in progress.seen})
         self.mpm_errsqueue = mgr.Queue()
+        self.mpm_flushqueue = mgr.Queue()
         self.mpm_failqueue = mgr.Queue()
 
-        # Don't use mgr.Queue because this must survive after mgr dies
-        self.mp_jobqueue = MP.Queue()
+        # Don't use mgr.Queue because these must survive after mgr dies
+        self.mp_tilequeue = MP.Queue()
+        self.mp_tiledomcq = MP.Queue()
 
         self.workers: List[TileProcessorWorker] = []
+        self.recorder: Optional[TileProcessorRecorder] = None
 
     def prime(self):
         for i in range(0, self.count):
             print(i, end=" ", flush=True)
             w = TileProcessorWorker(
-                self.mp_jobqueue,
-                self.mpm_regions,
-                self.mpm_seen,
-                self.mpm_proglock,
+                self.mp_tilequeue,
+                self.mp_tiledomcq,
                 self.mpm_errsqueue,
                 self.mpm_failqueue,
-                self.progress_file,
             )
             w.start()
             self.workers.append(w)
+        self.recorder = TileProcessorRecorder(
+            self.mp_tiledomcq,
+            self.progress.regions,
+            self.progress.seen,
+            self.progress_file,
+            self.mpm_flushqueue,
+            self.mpm_failqueue,
+        )
+        self.recorder.start()
 
     @property
     def ready_count(self):
-        return sum(
-            1 for w in self.workers if w.state == TileProcessorWorker.STATE_READY
-        )
+        return sum(1 for w in self.workers if w.state == WorkerState.READY)
 
     @property
     def safed_count(self):
@@ -180,14 +269,29 @@ class TileProcessorGang:
         while readied_workers < self.count:
             time.sleep(1.0)
             readied_workers = self.ready_count
+        while self.recorder.state != WorkerState.READY:
+            time.sleep(1.0)
 
     def wait_safed(self):
         safed_workers = 0
-        while safed_workers < self.count:
+        while not self.mp_tilequeue.empty() or safed_workers < self.count:
             time.sleep(1.0)
             safed_workers = self.safed_count
+        self.mp_tiledomcq.put("SAVE")
+        while not self.mp_tiledomcq.empty() or (
+            self.recorder.state not in self.SAFED_STATES
+        ):
+            time.sleep(1.0)
 
-    def disband(self):
+    def disband(self, update_progress: bool = True):
+        if update_progress:
+            self.mp_tiledomcq.put("FLUSH")
+            time.sleep(1.0)
+            while self.recorder.state != WorkerState.READY:
+                time.sleep(1.0)
+            self.progress.regions.update(self.mpm_flushqueue.get())
+            self.progress.seen.update(self.mpm_flushqueue.get())
+
         # Shutting down the manager before ending the workers prevents GetOverlappedResult err/warning
         # After all at this point in time we no longer need the facilities of SyncManager
         self.mgr.shutdown()
@@ -195,10 +299,13 @@ class TileProcessorGang:
 
         # At this point all workers are lame ducks and cannot do anything but to disband.
         # So, we tell workers to disband
-        [self.mp_jobqueue.put("DIE") for w in self.workers if w.is_alive()]
+        [self.mp_tilequeue.put("DIE") for w in self.workers if w.is_alive()]
+        self.mp_tiledomcq.put("DIE")
         time.sleep(1.0)
-        self.mp_jobqueue.close()
+        self.mp_tilequeue.close()
+        self.mp_tiledomcq.close()
         [w.join() for w in self.workers]
+        self.recorder.join()
 
     @staticmethod
     def drain_queue(queue: MP.Queue, fun: Callable[[Any], Any] = None):
@@ -216,5 +323,5 @@ class TileProcessorGang:
         yield from self.drain_queue(self.mpm_failqueue)
 
     @property
-    def backlog_size(self) -> int:
-        return self.mp_jobqueue.qsize()
+    def backlog_sizes(self) -> Tuple[int, int]:
+        return self.mp_tilequeue.qsize(), self.mp_tiledomcq.qsize()

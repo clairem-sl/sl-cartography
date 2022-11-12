@@ -49,7 +49,7 @@ DEFA_MOSAIC = "world-mosaic-2.png"
 
 STATE_DIR = Path(appdirs.site_data_dir("sl-cartography"))
 PROGRESS_FILE = STATE_DIR / "mosaic_progress_2.msgp"
-WORKER_COUNT = 12
+WORKER_COUNT = 10
 
 # noinspection PySetFunctionToLiteral
 FORCE_REDO_ROWS = set([])
@@ -157,7 +157,7 @@ def main(
                 xmax,
                 ymin,
                 ymax,
-                tile_callback=work_force.mp_jobqueue.put,
+                tile_callback=work_force.mp_tilequeue.put,
                 force_rows=rows_to_force,
                 progress=progress,
                 conn_limit=20,
@@ -173,29 +173,29 @@ def main(
         print(f"\nAn Exception happened: {type(e)}")
     finally:
         print(
-            f"\nWaiting for workers to finish backlog ({work_force.backlog_size})...",
+            f"\nWaiting for workers to finish backlog ({work_force.backlog_sizes})...",
             end="",
             flush=True,
         )
         work_force.wait_safed()
-        print("done.")
-
-        print("\nSaving progress so far...", end="", flush=True)
         errors = [err for err in work_force.drain_errsqueue()]
         progress.last_fail_rows.update(
             coord.y for coord, ex in work_force.drain_failqueue()
         )
-        progress.regions.update(work_force.mpm_regions)
-        progress.seen = set(work_force.mpm_seen.keys())
-        # Use lock here to be safe, just in case one of the workers got a 'save' signal and needs some time to
-        # save the progress so far.
-        with work_force.mpm_proglock:
-            progress.write_to_path(PROGRESS_FILE)
-        print("saved.", flush=True)
+        # progress.regions.update(work_force.mpm_regions)
+        # progress.seen = set(work_force.mpm_seen.keys())
+        # # Use lock here to be safe, just in case one of the workers got a 'save' signal and needs some time to
+        # # save the progress so far.
+        # progress.write_to_path(PROGRESS_FILE)
+        print("done.", flush=True)
 
         print("\nWaiting for workers to disband...", end="", flush=True)
-        work_force.disband()
+        work_force.disband(update_progress=True)
         print("done.")
+
+        print("\nSaving progress so far...", end="", flush=True)
+        progress.write_to_path(PROGRESS_FILE)
+        print("saved.", flush=True)
 
     regions_to_build = progress.regions.copy()
 
