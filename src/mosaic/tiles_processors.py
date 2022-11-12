@@ -67,7 +67,7 @@ class TileProcessorWorker(ProcessWithState):
         self,
         tile_queue: MP.Queue,
         outgoing_queue: MP.Queue,
-        errqueue: MP.Queue,
+        errmessq: MP.Queue,
         failqueue: MP.Queue,
         *args,
         **kwargs,
@@ -75,7 +75,7 @@ class TileProcessorWorker(ProcessWithState):
         super().__init__(*args, **kwargs)
         self.tile_queue = tile_queue
         self.outgoing_queue = outgoing_queue
-        self.errqueue = errqueue
+        self.errmessq = errmessq
         self.failqueue = failqueue
 
     def run(self):
@@ -109,7 +109,7 @@ class TileProcessorWorker(ProcessWithState):
                 except Exception as ew:
                     errmess = f"ERR[{type(ew)}:{ew}]({tile.coord.x},{tile.coord.y})"
                     print(errmess, end="", flush=True)
-                    self.errqueue.put(errmess)
+                    self.errmessq.put(errmess)
                     self.failqueue.put_nowait((tile.coord, ew))
 
                 count += 1
@@ -127,7 +127,7 @@ class TileProcessorWorker(ProcessWithState):
                 self.state = WorkerState.DEAD
                 self.tile_queue.close()
                 self.outgoing_queue.close()
-                self.errqueue.close()
+                self.errmessq.close()
                 self.failqueue.close()
                 time.sleep(1.0)
             except Exception:
@@ -242,7 +242,7 @@ class TileProcessorGang:
         mgr = self.mgr
         # self.mpm_regions = mgr.dict(progress.regions)
         # self.mpm_seen = mgr.dict({k: None for k in progress.seen})
-        self.mpm_errsqueue = mgr.Queue()
+        self.mpm_errmessq = mgr.Queue()
         self.mpm_flushqueue = mgr.Queue()
         self.mpm_failqueue = mgr.Queue()
 
@@ -259,7 +259,7 @@ class TileProcessorGang:
             w = TileProcessorWorker(
                 self.mp_tilequeue,
                 self.mp_tiledomcq,
-                self.mpm_errsqueue,
+                self.mpm_errmessq,
                 self.mpm_failqueue,
             )
             w.start()
@@ -338,7 +338,7 @@ class TileProcessorGang:
                 yield item
 
     def drain_errsqueue(self) -> Generator[str, None, None]:
-        yield from self.drain_queue(self.mpm_errsqueue)
+        yield from self.drain_queue(self.mpm_errmessq)
 
     def drain_failqueue(self) -> Generator[Tuple[MapCoord, Exception], None, None]:
         yield from self.drain_queue(self.mpm_failqueue)

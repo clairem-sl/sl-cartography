@@ -163,7 +163,7 @@ def main(
                 progress=progress,
                 conn_limit=20,
                 keepalive_limit=20,
-                err_callback=work_force.mpm_errsqueue.put,
+                err_callback=work_force.mpm_errmessq.put,
             )
         )
         elapsed_t = time.monotonic() - start_t
