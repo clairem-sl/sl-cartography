@@ -123,8 +123,7 @@ class TileProcessorRecorder(Process):
     def __init__(
         self,
         incoming: MP.Queue,
-        regions_dict: Dict[MapCoord, DominantColors],
-        seen_dict: Set[MapCoord],
+        progresss_so_far: MosaicProgress,
         progress_file: Path,
         flushqueue: MP.Queue,
         failqueue: MP.Queue,
@@ -133,8 +132,9 @@ class TileProcessorRecorder(Process):
     ):
         super().__init__(*args, **kwargs)
         self.incoming = incoming
-        self.regions_dict = regions_dict
-        self.seen_dict = seen_dict
+        self.regions_dict = progresss_so_far.regions
+        self.seen_dict = progresss_so_far.seen
+        self.prev_failrows = progresss_so_far.last_fail_rows
         self.progress_file = progress_file
         self.flushqueue = flushqueue
         self.failqueue = failqueue
@@ -145,7 +145,11 @@ class TileProcessorRecorder(Process):
         return self._state.value
 
     def _save(self, regions: Dict[MapCoord, DominantColors], seen: Set[MapCoord]):
-        MosaicProgress(regions=regions, seen=seen).write_to_path(self.progress_file)
+        MosaicProgress(
+            regions=regions,
+            seen=seen,
+            last_fail_rows=self.prev_failrows
+        ).write_to_path(self.progress_file)
 
     def run(self) -> None:
         self._state.value = WorkerState.SETUP
@@ -248,8 +252,7 @@ class TileProcessorGang:
             self.workers.append(w)
         self.recorder = TileProcessorRecorder(
             self.mp_tiledomcq,
-            self.progress.regions,
-            self.progress.seen,
+            self.progress,
             self.progress_file,
             self.mpm_flushqueue,
             self.mpm_failqueue,
@@ -283,14 +286,16 @@ class TileProcessorGang:
         ):
             time.sleep(1.0)
 
-    def disband(self, update_progress: bool = True):
-        if update_progress:
-            self.mp_tiledomcq.put("FLUSH")
+    def disband(self) -> List[str]:
+        self.mp_tiledomcq.put("FLUSH")
+        time.sleep(1.0)
+        while self.recorder.state != WorkerState.READY:
             time.sleep(1.0)
-            while self.recorder.state != WorkerState.READY:
-                time.sleep(1.0)
-            self.progress.regions.update(self.mpm_flushqueue.get())
-            self.progress.seen.update(self.mpm_flushqueue.get())
+        self.progress.regions.update(self.mpm_flushqueue.get())
+        self.progress.seen.update(self.mpm_flushqueue.get())
+        self.progress.last_fail_rows = {coord.y for coord, ex in self.drain_failqueue()}
+
+        errs = [err for err in self.drain_errsqueue()]
 
         # Shutting down the manager before ending the workers prevents GetOverlappedResult err/warning
         # After all at this point in time we no longer need the facilities of SyncManager
@@ -306,6 +311,8 @@ class TileProcessorGang:
         self.mp_tiledomcq.close()
         [w.join() for w in self.workers]
         self.recorder.join()
+
+        return errs
 
     @staticmethod
     def drain_queue(queue: MP.Queue, fun: Callable[[Any], Any] = None):

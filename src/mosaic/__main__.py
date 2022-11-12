@@ -178,19 +178,10 @@ def main(
             flush=True,
         )
         work_force.wait_safed()
-        errors = [err for err in work_force.drain_errsqueue()]
-        progress.last_fail_rows.update(
-            coord.y for coord, ex in work_force.drain_failqueue()
-        )
-        # progress.regions.update(work_force.mpm_regions)
-        # progress.seen = set(work_force.mpm_seen.keys())
-        # # Use lock here to be safe, just in case one of the workers got a 'save' signal and needs some time to
-        # # save the progress so far.
-        # progress.write_to_path(PROGRESS_FILE)
         print("done.", flush=True)
 
         print("\nWaiting for workers to disband...", end="", flush=True)
-        work_force.disband(update_progress=True)
+        errors = work_force.disband()
         print("done.")
 
         print("\nSaving progress so far...", end="", flush=True)
