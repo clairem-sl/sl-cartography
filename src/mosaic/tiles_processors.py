@@ -168,6 +168,8 @@ class TileProcessorRecorder(ProcessWithState):
                 job = self.incoming.get()
 
                 if job == "DIE":
+                    self.state = WorkerState.DYING
+                    self._save(regions, seen_set)
                     print("Z", end="", flush=True)
                     break
 
