@@ -33,12 +33,19 @@ class MPValueProtocol(Protocol):
         ...
 
 
+# Bitwise flags:
+# 0000_0dbr
+#       |++--> 00 = not busy, but not ready
+#       |      01 = not busy, ready
+#       |      10 = busy, not ready
+#       +----> 0 = alive, 1 = dead (or in process of becoming dead)
+
 class WorkerState(IntEnum):
-    SETUP = 1
-    READY = 2
-    BUSY = 3
-    DEAD = -1
-    DYING = 4
+    SETUP = 0b0000_0000
+    READY = 0b0000_0001
+    BUSY  = 0b0000_0010  # noqa: E221
+    DEAD  = 0b0000_0100  # noqa: E221
+    DYING = 0b0000_0110
 
 
 class ProcessWithState(Process):
