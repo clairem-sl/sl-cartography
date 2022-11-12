@@ -17,8 +17,7 @@ def make_backup(the_file: Path, levels: int = 2):
         prev_n = the_file.with_suffix(f".prev{n}{suff}")
         prev_b = the_file.with_suffix(f".prev{n-1}{suff}")
         if prev_b.exists():
-            prev_n.unlink(missing_ok=True)
-            prev_b.rename(prev_n)
+            prev_b.replace(prev_n)
 
 
 class QuietablePrint:
