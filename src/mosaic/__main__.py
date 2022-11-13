@@ -182,7 +182,7 @@ def main(
         print("done.", flush=True)
 
         print("\nWaiting for workers to disband...", end="", flush=True)
-        errors = work_force.disband()
+        results = work_force.disband()
         print("done.")
 
         print("\nSaving progress so far...", end="", flush=True)
@@ -209,9 +209,9 @@ def main(
         elapsed_t = time.monotonic() - start_t
         print(f"ALL DONE. {elapsed_t:,.2f} seconds in total.")
         pp = PrettyPrinter(width=160)
-        if errors:
+        if errs := results["errors"]:
             print("Errors found:")
-            pp.pprint(errors)
+            pp.pprint(errs)
         else:
             print("  No Errors")
         if progress.last_fail_rows:
@@ -220,7 +220,7 @@ def main(
         else:
             print("  No failed rows")
 
-    if not errors and not progress.last_fail_rows:
+    if not errs and not progress.last_fail_rows:
         sys.exit(0)
     else:
         sys.exit(1)

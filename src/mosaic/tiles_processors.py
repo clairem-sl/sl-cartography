@@ -299,7 +299,7 @@ class TileProcessorGang:
         ):
             time.sleep(1.0)
 
-    def disband(self) -> List[str]:
+    def disband(self) -> Dict[str, Any]:
         self.mp_tiledomcq.put("FLUSH")
         time.sleep(1.0)
         while self.recorder.state != WorkerState.READY:
@@ -326,7 +326,7 @@ class TileProcessorGang:
         [w.join() for w in self.workers]
         self.recorder.join()
 
-        return errs
+        return {"errors": errs}
 
     @staticmethod
     def drain_queue(queue: MP.Queue, fun: Callable[[Any], Any] = None):
