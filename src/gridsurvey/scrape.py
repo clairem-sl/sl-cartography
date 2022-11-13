@@ -7,13 +7,13 @@
 import re
 import time
 from pathlib import Path
-from typing import Generator, Set, List
+from typing import Generator, List, Set
 
 import httpx
 import msgpack
 from bs4 import BeautifulSoup
 
-from gridsurvey import GridSurveyWebDatum, GridSurveyWeb, STATE_DIR
+from gridsurvey import STATE_DIR, GridSurveyWeb, GridSurveyWebDatum
 from sl_maptools.utils import make_backup
 
 RE_PAGEOF = re.compile(r"Showing page \d+ of (\d+) pages")

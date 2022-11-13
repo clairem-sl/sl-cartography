@@ -11,7 +11,7 @@ import re
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Tuple, Dict, Union
+from typing import Dict, Tuple, Union
 
 import appdirs
 import httpx

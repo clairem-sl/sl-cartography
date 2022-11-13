@@ -3,27 +3,27 @@
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 from __future__ import annotations
 
-import time
 import multiprocessing as MP
+import time
 from enum import IntEnum
 from multiprocessing import Process
-from typing import (
-    Dict,
-    Any,
-    Tuple,
-    List,
-    Callable,
-    Generator,
-    Protocol,
-    ContextManager,
-    Set,
-    Optional,
-)
 from pathlib import Path
+from typing import (
+    Any,
+    Callable,
+    ContextManager,
+    Dict,
+    Generator,
+    List,
+    Optional,
+    Protocol,
+    Set,
+    Tuple,
+)
 
 from mosaic.color_processing import DominantColors
-from sl_maptools import MapCoord, MapTile
 from mosaic.progress import MosaicProgress
+from sl_maptools import MapCoord, MapTile
 
 
 class MPValueProtocol(Protocol):
