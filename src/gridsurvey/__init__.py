@@ -11,12 +11,14 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Tuple, Dict, Union
 
+import appdirs
 import httpx
 from bs4 import BeautifulSoup
 
 from sl_maptools import MapCoord
 
 RE_COORD = re.compile(r"\((\d+),(\d+)\)")
+STATE_DIR = Path(appdirs.site_data_dir("sl-cartography"))
 
 
 @dataclass(eq=True, frozen=True)

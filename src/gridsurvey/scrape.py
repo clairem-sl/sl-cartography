@@ -11,12 +11,12 @@ import httpx
 import msgpack
 from bs4 import BeautifulSoup
 
-from gridsurvey import GridSurveyWebDatum, GridSurveyWeb
+from gridsurvey import GridSurveyWebDatum, GridSurveyWeb, STATE_DIR
 from sl_maptools.utils import make_backup
 
 RE_PAGEOF = re.compile(r"Showing page \d+ of (\d+) pages")
-GS_DATA = Path("gridsurvey_webdata.msgp")
-PAGE_CACHE = Path("gridsurvey_pagecache.pickle")
+GS_DATA = STATE_DIR / Path("gridsurvey_webdata.msgp")
+PAGE_CACHE = STATE_DIR / Path("gridsurvey_pagecache.pickle")
 
 
 def parse_soup(soup: BeautifulSoup) -> Generator[GridSurveyWebDatum, None, None]:
