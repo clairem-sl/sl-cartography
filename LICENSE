@@ -10,10 +10,11 @@ Full text of the license: https://www.mozilla.org/en-US/MPL/2.0/
 
 # Additional Licenses
 
-## `sl_maptools/validator.py`
+## GridSurvey
 
-The source file `sl_maptools/validator.py` uses data & API provided by Tyche Shepherd & gridsurvey.com,
-which was released under the [CC-BY-2.0-UK](https://creativecommons.org/licenses/by/2.0/uk/) license.
+The source file `sl_maptools/validator.py` and the source files under `src/gridsurvey` uses data & API provided by
+Tyche Shepherd & gridsurvey.com, which was released under the
+[CC-BY-2.0-UK](https://creativecommons.org/licenses/by/2.0/uk/) license.
 
 Reference:
   - [Web Archive of GridSurvey FAQ](https://web.archive.org/web/20220522014833/www.gridsurvey.com/api.php) -
