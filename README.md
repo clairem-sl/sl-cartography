@@ -90,3 +90,6 @@ Also, please follow these guidelines:
 ## Licenses
 
 Mostly MPL-2.0, with some exceptions. Please see the `LICENSE` file for details.
+
+Most notably, the usage of data & API of [GridSurvey](http://www.gridsurvey.com)
+is licensed under [CC-BY-2.0-UK](https://creativecommons.org/licenses/by/2.0/uk/).
