@@ -33,65 +33,6 @@ def parse_soup(soup: BeautifulSoup) -> Generator[GridSurveyWebDatum, None, None]
     # print("\u25ac", end="", flush=True)
 
 
-# def get_soup(
-#     client: httpx.Client,
-#     url: str,
-#     cache: Path = None,
-#     force_refresh: bool = False,
-#     limit_age: int = 7,
-#     retries: int = 3,
-# ) -> Tuple[BeautifulSoup, bool]:
-#     cached_pages: Dict[str, Union[str, Tuple[datetime.date, str]]]
-#     if cache is not None and cache.exists() and cache.stat().st_size > 0:
-#         with cache.open("rb") as fin:
-#             cached_pages = pickle.load(fin)
-#     else:
-#         cached_pages = {}
-#     _today = datetime.date.today()
-#     for k, v in cached_pages.items():
-#         if isinstance(v, str):
-#             cached_pages[k] = _today, v
-#     from_cache = False
-#     cpage: Union[None, Tuple[datetime.date, str]] = cached_pages.get(url)
-#     page: str
-#     if (
-#         force_refresh
-#         or cpage is None
-#         or (_today - cpage[0]) > datetime.timedelta(days=limit_age)
-#     ):
-#         eh = None
-#         dly = 0.5
-#         for retry in range(retries):
-#             try:
-#                 resp = client.get(url)
-#                 if resp.status_code == 200:
-#                     break
-#             except (httpx.ConnectError, httpx.RemoteProtocolError, httpx.Timeout) as eh:
-#                 pass
-#             print("!", end="", flush=True)
-#             time.sleep(dly)
-#             dly *= (1 + random.random())
-#         else:
-#             if eh:
-#                 raise eh
-#             raise ConnectionError("Server seems to be out")
-#         print("\u25bc", end="", flush=True)
-#         page = resp.text
-#         if cache is not None:
-#             cached_pages[url] = (_today, page)
-#             cache_suff = cache.suffix
-#             cache_temp = cache.with_suffix(".temp" + cache_suff)
-#             with cache_temp.open("wb") as fout:
-#                 pickle.dump(cached_pages, fout, protocol=pickle.HIGHEST_PROTOCOL)
-#             cache_temp.replace(cache)
-#     else:
-#         print("\u25b3", end="", flush=True)
-#         from_cache = True
-#         page = cpage[1]
-#     soup = BeautifulSoup(page, "html.parser")
-#     return soup, from_cache
-
-
 def save(regions: Set[GridSurveyWebDatum]):
     suff = GS_DATA.suffix
     temp = GS_DATA.with_suffix(".temp" + suff)
