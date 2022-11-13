@@ -40,11 +40,12 @@ class MPValueProtocol(Protocol):
 #       |      10 = busy, not ready
 #       +----> 0 = alive, 1 = dead (or in process of becoming dead)
 
+
 class WorkerState(IntEnum):
     SETUP = 0b0000_0000
     READY = 0b0000_0001
-    BUSY  = 0b0000_0010  # noqa: E221
-    DEAD  = 0b0000_0100  # noqa: E221
+    BUSY = 0b0000_0010  # noqa: E221
+    DEAD = 0b0000_0100  # noqa: E221
     DYING = 0b0000_0110
 
 
@@ -158,9 +159,7 @@ class TileProcessorRecorder(ProcessWithState):
 
     def _save(self, regions: Dict[MapCoord, DominantColors], seen: Set[MapCoord]):
         MosaicProgress(
-            regions=regions,
-            seen=seen,
-            last_fail_rows=self.prev_failrows
+            regions=regions, seen=seen, last_fail_rows=self.prev_failrows
         ).write_to_path(self.progress_file)
 
     def run(self) -> None:
@@ -307,7 +306,9 @@ class TileProcessorGang:
             time.sleep(1.0)
         self.progress.regions.update(self.mpm_flushqueue.get())
         self.progress.seen.update(self.mpm_flushqueue.get())
-        self.progress.last_fail_rows.update(coord.y for coord, ex in self.drain_failqueue())
+        self.progress.last_fail_rows.update(
+            coord.y for coord, ex in self.drain_failqueue()
+        )
         errs = [err for err in self.drain_errsqueue()]
 
         # Shutting down the manager before ending the workers prevents GetOverlappedResult err/warning
