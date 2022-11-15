@@ -23,7 +23,7 @@ import multiprocessing as MP
 import time
 from pathlib import Path
 from pprint import PrettyPrinter
-from typing import List, Set
+from typing import List, Set, Tuple
 
 import httpx
 
@@ -34,6 +34,7 @@ from mosaic_v3.progress import MosaicProgress, MosaicProgressProxy
 from mosaic_v3.workers import WorkTeam
 from mosaic_v3.workers.recorder import TileRecorder
 from mosaic_v3.workers.tile_processor import TileProcessor
+from sl_maptools import MapCoord
 from sl_maptools.utils import make_backup
 
 
@@ -62,8 +63,8 @@ async def async_main(
     print("Launching the workers ... ", end="", flush=True)
     mgr = MP.Manager()
     progress_proxy: MosaicProgressProxy = progress.get_proxies(mgr)
-    coordfail_q = MP.Queue()
-    err_q = MP.Queue()
+    coordfail_q: MP.Queue[Tuple[MapCoord, Exception]] = MP.Queue()
+    err_q: MP.Queue[str] = MP.Queue()
 
     recorder_team = WorkTeam(
         num_workers=1,
@@ -117,6 +118,10 @@ async def async_main(
         progress.failed_rows = row_progress.pending_rows
         failed_rows = set(k for k in progress_proxy.failed_rows.keys())
         progress.failed_rows.update(failed_rows)
+        while not coordfail_q.empty():
+            coord, ee = coordfail_q.get()
+            progress.failed_rows.add(coord.y)
+        coordfail_q.close()
         progress.write_to_path(STATE_FILE_PATH)
 
         while not err_q.empty():
