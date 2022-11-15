@@ -8,7 +8,7 @@ import time
 import warnings
 from enum import IntEnum
 from multiprocessing import Process
-from typing import Protocol, ContextManager, List, Set, Iterable, Any, Tuple
+from typing import Any, ContextManager, Iterable, List, Protocol, Set, Tuple
 
 
 class MPValueProtocol(Protocol):
@@ -66,9 +66,7 @@ class WorkTeam:
         WorkerState.DEAD,
     }
 
-    def __init__(
-        self, num_workers: int, worker_class: type[ProcessWithState], *args, **kwargs
-    ):
+    def __init__(self, num_workers: int, worker_class: type[ProcessWithState], *args, **kwargs):
         self.num_workers = num_workers
         self.worker_class = worker_class
         self.args = args
@@ -98,9 +96,7 @@ class WorkTeam:
             time.sleep(1.0)
             readied = self.ready_count
 
-    def wait_safed(
-        self, check_queues: List[MP.Queue] = None, quiet: bool = False
-    ) -> None:
+    def wait_safed(self, check_queues: List[MP.Queue] = None, quiet: bool = False) -> None:
         qs = [self.command_queue]
         if check_queues is not None:
             qs.extend(check_queues)
@@ -124,9 +120,7 @@ class WorkTeam:
         queues: Iterable[MP.Queue] = None,
     ) -> Tuple[Any, Any]:
         if not self.__safed:
-            warnings.warn(
-                "disband() before wait_safed() is not recommended!", RuntimeWarning
-            )
+            warnings.warn("disband() before wait_safed() is not recommended!", RuntimeWarning)
 
         pre = self.pre_disband()
 

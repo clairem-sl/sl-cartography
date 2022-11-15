@@ -6,12 +6,12 @@ import copy
 import multiprocessing as MP
 import time
 from pathlib import Path
-from typing import Optional, Dict
+from typing import Dict, Optional
 
 from mosaic_v3.color_processing import DominantColors
 from mosaic_v3.progress import MosaicProgressProxy
 from mosaic_v3.workers import ProcessWithState, WorkerState
-from sl_maptools import MapTile, MapCoord
+from sl_maptools import MapCoord, MapTile
 
 
 class TileRecorder(ProcessWithState):

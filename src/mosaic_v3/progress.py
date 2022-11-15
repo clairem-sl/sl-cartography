@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import copy
 import multiprocessing as MP
-
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, Iterable, Set, Tuple, TypedDict
@@ -30,10 +29,7 @@ class MosaicProgress:
 
     def write_to_stream(self, stream):
         encoded: MosaicProgressSerialized = {
-            "__regions": [
-                ((coord.x, coord.y), domc.encode())
-                for coord, domc in self.regions.items()
-            ],
+            "__regions": [((coord.x, coord.y), domc.encode()) for coord, domc in self.regions.items()],
             "__completed": list(self.completed_rows),
             "__fails": list(self.failed_rows),
         }
@@ -54,8 +50,7 @@ class MosaicProgress:
     def new_from_stream(cls, stream):
         encoded: MosaicProgressSerialized = msgpack.unpack(stream)
         regions = {
-            MapCoord(*coord): DominantColors.from_serialized(domc_raw)
-            for coord, domc_raw in encoded["__regions"]
+            MapCoord(*coord): DominantColors.from_serialized(domc_raw) for coord, domc_raw in encoded["__regions"]
         }
         completed = set(encoded["__completed"])
         failed_rows = set(encoded["__fails"])

@@ -30,11 +30,9 @@ from mosaic_v3.builder import build_mosaic
 from mosaic_v3.config import *
 from mosaic_v3.dispatcher import async_fetch_area
 from mosaic_v3.progress import MosaicProgress, MosaicProgressProxy
-
 from mosaic_v3.workers import WorkTeam
 from mosaic_v3.workers.recorder import TileRecorder
 from mosaic_v3.workers.tile_processor import TileProcessor
-
 from sl_maptools.utils import make_backup
 
 
@@ -73,7 +71,7 @@ async def async_main(
         worker_class=TileProcessor,
         output_q=recorder_team.command_queue,
         coordfail_q=coordfail_q,
-        err_q=err_q
+        err_q=err_q,
     )
     processor_team.start()
 

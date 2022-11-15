@@ -8,13 +8,12 @@ import time
 from asyncio import Task
 from collections import defaultdict
 from itertools import chain
-from typing import Optional, Dict, Set, Iterable, Tuple, List
+from typing import Dict, Iterable, List, Optional, Set, Tuple
 
 import httpx
 
 from sl_maptools import MapCoord, MapTile
 from sl_maptools.fetcher import MapFetcher
-
 
 BATCH_SIZE = 2000
 BATCH_WAIT = 5.0
@@ -136,9 +135,7 @@ async def async_fetch_area(
                 try:
                     coord = next(coords_g)
                     row_progress.start(coord.y)
-                    new_task = asyncio.create_task(
-                        bfetcher.fetch(coord), name=f"fetch-{coord}"
-                    )
+                    new_task = asyncio.create_task(bfetcher.fetch(coord), name=f"fetch-{coord}")
                     pending_tasks.add(new_task)
                 except StopIteration:
                     print(

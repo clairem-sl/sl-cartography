@@ -23,9 +23,7 @@ def build_mosaic(
     mo_subtile_sz = 2
     mo_subtile_boxsz = MapCoord(mo_subtile_sz, mo_subtile_sz)
 
-    Image.MAX_IMAGE_PIXELS = (
-        tot_width * nl_tile_img_size * tot_height * nl_tile_img_size
-    )
+    Image.MAX_IMAGE_PIXELS = tot_width * nl_tile_img_size * tot_height * nl_tile_img_size
 
     nl_black = 0
     nl_white = 255
@@ -34,16 +32,10 @@ def build_mosaic(
     start_t = time.monotonic()
     # Gotta disable Type Checker for this line, because the type hint says "LA" is not supported, while in fact, it is
     # noinspection PyTypeChecker
-    canvas_nightlights = Image.new(
-        "LA", (tot_width * nl_tile_img_size, tot_height * nl_tile_img_size)
-    )
-    rect_row_black = Image.new(
-        "L", (tot_width * nl_tile_img_size, nl_tile_img_size), color=nl_black
-    )
+    canvas_nightlights = Image.new("LA", (tot_width * nl_tile_img_size, tot_height * nl_tile_img_size))
+    rect_row_black = Image.new("L", (tot_width * nl_tile_img_size, nl_tile_img_size), color=nl_black)
     for y in seen_rows:
-        canvas_nightlights.paste(
-            rect_row_black, (0, nl_tile_img_size * (tot_height - y - 1))
-        )
+        canvas_nightlights.paste(rect_row_black, (0, nl_tile_img_size * (tot_height - y - 1)))
     sqw_3x3 = Image.new("L", (3, 3), color=nl_white)
 
     canvas_mosaic_1x1 = Image.new("RGBA", (tot_width * mo_subtile_sz, tot_height * mo_subtile_sz))
@@ -159,7 +151,9 @@ def build_mosaic(
 
         tile_mosaic_3x3 = Image.new("RGBA", mo_subtile_boxsz * 3)
         paste_subtiles(
-            tile_mosaic_3x3, 3, domc.to_list("n_nw", "n_no", "n_ne", "n_we", "n_ce", "n_ea", "n_sw", "n_so", "n_se")
+            tile_mosaic_3x3,
+            3,
+            domc.to_list("n_nw", "n_no", "n_ne", "n_we", "n_ce", "n_ea", "n_sw", "n_so", "n_se"),
         )
         canvas_mosaic_3x3.paste(tile_mosaic_3x3, tuple(canvas_coord * (mo_subtile_sz * 3)))
 

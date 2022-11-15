@@ -13,7 +13,14 @@ from sl_maptools import MapTile
 class TileProcessor(ProcessWithState):
     SAVE_SIGNALS = {"SAVE", "ROW"}
 
-    def __init__(self, *args, output_q: MP.Queue, coordfail_q: MP.Queue, err_q: MP.Queue, **kwargs):
+    def __init__(
+        self,
+        *args,
+        output_q: MP.Queue,
+        coordfail_q: MP.Queue,
+        err_q: MP.Queue,
+        **kwargs,
+    ):
         super().__init__(*args, **kwargs)
         self.input_q = self.command_queue
         self.output_q = output_q

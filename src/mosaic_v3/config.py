@@ -3,8 +3,8 @@
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 from pathlib import Path
-import appdirs
 
+import appdirs
 
 STATE_DIR = Path(appdirs.site_data_dir("sl-cartography"))
 STATE_FILE_PATH = STATE_DIR / "mosaic-state-v3.msgp"
