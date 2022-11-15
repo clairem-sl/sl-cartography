@@ -37,7 +37,7 @@ python -m pip install .
 
 ## Contents
 
-### `cartographer`
+### `cartographer` Module
 
 An executable module to generate maps of Known Areas.
 
@@ -55,7 +55,7 @@ To see the options, use `--help`
 
 An executable module to generate mosaic map and nightlights map.
 
-> **WARNING:** This module takes _HOURS_ to finish! And you may have to re-run it several times
+> **WARNING:** This module takes _HOURS_ to finish if you use the default range of `y_min=0` to `y_max=2000`! And you may have to re-run it several times
 > for it to retrieve 'missing' tiles due to error during retrieval!
 
 To see how to use it:
@@ -68,7 +68,7 @@ python -Xfrozen_modules=off -m mosaic_v3 [options]
 To see the options, use `--help`
 
 
-### `sl-maptools`
+### `sl-maptools` Module
 
 A library of functions and classes used by the rest of the SL-Cartography package.
 
