@@ -51,7 +51,7 @@ python -Xfrozen_modules=off -m cartographer [options]
 To see the options, use `--help`
 
 
-### `mosaic`
+### `mosaic_v3` Module
 
 An executable module to generate mosaic map and nightlights map.
 
@@ -62,7 +62,7 @@ To see how to use it:
 
 ```shell
 cd src
-python -Xfrozen_modules=off -m mosaic [options] 
+python -Xfrozen_modules=off -m mosaic_v3 [options] 
 ```
 
 To see the options, use `--help`
