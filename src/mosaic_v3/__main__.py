@@ -22,7 +22,7 @@ else:
 import multiprocessing as MP
 import time
 from pprint import PrettyPrinter
-from typing import Iterable, Set, List
+from typing import Iterable, Set
 
 import httpx
 
