@@ -34,7 +34,7 @@ from mosaic_v3.progress import MosaicProgress, MosaicProgressProxy
 from mosaic_v3.workers import WorkTeam
 from mosaic_v3.workers.recorder import TileRecorder
 from mosaic_v3.workers.tile_processor import TileProcessor
-from sl_maptools import MapCoord
+from sl_maptools import MapCoord, MapTile
 from sl_maptools.utils import make_backup
 
 
@@ -46,7 +46,19 @@ async def async_main(
     redo: List[int],
     savedir: Path,
     workers: int,
-):
+) -> None:
+    """
+    Manages/orchestrates the process of map tile fetching + mosaic building
+
+    :param xmin: Leftmost tile
+    :param xmax: Rightmost tile
+    :param ymin: Bottommost tile
+    :param ymax: Topmost tile
+    :param redo: List of rows to re-fetch explicitly
+    :param savedir: Directory where images will be saved
+    :param workers: How many TileProcessor workers to launch
+    :return: None
+    """
     print(f"{platform.python_implementation()} {platform.python_version()}")
     print(f"Retrieving tiles within ({xmin},{ymax})..({xmax},{ymin}) (inclusive), starting from the top")
 

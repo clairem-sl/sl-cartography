@@ -15,6 +15,13 @@ from sl_maptools import MapCoord
 
 
 class TileRecorder(Worker):
+    """
+    Receives tiles that have been processed, and record them.
+
+    This will record not just into a proxied Progress object, but also (optionally) to disk.
+
+    IN ADDITION, this worker will also gather the failed tiles and record them also into the proxied Progress object.
+    """
     MIN_SAVE_DISTANCE = 200
 
     def __init__(
@@ -25,6 +32,13 @@ class TileRecorder(Worker):
         coordfail_q: MP.Queue[Tuple[MapCoord, Exception]],
         **kwargs,
     ):
+        """
+        :param args: Non-keyword arguments to pass to the superclass
+        :param progress_proxy: A 'proxified' version of MapProgress
+        :param progress_file: The path to which the Progress is to be saved
+        :param coordfail_q: A queue containing failed tiles in the form of
+        :param kwargs: Keyword arguments to pass to the superclass
+        """
         super().__init__(*args, **kwargs)
         self.incoming: MP.Queue[Union[str, Tuple[MapCoord, Optional[DominantColors]]]] = self.command_queue
         self.progress_proxy = progress_proxy
@@ -32,6 +46,7 @@ class TileRecorder(Worker):
         self.coordfail_q: MP.Queue[Tuple[MapCoord, Exception]] = coordfail_q
 
     def _flush(self, regions):
+        """Updates the syncmanaged dict with values we gained. Including also fails."""
         failrows: Dict[int, None] = {}
         while not self.coordfail_q.empty():
             coord, ee = self.coordfail_q.get()
@@ -40,11 +55,13 @@ class TileRecorder(Worker):
         self.progress_proxy.regions.update(regions)
 
     def _save(self, regions):
+        """Flush then save the progress."""
         self._flush(regions)
         p = self.progress_proxy.unproxy()
         p.write_to_path(self.progress_file)
 
     def run(self) -> None:
+        """Do multiprocessing jobs"""
         self.state = WorkerState.SETUP
         regions = copy.deepcopy(self.progress_proxy.regions)
         coord: Optional[MapCoord] = None

@@ -12,6 +12,7 @@ from typing import Any, ContextManager, Iterable, List, Protocol, Set, Tuple
 
 
 class MPValueProtocol(Protocol):
+    """Protocol implemented by multiprocessing.Value"""
     value: int
 
     def get_lock(self) -> ContextManager:
@@ -19,6 +20,7 @@ class MPValueProtocol(Protocol):
 
 
 class WorkerState(IntEnum):
+    """An enumeration of possible states a Worker might be in"""
     # Bitwise flags:
     # 0000_0dbr
     #       |++--> 00 = not busy, but not ready
@@ -70,12 +72,24 @@ class Worker(Process):
 
 
 class WorkTeam:
+    """
+    Manages a collection of Workers by implementing standard boilerplate operations.
+
+    Workers managed by an instance of this class must be instatiated from Worker a subclass of Worker.
+    """
+
     SAFED_STATES: Set[int] = {
         WorkerState.READY,
         WorkerState.DEAD,
     }
 
     def __init__(self, num_workers: int, worker_class: type[Worker], *args, **kwargs):
+        """
+        :param num_workers: Number of workers to instantiate
+        :param worker_class: The class to instantiate (must be subclass of Worker)
+        :param args: Non-keyword arguments to pass to the workers' class
+        :param kwargs: Keyword arguments to pass to the workers' class
+        """
         self.num_workers = num_workers
         self.worker_class = worker_class
         self.args = args
@@ -85,6 +99,13 @@ class WorkTeam:
         self.__safed = False
 
     def start(self, quiet: bool = True, start_num: int = 0) -> None:
+        """
+        Instantiates Workers and starts all of them
+
+        :param quiet: If true, suppresses counting of worker started
+        :param start_num: Start counting from this number
+        :return: None
+        """
         self.worker_class.CommandQueue = self.command_queue
         for i in range(0, self.num_workers):
             w = self.worker_class(*self.args, **self.kwargs)
@@ -95,19 +116,42 @@ class WorkTeam:
 
     @property
     def ready_count(self) -> int:
+        """Number of workers that have entered the READY state"""
         return sum(1 for w in self._workers if w.state == WorkerState.READY)
 
     @property
     def safed_count(self) -> int:
+        """Number of workers that have entered a 'safe' state (READY or DEAD)"""
         return sum(1 for w in self._workers if w.state in self.SAFED_STATES)
 
     def wait_ready(self) -> None:
+        """
+        Waits until all workers are in READY state
+
+        Invoke this before starting to send jobs to the workers.
+
+        :return: None
+        """
         readied = 0
         while readied < self.num_workers:
             time.sleep(1.0)
             readied = self.ready_count
 
     def wait_safed(self, check_queues: List[MP.Queue] = None, quiet: bool = False) -> None:
+        """
+        Waits until all workers are in a 'safe' state.
+
+        Safe state means workers are either idling (e.g., waiting for a job) or dead,
+        and with no incoming job(s) in their input queue(s).
+
+        The objective is to ensure that workers are not in a state where it will change its output queue(s).
+
+        Usually you want to call this right before you send them the poison pill.
+
+        :param check_queues: A list of queues to check that they are empty
+        :param quiet: If true, suppresses the workers' output
+        :return: None
+        """
         qs = [self.command_queue]
         if check_queues is not None:
             qs.extend(check_queues)
@@ -130,6 +174,15 @@ class WorkTeam:
         managers: Iterable[MP.managers.SyncManager] = None,
         queues: Iterable[MP.Queue] = None,
     ) -> Tuple[Any, Any]:
+        """
+        Performs an orderly shutdown of the Workers.
+
+        :param managers: SyncManager's to shutdown as well, if any.
+        They will be shutdown before sending the poison pill to the workers.
+        :param queues: multiprocessing queues to close (in addition to the command_queue)
+        :return: Reports from pre_disband() and post_disband(), if implemented.
+        Subclass the WorkTeam class and override those methods if you need custom pre- and post- behaviors.
+        """
         if not self.__safed:
             warnings.warn("disband() before wait_safed() is not recommended!", RuntimeWarning)
 
@@ -157,4 +210,5 @@ class WorkTeam:
 
     @property
     def backlog_size(self):
+        """Approximate number of outstanding jobs in the command_queue"""
         return self.command_queue.qsize()
