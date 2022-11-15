@@ -7,7 +7,6 @@ import multiprocessing as MP
 import time
 from asyncio import Task
 from collections import defaultdict
-from itertools import chain
 from typing import Dict, Iterable, List, Optional, Set, Tuple
 
 import httpx
@@ -103,7 +102,9 @@ async def async_fetch_area(
 
     def gen_coords():
         skipping = False
-        for y in chain(redo_rows, range(y_max, y_min - 1, -1)):
+        rowset: Set[int] = set(y for y in range(y_max, y_min - 1, -1))
+        rowset.update(redo_rows)
+        for y in sorted(rowset, reverse=True):
             if y in row_progress:
                 if not skipping:
                     skipping = True
