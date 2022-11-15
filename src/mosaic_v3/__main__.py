@@ -124,6 +124,9 @@ async def async_main(
             errs.append(err_q.get())
         err_q.close()
 
+        mgr.shutdown()
+        mgr.join()
+
     build_mosaic(
         progress.regions,
         progress.completed_rows,
