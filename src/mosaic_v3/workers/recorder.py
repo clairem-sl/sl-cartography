@@ -11,7 +11,7 @@ from typing import Dict, Optional
 from mosaic_v3.color_processing import DominantColors
 from mosaic_v3.progress import MosaicProgressProxy
 from mosaic_v3.workers import Worker, WorkerState
-from sl_maptools import MapCoord, MapTile
+from sl_maptools import MapCoord
 
 
 class TileRecorder(Worker):
@@ -47,7 +47,7 @@ class TileRecorder(Worker):
     def run(self) -> None:
         self.state = WorkerState.SETUP
         regions = copy.deepcopy(self.progress_proxy.regions)
-        tile: Optional[MapTile] = None
+        coord: Optional[MapCoord] = None
         try:
             while True:
                 self.state = WorkerState.READY
@@ -89,9 +89,11 @@ class TileRecorder(Worker):
                 else:
                     regions[coord] = domc
 
+                coord = None
+
         except (KeyboardInterrupt, Exception) as ee:
-            if isinstance(tile, MapTile):
-                self.coordfail_q.put((tile.coord, ee))
+            if isinstance(coord, MapCoord):
+                self.coordfail_q.put((coord, ee))
             if not isinstance(ee, KeyboardInterrupt):
                 raise
         finally:
