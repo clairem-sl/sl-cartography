@@ -83,7 +83,6 @@ async def async_main(
     )
     processor_team.start(quiet=False, start_num=1)
 
-    print()
     # processor = TileProcessorGang(
     #     worker_count=WORKERS,
     #     progress=progress,
@@ -94,6 +93,7 @@ async def async_main(
 
     processor_team.wait_ready()
     recorder_team.wait_ready()
+    print("\nDispatching jobs:", end="", flush=True)
     try:
         skip_rows = progress.completed_rows - redo_rows
         limits = httpx.Limits(max_connections=20, max_keepalive_connections=20)
