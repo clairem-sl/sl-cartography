@@ -49,6 +49,7 @@ async def async_main(
     progress = MosaicProgress.new_from_path(STATE_FILE_PATH, missing_ok=True)
     _redo.update(progress.failed_rows)
     print(f"These rows will be force-fetched: {sorted(_redo)}")
+    progress.failed_rows.clear()
 
     global_start = time.monotonic()
 
@@ -115,7 +116,8 @@ async def async_main(
         print()
 
         progress.failed_rows = row_progress.pending_rows
-        progress.failed_rows.update(k for k in progress_proxy.failed_rows.keys())
+        failed_rows = set(k for k in progress_proxy.failed_rows.keys())
+        progress.failed_rows.update(failed_rows)
         progress.write_to_path(STATE_FILE_PATH)
 
         while not err_q.empty():
