@@ -31,6 +31,7 @@ dependencies = [
     "colorthief",
     "msgpack",
     "appdirs",
+    "beautifulsoup4",
 ]
 
 [build-system]
@@ -42,6 +43,7 @@ requires = [
     "colorthief",
     "msgpack",
     "appdirs",
+    "beautifulsoup4",
     #
     "black",
     "black[d]",
