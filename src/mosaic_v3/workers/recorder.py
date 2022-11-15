@@ -6,7 +6,7 @@ import copy
 import multiprocessing as MP
 import time
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, Optional, Tuple, Union
 
 from mosaic_v3.color_processing import DominantColors
 from mosaic_v3.progress import MosaicProgressProxy
@@ -22,19 +22,19 @@ class TileRecorder(Worker):
         *args,
         progress_proxy: MosaicProgressProxy,
         progress_file: Path,
-        coordfail_q: MP.Queue,
+        coordfail_q: MP.Queue[Tuple[MapCoord, Exception]],
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
-        self.incoming = self.command_queue
+        self.incoming: MP.Queue[Union[str, Tuple[MapCoord, Optional[DominantColors]]]] = self.command_queue
         self.progress_proxy = progress_proxy
         self.progress_file = progress_file
-        self.coordfail_q = coordfail_q
+        self.coordfail_q: MP.Queue[Tuple[MapCoord, Exception]] = coordfail_q
 
     def _flush(self, regions):
         failrows: Dict[int, None] = {}
         while not self.coordfail_q.empty():
-            coord: MapCoord = self.coordfail_q.get()
+            coord, ee = self.coordfail_q.get()
             failrows[coord.y] = None
         self.progress_proxy.failed_rows.update(failrows)
         self.progress_proxy.regions.update(regions)
