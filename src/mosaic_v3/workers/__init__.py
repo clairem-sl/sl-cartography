@@ -32,7 +32,16 @@ class WorkerState(IntEnum):
     DYING = 0b0000_0110
 
 
-class ProcessWithState(Process):
+class Worker(Process):
+    """
+    A subclass of Process with some custom behaviors.
+
+    *) Built-in/enforced CommandQueue
+    *) Built-in shared variable for tracking worker state
+    *) Built-in shared variable to change worker's 'quietness'
+
+    Please note that Worker.CommandQueue class attribute *must* be set prior to instantating!
+    """
     CommandQueue: MP.Queue = None
 
     def __init__(self, *args, **kwargs):
@@ -66,13 +75,13 @@ class WorkTeam:
         WorkerState.DEAD,
     }
 
-    def __init__(self, num_workers: int, worker_class: type[ProcessWithState], *args, **kwargs):
+    def __init__(self, num_workers: int, worker_class: type[Worker], *args, **kwargs):
         self.num_workers = num_workers
         self.worker_class = worker_class
         self.args = args
         self.kwargs = kwargs
         self.command_queue = MP.Queue()
-        self._workers: List[ProcessWithState] = []
+        self._workers: List[Worker] = []
         self.__safed = False
 
     def start(self, quiet: bool = True, start_num: int = 0) -> None:

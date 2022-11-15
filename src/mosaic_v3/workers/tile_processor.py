@@ -6,11 +6,11 @@ import multiprocessing as MP
 from typing import Optional
 
 from mosaic_v3.color_processing import DominantColors
-from mosaic_v3.workers import ProcessWithState, WorkerState
+from mosaic_v3.workers import Worker, WorkerState
 from sl_maptools import MapTile
 
 
-class TileProcessor(ProcessWithState):
+class TileProcessor(Worker):
     SAVE_SIGNALS = {"SAVE", "ROW"}
 
     def __init__(

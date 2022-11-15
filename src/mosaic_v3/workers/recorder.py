@@ -10,11 +10,11 @@ from typing import Dict, Optional
 
 from mosaic_v3.color_processing import DominantColors
 from mosaic_v3.progress import MosaicProgressProxy
-from mosaic_v3.workers import ProcessWithState, WorkerState
+from mosaic_v3.workers import Worker, WorkerState
 from sl_maptools import MapCoord, MapTile
 
 
-class TileRecorder(ProcessWithState):
+class TileRecorder(Worker):
     MIN_SAVE_DISTANCE = 200
 
     def __init__(
