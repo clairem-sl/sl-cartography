@@ -59,6 +59,7 @@ async def async_main(
 
     global_start = time.monotonic()
 
+    print("Launching the workers ... ", end="", flush=True)
     mgr = MP.Manager()
     progress_proxy: MosaicProgressProxy = progress.get_proxies(mgr)
     coordfail_q = MP.Queue()
@@ -71,7 +72,7 @@ async def async_main(
         progress_file=STATE_FILE_PATH,
         coordfail_q=coordfail_q,
     )
-    recorder_team.start()
+    recorder_team.start(quiet=False)
 
     processor_team = WorkTeam(
         num_workers=workers,
@@ -80,8 +81,9 @@ async def async_main(
         coordfail_q=coordfail_q,
         err_q=err_q,
     )
-    processor_team.start()
+    processor_team.start(quiet=False, start_num=1)
 
+    print()
     # processor = TileProcessorGang(
     #     worker_count=WORKERS,
     #     progress=progress,

@@ -75,12 +75,14 @@ class WorkTeam:
         self._workers: List[ProcessWithState] = []
         self.__safed = False
 
-    def start(self) -> None:
+    def start(self, quiet: bool = True, start_num: int = 0) -> None:
         self.worker_class.CommandQueue = self.command_queue
         for i in range(0, self.num_workers):
             w = self.worker_class(*self.args, **self.kwargs)
             w.start()
             self._workers.append(w)
+            if not quiet:
+                print((i+start_num), end=" ", flush=True)
 
     @property
     def ready_count(self) -> int:
