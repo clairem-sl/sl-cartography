@@ -205,5 +205,9 @@ async def async_fetch_area(
             t.cancel()
         _, _ = await asyncio.wait(pending_tasks, timeout=ABORT_WAIT)
     global_elapsed = time.monotonic() - global_start
-    print(f"\n### Fetching is complete, {global_elapsed:,.2f} seconds", flush=True)
+    print(
+        f"\n### Fetching is complete, {global_elapsed:,.2f} seconds."
+        f" {sum(row_progress.regions.values())} regions fetched.",
+        flush=True,
+    )
     return row_progress, errs
