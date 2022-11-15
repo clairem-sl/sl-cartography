@@ -21,8 +21,9 @@ else:
 
 import multiprocessing as MP
 import time
+from pathlib import Path
 from pprint import PrettyPrinter
-from typing import Iterable, Set
+from typing import List, Set
 
 import httpx
 
@@ -37,18 +38,20 @@ from sl_maptools.utils import make_backup
 
 
 async def async_main(
-    x_min,
-    x_max,
-    y_min,
-    y_max,
-    redo_rows: Iterable[int] = None,
+    xmin,
+    xmax,
+    ymin,
+    ymax,
+    redo: List[int],
+    savedir: Path,
+    workers: int,
 ):
-    _redo: Set[int] = set() if redo_rows is None else set(redo_rows)
+    redo_rows: Set[int] = set() if redo is None else set(redo)
 
     make_backup(STATE_FILE_PATH, levels=3)
     progress = MosaicProgress.new_from_path(STATE_FILE_PATH, missing_ok=True)
-    _redo.update(progress.failed_rows)
-    print(f"These rows will be force-fetched: {sorted(_redo)}")
+    redo_rows.update(progress.failed_rows)
+    print(f"These rows will be force-fetched: {sorted(redo_rows)}")
     progress.failed_rows.clear()
 
     global_start = time.monotonic()
@@ -68,7 +71,7 @@ async def async_main(
     recorder_team.start()
 
     processor_team = WorkTeam(
-        num_workers=WORKERS,
+        num_workers=workers,
         worker_class=TileProcessor,
         output_q=recorder_team.command_queue,
         coordfail_q=coordfail_q,
@@ -87,16 +90,16 @@ async def async_main(
     processor_team.wait_ready()
     recorder_team.wait_ready()
     try:
-        skip_rows = progress.completed_rows - _redo
+        skip_rows = progress.completed_rows - redo_rows
         limits = httpx.Limits(max_connections=20, max_keepalive_connections=20)
         async with httpx.AsyncClient(limits=limits, timeout=10.0, http2=True) as client:
             row_progress, errs = await async_fetch_area(
                 client,
-                x_min,
-                x_max,
-                y_min,
-                y_max,
-                redo_rows=_redo,
+                xmin,
+                xmax,
+                ymin,
+                ymax,
+                redo_rows=redo_rows,
                 skip_rows=skip_rows,
                 output_q=processor_team.command_queue,
             )
@@ -127,8 +130,8 @@ async def async_main(
     build_mosaic(
         progress.regions,
         progress.completed_rows,
-        NIGHTLIGHTS_PATH,
-        MOSAIC_PATH,
+        savedir / NIGHTLIGHTS_NAME,
+        savedir / MOSAIC_NAME,
         tot_width=WORLD_WIDTH,
         tot_height=WORLD_HEIGHT,
     )
@@ -149,4 +152,5 @@ async def async_main(
 
 
 if __name__ == "__main__":
-    asyncio.run(async_main(0, 2000, 1700, 2000))
+    opts = options()
+    asyncio.run(async_main(**vars(opts)))
