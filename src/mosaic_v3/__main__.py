@@ -83,6 +83,7 @@ async def async_main(
         err_q=err_q,
     )
     processor_team.start(quiet=False, start_num=1)
+    processor_input_q: MP.Queue[MapTile] = processor_team.command_queue
 
     processor_team.wait_ready()
     recorder_team.wait_ready()
@@ -99,7 +100,7 @@ async def async_main(
                 ymax,
                 redo_rows=redo_rows,
                 skip_rows=skip_rows,
-                output_q=processor_team.command_queue,
+                output_q=processor_input_q,
             )
     except KeyboardInterrupt:
         print("User Aborted!")

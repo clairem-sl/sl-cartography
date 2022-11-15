@@ -7,7 +7,7 @@ import multiprocessing as MP
 import time
 from asyncio import Task
 from collections import defaultdict
-from typing import Dict, Iterable, List, Optional, Set, Tuple
+from typing import Dict, Iterable, List, Optional, Set, Tuple, Union
 
 import httpx
 
@@ -86,7 +86,7 @@ async def async_fetch_area(
     x_max: int,
     y_min: int,
     y_max: int,
-    output_q: MP.Queue = None,
+    output_q: MP.Queue[Union[str, MapTile]] = None,
     redo_rows: Iterable[int] = None,
     skip_rows: Set[int] = None,
     low_water: int = DEFA_LOW_WATER,

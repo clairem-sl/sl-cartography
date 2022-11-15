@@ -3,11 +3,11 @@
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import multiprocessing as MP
-from typing import Optional
+from typing import Optional, Tuple, Union
 
 from mosaic_v3.color_processing import DominantColors
 from mosaic_v3.workers import Worker, WorkerState
-from sl_maptools import MapTile
+from sl_maptools import MapTile, MapCoord
 
 
 class TileProcessor(Worker):
@@ -16,13 +16,13 @@ class TileProcessor(Worker):
     def __init__(
         self,
         *args,
-        output_q: MP.Queue,
-        coordfail_q: MP.Queue,
-        err_q: MP.Queue,
+        output_q: MP.Queue[Union[str, Tuple[MapCoord, DominantColors]]],
+        coordfail_q: MP.Queue[Tuple[MapCoord, Exception]],
+        err_q: MP.Queue[str],
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
-        self.input_q = self.command_queue
+        self.input_q: MP.Queue[Union[str, MapTile]] = self.command_queue
         self.output_q = output_q
         self.err_q = err_q
         self.coordfail_q = coordfail_q
