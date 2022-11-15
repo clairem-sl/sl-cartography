@@ -112,7 +112,6 @@ async def async_main(
         processor_team.disband()
         recorder_team.wait_safed()
         recorder_team.disband()
-        # final_report = processor.disband()
         print()
 
         progress.failed_rows = row_progress.pending_rows
