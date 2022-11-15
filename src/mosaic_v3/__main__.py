@@ -46,6 +46,9 @@ async def async_main(
     savedir: Path,
     workers: int,
 ):
+    print(f"{platform.python_implementation()} {platform.python_version()}")
+    print(f"Retrieving tiles within ({xmin},{ymax})..({xmax},{ymin}) (inclusive), starting from the top")
+
     redo_rows: Set[int] = set() if redo is None else set(redo)
 
     make_backup(STATE_FILE_PATH, levels=3)
@@ -137,6 +140,7 @@ async def async_main(
     )
 
     global_elapsed = time.monotonic() - global_start
+    print("=" * 60)
     print(f"All done in {global_elapsed:,.2f} seconds.")
     if errs:
         print("Errors found:")
@@ -148,7 +152,7 @@ async def async_main(
         print(f"Last run failed on rows {sorted(progress.failed_rows)}")
         print("  Will be force-read the next run")
     else:
-        print("  No failed rows")
+        print("  No Failed Rows")
 
 
 if __name__ == "__main__":
