@@ -83,14 +83,6 @@ async def async_main(
     )
     processor_team.start(quiet=False, start_num=1)
 
-    # processor = TileProcessorGang(
-    #     worker_count=WORKERS,
-    #     progress=progress,
-    #     progress_file=STATE_FILE_PATH,
-    # )
-    # processor.start()
-    # processor.wait_ready()
-
     processor_team.wait_ready()
     recorder_team.wait_ready()
     print("\nDispatching jobs:", end="", flush=True)
