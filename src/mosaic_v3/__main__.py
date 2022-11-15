@@ -87,7 +87,6 @@ async def async_main(
 
     processor_team.wait_ready()
     recorder_team.wait_ready()
-    errs: List[str] = []
     try:
         skip_rows = progress.completed_rows - _redo
         limits = httpx.Limits(max_connections=20, max_keepalive_connections=20)
