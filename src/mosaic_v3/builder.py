@@ -44,7 +44,8 @@ def build_mosaic(
     canvas_nightlights = Image.new("LA", (tot_width * nl_tile_img_size, tot_height * nl_tile_img_size))
     rect_row_black = Image.new("L", (tot_width * nl_tile_img_size, nl_tile_img_size), color=nl_black)
     for y in seen_rows:
-        canvas_nightlights.paste(rect_row_black, (0, nl_tile_img_size * (y_max - y - 1)))
+        # x here MUST be 0, not x_min, because the coords here is relative to the canvas size, in pixels
+        canvas_nightlights.paste(rect_row_black, (0, nl_tile_img_size * (y_max - y)))
     sqw_3x3 = Image.new("L", (3, 3), color=nl_white)
 
     canvas_mosaic_1x1 = Image.new("RGBA", (tot_width * mo_subtile_sz, tot_height * mo_subtile_sz))
@@ -150,7 +151,7 @@ def build_mosaic(
             else:
                 draw.point((2, 6), fill=nl_white)
 
-        canvas_coord = MapCoord(coord.x - x_min, y_max - coord.y - 1)
+        canvas_coord = MapCoord(coord.x - x_min, y_max - coord.y)
 
         canvas_nightlights.paste(tile_img, tuple(canvas_coord * nl_tile_img_size))
 
