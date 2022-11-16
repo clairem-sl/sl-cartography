@@ -23,14 +23,31 @@ DEFA_LOW_WATER = MAX_IN_FLIGHT * 2
 
 
 class BoundedFetcher:
-    def __init__(self, sema_size: int, async_session: httpx.AsyncClient):
+    """
+    Wraps MapFetcher in a way to limit in-flight fetches.
+
+    It does this by implementing a semaphore of a certain size, and only launches an actual fetcher job when it can
+    acquire a semaphore.
+
+    This is done to limit the concurrent hit against the SL Maps CDN, because empirical experience seems to indicate
+    that if there are too many in-flight requests, we get throttled.
+    """
+
+    def __init__(self, sema_size: int, async_session: httpx.AsyncClient, retries: int = 3):
+        """
+
+        :param sema_size: Size of semaphore, which limits the number of in-flight requests
+        :param async_session: The asynchronous httpx session to be used (connection pool, etc)
+        :param retries: How many times to retry if request completes but we get an unexpected HTTP Status Code
+        """
         self.sema = asyncio.Semaphore(sema_size)
         self.fetcher = MapFetcher(a_session=async_session)
+        self.retries = retries
 
     async def fetch(self, coord: MapCoord) -> Optional[MapTile]:
         async with self.sema:
             try:
-                return await self.fetcher.async_get_tile(coord, quiet=True)
+                return await self.fetcher.async_get_tile(coord, quiet=True, retries=self.retries)
             except asyncio.CancelledError:
                 print(f"{coord} cancelled")
                 return None
