@@ -8,7 +8,11 @@ from typing import Dict, List, Set, Tuple
 from PIL import Image, ImageDraw
 
 from mosaic_v3.color_processing import DominantColors
-from sl_maptools import MapCoord
+from sl_maptools import MapCoord, MapBounds
+
+
+class OutOfBoundsError(ValueError):
+    pass
 
 
 def build_mosaic(
@@ -16,9 +20,14 @@ def build_mosaic(
     seen_rows: Set[int],
     nightlights_path: Path,
     mosaic_path: Path,
-    tot_width: int,
-    tot_height: int,
+    corner1: MapCoord,
+    corner2: MapCoord,
 ):
+    world_bounds = MapBounds.from_coords(corner1, corner2)
+    x_min, y_min, x_max, y_max = world_bounds
+    tot_width = x_max - x_min + 1
+    tot_height = y_max - y_min + 1
+
     nl_tile_img_size = 9
     mo_subtile_sz = 2
     mo_subtile_boxsz = MapCoord(mo_subtile_sz, mo_subtile_sz)
@@ -35,7 +44,7 @@ def build_mosaic(
     canvas_nightlights = Image.new("LA", (tot_width * nl_tile_img_size, tot_height * nl_tile_img_size))
     rect_row_black = Image.new("L", (tot_width * nl_tile_img_size, nl_tile_img_size), color=nl_black)
     for y in seen_rows:
-        canvas_nightlights.paste(rect_row_black, (0, nl_tile_img_size * (tot_height - y - 1)))
+        canvas_nightlights.paste(rect_row_black, (0, nl_tile_img_size * (y_max - y - 1)))
     sqw_3x3 = Image.new("L", (3, 3), color=nl_white)
 
     canvas_mosaic_1x1 = Image.new("RGBA", (tot_width * mo_subtile_sz, tot_height * mo_subtile_sz))
@@ -83,6 +92,9 @@ def build_mosaic(
     coord: MapCoord
     domc: DominantColors
     for count, (coord, domc) in enumerate(regions.items(), start=1):
+        if coord not in world_bounds:
+            raise OutOfBoundsError(f"{coord} is not in {world_bounds}")
+
         if count % 100 == 0:
             print("|", end="", flush=True)
             count = 0
@@ -138,7 +150,7 @@ def build_mosaic(
             else:
                 draw.point((2, 6), fill=nl_white)
 
-        canvas_coord = MapCoord(coord.x, tot_height - coord.y - 1)
+        canvas_coord = MapCoord(coord.x - x_min, y_max - coord.y - 1)
 
         canvas_nightlights.paste(tile_img, tuple(canvas_coord * nl_tile_img_size))
 

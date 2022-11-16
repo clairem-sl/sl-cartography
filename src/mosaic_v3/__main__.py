@@ -161,8 +161,8 @@ async def async_main(
         progress.completed_rows,
         savedir / NIGHTLIGHTS_NAME,
         savedir / MOSAIC_NAME,
-        tot_width=WORLD_WIDTH,
-        tot_height=WORLD_HEIGHT,
+        corner1=MapCoord(0, 0),
+        corner2=MapCoord(2000, 2000),
     )
 
     global_elapsed = time.monotonic() - global_start
