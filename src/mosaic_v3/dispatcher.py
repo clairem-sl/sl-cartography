@@ -118,6 +118,7 @@ async def async_fetch_area(
     low_water: int = DEFA_LOW_WATER,
     batch_size: int = BATCH_SIZE,
     save_every: int = BATCH_SIZE,
+    batch_wait: float = BATCH_WAIT,
 ) -> Tuple[RowProgress, List[str]]:
     skip_rows = skip_rows or set()
     tasks_done_count: int = 0
@@ -174,7 +175,7 @@ async def async_fetch_area(
                     break
 
         try:
-            done, pending_tasks = await asyncio.wait(pending_tasks, timeout=BATCH_WAIT)
+            done, pending_tasks = await asyncio.wait(pending_tasks, timeout=batch_wait)
         except ValueError as ve:
             if str(ve) == "Set of Tasks/Futures is empty.":
                 break
