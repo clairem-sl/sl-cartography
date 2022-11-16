@@ -13,6 +13,7 @@ from typing import Any, ContextManager, Iterable, List, Protocol, Set, Tuple
 
 class MPValueProtocol(Protocol):
     """Protocol implemented by multiprocessing.Value"""
+
     value: int
 
     def get_lock(self) -> ContextManager:
@@ -21,6 +22,7 @@ class MPValueProtocol(Protocol):
 
 class WorkerState(IntEnum):
     """An enumeration of possible states a Worker might be in"""
+
     # Bitwise flags:
     # 0000_0dbr
     #       |++--> 00 = not busy, but not ready
@@ -44,6 +46,7 @@ class Worker(Process):
 
     Please note that Worker.CommandQueue class attribute *must* be set prior to instantating!
     """
+
     CommandQueue: MP.Queue = None
 
     def __init__(self, *args, **kwargs):
@@ -112,7 +115,7 @@ class WorkTeam:
             w.start()
             self._workers.append(w)
             if not quiet:
-                print((i+start_num), end=" ", flush=True)
+                print((i + start_num), end=" ", flush=True)
 
     @property
     def ready_count(self) -> int:

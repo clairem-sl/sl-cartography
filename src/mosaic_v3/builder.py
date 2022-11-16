@@ -10,7 +10,7 @@ from typing import Dict, List, Set, Tuple
 from PIL import Image, ImageDraw
 
 from mosaic_v3.color_processing import DominantColors
-from sl_maptools import MapCoord, MapBounds
+from sl_maptools import MapBounds, MapCoord
 
 
 class OutOfBoundsError(ValueError):

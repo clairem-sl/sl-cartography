@@ -8,7 +8,7 @@ from typing import Optional, Tuple, Union
 
 from mosaic_v3.color_processing import DominantColors
 from mosaic_v3.workers import Worker, WorkerState
-from sl_maptools import MapTile, MapCoord
+from sl_maptools import MapCoord, MapTile
 
 
 class TileProcessor(Worker):

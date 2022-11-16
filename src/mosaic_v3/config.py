@@ -23,10 +23,7 @@ WORLD_HEIGHT = 2001
 
 
 def options():
-    parser = argparse.ArgumentParser(
-        "SL Mosaic v3",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter
-    )
+    parser = argparse.ArgumentParser("SL Mosaic v3", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     parser.add_argument("--xmin", type=int, default=0, help="Leftmost coordinate (inclusive)")
     parser.add_argument("--xmax", type=int, default=2000, help="Rightmost coordinate (inclusive)")
