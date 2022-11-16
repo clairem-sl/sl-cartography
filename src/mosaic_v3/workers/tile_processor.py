@@ -8,7 +8,11 @@ from typing import Optional, Tuple, Union
 
 from mosaic_v3.color_processing import DominantColors
 from mosaic_v3.workers import Worker, WorkerState
+from mosaic_v3.workers.recorder import RecorderJob
 from sl_maptools import MapCoord, MapTile
+
+
+ProcessorJob = Union[str, MapTile]
 
 
 class TileProcessor(Worker):
@@ -17,13 +21,13 @@ class TileProcessor(Worker):
     def __init__(
         self,
         *args,
-        output_q: MP.Queue[Union[str, Tuple[MapCoord, DominantColors]]],
+        output_q: MP.Queue[RecorderJob],
         coordfail_q: MP.Queue[Tuple[MapCoord, Exception]],
         err_q: MP.Queue[str],
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
-        self.input_q: MP.Queue[Union[str, MapTile]] = self.command_queue
+        self.input_q: MP.Queue[ProcessorJob] = self.command_queue
         self.output_q = output_q
         self.err_q = err_q
         self.coordfail_q = coordfail_q
@@ -35,7 +39,7 @@ class TileProcessor(Worker):
         try:
             while True:
                 self.state = WorkerState.READY
-                job = self.input_q.get()
+                job: ProcessorJob = self.input_q.get()
 
                 self.state = WorkerState.BUSY
                 if job is None:
@@ -54,7 +58,7 @@ class TileProcessor(Worker):
                     print(f"Unknown job <{type(job)}>: {job}")
                     continue
 
-                tile: MapTile = job
+                tile = job
                 try:
                     if not tile.is_void:
                         domc = DominantColors.from_tile(tile)

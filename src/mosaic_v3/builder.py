@@ -5,7 +5,7 @@ import time
 from abc import ABCMeta, abstractmethod
 from math import isqrt
 from pathlib import Path
-from typing import Dict, List, Sequence, Set, Tuple
+from typing import Dict, List, Optional, Sequence, Set, Tuple
 
 from PIL import Image, ImageDraw
 
@@ -30,36 +30,37 @@ class WorldMapBuilder(metaclass=ABCMeta):
         self.world_corner1 = corner1
         self.world_corner2 = corner2
         self._world_bounds = MapBounds.from_coords(corner1, corner2)
+        self.canvas: Optional[Image.Image] = None
 
     @property
-    def xmin(self):
+    def xmin(self) -> int:
         return self._world_bounds.x_leftmost
 
     @property
-    def xmax(self):
+    def xmax(self) -> int:
         return self._world_bounds.x_rightmost
 
     @property
-    def ymin(self):
+    def ymin(self) -> int:
         return self._world_bounds.y_bottommost
 
     @property
-    def ymax(self):
+    def ymax(self) -> int:
         return self._world_bounds.y_topmost
 
     @property
-    def width(self):
+    def width(self) -> int:
         return self._world_bounds.width
 
     @property
-    def height(self):
+    def height(self) -> int:
         return self._world_bounds.height
 
-    def canvas_coord(self, tile_x: int, tile_y: int, multiplier: int = 1):
+    def canvas_coord(self, tile_x: int, tile_y: int, multiplier: int = 1) -> tuple[int, int]:
         return (tile_x - self.xmin) * multiplier, (self.ymax - tile_y) * multiplier
 
     @abstractmethod
-    def add_tile(self, coord: MapCoord, domc: DominantColors):
+    def add_tile(self, coord: MapCoord, domc: DominantColors) -> None:
         raise NotImplementedError
 
 
@@ -102,7 +103,7 @@ class NightlightsMap(WorldMapBuilder):
                 return False
         return True
 
-    def add_tile(self, coord: MapCoord, domc: DominantColors):
+    def add_tile(self, coord: MapCoord, domc: DominantColors) -> None:
         tile_sz = self.NightlightsTileSize
         black = self.Black
         white = self.White
@@ -188,7 +189,7 @@ class MosaicMap(WorldMapBuilder):
         canvas_box = MapCoord(self.width, self.height) * self.MosaicSubtileSize * self._dim
         self.canvas = Image.new("RGBA", canvas_box)
 
-    def paste_subtiles(self, target: Image.Image, size: int, subtile_colors: List[Tuple[int, int, int]]):
+    def paste_subtiles(self, target: Image.Image, size: int, subtile_colors: List[Tuple[int, int, int]]) -> None:
         assert len(subtile_colors) == (size * size)
         sx, sy = 0, 0
         smax = size * self.MosaicSubtileSize
@@ -202,7 +203,7 @@ class MosaicMap(WorldMapBuilder):
                 sx = 0
                 sy += self.MosaicSubtileSize
 
-    def add_tile(self, coord: MapCoord, domc: DominantColors):
+    def add_tile(self, coord: MapCoord, domc: DominantColors) -> None:
         tile_sz = self.MosaicSubtileSize
         tile_boxsz = MapCoord(tile_sz, tile_sz)
         tile_mosaic = Image.new("RGBA", tile_boxsz * self._dim)
@@ -217,7 +218,7 @@ def build_world_maps(
     mosaic_path: Path,
     corner1: MapCoord,
     corner2: MapCoord,
-):
+) -> None:
     world_bounds = MapBounds.from_coords(corner1, corner2)
     start_t = time.monotonic()
 

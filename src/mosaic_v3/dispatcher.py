@@ -8,7 +8,7 @@ import multiprocessing as MP
 import time
 from asyncio import Task
 from collections import defaultdict
-from typing import Dict, Iterable, List, Optional, Set, Tuple, Union
+from typing import Dict, Generator, Iterable, List, Optional, Set, Tuple, Union
 
 import httpx
 
@@ -69,27 +69,27 @@ class RowProgress:
         self.row_starts: Dict[int, float] = {}
         self.fetched_rows: Set[int] = set()
 
-    def inc_region(self, row: int):
+    def inc_region(self, row: int) -> None:
         self.regions_per_row[row] += 1
 
-    def init(self, row: int):
+    def init(self, row: int) -> None:
         if row not in self.pending_per_row:
             self.pending_per_row[row] = self.row_width
 
-    def start(self, row: int):
+    def start(self, row: int) -> None:
         if row not in self.row_starts:
             self.row_starts[row] = time.monotonic()
 
-    def elapsed(self, row: int):
+    def elapsed(self, row: int) -> float:
         if row in self.row_starts:
             return time.monotonic() - self.row_starts[row]
 
-    def dec(self, row: int):
+    def dec(self, row: int) -> int:
         if row in self.pending_per_row:
             self.pending_per_row[row] -= 1
             return self.pending_per_row[row]
 
-    def complete(self, row: int):
+    def complete(self, row: int) -> None:
         if row not in self.pending_per_row and row not in self.row_starts:
             raise KeyError(row)
         del self.pending_per_row[row]
@@ -100,7 +100,7 @@ class RowProgress:
     def pending_rows(self) -> Set[int]:
         return set(self.pending_per_row.keys())
 
-    def __contains__(self, item: int):
+    def __contains__(self, item: int) -> bool:
         return item in self.fetched_rows or item in self.pending_per_row
 
 
@@ -143,7 +143,7 @@ async def async_fetch_area(
     rows_done_count: int = 0
     exc_count: int = 0
 
-    def gen_coords():
+    def gen_coords() -> Generator[MapCoord, None, None]:
         skipping = False
         rowset: Set[int] = set(y for y in range(y_max, y_min - 1, -1))
         rowset.update(redo_rows)

@@ -62,7 +62,7 @@ class Worker(Process):
         return self._state.value
 
     @state.setter
-    def state(self, value: int):
+    def state(self, value: WorkerState):
         self._state.value = value
 
     @property
@@ -70,7 +70,7 @@ class Worker(Process):
         return self._quiet.value
 
     @quiet.setter
-    def quiet(self, value: int):
+    def quiet(self, value: bool):
         self._quiet.value = value
 
 
@@ -212,6 +212,6 @@ class WorkTeam:
         return pre, post
 
     @property
-    def backlog_size(self):
+    def backlog_size(self) -> int:
         """Approximate number of outstanding jobs in the command_queue"""
         return self.command_queue.qsize()
