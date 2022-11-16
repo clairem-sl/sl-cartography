@@ -192,12 +192,15 @@ async def async_fetch_area(
                 errs.append(errmess)
                 exc_count += 1
                 continue
+
             result: MapTile = fut.result()
             if result is None:
                 continue
+
             res_y = result.coord.y
             if not result.is_void:
                 row_progress.inc_region(res_y)
+
             if row_progress.dec(res_y) == 0:
                 row_elapsed = row_progress.elapsed(res_y)
                 row_regs = row_progress.regions_per_row[res_y]
@@ -211,6 +214,7 @@ async def async_fetch_area(
                     end="",
                     flush=True,
                 )
+
             if output_q is not None:
                 output_q.put(result)
                 count += 1
