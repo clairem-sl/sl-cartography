@@ -66,6 +66,9 @@ async def async_main(
 
     make_backup(STATE_FILE_PATH, levels=3)
     progress = MosaicProgress.new_from_path(STATE_FILE_PATH, missing_ok=True)
+    old_regs_count = len(progress.regions)
+    old_comprows_count = len(progress.completed_rows)
+    print(f"Progress so far: {old_regs_count} regions out of {old_comprows_count} complete rows")
     redo_rows.update(progress.failed_rows)
     print(f"These rows will be force-fetched: {sorted(redo_rows)}")
     progress.failed_rows.clear()
@@ -145,6 +148,12 @@ async def async_main(
 
         mgr.shutdown()
         mgr.join()
+
+    print(
+        f"Fetch phase adds {len(progress.regions) - old_regs_count} new regions,"
+        f" {len(progress.completed_rows) - old_comprows_count} new rows.",
+        flush=True
+    )
 
     build_mosaic(
         progress.regions,
