@@ -135,6 +135,8 @@ async def async_main(
             coord, ee = coordfail_q.get()
             progress.failed_rows.add(coord.y)
         coordfail_q.close()
+
+        progress.regions.update(progress_proxy.regions)
         progress.write_to_path(STATE_FILE_PATH)
 
         while not err_q.empty():
