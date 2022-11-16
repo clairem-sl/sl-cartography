@@ -59,7 +59,7 @@ class RowProgress:
     Tracks the progress of job dispatching.
     """
 
-    def __init__(self, row_width: int, skip_rows: Set[int] = None):
+    def __init__(self, row_width: int):
         """
 
         :param row_width: The overall width of a row, used to determine if a row has completed fetching
@@ -70,8 +70,6 @@ class RowProgress:
         self.regions_per_row: Dict[int, int] = defaultdict(int)
         self.row_starts: Dict[int, float] = {}
         self.fetched_rows: Set[int] = set()
-        if skip_rows:
-            self.fetched_rows.update(skip_rows)
 
     def inc_region(self, row: int):
         self.regions_per_row[row] += 1
@@ -124,7 +122,7 @@ async def async_fetch_area(
     skip_rows = skip_rows or set()
     tasks_done_count: int = 0
     pending_tasks: Set[Task] = set()
-    row_progress = RowProgress(x_max - x_min + 1, skip_rows)
+    row_progress = RowProgress(x_max - x_min + 1)
     rows_done_count: int = 0
     exc_count: int = 0
 
@@ -133,7 +131,7 @@ async def async_fetch_area(
         rowset: Set[int] = set(y for y in range(y_max, y_min - 1, -1))
         rowset.update(redo_rows)
         for y in sorted(rowset, reverse=True):
-            if y in row_progress:
+            if y in row_progress or y in skip_rows:
                 if not skipping:
                     skipping = True
                     print(f"\nSkipping rows {y}..", end="", flush=True)
