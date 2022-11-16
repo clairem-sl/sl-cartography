@@ -120,6 +120,24 @@ async def async_fetch_area(
     save_every: int = BATCH_SIZE,
     batch_wait: float = BATCH_WAIT,
 ) -> Tuple[RowProgress, List[str]]:
+    """
+    Asynchronously fetch a given area.
+
+    :param client: The asynchronous HTTP client session to use
+    :param x_min: Leftmost coordinate
+    :param x_max: Rightmost coordinate
+    :param y_min: Bottommost coordinate
+    :param y_max: Topmost coordinate
+    :param output_q: Every successful fetches will be put here
+    :param redo_rows: Rows to force redo of fetching
+    :param skip_rows: Rows to skip fetching
+    :param low_water: If outstanding jobs are below this level, inject a new batch of jobs
+    :param batch_size: How many jobs to inject per injection
+    :param save_every: Inject "SAVE" after this many jobs
+    :param batch_wait: Time (seconds) to wait for async jobs before determining which ones are completed
+    :return: A tuple of final progress result (contains info such as which rows are still pending completion), and
+    a list of error messages encountered during fetching.
+    """
     skip_rows = skip_rows or set()
     tasks_done_count: int = 0
     pending_tasks: Set[Task] = set()
