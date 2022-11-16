@@ -153,7 +153,7 @@ async def async_main(
     print(
         f"Fetch phase adds {len(progress.regions) - old_regs_count} new regions,"
         f" {len(progress.completed_rows) - old_comprows_count} new rows.",
-        flush=True
+        flush=True,
     )
 
     build_world_maps(

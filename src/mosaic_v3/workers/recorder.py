@@ -23,6 +23,7 @@ class TileRecorder(Worker):
 
     IN ADDITION, this worker will also gather the failed tiles and record them also into the proxied Progress object.
     """
+
     MIN_SAVE_DISTANCE = 200
 
     def __init__(
