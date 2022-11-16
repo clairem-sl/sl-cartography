@@ -22,6 +22,14 @@ class MapBounds(NamedTuple):
             self.y_bottommost <= y <= self.y_topmost
         )
 
+    @property
+    def height(self):
+        return self.y_topmost - self.y_bottommost + 1
+
+    @property
+    def width(self):
+        return self.x_rightmost - self.x_leftmost + 1
+
     @classmethod
     def from_coords(cls, coord1: tuple[int, int], coord2: tuple[int, int]):
         x1, y1 = coord1
