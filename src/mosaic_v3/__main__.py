@@ -19,6 +19,7 @@ else:
 # isort: on
 # fmt: on
 
+import datetime
 import multiprocessing as MP
 import time
 from pathlib import Path
@@ -165,8 +166,9 @@ async def async_main(
     )
 
     global_elapsed = time.monotonic() - global_start
+    nao = datetime.datetime.now()
     print("=" * 60)
-    print(f"All done in {global_elapsed:,.2f} seconds.")
+    print(f"All done in {global_elapsed:,.2f} seconds at {nao.strftime('%H:%M')}")
     if errs:
         print("Errors found:")
         pp = PrettyPrinter(width=160)
