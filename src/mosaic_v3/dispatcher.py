@@ -61,9 +61,7 @@ class RowProgress:
 
     def __init__(self, row_width: int):
         """
-
         :param row_width: The overall width of a row, used to determine if a row has completed fetching
-        :param skip_rows: A set of row numbers to skip
         """
         self.row_width = row_width
         self.pending_per_row: Dict[int, int] = {}
