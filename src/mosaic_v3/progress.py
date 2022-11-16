@@ -87,7 +87,7 @@ class MosaicProgressProxy:
 
     def unproxy(self):
         return MosaicProgress(
-            regions=self.regions,
+            regions=self.regions.copy(),
             completed_rows=set(self.completed_rows.keys()),
             failed_rows=set(self.failed_rows.keys()),
         )
