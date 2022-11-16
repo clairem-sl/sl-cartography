@@ -5,7 +5,7 @@ import time
 from abc import ABCMeta, abstractmethod
 from math import isqrt
 from pathlib import Path
-from typing import Dict, List, Set, Tuple
+from typing import Dict, List, Sequence, Set, Tuple
 
 from PIL import Image, ImageDraw
 
@@ -177,7 +177,7 @@ class MosaicMap(WorldMapBuilder):
         seen_rows: Set[int],
         corner1: MapCoord,
         corner2: MapCoord,
-        subtiles_domc_keys: List[str],
+        subtiles_domc_keys: Sequence[str],
     ):
         super().__init__(regions, seen_rows, corner1, corner2)
 
@@ -222,11 +222,9 @@ def build_world_maps(
     start_t = time.monotonic()
 
     nightlights = NightlightsMap(regions, seen_rows, corner1, corner2)
-    mosaic_1x1 = MosaicMap(regions, seen_rows, corner1, corner2, ["full"])
-    mosaic_2x2 = MosaicMap(regions, seen_rows, corner1, corner2, ["q_nw", "q_ne", "q_sw", "q_se"])
-    mosaic_3x3 = MosaicMap(
-        regions, seen_rows, corner1, corner2, ["n_nw", "n_no", "n_ne", "n_we", "n_ce", "n_ea", "n_sw", "n_so", "n_se"]
-    )
+    mosaic_1x1 = MosaicMap(regions, seen_rows, corner1, corner2, DominantColors.Keys_1x1)
+    mosaic_2x2 = MosaicMap(regions, seen_rows, corner1, corner2, DominantColors.Keys_2x2)
+    mosaic_3x3 = MosaicMap(regions, seen_rows, corner1, corner2, DominantColors.Keys_3x3)
 
     count = 0
     coord: MapCoord

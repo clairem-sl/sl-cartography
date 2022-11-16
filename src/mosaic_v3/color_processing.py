@@ -35,6 +35,10 @@ class ColorThief2(ColorThief):
 
 
 class DominantColors:
+    Keys_1x1 = ("full",)
+    Keys_2x2 = ("q_nw", "q_ne", "q_sw", "q_se")
+    Keys_3x3 = ("n_nw", "n_no", "n_ne", "n_we", "n_ce", "n_ea", "n_sw", "n_so", "n_se")
+
     def __init__(self):
         self._domc: Dict[str, Tuple[int, int, int]] = {}
 
