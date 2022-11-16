@@ -28,7 +28,7 @@ from typing import List, Set, Tuple
 
 import httpx
 
-from mosaic_v3.builder import build_mosaic
+from mosaic_v3.builder import build_world_maps
 from mosaic_v3.config import *
 from mosaic_v3.dispatcher import async_fetch_area
 from mosaic_v3.progress import MosaicProgress, MosaicProgressProxy
@@ -156,7 +156,7 @@ async def async_main(
         flush=True
     )
 
-    build_mosaic(
+    build_world_maps(
         progress.regions,
         progress.completed_rows,
         savedir / NIGHTLIGHTS_NAME,

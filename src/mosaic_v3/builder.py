@@ -15,7 +15,7 @@ class OutOfBoundsError(ValueError):
     pass
 
 
-def build_mosaic(
+def build_world_maps(
     regions: Dict[MapCoord, DominantColors],
     seen_rows: Set[int],
     nightlights_path: Path,
