@@ -45,6 +45,7 @@ class BoundedFetcher:
         self.retries = retries
 
     async def fetch(self, coord: MapCoord) -> Optional[MapTile]:
+        """Perform async fetch, but won't actually start fetching if semaphore is depleted."""
         async with self.sema:
             try:
                 return await self.fetcher.async_get_tile(coord, quiet=True, retries=self.retries)
@@ -54,48 +55,57 @@ class BoundedFetcher:
 
 
 class RowProgress:
+    """
+    Tracks the progress of job dispatching.
+    """
+
     def __init__(self, row_width: int, skip_rows: Set[int] = None):
-        self.width = row_width
-        self.pending: Dict[int, int] = {}
-        self.starts: Dict[int, float] = {}
-        self.regions: Dict[int, int] = defaultdict(int)
+        """
+
+        :param row_width: The overall width of a row, used to determine if a row has completed fetching
+        :param skip_rows: A set of row numbers to skip
+        """
+        self.row_width = row_width
+        self.pending_per_row: Dict[int, int] = {}
+        self.regions_per_row: Dict[int, int] = defaultdict(int)
+        self.row_starts: Dict[int, float] = {}
         self.fetched_rows: Set[int] = set()
         if skip_rows:
             self.fetched_rows.update(skip_rows)
 
     def inc_region(self, row: int):
-        self.regions[row] += 1
+        self.regions_per_row[row] += 1
 
     def init(self, row: int):
-        if row not in self.pending:
-            self.pending[row] = self.width
+        if row not in self.pending_per_row:
+            self.pending_per_row[row] = self.row_width
 
     def start(self, row: int):
-        if row not in self.starts:
-            self.starts[row] = time.monotonic()
+        if row not in self.row_starts:
+            self.row_starts[row] = time.monotonic()
 
     def elapsed(self, row: int):
-        if row in self.starts:
-            return time.monotonic() - self.starts[row]
+        if row in self.row_starts:
+            return time.monotonic() - self.row_starts[row]
 
     def dec(self, row: int):
-        if row in self.pending:
-            self.pending[row] -= 1
-            return self.pending[row]
+        if row in self.pending_per_row:
+            self.pending_per_row[row] -= 1
+            return self.pending_per_row[row]
 
     def complete(self, row: int):
-        if row not in self.pending and row not in self.starts:
+        if row not in self.pending_per_row and row not in self.row_starts:
             raise KeyError(row)
-        del self.pending[row]
-        del self.starts[row]
+        del self.pending_per_row[row]
+        del self.row_starts[row]
         self.fetched_rows.add(row)
 
     @property
     def pending_rows(self) -> Set[int]:
-        return set(self.pending.keys())
+        return set(self.pending_per_row.keys())
 
     def __contains__(self, item: int):
-        return item in self.fetched_rows or item in self.pending
+        return item in self.fetched_rows or item in self.pending_per_row
 
 
 async def async_fetch_area(
@@ -192,7 +202,7 @@ async def async_fetch_area(
                 row_progress.inc_region(res_y)
             if row_progress.dec(res_y) == 0:
                 row_elapsed = row_progress.elapsed(res_y)
-                row_regs = row_progress.regions[res_y]
+                row_regs = row_progress.regions_per_row[res_y]
                 row_progress.complete(res_y)
                 rows_done_count += 1
                 global_elapsed = time.monotonic() - global_start
@@ -226,7 +236,7 @@ async def async_fetch_area(
     global_elapsed = time.monotonic() - global_start
     print(
         f"\n### Fetching is complete, {global_elapsed:,.2f} seconds."
-        f" {sum(row_progress.regions.values())} regions fetched.",
+        f" {sum(row_progress.regions_per_row.values())} regions fetched.",
         flush=True,
     )
     return row_progress, errs
