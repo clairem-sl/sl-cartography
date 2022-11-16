@@ -15,6 +15,9 @@ from mosaic_v3.workers import Worker, WorkerState
 from sl_maptools import MapCoord
 
 
+RecorderJob = Union[str, Tuple[MapCoord, DominantColors]]
+
+
 class TileRecorder(Worker):
     """
     Receives tiles that have been processed, and record them.
@@ -42,12 +45,12 @@ class TileRecorder(Worker):
         :param kwargs: Keyword arguments to pass to the superclass
         """
         super().__init__(*args, **kwargs)
-        self.incoming: MP.Queue[Union[str, Tuple[MapCoord, Optional[DominantColors]]]] = self.command_queue
+        self.incoming: MP.Queue[RecorderJob] = self.command_queue
         self.progress_proxy = progress_proxy
         self.progress_file = progress_file
         self.coordfail_q: MP.Queue[Tuple[MapCoord, Exception]] = coordfail_q
 
-    def _flush(self, regions):
+    def _flush(self, regions: dict[MapCoord, DominantColors]) -> None:
         """Updates the syncmanaged dict with values we gained. Including also fails."""
         failrows: Dict[int, None] = {}
         while not self.coordfail_q.empty():
@@ -56,7 +59,7 @@ class TileRecorder(Worker):
         self.progress_proxy.failed_rows.update(failrows)
         self.progress_proxy.regions.update(regions)
 
-    def _save(self, regions):
+    def _save(self, regions: dict[MapCoord, DominantColors]) -> None:
         """Flush then save the progress."""
         self._flush(regions)
         p = self.progress_proxy.unproxy()
@@ -70,7 +73,7 @@ class TileRecorder(Worker):
         try:
             while True:
                 self.state = WorkerState.READY
-                job = self.incoming.get()
+                job: RecorderJob = self.incoming.get()
 
                 if job == "DIE":
                     self.state = WorkerState.DYING

@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import functools
-from typing import Dict, Iterable, Tuple
+from typing import Dict, Iterable, List, Self, Tuple
 
 from colorthief import ColorThief
 from PIL import Image
@@ -35,10 +35,14 @@ class ColorThief2(ColorThief):
 
 
 class DominantColors:
+    Keys_1x1 = ("full",)
+    Keys_2x2 = ("q_nw", "q_ne", "q_sw", "q_se")
+    Keys_3x3 = ("n_nw", "n_no", "n_ne", "n_we", "n_ce", "n_ea", "n_sw", "n_so", "n_se")
+
     def __init__(self):
         self._domc: Dict[str, Tuple[int, int, int]] = {}
 
-    def __getitem__(self, item):
+    def __getitem__(self, item) -> Tuple[int, int, int]:
         return self._domc[item]
 
     def __setitem__(self, key, value):
@@ -116,14 +120,14 @@ class DominantColors:
         return domc
 
     @classmethod
-    def from_serialized(cls, raw_dict: Dict[str, Iterable[int]]):
+    def from_serialized(cls, raw_dict: Dict[str, Iterable[int]]) -> Self:
         domc = cls()
         for k, v in raw_dict.items():
             domc[k] = tuple(v)
         return domc
 
-    def encode(self):
+    def encode(self) -> Dict[str, Tuple[int, int, int]]:
         return self._domc
 
-    def to_list(self, *indexes):
+    def to_list(self, *indexes) -> List[Tuple[int, int, int]]:
         return [self._domc[idx] for idx in indexes]

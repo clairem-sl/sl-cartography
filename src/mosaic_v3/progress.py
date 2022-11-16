@@ -7,7 +7,7 @@ import copy
 import multiprocessing as MP
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, Iterable, Set, Tuple, TypedDict
+from typing import BinaryIO, Dict, Iterable, Self, Set, Tuple, TypedDict
 
 import msgpack
 
@@ -27,7 +27,7 @@ class MosaicProgress:
     completed_rows: Set[int] = field(default_factory=set)
     failed_rows: Set[int] = field(default_factory=set)
 
-    def write_to_stream(self, stream):
+    def write_to_stream(self, stream: BinaryIO) -> None:
         encoded: MosaicProgressSerialized = {
             "__regions": [(coord.encode(), domc.encode()) for coord, domc in self.regions.items()],
             "__completed": list(self.completed_rows),
@@ -35,7 +35,7 @@ class MosaicProgress:
         }
         msgpack.pack(encoded, stream)
 
-    def write_to_path(self, path: Path, with_temp: bool = True):
+    def write_to_path(self, path: Path, with_temp: bool = True) -> None:
         if not with_temp:
             with path.open("wb") as fout:
                 self.write_to_stream(fout)
@@ -47,7 +47,7 @@ class MosaicProgress:
             temp.replace(path)
 
     @classmethod
-    def new_from_stream(cls, stream):
+    def new_from_stream(cls, stream: BinaryIO) -> Self:
         encoded: MosaicProgressSerialized = msgpack.unpack(stream)
         regions = {
             MapCoord(*coord): DominantColors.from_serialized(domc_raw) for coord, domc_raw in encoded["__regions"]
@@ -57,7 +57,7 @@ class MosaicProgress:
         return cls(regions=regions, completed_rows=completed, failed_rows=failed_rows)
 
     @classmethod
-    def new_from_path(cls, path: Path, missing_ok: bool = False):
+    def new_from_path(cls, path: Path, missing_ok: bool = False) -> Self:
         if not path.exists():
             if not missing_ok:
                 raise FileNotFoundError(f"{path} not found!")
@@ -85,7 +85,7 @@ class MosaicProgressProxy:
     completed_rows: Dict[int, None]
     failed_rows: Dict[int, None]
 
-    def unproxy(self):
+    def unproxy(self) -> MosaicProgress:
         return MosaicProgress(
             regions=self.regions.copy(),
             completed_rows=set(self.completed_rows.keys()),
