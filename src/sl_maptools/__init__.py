@@ -16,12 +16,27 @@ class MapBounds(NamedTuple):
     x_rightmost: int
     y_topmost: int
 
-    def __contains__(self, item: MapCoord) -> bool:
-        assert isinstance(item, MapCoord)
+    def __contains__(self, item: tuple[int, int]) -> bool:
         x, y = item
         return (self.x_leftmost <= x <= self.x_rightmost) and (
             self.y_bottommost <= y <= self.y_topmost
         )
+
+    @property
+    def height(self):
+        return self.y_topmost - self.y_bottommost + 1
+
+    @property
+    def width(self):
+        return self.x_rightmost - self.x_leftmost + 1
+
+    @classmethod
+    def from_coords(cls, coord1: tuple[int, int], coord2: tuple[int, int]):
+        x1, y1 = coord1
+        x2, y2 = coord2
+        x_min, x_max = (x1, x2) if x1 <= x2 else (x2, x1)
+        y_min, y_max = (y1, y2) if y1 <= y2 else (y2, y1)
+        return cls(x_min, y_min, x_max, y_max)
 
 
 class MapCoord(NamedTuple):
@@ -40,6 +55,9 @@ class MapCoord(NamedTuple):
         if isinstance(other, tuple):
             return MapCoord(self.x * other[0], self.y * other[1])
         raise NotImplementedError
+
+    def encode(self) -> tuple[int, int]:
+        return self.x, self.y
 
 
 class MapTile(object):
