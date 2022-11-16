@@ -29,7 +29,7 @@ class MosaicProgress:
 
     def write_to_stream(self, stream):
         encoded: MosaicProgressSerialized = {
-            "__regions": [((coord.x, coord.y), domc.encode()) for coord, domc in self.regions.items()],
+            "__regions": [(coord.encode(), domc.encode()) for coord, domc in self.regions.items()],
             "__completed": list(self.completed_rows),
             "__fails": list(self.failed_rows),
         }

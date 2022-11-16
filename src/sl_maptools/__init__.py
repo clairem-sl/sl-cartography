@@ -41,6 +41,9 @@ class MapCoord(NamedTuple):
             return MapCoord(self.x * other[0], self.y * other[1])
         raise NotImplementedError
 
+    def encode(self) -> tuple[int, int]:
+        return self.x, self.y
+
 
 class MapTile(object):
     def __init__(
