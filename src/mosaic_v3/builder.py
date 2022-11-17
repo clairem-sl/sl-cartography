@@ -14,6 +14,8 @@ from sl_maptools import MapBounds, MapCoord
 
 
 class OutOfBoundsError(ValueError):
+    """Raised if a coordinate falls outside the map's boundaries"""
+
     pass
 
 
@@ -232,7 +234,25 @@ def build_world_maps(
     mosaic_path: Path,
     corner1: MapCoord,
     corner2: MapCoord,
+    ignore_out_of_bounds: bool = False,
 ) -> None:
+    """
+    Generates the world map images.
+
+    Currently hardcoded to produce 4 kinds of world maps.
+
+    :param regions: A dict of MapCoord:DominantColors to build the world maps with
+    :param seen_rows: A set of rownumbers indicating which rows have been fully-fetched
+    :param nightlights_path: Path for saving nightlights map
+    :param mosaic_path: Path for saving mosaic map; will be transformed into several paths
+    :param corner1: Coordinates of a corner of the world map
+    :param corner2: Coordinates of another corner of the world map, opposite corner 1
+    :param ignore_out_of_bounds: If False (default) will raise an exception if regions contain a coordinate that
+    falls outside the bounds of the world map
+    :return: None
+    :raises OutOfBoundsError: if a coordinat in regions fall outside map bounds, but only if ignore_out_of_bounds is
+    set to False
+    """
     world_bounds = MapBounds.from_coords(corner1, corner2)
     start_t = time.monotonic()
 
@@ -246,7 +266,10 @@ def build_world_maps(
     domc: DominantColors
     for count, (coord, domc) in enumerate(regions.items(), start=1):
         if coord not in world_bounds:
-            raise OutOfBoundsError(f"{coord} is not in {world_bounds}")
+            if not ignore_out_of_bounds:
+                raise OutOfBoundsError(f"{coord} is not in {world_bounds}")
+            # Ignore silently
+            continue
 
         if count % 100 == 0:
             print("|", end="", flush=True)
