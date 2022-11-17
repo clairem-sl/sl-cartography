@@ -20,6 +20,10 @@ class OutOfBoundsError(ValueError):
 
 
 class WorldMapBuilder(metaclass=ABCMeta):
+    """
+    Abstract class that provides the common protocol for map builders
+    """
+
     def __init__(
         self,
         regions: Dict[MapCoord, DominantColors],
@@ -59,10 +63,29 @@ class WorldMapBuilder(metaclass=ABCMeta):
         return self._world_bounds.height
 
     def canvas_coord(self, tile_x: int, tile_y: int, multiplier: int = 1) -> tuple[int, int]:
+        """
+        Converts geo-coords (in units of tiles) to canvas coords (in units of pixels)
+
+        This is not a simple multiplied-items tuple like what's implemented by MapCoord.__mul__
+
+        This method implements the shift, reflect, and multiplication necessary to do the conversion.
+
+        :param tile_x: X geo-coordinate of the tile
+        :param tile_y: Y geo-coordinate of the tile
+        :param multiplier: Optional multiplier
+        :return: The canvas coordinate for the tile
+        """
         return (tile_x - self.xmin) * multiplier, (self.ymax - tile_y) * multiplier
 
     @abstractmethod
     def add_tile(self, coord: MapCoord, domc: DominantColors) -> None:
+        """
+        Adds a tile into the world map.
+
+        :param coord: Coordinate of the tile
+        :param domc: Dominant colors of the tile
+        :return: None
+        """
         raise NotImplementedError
 
     @staticmethod
@@ -71,9 +94,15 @@ class WorldMapBuilder(metaclass=ABCMeta):
 
 
 class NightlightsMap(WorldMapBuilder):
+    """
+    Builds a 'nightlights' map tile-by-tile.
+    """
+
     NightlightsTileSize = 9
     Black = 0
+    """Definition of 'black' color. You will need to ensure the data format is suitable for the image type."""
     White = 255
+    """Definition of 'white' color. You will need to ensure the data format is suitable for the image type."""
 
     def __init__(
         self,
@@ -82,6 +111,13 @@ class NightlightsMap(WorldMapBuilder):
         corner1: MapCoord,
         corner2: MapCoord,
     ):
+        """
+        :param regions: A dict of coordinates and tile_data (the latter will be ignored)
+        :param seen_rows: A set of rows known to have been fully-fetched
+        :param corner1: Coordinates for one corner of the map
+        :param corner2: Coordinates for the corner of the map opposite to corner 1
+        :raises ValueError: if the NightlightsTileSize class attribute is not a multiple of 3
+        """
         super().__init__(regions, seen_rows, corner1, corner2)
 
         self.subtile_sz = self.NightlightsTileSize // 3
@@ -89,7 +125,7 @@ class NightlightsMap(WorldMapBuilder):
             raise ValueError("NightlightsTileSize must be an integer multiple of 3!")
 
         canvas_box = MapCoord(self.width, self.height) * self.NightlightsTileSize
-        # Need noinspection here because "LA" is actually supported but PyCharm complains
+        # Need 'noinspection' here because "LA" is actually supported but PyCharm complains
         # noinspection PyTypeChecker
         self.canvas = Image.new("LA", canvas_box)
 
@@ -109,6 +145,15 @@ class NightlightsMap(WorldMapBuilder):
         return not any(map(self.regions.__contains__, coords))
 
     def add_tile(self, coord: MapCoord, domc: DominantColors) -> None:
+        """
+        Adds a tile into the world map.
+
+        The domc parameter will be ignored.
+
+        :param coord: Coordinate of the tile
+        :param domc: Ignored
+        :return: None
+        """
         tile_sz = self.NightlightsTileSize
         subtile_sz = self.subtile_sz
         black = self.Black
@@ -180,6 +225,10 @@ class NightlightsMap(WorldMapBuilder):
 
 
 class MosaicMap(WorldMapBuilder):
+    """
+    Builds a Mosaic Map, tile-by-tile.
+    """
+
     MosaicSubtileSize = 2
 
     def __init__(

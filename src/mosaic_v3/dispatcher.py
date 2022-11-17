@@ -90,6 +90,7 @@ class RowProgress:
             return self.pending_per_row[row]
 
     def complete(self, row: int) -> None:
+        """Mark a row as complete (fully-fetched with no errors during fetch)"""
         if row not in self.pending_per_row and row not in self.row_starts:
             raise KeyError(row)
         del self.pending_per_row[row]
@@ -145,6 +146,18 @@ async def async_fetch_area(
     redo_rows: Set[int] = set(redo_rows)
 
     def gen_coords() -> Generator[MapCoord, None, None]:
+        """
+        Generate coordinates to fetch.
+
+        The logic also considers:
+        - Rows to be force-fetched
+        - Rows to be skipped
+
+        Note that force-fetch takes precedence over skip. So if a rownum is a member of both the
+        force-fetched set and the skipped set, the rownum will be force-fetched.
+
+        :return: A generator that will emit a MapCoord every iteration
+        """
         skipping = False
         rowset: Set[int] = set(y for y in range(y_max, y_min - 1, -1)) | redo_rows
         _skips = skip_rows - redo_rows

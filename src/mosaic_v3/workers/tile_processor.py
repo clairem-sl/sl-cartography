@@ -16,6 +16,20 @@ ProcessorJob = Union[str, MapTile]
 
 
 class TileProcessor(Worker):
+    """
+    Processes tiles received through the input/command queue.
+
+    This class implements the logic that processes tiles received through the input/command queue.
+
+    Currently, the process is just one: To find out the dominant color of every tile.
+    The logic/maths to do that is implemented in the DominantColors class.
+
+    This class recognizes the following 'jobs' in the input/command queue:
+    - "SAVE" instruction to save progress so far -- will be passed through to Recorder
+    - "ROW" notification that a row has been fully-fetched -- will cause "SEND" to be sent to Recorder
+    - MapTile -- actual fetched tile, will start the DominantColors processing
+    """
+
     SAVE_SIGNALS = {"SAVE", "ROW"}
 
     def __init__(

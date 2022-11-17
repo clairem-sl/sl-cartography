@@ -23,11 +23,23 @@ class MosaicProgressSerialized(TypedDict):
 
 @dataclass
 class MosaicProgress:
+    """
+    Tracks the progress of world map building.
+
+    This class is serializable using MessagePack. The decision to use MessagePack instead of plain ol' pickle is
+    because with pickle, if we refactor the code by moving this class around, pickle might fail to re-instantiate
+    the object as stored. MessagePack provides a location-agnostic mechanism to serialize and unserialize.
+
+    Also, this class records DominantColors of each MapCoord for Mosaic-making purposes, hence the name of the
+    class, "MosaicProgress".
+    """
+
     regions: Dict[MapCoord, DominantColors] = field(default_factory=dict)
     completed_rows: Set[int] = field(default_factory=set)
     failed_rows: Set[int] = field(default_factory=set)
 
     def write_to_stream(self, stream: BinaryIO) -> None:
+        """Serializes the class into an already-open binary 'file' (or file-like stream.)"""
         encoded: MosaicProgressSerialized = {
             "__regions": [(coord.encode(), domc.encode()) for coord, domc in self.regions.items()],
             "__completed": list(self.completed_rows),
@@ -36,6 +48,7 @@ class MosaicProgress:
         msgpack.pack(encoded, stream)
 
     def write_to_path(self, path: Path, with_temp: bool = True) -> None:
+        """Serializes the class into a file."""
         if not with_temp:
             with path.open("wb") as fout:
                 self.write_to_stream(fout)
@@ -48,6 +61,7 @@ class MosaicProgress:
 
     @classmethod
     def new_from_stream(cls, stream: BinaryIO) -> Self:
+        """Re-instantiates the class from an already-open binary 'file' (or file-like object.)"""
         encoded: MosaicProgressSerialized = msgpack.unpack(stream)
         regions = {
             MapCoord(*coord): DominantColors.from_serialized(domc_raw) for coord, domc_raw in encoded["__regions"]
@@ -58,6 +72,7 @@ class MosaicProgress:
 
     @classmethod
     def new_from_path(cls, path: Path, missing_ok: bool = False) -> Self:
+        """Re-instantiates the class from a file."""
         if not path.exists():
             if not missing_ok:
                 raise FileNotFoundError(f"{path} not found!")
@@ -66,12 +81,14 @@ class MosaicProgress:
             return cls.new_from_stream(fin)
 
     def deepcopy(self) -> MosaicProgress:
+        """Perform a deepcopy() of a MosaicProgress object."""
         regs = copy.deepcopy(self.regions)
         seen = copy.deepcopy(self.completed_rows)
         fail = copy.deepcopy(self.failed_rows)
         return MosaicProgress(regions=regs, completed_rows=seen, failed_rows=fail)
 
     def get_proxies(self, mgr: MP.managers.SyncManager) -> MosaicProgressProxy:
+        """Get a 'proxified' version of MosaicProgress, i.e., something synced by a SyncManager."""
         return MosaicProgressProxy(
             mgr.dict(self.regions),
             mgr.dict({k: None for k in self.completed_rows}),
@@ -90,4 +107,12 @@ class MosaicProgressProxy:
             regions=self.regions.copy(),
             completed_rows=set(self.completed_rows.keys()),
             failed_rows=set(self.failed_rows.keys()),
+        )
+
+    @classmethod
+    def proxify(cls, prog: MosaicProgress, mgr: MP.managers.SyncManager) -> Self:
+        return cls(
+            mgr.dict(prog.regions),
+            mgr.dict({k: None for k in prog.completed_rows}),
+            mgr.dict({k: None for k in prog.failed_rows}),
         )

@@ -23,6 +23,11 @@ WORLD_HEIGHT = 2001
 
 
 def options():
+    """
+    Parse CLI options
+
+    :return: A namespace containing the options
+    """
     parser = argparse.ArgumentParser("SL Mosaic v3", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     parser.add_argument("--xmin", type=int, default=0, help="Leftmost coordinate (inclusive)")

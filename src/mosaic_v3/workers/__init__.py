@@ -167,9 +167,11 @@ class WorkTeam:
         self.__safed = True
 
     def pre_disband(self) -> Any:
+        """Overridable method that will be called before disband() process begins"""
         pass
 
     def post_disband(self) -> Any:
+        """Overridable method that will be called after disband() process completes"""
         pass
 
     def disband(
