@@ -205,15 +205,26 @@ class MosaicMap(WorldMapBuilder):
         canvas_box = MapCoord(self.width, self.height) * self.MosaicSubtileSize * self._dim
         self.canvas = Image.new("RGBA", canvas_box)
 
-    def paste_subtiles(self, target: Image.Image, size: int, subtile_colors: List[Tuple[int, int, int]]) -> None:
-        assert len(subtile_colors) == (size * size)
+    def paste_subtiles(self, tile: Image.Image, dimension: int, subtile_colors: List[Tuple[int, int, int]]) -> None:
+        """
+        Pastes subtiles (squares of certain colors) into the tile image.
+
+        :param tile: The tile to which the subtiles will be pasted
+        :param dimension: The dimension of the tile (in units of subtiles)
+        :param subtile_colors: The colors of the subtiles. The number of colors given must match the actual number of
+        subtiles to be pasted to the tile.
+        :return: None
+        :raises AttributeError: if the number of colors is not equal to total number of subtiles
+        """
+        if len(subtile_colors) != (dimension * dimension):
+            raise AttributeError("Number of colors must match total number of subtiles!")
         sx, sy = 0, 0
-        smax = size * self.MosaicSubtileSize
-        tile_boxsz = (self.MosaicSubtileSize, self.MosaicSubtileSize)
+        smax = dimension * self.MosaicSubtileSize
+        subtile_boxsz = (self.MosaicSubtileSize, self.MosaicSubtileSize)
         for color in subtile_colors:
             loc = (sx, sy)
-            subtile = Image.new("RGBA", tile_boxsz, color=color)
-            target.paste(subtile, loc)
+            subtile = Image.new("RGB", subtile_boxsz, color=color)
+            tile.paste(subtile, loc)
             sx += self.MosaicSubtileSize
             if sx >= smax:
                 sx = 0
