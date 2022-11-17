@@ -127,7 +127,7 @@ async def async_fetch_area(
     :param y_min: Bottommost coordinate
     :param y_max: Topmost coordinate
     :param output_q: Every successful fetches will be put here
-    :param redo_rows: Rows to force redo of fetching
+    :param redo_rows: Rows to force redo of fetching. This takes precedence over skip_rows
     :param skip_rows: Rows to skip fetching
     :param low_water: If outstanding jobs are below this level, inject a new batch of jobs
     :param batch_size: How many jobs to inject per injection
@@ -142,13 +142,14 @@ async def async_fetch_area(
     row_progress = RowProgress(x_max - x_min + 1)
     rows_done_count: int = 0
     exc_count: int = 0
+    redo_rows: Set[int] = set(redo_rows)
 
     def gen_coords() -> Generator[MapCoord, None, None]:
         skipping = False
-        rowset: Set[int] = set(y for y in range(y_max, y_min - 1, -1))
-        rowset.update(redo_rows)
+        rowset: Set[int] = set(y for y in range(y_max, y_min - 1, -1)) | redo_rows
+        _skips = skip_rows - redo_rows
         for y in sorted(rowset, reverse=True):
-            if y in row_progress or y in skip_rows:
+            if y in row_progress or y in _skips:
                 if not skipping:
                     skipping = True
                     print(f"\nSkipping rows {y}..", end="", flush=True)
