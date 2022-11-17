@@ -21,7 +21,7 @@ class WorldMapBuilder(metaclass=ABCMeta):
     def __init__(
         self,
         regions: Dict[MapCoord, DominantColors],
-        seen_rows: Set[int],
+        seen_rows: Set[int] | None,
         corner1: MapCoord,
         corner2: MapCoord,
     ):
@@ -183,12 +183,18 @@ class MosaicMap(WorldMapBuilder):
     def __init__(
         self,
         regions: Dict[MapCoord, DominantColors],
-        seen_rows: Set[int],
         corner1: MapCoord,
         corner2: MapCoord,
         subtiles_domc_keys: Sequence[str],
     ):
-        super().__init__(regions, seen_rows, corner1, corner2)
+        """
+        :param regions: A dict of MapCoord:DominantColors to build the map upon
+        :param corner1: Coordinates for one corner of the map
+        :param corner2: Coordinates for the corner of the map opposite to corner 1
+        :param subtiles_domc_keys: A sequence of keys with which to color the subtiles.
+        These are defined as class attributes in DominantColors
+        """
+        super().__init__(regions, None, corner1, corner2)
 
         self._domc_keys = subtiles_domc_keys
         # See https://docs.python.org/3/library/math.html#math.isqrt
@@ -231,9 +237,9 @@ def build_world_maps(
     start_t = time.monotonic()
 
     nightlights = NightlightsMap(regions, seen_rows, corner1, corner2)
-    mosaic_1x1 = MosaicMap(regions, seen_rows, corner1, corner2, DominantColors.Keys_1x1)
-    mosaic_2x2 = MosaicMap(regions, seen_rows, corner1, corner2, DominantColors.Keys_2x2)
-    mosaic_3x3 = MosaicMap(regions, seen_rows, corner1, corner2, DominantColors.Keys_3x3)
+    mosaic_1x1 = MosaicMap(regions, corner1, corner2, DominantColors.Keys_1x1)
+    mosaic_2x2 = MosaicMap(regions, corner1, corner2, DominantColors.Keys_2x2)
+    mosaic_3x3 = MosaicMap(regions, corner1, corner2, DominantColors.Keys_3x3)
 
     count = 0
     coord: MapCoord
