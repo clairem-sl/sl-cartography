@@ -63,6 +63,10 @@ class WorldMapBuilder(metaclass=ABCMeta):
     def add_tile(self, coord: MapCoord, domc: DominantColors) -> None:
         raise NotImplementedError
 
+    @staticmethod
+    def box(value: int) -> Tuple[int, int]:
+        return value, value
+
 
 class NightlightsMap(WorldMapBuilder):
     NightlightsTileSize = 9
@@ -78,6 +82,10 @@ class NightlightsMap(WorldMapBuilder):
     ):
         super().__init__(regions, seen_rows, corner1, corner2)
 
+        self.subtile_sz = self.NightlightsTileSize // 3
+        if self.subtile_sz * 3 != self.NightlightsTileSize:
+            raise ValueError("NightlightsTileSize must be an integer multiple of 3!")
+
         canvas_box = MapCoord(self.width, self.height) * self.NightlightsTileSize
         # Need noinspection here because "LA" is actually supported but PyCharm complains
         # noinspection PyTypeChecker
@@ -89,25 +97,21 @@ class NightlightsMap(WorldMapBuilder):
         for y in self.seen_rows:
             # x here MUST be 0, not x_min, because the coords here is relative to the canvas size, in pixels
             self.canvas.paste(rect_row_black, (0, self.NightlightsTileSize * (self.ymax - y)))
-        self.sqw_3x3 = Image.new("L", (3, 3), color=self.White)
 
-    def world_has_all_of(self, *items: MapCoord) -> bool:
-        for i in items:
-            if not self.regions.get(i):
-                return False
-        return True
+        self.subtile_w = Image.new("L", (self.subtile_sz, self.subtile_sz), color=self.White)
 
-    def world_has_none_of(self, *items: MapCoord) -> bool:
-        for i in items:
-            if self.regions.get(i):
-                return False
-        return True
+    def world_has_all_of(self, *coords: MapCoord) -> bool:
+        return all(map(self.regions.__contains__, coords))
+
+    def world_has_none_of(self, *coords: MapCoord) -> bool:
+        return not any(map(self.regions.__contains__, coords))
 
     def add_tile(self, coord: MapCoord, domc: DominantColors) -> None:
         tile_sz = self.NightlightsTileSize
+        subtile_sz = self.subtile_sz
         black = self.Black
         white = self.White
-        sqw_3x3 = self.sqw_3x3
+        subtile_w = self.subtile_w
 
         # region Compass points coordinates
         c_n = coord + (0, 1)
@@ -121,49 +125,53 @@ class NightlightsMap(WorldMapBuilder):
         # endregion
 
         tile_img = Image.new("L", (tile_sz, tile_sz), color=black)
-        tile_img.paste(sqw_3x3, (3, 3))
+        tile_img.paste(subtile_w, (subtile_sz, subtile_sz))
         draw = ImageDraw.Draw(tile_img)
 
         # region Vertical & Horizontal connections
         if c_n in self.regions:
-            tile_img.paste(sqw_3x3, (3, 0))
+            tile_img.paste(subtile_w, (subtile_sz, 0))
         if c_e in self.regions:
-            tile_img.paste(sqw_3x3, (6, 3))
+            tile_img.paste(subtile_w, (subtile_sz * 2, subtile_sz))
         if c_w in self.regions:
-            tile_img.paste(sqw_3x3, (0, 3))
+            tile_img.paste(subtile_w, (0, subtile_sz))
         if c_s in self.regions:
-            tile_img.paste(sqw_3x3, (3, 6))
+            tile_img.paste(subtile_w, (subtile_sz, subtile_sz * 2))
         # endregion
 
         # region Diagonals
         if self.world_has_all_of(c_n, c_e):
             if c_ne in self.regions:
-                tile_img.paste(sqw_3x3, (6, 0))
+                tile_img.paste(subtile_w, (subtile_sz * 2, 0))
                 if self.world_has_none_of(c_s, c_sw, c_w):
-                    draw.point((3, 5), fill=black)
+                    draw.point((subtile_sz, subtile_sz * 2 - 1), fill=black)
             else:
-                draw.point((6, 2), fill=white)
+                draw.point((subtile_sz * 2, subtile_sz - 1), fill=white)
+
         if self.world_has_all_of(c_n, c_w):
             if c_nw in self.regions:
-                tile_img.paste(sqw_3x3, (0, 0))
+                tile_img.paste(subtile_w, (0, 0))
                 if self.world_has_none_of(c_s, c_se, c_e):
-                    draw.point((5, 5), fill=black)
+                    draw.point(self.box(subtile_sz * 2 - 1), fill=black)
             else:
-                draw.point((2, 2), fill=white)
+                draw.point(self.box(subtile_sz - 1), fill=white)
+
         if self.world_has_all_of(c_s, c_e):
             if c_se in self.regions:
-                tile_img.paste(sqw_3x3, (6, 6))
+                tile_img.paste(subtile_w, self.box(subtile_sz * 2))
                 if self.world_has_none_of(c_n, c_nw, c_w):
-                    draw.point((3, 3), fill=black)
+                    draw.point((subtile_sz, subtile_sz), fill=black)
             else:
-                draw.point((6, 6), fill=white)
+                draw.point(self.box(subtile_sz * 2), fill=white)
+
         if self.world_has_all_of(c_s, c_w):
             if c_sw in self.regions:
-                tile_img.paste(sqw_3x3, (0, 6))
+                tile_img.paste(subtile_w, (0, subtile_sz * 2))
                 if self.world_has_none_of(c_n, c_ne, c_e):
-                    draw.point((5, 3), fill=black)
+                    draw.point((subtile_sz * 2 - 1, subtile_sz), fill=black)
             else:
-                draw.point((2, 6), fill=white)
+                draw.point((subtile_sz - 1, subtile_sz * 2), fill=white)
+
         # endregion
 
         self.canvas.paste(tile_img, self.canvas_coord(*coord, tile_sz))
