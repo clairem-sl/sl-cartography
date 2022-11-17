@@ -14,14 +14,20 @@ from sl_maptools import MapBounds, MapCoord
 
 
 class OutOfBoundsError(ValueError):
+    """Raised if a coordinate falls outside the map's boundaries"""
+
     pass
 
 
 class WorldMapBuilder(metaclass=ABCMeta):
+    """
+    Abstract class that provides the common protocol for map builders
+    """
+
     def __init__(
         self,
         regions: Dict[MapCoord, DominantColors],
-        seen_rows: Set[int],
+        seen_rows: Set[int] | None,
         corner1: MapCoord,
         corner2: MapCoord,
     ):
@@ -57,17 +63,46 @@ class WorldMapBuilder(metaclass=ABCMeta):
         return self._world_bounds.height
 
     def canvas_coord(self, tile_x: int, tile_y: int, multiplier: int = 1) -> tuple[int, int]:
+        """
+        Converts geo-coords (in units of tiles) to canvas coords (in units of pixels)
+
+        This is not a simple multiplied-items tuple like what's implemented by MapCoord.__mul__
+
+        This method implements the shift, reflect, and multiplication necessary to do the conversion.
+
+        :param tile_x: X geo-coordinate of the tile
+        :param tile_y: Y geo-coordinate of the tile
+        :param multiplier: Optional multiplier
+        :return: The canvas coordinate for the tile
+        """
         return (tile_x - self.xmin) * multiplier, (self.ymax - tile_y) * multiplier
 
     @abstractmethod
     def add_tile(self, coord: MapCoord, domc: DominantColors) -> None:
+        """
+        Adds a tile into the world map.
+
+        :param coord: Coordinate of the tile
+        :param domc: Dominant colors of the tile
+        :return: None
+        """
         raise NotImplementedError
+
+    @staticmethod
+    def box(value: int) -> Tuple[int, int]:
+        return value, value
 
 
 class NightlightsMap(WorldMapBuilder):
+    """
+    Builds a 'nightlights' map tile-by-tile.
+    """
+
     NightlightsTileSize = 9
     Black = 0
+    """Definition of 'black' color. You will need to ensure the data format is suitable for the image type."""
     White = 255
+    """Definition of 'white' color. You will need to ensure the data format is suitable for the image type."""
 
     def __init__(
         self,
@@ -76,10 +111,21 @@ class NightlightsMap(WorldMapBuilder):
         corner1: MapCoord,
         corner2: MapCoord,
     ):
+        """
+        :param regions: A dict of coordinates and tile_data (the latter will be ignored)
+        :param seen_rows: A set of rows known to have been fully-fetched
+        :param corner1: Coordinates for one corner of the map
+        :param corner2: Coordinates for the corner of the map opposite to corner 1
+        :raises ValueError: if the NightlightsTileSize class attribute is not a multiple of 3
+        """
         super().__init__(regions, seen_rows, corner1, corner2)
 
+        self.subtile_sz = self.NightlightsTileSize // 3
+        if self.subtile_sz * 3 != self.NightlightsTileSize:
+            raise ValueError("NightlightsTileSize must be an integer multiple of 3!")
+
         canvas_box = MapCoord(self.width, self.height) * self.NightlightsTileSize
-        # Need noinspection here because "LA" is actually supported but PyCharm complains
+        # Need 'noinspection' here because "LA" is actually supported but PyCharm complains
         # noinspection PyTypeChecker
         self.canvas = Image.new("LA", canvas_box)
 
@@ -89,25 +135,30 @@ class NightlightsMap(WorldMapBuilder):
         for y in self.seen_rows:
             # x here MUST be 0, not x_min, because the coords here is relative to the canvas size, in pixels
             self.canvas.paste(rect_row_black, (0, self.NightlightsTileSize * (self.ymax - y)))
-        self.sqw_3x3 = Image.new("L", (3, 3), color=self.White)
 
-    def world_has_all_of(self, *items: MapCoord) -> bool:
-        for i in items:
-            if not self.regions.get(i):
-                return False
-        return True
+        self.subtile_w = Image.new("L", (self.subtile_sz, self.subtile_sz), color=self.White)
 
-    def world_has_none_of(self, *items: MapCoord) -> bool:
-        for i in items:
-            if self.regions.get(i):
-                return False
-        return True
+    def world_has_all_of(self, *coords: MapCoord) -> bool:
+        return all(map(self.regions.__contains__, coords))
+
+    def world_has_none_of(self, *coords: MapCoord) -> bool:
+        return not any(map(self.regions.__contains__, coords))
 
     def add_tile(self, coord: MapCoord, domc: DominantColors) -> None:
+        """
+        Adds a tile into the world map.
+
+        The domc parameter will be ignored.
+
+        :param coord: Coordinate of the tile
+        :param domc: Ignored
+        :return: None
+        """
         tile_sz = self.NightlightsTileSize
+        subtile_sz = self.subtile_sz
         black = self.Black
         white = self.White
-        sqw_3x3 = self.sqw_3x3
+        subtile_w = self.subtile_w
 
         # region Compass points coordinates
         c_n = coord + (0, 1)
@@ -121,66 +172,80 @@ class NightlightsMap(WorldMapBuilder):
         # endregion
 
         tile_img = Image.new("L", (tile_sz, tile_sz), color=black)
-        tile_img.paste(sqw_3x3, (3, 3))
+        tile_img.paste(subtile_w, (subtile_sz, subtile_sz))
         draw = ImageDraw.Draw(tile_img)
 
         # region Vertical & Horizontal connections
         if c_n in self.regions:
-            tile_img.paste(sqw_3x3, (3, 0))
+            tile_img.paste(subtile_w, (subtile_sz, 0))
         if c_e in self.regions:
-            tile_img.paste(sqw_3x3, (6, 3))
+            tile_img.paste(subtile_w, (subtile_sz * 2, subtile_sz))
         if c_w in self.regions:
-            tile_img.paste(sqw_3x3, (0, 3))
+            tile_img.paste(subtile_w, (0, subtile_sz))
         if c_s in self.regions:
-            tile_img.paste(sqw_3x3, (3, 6))
+            tile_img.paste(subtile_w, (subtile_sz, subtile_sz * 2))
         # endregion
 
         # region Diagonals
         if self.world_has_all_of(c_n, c_e):
             if c_ne in self.regions:
-                tile_img.paste(sqw_3x3, (6, 0))
+                tile_img.paste(subtile_w, (subtile_sz * 2, 0))
                 if self.world_has_none_of(c_s, c_sw, c_w):
-                    draw.point((3, 5), fill=black)
+                    draw.point((subtile_sz, subtile_sz * 2 - 1), fill=black)
             else:
-                draw.point((6, 2), fill=white)
+                draw.point((subtile_sz * 2, subtile_sz - 1), fill=white)
+
         if self.world_has_all_of(c_n, c_w):
             if c_nw in self.regions:
-                tile_img.paste(sqw_3x3, (0, 0))
+                tile_img.paste(subtile_w, (0, 0))
                 if self.world_has_none_of(c_s, c_se, c_e):
-                    draw.point((5, 5), fill=black)
+                    draw.point(self.box(subtile_sz * 2 - 1), fill=black)
             else:
-                draw.point((2, 2), fill=white)
+                draw.point(self.box(subtile_sz - 1), fill=white)
+
         if self.world_has_all_of(c_s, c_e):
             if c_se in self.regions:
-                tile_img.paste(sqw_3x3, (6, 6))
+                tile_img.paste(subtile_w, self.box(subtile_sz * 2))
                 if self.world_has_none_of(c_n, c_nw, c_w):
-                    draw.point((3, 3), fill=black)
+                    draw.point((subtile_sz, subtile_sz), fill=black)
             else:
-                draw.point((6, 6), fill=white)
+                draw.point(self.box(subtile_sz * 2), fill=white)
+
         if self.world_has_all_of(c_s, c_w):
             if c_sw in self.regions:
-                tile_img.paste(sqw_3x3, (0, 6))
+                tile_img.paste(subtile_w, (0, subtile_sz * 2))
                 if self.world_has_none_of(c_n, c_ne, c_e):
-                    draw.point((5, 3), fill=black)
+                    draw.point((subtile_sz * 2 - 1, subtile_sz), fill=black)
             else:
-                draw.point((2, 6), fill=white)
+                draw.point((subtile_sz - 1, subtile_sz * 2), fill=white)
+
         # endregion
 
         self.canvas.paste(tile_img, self.canvas_coord(*coord, tile_sz))
 
 
 class MosaicMap(WorldMapBuilder):
+    """
+    Builds a Mosaic Map, tile-by-tile.
+    """
+
     MosaicSubtileSize = 2
 
     def __init__(
         self,
         regions: Dict[MapCoord, DominantColors],
-        seen_rows: Set[int],
         corner1: MapCoord,
         corner2: MapCoord,
         subtiles_domc_keys: Sequence[str],
     ):
-        super().__init__(regions, seen_rows, corner1, corner2)
+        """
+        :param regions: A dict of MapCoord:DominantColors to build the map upon
+        :param corner1: Coordinates for one corner of the map
+        :param corner2: Coordinates for the corner of the map opposite to corner 1
+        :param subtiles_domc_keys: A sequence of keys with which to color the subtiles.
+        These are defined as class attributes in DominantColors
+        """
+        super().__init__(regions, None, corner1, corner2)
 
         self._domc_keys = subtiles_domc_keys
         # See https://docs.python.org/3/library/math.html#math.isqrt
@@ -189,15 +254,26 @@ class MosaicMap(WorldMapBuilder):
         canvas_box = MapCoord(self.width, self.height) * self.MosaicSubtileSize * self._dim
         self.canvas = Image.new("RGBA", canvas_box)
 
-    def paste_subtiles(self, target: Image.Image, size: int, subtile_colors: List[Tuple[int, int, int]]) -> None:
-        assert len(subtile_colors) == (size * size)
+    def paste_subtiles(self, tile: Image.Image, dimension: int, subtile_colors: List[Tuple[int, int, int]]) -> None:
+        """
+        Pastes subtiles (squares of certain colors) into the tile image.
+
+        :param tile: The tile to which the subtiles will be pasted
+        :param dimension: The dimension of the tile (in units of subtiles)
+        :param subtile_colors: The colors of the subtiles. The number of colors given must match the actual number of
+        subtiles to be pasted to the tile.
+        :return: None
+        :raises AttributeError: if the number of colors is not equal to total number of subtiles
+        """
+        if len(subtile_colors) != (dimension * dimension):
+            raise AttributeError("Number of colors must match total number of subtiles!")
         sx, sy = 0, 0
-        smax = size * self.MosaicSubtileSize
-        tile_boxsz = (self.MosaicSubtileSize, self.MosaicSubtileSize)
+        smax = dimension * self.MosaicSubtileSize
+        subtile_boxsz = (self.MosaicSubtileSize, self.MosaicSubtileSize)
         for color in subtile_colors:
             loc = (sx, sy)
-            subtile = Image.new("RGBA", tile_boxsz, color=color)
-            target.paste(subtile, loc)
+            subtile = Image.new("RGB", subtile_boxsz, color=color)
+            tile.paste(subtile, loc)
             sx += self.MosaicSubtileSize
             if sx >= smax:
                 sx = 0
@@ -218,21 +294,42 @@ def build_world_maps(
     mosaic_path: Path,
     corner1: MapCoord,
     corner2: MapCoord,
+    ignore_out_of_bounds: bool = False,
 ) -> None:
+    """
+    Generates the world map images.
+
+    Currently hardcoded to produce 4 kinds of world maps.
+
+    :param regions: A dict of MapCoord:DominantColors to build the world maps with
+    :param seen_rows: A set of rownumbers indicating which rows have been fully-fetched
+    :param nightlights_path: Path for saving nightlights map
+    :param mosaic_path: Path for saving mosaic map; will be transformed into several paths
+    :param corner1: Coordinates of a corner of the world map
+    :param corner2: Coordinates of another corner of the world map, opposite corner 1
+    :param ignore_out_of_bounds: If False (default) will raise an exception if regions contain a coordinate that
+    falls outside the bounds of the world map
+    :return: None
+    :raises OutOfBoundsError: if a coordinat in regions fall outside map bounds, but only if ignore_out_of_bounds is
+    set to False
+    """
     world_bounds = MapBounds.from_coords(corner1, corner2)
     start_t = time.monotonic()
 
     nightlights = NightlightsMap(regions, seen_rows, corner1, corner2)
-    mosaic_1x1 = MosaicMap(regions, seen_rows, corner1, corner2, DominantColors.Keys_1x1)
-    mosaic_2x2 = MosaicMap(regions, seen_rows, corner1, corner2, DominantColors.Keys_2x2)
-    mosaic_3x3 = MosaicMap(regions, seen_rows, corner1, corner2, DominantColors.Keys_3x3)
+    mosaic_1x1 = MosaicMap(regions, corner1, corner2, DominantColors.Keys_1x1)
+    mosaic_2x2 = MosaicMap(regions, corner1, corner2, DominantColors.Keys_2x2)
+    mosaic_3x3 = MosaicMap(regions, corner1, corner2, DominantColors.Keys_3x3)
 
     count = 0
     coord: MapCoord
     domc: DominantColors
     for count, (coord, domc) in enumerate(regions.items(), start=1):
         if coord not in world_bounds:
-            raise OutOfBoundsError(f"{coord} is not in {world_bounds}")
+            if not ignore_out_of_bounds:
+                raise OutOfBoundsError(f"{coord} is not in {world_bounds}")
+            # Ignore silently
+            continue
 
         if count % 100 == 0:
             print("|", end="", flush=True)

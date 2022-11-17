@@ -25,6 +25,11 @@ class TileRecorder(Worker):
     This will record not just into a proxied Progress object, but also (optionally) to disk.
 
     IN ADDITION, this worker will also gather the failed tiles and record them also into the proxied Progress object.
+
+    This class recognizes the following 'jobs' in the input/command queue:
+    - "FLUSH" will sync the in-memory data with the SyncManager-managed MapProgressProxy object
+    - "SAVE" instruction to save progress so far
+    - (MapCoord, DominantColors) -- actual data to be accumulated (not yet written to disk until "SAVE" is received)
     """
 
     MIN_SAVE_DISTANCE = 200

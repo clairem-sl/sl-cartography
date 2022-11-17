@@ -35,6 +35,22 @@ class ColorThief2(ColorThief):
 
 
 class DominantColors:
+    """
+    Calculates the dominant colors of a tile and its subtiles.
+
+    Currently hardcoded into calculating the dominant colors of the following:
+    - The whole tile ("full")
+    - Non-overlapping 2x2 subtiles ("quarters" or "q"s)
+    - Slightly overlapping 3x3 subtiles ("ninths" or "n"s)
+
+    For the 3x3 subtiles, the strategy is to first split the tile into 16x16 squares,
+    then create 9 subtiles each of 6x6 squares. This will cause a 1-square overlap between
+    adjacent subtiles.
+
+    All calculated dominant colors are stored in a dict with a label that describes its
+    position in the tile.
+    """
+
     Keys_1x1 = ("full",)
     Keys_2x2 = ("q_nw", "q_ne", "q_sw", "q_se")
     Keys_3x3 = ("n_nw", "n_no", "n_ne", "n_we", "n_ce", "n_ea", "n_sw", "n_so", "n_se")
