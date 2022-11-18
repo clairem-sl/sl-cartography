@@ -3,16 +3,20 @@
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 from __future__ import annotations
 
+import io
 import multiprocessing as MP
 from typing import Optional, Tuple, Union
+
+from PIL import Image
 
 from mosaic_v3.color_processing import DominantColors
 from mosaic_v3.workers import Worker, WorkerState
 from mosaic_v3.workers.recorder import RecorderJob
 from sl_maptools import MapCoord, MapTile
+from sl_maptools.fetcher import RawTile
 
 
-ProcessorJob = Union[str, MapTile]
+ProcessorJob = Union[str, RawTile]
 
 
 class TileProcessor(Worker):
@@ -68,13 +72,17 @@ class TileProcessor(Worker):
                 if isinstance(job, str):
                     print(f"Unknown command: {job}")
                     continue
-                if not isinstance(job, MapTile):
+                if not isinstance(job, tuple):
                     print(f"Unknown job <{type(job)}>: {job}")
                     continue
 
-                tile = job
+                coord, rawdata = job
                 try:
-                    if not tile.is_void:
+                    if rawdata:
+                        with io.BytesIO(rawdata) as bio:
+                            img = Image.open(bio)
+                            img.load()
+                        tile = MapTile(coord, img)
                         domc = DominantColors.from_tile(tile)
                     else:
                         domc = None

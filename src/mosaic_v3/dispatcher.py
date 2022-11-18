@@ -8,12 +8,13 @@ import multiprocessing as MP
 import time
 from asyncio import Task
 from collections import defaultdict
-from typing import Dict, Generator, Iterable, List, Optional, Set, Tuple, Union
+from typing import Dict, Generator, Iterable, List, Optional, Set, Tuple
 
 import httpx
 
-from sl_maptools import MapCoord, MapTile
-from sl_maptools.fetcher import MapFetcher
+from mosaic_v3.workers.tile_processor import ProcessorJob
+from sl_maptools import MapCoord
+from sl_maptools.fetcher import MapFetcher, RawTile
 
 BATCH_SIZE = 2000
 BATCH_WAIT = 5.0
@@ -44,11 +45,11 @@ class BoundedFetcher:
         self.fetcher = MapFetcher(a_session=async_session)
         self.retries = retries
 
-    async def fetch(self, coord: MapCoord) -> Optional[MapTile]:
+    async def fetch(self, coord: MapCoord) -> Optional[RawTile]:
         """Perform async fetch, but won't actually start fetching if semaphore is depleted."""
         async with self.sema:
             try:
-                return await self.fetcher.async_get_tile(coord, quiet=True, retries=self.retries)
+                return await self.fetcher.async_get_tile_raw(coord, quiet=True, retries=self.retries)
             except asyncio.CancelledError:
                 print(f"{coord} cancelled")
                 return None
@@ -111,7 +112,7 @@ async def async_fetch_area(
     x_max: int,
     y_min: int,
     y_max: int,
-    output_q: MP.Queue[Union[str, MapTile]] = None,
+    output_q: MP.Queue[ProcessorJob] = None,
     redo_rows: Iterable[int] = None,
     skip_rows: Set[int] = None,
     low_water: int = DEFA_LOW_WATER,
@@ -224,12 +225,12 @@ async def async_fetch_area(
                 exc_count += 1
                 continue
 
-            result: MapTile = fut.result()
+            result: Optional[RawTile] = fut.result()
             if result is None:
                 continue
 
-            res_y = result.coord.y
-            if not result.is_void:
+            res_y = result[0].y
+            if result[1] is not None:
                 row_progress.inc_region(res_y)
 
             if row_progress.dec(res_y) == 0:

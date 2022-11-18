@@ -8,6 +8,7 @@ from __future__ import annotations
 # import sys
 import platform
 import asyncio
+import sys
 
 # uvloop only works with CPython on Linux
 if platform.system() == "Linux" and platform.python_implementation() == "CPython":
@@ -34,8 +35,8 @@ from mosaic_v3.dispatcher import async_fetch_area
 from mosaic_v3.progress import MosaicProgress, MosaicProgressProxy
 from mosaic_v3.workers import WorkTeam
 from mosaic_v3.workers.recorder import TileRecorder
-from mosaic_v3.workers.tile_processor import TileProcessor
-from sl_maptools import MapCoord, MapTile
+from mosaic_v3.workers.tile_processor import TileProcessor, ProcessorJob
+from sl_maptools import MapCoord
 from sl_maptools.utils import make_backup
 
 
@@ -99,7 +100,7 @@ async def async_main(
         err_q=err_q,
     )
     processor_team.start(quiet=False, start_num=1)
-    processor_input_q: MP.Queue[MapTile] = processor_team.command_queue
+    processor_input_q: MP.Queue[ProcessorJob] = processor_team.command_queue
 
     processor_team.wait_ready()
     recorder_team.wait_ready()
