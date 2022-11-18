@@ -90,7 +90,7 @@ async def async_main(
         progress_file=STATE_FILE_PATH,
         coordfail_q=coordfail_q,
     )
-    recorder_team.start(verbose=False)
+    recorder_team.start(verbose=True)
 
     processor_team = WorkTeam(
         num_workers=workers,
@@ -99,7 +99,7 @@ async def async_main(
         coordfail_q=coordfail_q,
         err_q=err_q,
     )
-    processor_team.start(verbose=False, start_num=1)
+    processor_team.start(verbose=True, start_num=1)
     processor_input_q: MP.Queue[ProcessorJob] = processor_team.command_queue
 
     processor_team.wait_ready()
