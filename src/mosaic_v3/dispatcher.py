@@ -128,7 +128,7 @@ async def async_fetch_area(
     :param y_min: Bottommost coordinate
     :param y_max: Topmost coordinate
     :param callback: A function that will be invoked with each successful fetch. The callback must accept either
-    a tuple of (coord, bytes) for successful fetch, or a str "SAVE"
+    a tuple of (coord, bytes) for successful fetch, or a str ("SAVE" or "ROW:n" [where n is row number])
     :param redo_rows: Rows to force redo of fetching. This takes precedence over skip_rows
     :param skip_rows: Rows to skip fetching
     :param low_water: If outstanding jobs are below this level, inject a new batch of jobs
@@ -248,6 +248,7 @@ async def async_fetch_area(
                     end="",
                     flush=True,
                 )
+                callback(f"ROW:{res_y}")
 
             callback(result)
             count += 1

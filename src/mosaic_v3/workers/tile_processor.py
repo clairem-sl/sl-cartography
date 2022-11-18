@@ -30,11 +30,8 @@ class TileProcessor(Worker):
 
     This class recognizes the following 'jobs' in the input/command queue:
     - "SAVE" instruction to save progress so far -- will be passed through to Recorder
-    - "ROW" notification that a row has been fully-fetched -- will cause "SEND" to be sent to Recorder
     - MapTile -- actual fetched tile, will start the DominantColors processing
     """
-
-    SAVE_SIGNALS = {"SAVE", "ROW"}
 
     def __init__(
         self,
@@ -66,7 +63,9 @@ class TileProcessor(Worker):
                     self.state = WorkerState.DYING
                     print("X", end="", flush=True)
                     break
-                if job in self.SAVE_SIGNALS:
+                if job == "SAVE":
+                    if not self.quiet:
+                        print(">S>", end="", flush=True)
                     self.output_q.put("SAVE")
                     continue
                 if isinstance(job, str):

@@ -103,6 +103,15 @@ async def async_main(
 
     processor_team.wait_ready()
     recorder_team.wait_ready()
+
+    def callback(signal: ProcessorJob):
+        if isinstance(signal, str) and signal.startswith("ROW:"):
+            rownum = int(signal.removeprefix("ROW:"))
+            progress.completed_rows.add(rownum)
+            progress_proxy.completed_rows[rownum] = None
+            return
+        processor_input_q.put(signal)
+
     print("\nDispatching jobs:", end="", flush=True)
     try:
         skip_rows = progress.completed_rows - redo_rows
@@ -116,7 +125,7 @@ async def async_main(
                 ymax,
                 redo_rows=redo_rows,
                 skip_rows=skip_rows,
-                callback=processor_input_q.put,
+                callback=callback,
             )
     except KeyboardInterrupt:
         print("User Aborted!")
