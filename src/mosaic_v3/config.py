@@ -16,7 +16,7 @@ WORKERS = 10
 
 SAVE_DIR = Path(r"~\Pictures\SLMap").expanduser().absolute()
 NIGHTLIGHTS_NAME = "world-nightlights-3.png"
-MOSAIC_NAME = "world-mosaic-3.png"
+MOSAIC_NAME = "world-mosaic-3-pil.png"
 
 WORLD_WIDTH = 2001
 WORLD_HEIGHT = 2001

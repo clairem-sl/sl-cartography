@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import functools
-from typing import Dict, Iterable, List, Self, Tuple
+from typing import Dict, Iterable, List, Self, Tuple, cast
 
 from colorthief import ColorThief
 from PIL import Image
@@ -32,6 +32,14 @@ class ColorThief2(ColorThief):
             self.image = source
         else:
             super().__init__(source)
+
+
+def getdom(im: Image.Image, kmeans: int) -> Tuple[int, int, int]:
+    quant = im.quantize(colors=16, kmeans=kmeans)
+    rgb = quant.convert("RGB")
+    colors = cast(List[Tuple[int, Tuple[int, int, int]]], rgb.getcolors())
+    freq, dom = max(colors, key=lambda x: x[0])
+    return dom
 
 
 def getbox(splits: int, subreg_sz: int, x_offset: int, y_offset: int) -> Tuple[int, int, int, int]:
@@ -140,24 +148,28 @@ class DominantColors:
         return str(self._domc)
 
     @classmethod
+    def calc_domc(cls, img: Image.Image, key: str) -> Tuple[int, int, int]:
+        cropbox = cls.CropBox[key]
+        im = img.crop(cropbox)
+        sz, _ = im.size
+        qual = cls.QualBySize[sz]
+        # return ColorThief2(im).get_color(qual)
+        return getdom(im, qual)
+
+    @classmethod
     def from_tile(cls, tile: MapTile) -> DominantColors:
         imcopy = tile.image.copy()
         domc = cls()
-        for key, box in cls.CropBox.items():
-            im = imcopy.crop(box)
-            sz, _ = im.size
-            qual = cls.QualBySize[sz]
-            ct2 = ColorThief2(im)
+        for key in cls.CropBox.keys():
             # noinspection PyBroadException
             try:
-                col = ct2.get_color(qual)
+                col = cls.calc_domc(imcopy, key)
             except Exception:
                 if tile.coord not in EMERGENCY_TRANSFORM:
                     print(f"get_color failure for {tile.coord} {key}")
                     raise
                 col = EMERGENCY_TRANSFORM[tile.coord]
             domc[key] = col
-
         return domc
 
     @classmethod
