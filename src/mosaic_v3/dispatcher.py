@@ -138,6 +138,7 @@ async def async_fetch_area(
     :return: A tuple of final progress result (contains info such as which rows are still pending completion), and
     a list of error messages encountered during fetching.
     """
+    callback = callback or (lambda x: None)
     skip_rows = skip_rows or set()
     tasks_done_count: int = 0
     pending_tasks: Set[Task] = set()
@@ -248,12 +249,11 @@ async def async_fetch_area(
                     flush=True,
                 )
 
-            if callback is not None:
-                callback(result)
-                count += 1
-                if count >= save_every:
-                    callback("SAVE")
-                    count = 0
+            callback(result)
+            count += 1
+            if count >= save_every:
+                callback("SAVE")
+                count = 0
 
         print(
             f"\n"
