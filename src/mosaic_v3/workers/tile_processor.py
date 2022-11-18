@@ -29,6 +29,7 @@ class TileProcessor(Worker):
     The logic/maths to do that is implemented in the DominantColors class.
 
     This class recognizes the following 'jobs' in the input/command queue:
+    - "DIE" instruction to wrap up and end
     - "SAVE" instruction to save progress so far -- will be passed through to Recorder
     - MapTile -- actual fetched tile, will start the DominantColors processing
     """

@@ -70,6 +70,7 @@ async def async_main(
     old_regs_count = len(progress.regions)
     old_comprows_count = len(progress.completed_rows)
     print(f"Progress so far: {old_regs_count} regions out of {old_comprows_count} complete rows")
+    # By adding failed_rows to redo_rows, failed_rows will take precedence (see docstring of async_fetch_area)
     redo_rows.update(progress.failed_rows)
     print(f"These rows will be force-fetched: {sorted(redo_rows)}")
     progress.failed_rows.clear()
