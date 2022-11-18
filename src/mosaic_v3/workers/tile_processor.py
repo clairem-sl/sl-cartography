@@ -15,7 +15,6 @@ from mosaic_v3.workers.recorder import RecorderJob
 from sl_maptools import MapCoord, MapTile
 from sl_maptools.fetcher import RawTile
 
-
 ProcessorSignals = Union[Literal["DIE"], Literal["SAVE"]]
 ProcessorJob = Union[ProcessorSignals, RawTile]
 

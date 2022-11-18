@@ -184,10 +184,7 @@ class WorkTeam:
         pass
 
     def disband(
-        self,
-        managers: Iterable[MP.managers.SyncManager] = None,
-        queues: Iterable[MP.Queue] = None,
-        quiet: bool = True
+        self, managers: Iterable[MP.managers.SyncManager] = None, queues: Iterable[MP.Queue] = None, quiet: bool = True
     ) -> Tuple[Any, Any]:
         """
         Performs an orderly shutdown of the Workers.

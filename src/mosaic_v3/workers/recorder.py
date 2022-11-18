@@ -14,7 +14,6 @@ from mosaic_v3.progress import MosaicProgressProxy
 from mosaic_v3.workers import Worker, WorkerState
 from sl_maptools import MapCoord
 
-
 RecorderSignals = Union[Literal["DIE"], Literal["FLUSH"], Literal["SAVE"]]
 RecorderJob = Union[RecorderSignals, Tuple[MapCoord, DominantColors]]
 
