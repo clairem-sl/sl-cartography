@@ -53,7 +53,7 @@ class TileProcessor(Worker):
     def run(self) -> None:
         self.state = WorkerState.SETUP
         count = 0
-        tile: Optional[MapTile] = None
+        coord: Optional[MapCoord] = None
         try:
             while True:
                 self.state = WorkerState.READY
@@ -82,18 +82,15 @@ class TileProcessor(Worker):
                         with io.BytesIO(rawdata) as bio:
                             img = Image.open(bio)
                             img.load()
-                        tile = MapTile(coord, img)
-                        domc = DominantColors.from_tile(tile)
+                        domc = DominantColors.from_tile(MapTile(coord, img))
                     else:
                         domc = None
-                    self.output_q.put((tile.coord, domc))
+                    self.output_q.put((coord, domc))
                 except Exception as ew:
-                    errmess = f"ERR[{type(ew)}:{ew}]({tile.coord.x},{tile.coord.y})"
+                    errmess = f"ERR[{type(ew)}:{ew}]({coord.x},{coord.y})"
                     print(errmess, end="", flush=True)
                     self.err_q.put(errmess)
-                    self.coordfail_q.put_nowait((tile.coord, ew))
-                else:
-                    tile = None
+                    self.coordfail_q.put_nowait((coord, ew))
 
                 count += 1
                 if count >= 100:
@@ -101,8 +98,7 @@ class TileProcessor(Worker):
                         print("*", end="", flush=True)
                     count = 0
         except (KeyboardInterrupt, Exception) as ee:
-            if isinstance(tile, MapTile):
-                self.coordfail_q.put((tile.coord, ee))
+            self.coordfail_q.put((coord, ee))
             if not isinstance(ee, KeyboardInterrupt):
                 raise
         finally:
