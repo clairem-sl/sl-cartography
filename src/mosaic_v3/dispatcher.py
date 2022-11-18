@@ -161,6 +161,8 @@ async def async_fetch_area(
         """
         skipping = False
         rowset: Set[int] = set(y for y in range(y_max, y_min - 1, -1)) | redo_rows
+        # Reason why we don't just remove the skips from rowset, is so that we can put in a nice
+        # "Skipping rows nnn ... nnn" notification there.
         _skips = skip_rows - redo_rows
         for y in sorted(rowset, reverse=True):
             if y in row_progress or y in _skips:
