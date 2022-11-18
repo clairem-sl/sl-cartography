@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import io
 import multiprocessing as MP
-from typing import Optional, Tuple, Union
+from typing import Literal, Optional, Tuple, Union
 
 from PIL import Image
 
@@ -16,7 +16,8 @@ from sl_maptools import MapCoord, MapTile
 from sl_maptools.fetcher import RawTile
 
 
-ProcessorJob = Union[str, RawTile]
+ProcessorSignals = Union[Literal["DIE"], Literal["SAVE"]]
+ProcessorJob = Union[ProcessorSignals, RawTile]
 
 
 class TileProcessor(Worker):

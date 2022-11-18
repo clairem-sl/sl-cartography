@@ -7,7 +7,7 @@ import copy
 import multiprocessing as MP
 import time
 from pathlib import Path
-from typing import Dict, Optional, Tuple, Union
+from typing import Dict, Literal, Optional, Tuple, Union
 
 from mosaic_v3.color_processing import DominantColors
 from mosaic_v3.progress import MosaicProgressProxy
@@ -15,7 +15,8 @@ from mosaic_v3.workers import Worker, WorkerState
 from sl_maptools import MapCoord
 
 
-RecorderJob = Union[str, Tuple[MapCoord, DominantColors]]
+RecorderSignals = Union[Literal["DIE"], Literal["FLUSH"], Literal["SAVE"]]
+RecorderJob = Union[RecorderSignals, Tuple[MapCoord, DominantColors]]
 
 
 class TileRecorder(Worker):

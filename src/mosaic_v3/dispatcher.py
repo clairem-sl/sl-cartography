@@ -11,7 +11,6 @@ from typing import Callable, Dict, Generator, Iterable, List, Optional, Set, Tup
 
 import httpx
 
-from mosaic_v3.workers.tile_processor import ProcessorJob
 from sl_maptools import MapCoord
 from sl_maptools.fetcher import MapFetcher, RawTile
 
@@ -111,7 +110,7 @@ async def async_fetch_area(
     x_max: int,
     y_min: int,
     y_max: int,
-    callback: Callable[[str | ProcessorJob], None] = None,
+    callback: Callable[[str | RawTile], None] = None,
     redo_rows: Iterable[int] = None,
     skip_rows: Set[int] = None,
     low_water: int = DEFA_LOW_WATER,

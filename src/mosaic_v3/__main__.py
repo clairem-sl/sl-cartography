@@ -36,6 +36,7 @@ from mosaic_v3.workers import WorkTeam
 from mosaic_v3.workers.recorder import TileRecorder
 from mosaic_v3.workers.tile_processor import ProcessorJob, TileProcessor
 from sl_maptools import MapCoord
+from sl_maptools.fetcher import RawTile
 from sl_maptools.utils import make_backup
 
 
@@ -105,7 +106,7 @@ async def async_main(
     processor_team.wait_ready()
     recorder_team.wait_ready()
 
-    def callback(signal: ProcessorJob):
+    def callback(signal: str | RawTile):
         if isinstance(signal, str) and signal.startswith("ROW:"):
             rownum = int(signal.removeprefix("ROW:"))
             progress.completed_rows.add(rownum)
