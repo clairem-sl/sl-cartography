@@ -4,11 +4,10 @@
 from __future__ import annotations
 
 import asyncio
-import multiprocessing as MP
 import time
 from asyncio import Task
 from collections import defaultdict
-from typing import Dict, Generator, Iterable, List, Optional, Set, Tuple
+from typing import Callable, Dict, Generator, Iterable, List, Optional, Set, Tuple
 
 import httpx
 
@@ -112,7 +111,7 @@ async def async_fetch_area(
     x_max: int,
     y_min: int,
     y_max: int,
-    output_q: MP.Queue[ProcessorJob] = None,
+    callback: Callable[[str | ProcessorJob], None] = None,
     redo_rows: Iterable[int] = None,
     skip_rows: Set[int] = None,
     low_water: int = DEFA_LOW_WATER,
@@ -128,7 +127,8 @@ async def async_fetch_area(
     :param x_max: Rightmost coordinate
     :param y_min: Bottommost coordinate
     :param y_max: Topmost coordinate
-    :param output_q: Every successful fetches will be put here
+    :param callback: A function that will be invoked with each successful fetch. The callback must accept either
+    a tuple of (coord, bytes) for successful fetch, or a str "SAVE"
     :param redo_rows: Rows to force redo of fetching. This takes precedence over skip_rows
     :param skip_rows: Rows to skip fetching
     :param low_water: If outstanding jobs are below this level, inject a new batch of jobs
@@ -243,11 +243,11 @@ async def async_fetch_area(
                     flush=True,
                 )
 
-            if output_q is not None:
-                output_q.put(result)
+            if callback is not None:
+                callback(result)
                 count += 1
                 if count >= save_every:
-                    output_q.put("SAVE")
+                    callback("SAVE")
                     count = 0
 
         print(
