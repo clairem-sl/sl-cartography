@@ -101,11 +101,20 @@ class WorkTeam:
         self._workers: List[Worker] = []
         self.__safed = False
 
-    def start(self, quiet: bool = True, start_num: int = 0) -> None:
+    @property
+    def quiet(self) -> list[bool]:
+        return [bool(w.quiet) for w in self._workers]
+
+    @quiet.setter
+    def quiet(self, value: bool):
+        for w in self._workers:
+            w.quiet = value
+
+    def start(self, verbose: bool = False, start_num: int = 0) -> None:
         """
         Instantiates Workers and starts all of them
 
-        :param quiet: If true, suppresses counting of worker started
+        :param verbose: If False(default), suppresses counting of worker started
         :param start_num: Start counting from this number
         :return: None
         """
@@ -114,7 +123,7 @@ class WorkTeam:
             w = self.worker_class(*self.args, **self.kwargs)
             w.start()
             self._workers.append(w)
-            if not quiet:
+            if verbose:
                 print((i + start_num), end=" ", flush=True)
 
     @property
@@ -166,11 +175,11 @@ class WorkTeam:
             safed = self.safed_count
         self.__safed = True
 
-    def pre_disband(self) -> Any:
+    def pre_disband(self, quiet: bool) -> Any:
         """Overridable method that will be called before disband() process begins"""
         pass
 
-    def post_disband(self) -> Any:
+    def post_disband(self, quiet: bool) -> Any:
         """Overridable method that will be called after disband() process completes"""
         pass
 
@@ -178,6 +187,7 @@ class WorkTeam:
         self,
         managers: Iterable[MP.managers.SyncManager] = None,
         queues: Iterable[MP.Queue] = None,
+        quiet: bool = True
     ) -> Tuple[Any, Any]:
         """
         Performs an orderly shutdown of the Workers.
@@ -185,13 +195,16 @@ class WorkTeam:
         :param managers: SyncManager's to shutdown as well, if any.
         They will be shutdown before sending the poison pill to the workers.
         :param queues: multiprocessing queues to close (in addition to the command_queue)
+        :param quiet: If True (default), suppress output from workers while disbanding
         :return: Reports from pre_disband() and post_disband(), if implemented.
         Subclass the WorkTeam class and override those methods if you need custom pre- and post- behaviors.
         """
         if not self.__safed:
             warnings.warn("disband() before wait_safed() is not recommended!", RuntimeWarning)
 
-        pre = self.pre_disband()
+        self.quiet = quiet
+
+        pre = self.pre_disband(quiet)
 
         mgrs = []
         if managers is not None:
@@ -210,7 +223,7 @@ class WorkTeam:
 
         [w.join() for w in self._workers]
 
-        post = self.post_disband()
+        post = self.post_disband(quiet)
         return pre, post
 
     @property

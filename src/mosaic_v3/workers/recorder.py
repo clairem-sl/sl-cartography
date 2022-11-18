@@ -83,7 +83,8 @@ class TileRecorder(Worker):
                 if job == "DIE":
                     self.state = WorkerState.DYING
                     self._save(regions)
-                    print("Z", end="", flush=True)
+                    if not self.quiet:
+                        print("Z", end="", flush=True)
                     break
 
                 self.state = WorkerState.BUSY

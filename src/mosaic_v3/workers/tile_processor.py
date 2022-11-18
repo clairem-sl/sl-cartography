@@ -61,7 +61,8 @@ class TileProcessor(Worker):
                     continue
                 if job == "DIE":
                     self.state = WorkerState.DYING
-                    print("X", end="", flush=True)
+                    if not self.quiet:
+                        print("X", end="", flush=True)
                     break
                 if job == "SAVE":
                     if not self.quiet:

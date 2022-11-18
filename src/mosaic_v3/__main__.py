@@ -89,7 +89,7 @@ async def async_main(
         progress_file=STATE_FILE_PATH,
         coordfail_q=coordfail_q,
     )
-    recorder_team.start(quiet=False)
+    recorder_team.start(verbose=False)
 
     processor_team = WorkTeam(
         num_workers=workers,
@@ -98,7 +98,7 @@ async def async_main(
         coordfail_q=coordfail_q,
         err_q=err_q,
     )
-    processor_team.start(quiet=False, start_num=1)
+    processor_team.start(verbose=False, start_num=1)
     processor_input_q: MP.Queue[ProcessorJob] = processor_team.command_queue
 
     processor_team.wait_ready()
@@ -136,9 +136,9 @@ async def async_main(
         backlog = processor_team.backlog_size, recorder_team.backlog_size
         print(f"Waiting for Workers to finish (queued jobs = {backlog})", flush=True)
         processor_team.wait_safed()
-        processor_team.disband()
+        processor_team.disband(quiet=False)
         recorder_team.wait_safed()
-        recorder_team.disband()
+        recorder_team.disband(quiet=False)
         print()
 
         progress.failed_rows = row_progress.pending_rows
