@@ -17,7 +17,7 @@ from sl_maptools import MapCoord
 from sl_maptools.fetcher import MapFetcher, RawTile
 
 BATCH_SIZE = 2000
-BATCH_WAIT = 5.0
+BATCH_WAIT = 2.5
 ABORT_WAIT = 5.0
 MAX_IN_FLIGHT = 500
 DEFA_LOW_WATER = MAX_IN_FLIGHT * 2
