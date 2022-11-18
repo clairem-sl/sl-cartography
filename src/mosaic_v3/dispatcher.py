@@ -142,9 +142,11 @@ async def async_fetch_area(
     tasks_done_count: int = 0
     pending_tasks: Set[Task] = set()
     row_progress = RowProgress(x_max - x_min + 1)
-    rows_done_count: int = 0
     exc_count: int = 0
     redo_rows: Set[int] = set(redo_rows)
+    _run_rows_success: int = 0
+    _glob_rows_done: int = 0
+    _glob_rows_uptonow = y_max - y_min + 1
 
     def gen_coords() -> Generator[MapCoord, None, None]:
         """
@@ -159,6 +161,7 @@ async def async_fetch_area(
 
         :return: A generator that will emit a MapCoord every iteration
         """
+        nonlocal _glob_rows_done
         skipping = False
         rowset: Set[int] = set(y for y in range(y_max, y_min - 1, -1)) | redo_rows
         # Reason why we don't just remove the skips from rowset, is so that we can put in a nice
@@ -166,6 +169,7 @@ async def async_fetch_area(
         _skips = skip_rows - redo_rows
         for y in sorted(rowset, reverse=True):
             if y in row_progress or y in _skips:
+                _glob_rows_done += 1
                 if not skipping:
                     skipping = True
                     print(f"\nSkipping rows {y}..", end="", flush=True)
@@ -233,9 +237,10 @@ async def async_fetch_area(
                 row_elapsed = row_progress.elapsed(res_y)
                 row_regs = row_progress.regions_per_row[res_y]
                 row_progress.complete(res_y)
-                rows_done_count += 1
+                _glob_rows_done += 1
+                _run_rows_success += 1
                 global_elapsed = time.monotonic() - global_start
-                row_avg_time = global_elapsed / rows_done_count
+                row_avg_time = global_elapsed / _run_rows_success
                 print(
                     f"\nRow {res_y} ({row_regs} regions) is done in {row_elapsed:,.2f} seconds,"
                     f" {row_avg_time:,.2f}s avg time per row",
@@ -253,7 +258,7 @@ async def async_fetch_area(
         print(
             f"\n"
             f" {tasks_done_count:,} tasks done, {len(pending_tasks)} pending,"
-            f" {rows_done_count} rows done, {exc_count} exceptions",
+            f" {_glob_rows_done}/{_glob_rows_uptonow} rows globally, {exc_count} exceptions",
             end="",
             flush=True,
         )
