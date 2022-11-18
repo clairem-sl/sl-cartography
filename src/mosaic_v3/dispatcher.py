@@ -191,19 +191,13 @@ async def async_fetch_area(
         if not coords_g_done and len(pending_tasks) < low_water:
             print(f"\n### Adding (up to) {batch_size} jobs!", end="", flush=True)
             for i in range(0, batch_size):
-                try:
-                    coord = next(coords_g)
-                    row_progress.start(coord.y)
-                    new_task = asyncio.create_task(bfetcher.fetch(coord), name=f"fetch-{coord}")
-                    pending_tasks.add(new_task)
-                except StopIteration:
-                    print(
-                        f"\n### {i} jobs submitted, no more jobs available",
-                        end="",
-                        flush=True,
-                    )
+                if (coord := next(coords_g, None)) is None:
+                    print(f"\n### {i} jobs submitted, no more jobs available", end="", flush=True)
                     coords_g_done = True
                     break
+                row_progress.start(coord.y)
+                new_task = asyncio.create_task(bfetcher.fetch(coord), name=f"fetch-{coord}")
+                pending_tasks.add(new_task)
 
         try:
             done, pending_tasks = await asyncio.wait(pending_tasks, timeout=batch_wait)
