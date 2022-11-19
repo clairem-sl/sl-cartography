@@ -5,7 +5,6 @@ from __future__ import annotations
 
 # fmt: off
 # isort: off
-# import sys
 import platform
 import asyncio
 
@@ -21,6 +20,7 @@ else:
 
 import datetime
 import multiprocessing as MP
+import sys
 import time
 from pathlib import Path
 from pprint import PrettyPrinter
@@ -137,6 +137,7 @@ async def async_main(
             co, _ = job
             progress.failed_rows.add(co.y)
 
+    abort = False
     print("\nDispatching jobs:", end="", flush=True)
     try:
         skip_rows = progress.completed_rows - redo_rows
@@ -153,7 +154,8 @@ async def async_main(
                 callback=callback,
             )
     except KeyboardInterrupt:
-        print("User Aborted!")
+        print("User Aborted!", flush=True)
+        abort = True
     finally:
         progress.completed_rows.update(row_progress.fetched_rows)
         progress_proxy.completed_rows.update({k: None for k in progress.completed_rows})
@@ -166,7 +168,7 @@ async def async_main(
         recorder_team.disband(quiet=False, pre_disband=drain_incoming_q)
         print()
 
-        progress.failed_rows = row_progress.pending_rows
+        progress.failed_rows |= row_progress.pending_rows
         failed_rows = set(k for k in progress_proxy.failed_rows.keys())
         progress.failed_rows.update(failed_rows)
         while not coordfail_q.empty():
@@ -189,6 +191,9 @@ async def async_main(
         f" {len(progress.completed_rows) - old_comprows_count} new rows.",
         flush=True,
     )
+
+    if abort:
+        sys.exit(1)
 
     build_world_maps(
         progress.regions,

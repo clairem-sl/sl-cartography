@@ -76,14 +76,20 @@ class TileRecorder(Worker):
         self.state = WorkerState.SETUP
         regions = copy.deepcopy(self.progress_proxy.regions)
         coord: Optional[MapCoord] = None
+        ctrlc = False
         try:
             while True:
                 self.state = WorkerState.READY
-                job: RecorderJob = self.incoming.get()
+                try:
+                    job: RecorderJob = self.incoming.get()
+                except KeyboardInterrupt:
+                    if not ctrlc:
+                        ctrlc = True
+                        continue
+                    job = "DIE"
 
                 if job == "DIE":
                     self.state = WorkerState.DYING
-                    self._save(regions)
                     if not self.quiet:
                         print("Z", end="", flush=True)
                     break
@@ -126,11 +132,8 @@ class TileRecorder(Worker):
             if not isinstance(ee, KeyboardInterrupt):
                 raise
         finally:
-            # noinspection PyBroadException
-            try:
-                self.state = WorkerState.DEAD
-                self.incoming.close()
-                self.coordfail_q.close()
-                time.sleep(1.0)
-            except Exception:
-                pass
+            self._save(regions)
+            self.incoming.close()
+            self.coordfail_q.close()
+            self.state = WorkerState.DEAD
+            time.sleep(1.0)

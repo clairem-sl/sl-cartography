@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import io
 import multiprocessing as MP
+import time
 from typing import Literal, Optional, Tuple, Union
 
 from PIL import Image
@@ -51,10 +52,17 @@ class TileProcessor(Worker):
         self.state = WorkerState.SETUP
         count = 0
         coord: Optional[MapCoord] = None
+        ctrlc = False
         try:
             while True:
                 self.state = WorkerState.READY
-                job: ProcessorJob = self.input_q.get()
+                try:
+                    job: ProcessorJob = self.input_q.get()
+                except KeyboardInterrupt:
+                    if ctrlc:
+                        raise
+                    ctrlc = True
+                    continue
 
                 self.state = WorkerState.BUSY
                 if job is None:
@@ -93,16 +101,14 @@ class TileProcessor(Worker):
                         print("*", end="", flush=True)
                     count = 0
         except (KeyboardInterrupt, Exception) as ee:
-            self.coordfail_q.put((coord, ee))
+            if coord:
+                self.coordfail_q.put((coord, ee))
             if not isinstance(ee, KeyboardInterrupt):
                 raise
         finally:
-            # noinspection PyBroadException
-            try:
-                self.state = WorkerState.DEAD
-                self.input_q.close()
-                self.output_q.close()
-                self.err_q.close()
-                self.coordfail_q.close()
-            except Exception:
-                pass
+            self.input_q.close()
+            self.output_q.close()
+            self.err_q.close()
+            self.coordfail_q.close()
+            self.state = WorkerState.DEAD
+            time.sleep(1.0)
