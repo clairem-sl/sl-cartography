@@ -118,6 +118,25 @@ async def async_main(
                 return
         processor_input_q.put(signal)
 
+    # noinspection PyUnusedLocal
+    def drain_incoming_q(pteam: WorkTeam, quiet: bool):
+        """
+        Drains command queue of processor team.
+
+        If there are any jobs left, add the jobs to progress.failed_rows.
+        This should NOT ever happen, but we put it here just in case.
+
+        :param pteam: An instance of WorkTeam that handles the TileProcessors
+        :param quiet: Not used
+        :return: None
+        """
+        while not pteam.command_queue.empty():
+            job: ProcessorJob = pteam.command_queue.get()
+            if not isinstance(job, tuple):
+                continue
+            co, _ = job
+            progress.failed_rows.add(co.y)
+
     print("\nDispatching jobs:", end="", flush=True)
     try:
         skip_rows = progress.completed_rows - redo_rows
@@ -142,9 +161,9 @@ async def async_main(
         backlog = processor_team.backlog_size, recorder_team.backlog_size
         print(f"Waiting for Workers to finish (queued jobs = {backlog})", flush=True)
         processor_team.wait_safed()
-        processor_team.disband(quiet=False)
+        processor_team.disband(quiet=False, pre_disband=drain_incoming_q)
         recorder_team.wait_safed()
-        recorder_team.disband(quiet=False)
+        recorder_team.disband(quiet=False, pre_disband=drain_incoming_q)
         print()
 
         progress.failed_rows = row_progress.pending_rows

@@ -8,7 +8,7 @@ import time
 import warnings
 from enum import IntEnum
 from multiprocessing import Process
-from typing import Any, ContextManager, Iterable, List, Protocol, Set, Tuple
+from typing import Any, ContextManager, Iterable, List, Protocol, Set, Tuple, Callable, Self
 
 
 class MPValueProtocol(Protocol):
@@ -175,16 +175,13 @@ class WorkTeam:
             safed = self.safed_count
         self.__safed = True
 
-    def pre_disband(self, quiet: bool) -> Any:
-        """Overridable method that will be called before disband() process begins"""
-        pass
-
-    def post_disband(self, quiet: bool) -> Any:
-        """Overridable method that will be called after disband() process completes"""
-        pass
-
     def disband(
-        self, managers: Iterable[MP.managers.SyncManager] = None, queues: Iterable[MP.Queue] = None, quiet: bool = True
+        self,
+        managers: Iterable[MP.managers.SyncManager] = None,
+        queues: Iterable[MP.Queue] = None,
+        quiet: bool = True,
+        pre_disband: Callable[[Self, bool], Any] = None,
+        post_disband: Callable[[Self, bool], Any] = None,
     ) -> Tuple[Any, Any]:
         """
         Performs an orderly shutdown of the Workers.
@@ -193,6 +190,9 @@ class WorkTeam:
         They will be shutdown before sending the poison pill to the workers.
         :param queues: multiprocessing queues to close (in addition to the command_queue)
         :param quiet: If True (default), suppress output from workers while disbanding
+        :param pre_disband: A function to call before disbanding. Will be invoked with (self, quiet)
+        :param post_disband: A function to call after disbanding. Will be invoked with (self, quiet).
+        Please note that at this point, workers are dead, SyncManager's are dead, and queues are closed.
         :return: Reports from pre_disband() and post_disband(), if implemented.
         Subclass the WorkTeam class and override those methods if you need custom pre- and post- behaviors.
         """
@@ -201,7 +201,7 @@ class WorkTeam:
 
         self.quiet = quiet
 
-        pre = self.pre_disband(quiet)
+        pre = pre_disband(self, quiet) if pre_disband else None
 
         mgrs = []
         if managers is not None:
@@ -220,7 +220,7 @@ class WorkTeam:
 
         [w.join() for w in self._workers]
 
-        post = self.post_disband(quiet)
+        post = post_disband(self, quiet) if post_disband else None
         return pre, post
 
     @property
