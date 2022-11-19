@@ -30,7 +30,6 @@ class TileProcessor(Worker):
 
     This class recognizes the following 'jobs' in the input/command queue:
     - "DIE" instruction to wrap up and end
-    - "SAVE" instruction to save progress so far -- will be passed through to Recorder
     - MapTile -- actual fetched tile, will start the DominantColors processing
     """
 
@@ -65,11 +64,6 @@ class TileProcessor(Worker):
                     if not self.quiet:
                         print("X", end="", flush=True)
                     break
-                if job == "SAVE":
-                    if not self.quiet:
-                        print(">S>", end="", flush=True)
-                    self.output_q.put("SAVE")
-                    continue
                 if isinstance(job, str):
                     print(f"Unknown command: {job}")
                     continue

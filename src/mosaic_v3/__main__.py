@@ -107,11 +107,15 @@ async def async_main(
     recorder_team.wait_ready()
 
     def callback(signal: str | RawTile):
-        if isinstance(signal, str) and signal.startswith("ROW:"):
-            rownum = int(signal.removeprefix("ROW:"))
-            progress.completed_rows.add(rownum)
-            progress_proxy.completed_rows[rownum] = None
-            return
+        if isinstance(signal, str):
+            if signal.startswith("ROW:"):
+                rownum = int(signal.removeprefix("ROW:"))
+                progress.completed_rows.add(rownum)
+                progress_proxy.completed_rows[rownum] = None
+                return
+            if signal == "SAVE":
+                recorder_team.command_queue.put("SAVE")
+                return
         processor_input_q.put(signal)
 
     print("\nDispatching jobs:", end="", flush=True)
