@@ -67,6 +67,8 @@ class TileRecorder(Worker):
 
     def _save(self, regions: dict[MapCoord, DominantColors]) -> None:
         """Flush then save the progress."""
+        if not self.quiet:
+            print("V", end="", flush=True)
         self._flush(regions)
         p = self.progress_proxy.unproxy()
         p.write_to_path(self.progress_file)
@@ -100,8 +102,6 @@ class TileRecorder(Worker):
                     self._flush(regions)
                     continue
                 if job == "SAVE":
-                    if not self.quiet:
-                        print("V", end="", flush=True)
                     self._save(regions)
                     continue
                 if isinstance(job, str):
