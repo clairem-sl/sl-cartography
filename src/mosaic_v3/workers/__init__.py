@@ -178,7 +178,7 @@ class WorkTeam:
     def disband(
         self,
         managers: Iterable[MP.managers.SyncManager] = None,
-        queues: Iterable[MP.Queue] = None,
+        queues: List[MP.Queue] = None,
         quiet: bool = True,
         pre_disband: Callable[[Self, bool], Any] = None,
         post_disband: Callable[[Self, bool], Any] = None,
@@ -210,13 +210,18 @@ class WorkTeam:
             m.shutdown()
             m.join()
 
+        # This assumes that self.command_queue is empty, or else workers will not see the "DIE" signal
         [self.command_queue.put("DIE") for w in self._workers if w.is_alive()]
         time.sleep(1.0)
 
         if queues is not None:
-            for q in queues:
-                q.close()
-        self.command_queue.close()
+            queues.append(self.command_queue)
+        else:
+            queues = [self.command_queue]
+        for q in queues:
+            while not q.empty():
+                _ = q.get()
+            q.close()
 
         [w.join() for w in self._workers]
 
