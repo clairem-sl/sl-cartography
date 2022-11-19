@@ -45,6 +45,7 @@ async def async_main(
     xmax,
     ymin,
     ymax,
+    statefile: str,
     redo: List[int],
     savedir: Path,
     workers: int,
@@ -56,6 +57,7 @@ async def async_main(
     :param xmax: Rightmost tile
     :param ymin: Bottommost tile
     :param ymax: Topmost tile
+    :param statefile: The name of the state file to record progress
     :param redo: List of rows to re-fetch explicitly
     :param savedir: Directory where images will be saved
     :param workers: How many TileProcessor workers to launch
@@ -66,8 +68,10 @@ async def async_main(
 
     redo_rows: Set[int] = set() if redo is None else set(redo)
 
-    make_backup(STATE_FILE_PATH, levels=3)
-    progress = MosaicProgress.new_from_path(STATE_FILE_PATH, missing_ok=True)
+    state_file_path = STATE_DIR / statefile
+    print(f"Using state file: {state_file_path}")
+    make_backup(state_file_path, levels=3)
+    progress = MosaicProgress.new_from_path(state_file_path, missing_ok=True)
     old_regs_count = len(progress.regions)
     old_comprows_count = len(progress.completed_rows)
     print(f"Progress so far: {old_regs_count} regions out of {old_comprows_count} complete rows")
@@ -88,7 +92,7 @@ async def async_main(
         num_workers=1,
         worker_class=TileRecorder,
         progress_proxy=progress_proxy,
-        progress_file=STATE_FILE_PATH,
+        progress_file=state_file_path,
         coordfail_q=coordfail_q,
     )
     recorder_team.start(verbose=True)
@@ -177,7 +181,7 @@ async def async_main(
         coordfail_q.close()
 
         progress.regions.update(progress_proxy.regions)
-        progress.write_to_path(STATE_FILE_PATH)
+        progress.write_to_path(state_file_path)
 
         while not err_q.empty():
             errs.append(err_q.get())
