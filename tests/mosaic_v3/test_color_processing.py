@@ -47,8 +47,8 @@ def test_getbox(boxparms: FourInts, expekt: FourInts):
 
 
 test_tiles = (
-    Path("mosaic_v3") / "map-1-1000-1000-objects.jpg",
-    Path("mosaic_v3") / "map-1-1004-1000-objects.jpg",
+    Path("tests") / Path("mosaic_v3") / "map-1-1000-1000-objects.jpg",
+    Path("tests") / Path("mosaic_v3") / "map-1-1004-1000-objects.jpg",
 )
 
 
