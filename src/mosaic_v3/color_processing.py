@@ -6,7 +6,6 @@ from __future__ import annotations
 import functools
 from typing import Dict, Iterable, List, Self, Tuple, cast
 
-from colorthief import ColorThief
 from PIL import Image
 
 from sl_maptools import MapCoord, MapTile
@@ -22,16 +21,6 @@ EMERGENCY_TRANSFORM: Dict[MapCoord, Tuple[int, int, int]] = {
     # "Noweeta", pure white -- checked 2022-11-09
     MapCoord(934, 1130): (255, 255, 255),
 }
-
-
-class ColorThief2(ColorThief):
-    # This is a workaround because original ColorThief implementation insists on reading from a file,
-    # while in our usage we never have a file to begin with.
-    def __init__(self, source):
-        if isinstance(source, Image.Image):
-            self.image = source
-        else:
-            super().__init__(source)
 
 
 def getdom(im: Image.Image, kmeans: int) -> Tuple[int, int, int]:
@@ -159,7 +148,6 @@ class DominantColors:
         im = img.crop(cropbox)
         sz, _ = im.size
         qual = cls.QualBySize[sz]
-        # return ColorThief2(im).get_color(qual)
         return getdom(im, qual)
 
     @classmethod
