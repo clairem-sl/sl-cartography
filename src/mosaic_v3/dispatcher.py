@@ -21,7 +21,7 @@ MAX_IN_FLIGHT = 500
 DEFA_LOW_WATER = MAX_IN_FLIGHT * 2
 
 
-class RowProgress:
+class FetchProgress:
     """
     Tracks the progress of job dispatching.
     """
@@ -85,7 +85,7 @@ async def async_fetch_area(
     batch_size: int = BATCH_SIZE,
     save_every: int = BATCH_SIZE,
     batch_wait: float = BATCH_WAIT,
-) -> Tuple[RowProgress, List[str]]:
+) -> Tuple[FetchProgress, List[str]]:
     """
     Asynchronously fetch a given area.
 
@@ -109,7 +109,7 @@ async def async_fetch_area(
     skip_rows = skip_rows or set()
     tasks_done_count: int = 0
     pending_tasks: Set[Task] = set()
-    row_progress = RowProgress(x_max - x_min + 1)
+    row_progress = FetchProgress(x_max - x_min + 1)
     exc_count: int = 0
     redo_rows: Set[int] = set(redo_rows)
     _run_rows_success: int = 0

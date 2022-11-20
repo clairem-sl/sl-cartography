@@ -147,7 +147,7 @@ async def async_main(
         skip_rows = progress.completed_rows - redo_rows
         limits = httpx.Limits(max_connections=20, max_keepalive_connections=20)
         async with httpx.AsyncClient(limits=limits, timeout=10.0, http2=True) as client:
-            row_progress, errs = await async_fetch_area(
+            fetch_progress, errs = await async_fetch_area(
                 client,
                 xmin,
                 xmax,
@@ -161,7 +161,7 @@ async def async_main(
         print("User Aborted!", flush=True)
         abort = True
     finally:
-        progress.completed_rows.update(row_progress.fetched_rows)
+        progress.completed_rows.update(fetch_progress.fetched_rows)
         progress_proxy.completed_rows.update({k: None for k in progress.completed_rows})
 
         backlog = processor_team.backlog_size, recorder_team.backlog_size
@@ -172,7 +172,7 @@ async def async_main(
         recorder_team.disband(quiet=False, pre_disband=drain_incoming_q)
         print()
 
-        progress.failed_rows |= row_progress.pending_rows
+        progress.failed_rows |= fetch_progress.pending_rows
         failed_rows = set(k for k in progress_proxy.failed_rows.keys())
         progress.failed_rows.update(failed_rows)
         while not coordfail_q.empty():
