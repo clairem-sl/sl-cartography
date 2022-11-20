@@ -331,3 +331,35 @@ class MapCanvas(object):
     @property
     def size(self):
         return self.canvas.size
+
+
+class BoundedMapFetcher(MapFetcher):
+    """
+    Wraps MapFetcher in a way to limit in-flight fetches.
+
+    It does this by implementing a semaphore of a certain size, and only launches an actual fetcher job when it can
+    acquire a semaphore.
+
+    This is done to limit the concurrent hit against the SL Maps CDN, because empirical experience seems to indicate
+    that if there are too many in-flight requests, we get throttled.
+    """
+
+    def __init__(self, sema_size: int, async_session: httpx.AsyncClient, retries: int = 3):
+        """
+
+        :param sema_size: Size of semaphore, which limits the number of in-flight requests
+        :param async_session: The asynchronous httpx session to be used (connection pool, etc)
+        :param retries: How many times to retry if request completes but we get an unexpected HTTP Status Code
+        """
+        super().__init__(a_session=async_session)
+        self.sema = asyncio.Semaphore(sema_size)
+        self.retries = retries
+
+    async def async_fetch(self, coord: MapCoord) -> Optional[RawTile]:
+        """Perform async fetch, but won't actually start fetching if semaphore is depleted."""
+        async with self.sema:
+            try:
+                return await self.async_get_tile_raw(coord, quiet=True, retries=self.retries)
+            except asyncio.CancelledError:
+                print(f"{coord} cancelled")
+                return None
