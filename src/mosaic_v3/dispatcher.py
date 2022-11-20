@@ -226,7 +226,7 @@ async def async_fetch_area(
         print(
             f"\n"
             f" Run: {tasks_done_count:,} done, {len(pending_tasks)} pending, {exc_count} exceptions."
-            f" Global: {_glob_rows_done:,}/{_glob_rows_uptonow:,} rows.)",
+            f" Global: {_glob_rows_done:,}/{_glob_rows_uptonow:,} rows.",
             end="",
             flush=True,
         )
