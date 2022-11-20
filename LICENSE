@@ -1,10 +1,25 @@
 # Main License
 
-This sofware is licensed under the MPL 2.0 license.
+Most of this sofware is licensed under the MPL 2.0 license.
 
 `SPDX: MPL-2.0`
 
 Full text of the license: https://www.mozilla.org/en-US/MPL/2.0/
+
+
+## Implicit Exclusion
+
+Source files WITHOUT the following MPL 2.0 header are NOT licensed under MPL 2.0.
+
+```
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+```
+
+The absence of such header is NOT an oversight.
+
+Please contact the maintainers of the repository if you need to use those files in your project.
 
 =====
 
