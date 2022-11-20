@@ -26,7 +26,7 @@ RE_POSREC_LINE = re.compile(
 RE_POSREC_KV = re.compile(r"(?P<key>[^:\s]+)\s*:\s*(?P<value>.*)")
 RE_VECTOR = re.compile(r"\s*<\s*([\d.]+),\s*([\d.]+),\s*([\d.]+)\s*>\s*")
 
-POSREC_COMMANDS = {"start", "stop", "endroute", "solid", "dashed"}
+POSREC_COMMANDS = {"start", "stop", "endroute", "solid", "dashed", "break"}
 
 
 class DrawMode(IntEnum):
@@ -215,6 +215,10 @@ def execute(recs: list[str | PosRecord | tuple[str, str]]):
                 segment = Segment(DrawMode.DASHED)
             elif rec == "endroute":
                 print(f"  {continent}::{route} ends...")
+                all_routes[continent][route].append(segment)
+                segment = Segment(DrawMode.SOLID)
+            elif rec == "break":
+                print(f"    Discontinuous break!")
                 all_routes[continent][route].append(segment)
                 segment = Segment(DrawMode.SOLID)
 
