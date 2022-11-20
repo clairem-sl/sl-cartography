@@ -7,16 +7,16 @@ from pathlib import Path
 
 import appdirs
 
-__all__ = ["STATE_DIR", "STATE_FILE_PATH", "NIGHTLIGHTS_NAME", "MOSAIC_NAME", "WORLD_WIDTH", "WORLD_HEIGHT", "options"]
+__all__ = ["STATE_DIR", "NIGHTLIGHTS_NAME", "MOSAIC_NAME", "WORLD_WIDTH", "WORLD_HEIGHT", "options"]
 
 STATE_DIR = Path(appdirs.site_data_dir("sl-cartography"))
-STATE_FILE_PATH = STATE_DIR / "mosaic-state-v3.msgp"
+STATE_FILE_NAME = "mosaic-state-v3-2.msgp"
 
 WORKERS = 10
 
 SAVE_DIR = Path(r"~\Pictures\SLMap").expanduser().absolute()
 NIGHTLIGHTS_NAME = "world-nightlights-3.png"
-MOSAIC_NAME = "world-mosaic-3.png"
+MOSAIC_NAME = "world-mosaic-3-pil.png"
 
 WORLD_WIDTH = 2001
 WORLD_HEIGHT = 2001
@@ -35,6 +35,7 @@ def options():
     parser.add_argument("--ymin", type=int, default=0, help="Bottommost coordinate (inclusive)")
     parser.add_argument("--ymax", type=int, default=2000, help="Topmost coordinate (inclusive)")
 
+    parser.add_argument("--statefile", default=STATE_FILE_NAME, help="State file name")
     parser.add_argument("--redo", type=str, default=None, help="Comma-separated rows to re-fetch")
 
     parser.add_argument("--savedir", type=Path, default=SAVE_DIR, help="Directory to save the PNG files")

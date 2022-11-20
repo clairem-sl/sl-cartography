@@ -32,6 +32,8 @@ class MosaicProgress:
 
     Also, this class records DominantColors of each MapCoord for Mosaic-making purposes, hence the name of the
     class, "MosaicProgress".
+
+    IMPORTANT: If a rownum exists in both completed_rows and failed_rows, the latter must take precedence!
     """
 
     regions: Dict[MapCoord, DominantColors] = field(default_factory=dict)

@@ -7,15 +7,15 @@ import copy
 import multiprocessing as MP
 import time
 from pathlib import Path
-from typing import Dict, Optional, Tuple, Union
+from typing import Dict, Literal, Optional, Tuple, Union
 
 from mosaic_v3.color_processing import DominantColors
 from mosaic_v3.progress import MosaicProgressProxy
 from mosaic_v3.workers import Worker, WorkerState
 from sl_maptools import MapCoord
 
-
-RecorderJob = Union[str, Tuple[MapCoord, DominantColors]]
+RecorderSignals = Union[Literal["DIE"], Literal["FLUSH"], Literal["SAVE"]]
+RecorderJob = Union[RecorderSignals, Tuple[MapCoord, DominantColors]]
 
 
 class TileRecorder(Worker):
@@ -27,8 +27,9 @@ class TileRecorder(Worker):
     IN ADDITION, this worker will also gather the failed tiles and record them also into the proxied Progress object.
 
     This class recognizes the following 'jobs' in the input/command queue:
+    - "DIE" instruction to wrap up and end
     - "FLUSH" will sync the in-memory data with the SyncManager-managed MapProgressProxy object
-    - "SAVE" instruction to save progress so far
+    - "SAVE" instruction to save progress so far; will also trigger flush
     - (MapCoord, DominantColors) -- actual data to be accumulated (not yet written to disk until "SAVE" is received)
     """
 
@@ -66,6 +67,8 @@ class TileRecorder(Worker):
 
     def _save(self, regions: dict[MapCoord, DominantColors]) -> None:
         """Flush then save the progress."""
+        if not self.quiet:
+            print("V", end="", flush=True)
         self._flush(regions)
         p = self.progress_proxy.unproxy()
         p.write_to_path(self.progress_file)
@@ -75,15 +78,22 @@ class TileRecorder(Worker):
         self.state = WorkerState.SETUP
         regions = copy.deepcopy(self.progress_proxy.regions)
         coord: Optional[MapCoord] = None
+        ctrlc = False
         try:
             while True:
                 self.state = WorkerState.READY
-                job: RecorderJob = self.incoming.get()
+                try:
+                    job: RecorderJob = self.incoming.get()
+                except KeyboardInterrupt:
+                    if not ctrlc:
+                        ctrlc = True
+                        continue
+                    job = "DIE"
 
                 if job == "DIE":
                     self.state = WorkerState.DYING
-                    self._save(regions)
-                    print("Z", end="", flush=True)
+                    if not self.quiet:
+                        print("Z", end="", flush=True)
                     break
 
                 self.state = WorkerState.BUSY
@@ -92,8 +102,6 @@ class TileRecorder(Worker):
                     self._flush(regions)
                     continue
                 if job == "SAVE":
-                    if not self.quiet:
-                        print("V", end="", flush=True)
                     self._save(regions)
                     continue
                 if isinstance(job, str):
@@ -124,11 +132,8 @@ class TileRecorder(Worker):
             if not isinstance(ee, KeyboardInterrupt):
                 raise
         finally:
-            # noinspection PyBroadException
-            try:
-                self.state = WorkerState.DEAD
-                self.incoming.close()
-                self.coordfail_q.close()
-                time.sleep(1.0)
-            except Exception:
-                pass
+            self._save(regions)
+            self.incoming.close()
+            self.coordfail_q.close()
+            self.state = WorkerState.DEAD
+            time.sleep(1.0)

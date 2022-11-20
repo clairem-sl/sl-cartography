@@ -8,7 +8,7 @@ import io
 import random
 import time
 from pathlib import Path
-from typing import Any, Callable, Dict, FrozenSet, List, Optional, Protocol, Set, Union
+from typing import Any, Callable, Dict, FrozenSet, List, Optional, Protocol, Set, Tuple, Union
 
 import httpx
 from PIL import Image
@@ -16,6 +16,9 @@ from PIL import Image
 from sl_maptools import MapCoord, MapTile
 from sl_maptools.knowns import VERIFIED_VOIDS
 from sl_maptools.utils import QuietablePrint
+
+
+RawTile = Tuple[MapCoord, bytes | None]
 
 
 class MapConnectionError(ConnectionError):
@@ -58,13 +61,13 @@ class MapFetcher(object):
         self.skip_tiles: Set[MapCoord] = set() if skip_tiles is None else skip_tiles
         self.a_session: httpx.AsyncClient = a_session
 
-    async def async_get_tile(
+    async def async_get_tile_raw(
         self,
         coord: MapCoord,
         quiet: bool = False,
         retries: int = 2,
         raise_err: bool = True,
-    ) -> MapTile:
+    ) -> RawTile:
         """
         Asynchronously fetch a map tile from a given coordinate
 
@@ -77,7 +80,8 @@ class MapFetcher(object):
         qprint = QuietablePrint(quiet)
         qprint(".", end="", flush=True)
         if coord in self.skip_tiles or coord in VERIFIED_VOIDS:
-            return MapTile(coord, None)
+            # return MapTile(coord, None)
+            return coord, None
         url = self.URL_TEMPLATE.format(map_x=coord.x, map_y=coord.y)
         internal_errors = []
         multiplier = 0.25
@@ -107,15 +111,17 @@ class MapFetcher(object):
             if status_code == 403:
                 # "403 Forbidden" means the tile is a void
                 qprint("-", end="", flush=True)
-                return MapTile(coord, None)
+                # return MapTile(coord, None)
+                return coord, None
 
             if status_code == 200:
                 qprint("+", end="", flush=True)
-                with io.BytesIO(response.content) as bio:
-                    grabbed = Image.open(bio)
-                    # Need to call .load() because .open() is lazy
-                    grabbed.load()
-                return MapTile(coord, grabbed)
+                # with io.BytesIO(response.content) as bio:
+                #     grabbed = Image.open(bio)
+                #     # Need to call .load() because .open() is lazy
+                #     grabbed.load()
+                # return MapTile(coord, grabbed)
+                return coord, response.content
 
             # Don't quiet this
             print(f"{status_code}?", end="", flush=True)
@@ -126,6 +132,23 @@ class MapFetcher(object):
         print(f"ERR({coord})", end="", flush=True)
         if raise_err:
             raise MapConnectionError(internal_errors=internal_errors, coord=coord)
+
+    async def async_get_tile(
+        self,
+        coord: MapCoord,
+        quiet: bool = False,
+        retries: int = 2,
+        raise_err: bool = True,
+    ) -> MapTile:
+        coord, raw = await self.async_get_tile_raw(coord, quiet, retries, raise_err)
+        if raw is None:
+            return MapTile(coord, None)
+
+        with io.BytesIO(raw) as bio:
+            grabbed = Image.open(bio)
+            # Need to call .load() because .open() is lazy
+            grabbed.load()
+        return MapTile(coord, grabbed)
 
     async def async_get_area(
         self,

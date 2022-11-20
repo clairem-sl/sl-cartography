@@ -3,16 +3,21 @@
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 from __future__ import annotations
 
+import io
 import multiprocessing as MP
-from typing import Optional, Tuple, Union
+import time
+from typing import Literal, Optional, Tuple, Union
+
+from PIL import Image
 
 from mosaic_v3.color_processing import DominantColors
 from mosaic_v3.workers import Worker, WorkerState
 from mosaic_v3.workers.recorder import RecorderJob
 from sl_maptools import MapCoord, MapTile
+from sl_maptools.fetcher import RawTile
 
-
-ProcessorJob = Union[str, MapTile]
+ProcessorSignals = Union[Literal["DIE"], Literal["SAVE"]]
+ProcessorJob = Union[ProcessorSignals, RawTile]
 
 
 class TileProcessor(Worker):
@@ -25,12 +30,9 @@ class TileProcessor(Worker):
     The logic/maths to do that is implemented in the DominantColors class.
 
     This class recognizes the following 'jobs' in the input/command queue:
-    - "SAVE" instruction to save progress so far -- will be passed through to Recorder
-    - "ROW" notification that a row has been fully-fetched -- will cause "SEND" to be sent to Recorder
+    - "DIE" instruction to wrap up and end
     - MapTile -- actual fetched tile, will start the DominantColors processing
     """
-
-    SAVE_SIGNALS = {"SAVE", "ROW"}
 
     def __init__(
         self,
@@ -49,43 +51,49 @@ class TileProcessor(Worker):
     def run(self) -> None:
         self.state = WorkerState.SETUP
         count = 0
-        tile: Optional[MapTile] = None
+        coord: Optional[MapCoord] = None
+        ctrlc = False
         try:
             while True:
                 self.state = WorkerState.READY
-                job: ProcessorJob = self.input_q.get()
+                try:
+                    job: ProcessorJob = self.input_q.get()
+                except KeyboardInterrupt:
+                    if ctrlc:
+                        raise
+                    ctrlc = True
+                    continue
 
                 self.state = WorkerState.BUSY
                 if job is None:
                     continue
                 if job == "DIE":
                     self.state = WorkerState.DYING
-                    print("X", end="", flush=True)
+                    if not self.quiet:
+                        print("X", end="", flush=True)
                     break
-                if job in self.SAVE_SIGNALS:
-                    self.output_q.put("SAVE")
-                    continue
                 if isinstance(job, str):
                     print(f"Unknown command: {job}")
                     continue
-                if not isinstance(job, MapTile):
+                if not isinstance(job, tuple):
                     print(f"Unknown job <{type(job)}>: {job}")
                     continue
 
-                tile = job
+                coord, rawdata = job
                 try:
-                    if not tile.is_void:
-                        domc = DominantColors.from_tile(tile)
+                    if rawdata:
+                        with io.BytesIO(rawdata) as bio:
+                            img = Image.open(bio)
+                            img.load()
+                        domc = DominantColors.from_tile(MapTile(coord, img))
                     else:
                         domc = None
-                    self.output_q.put((tile.coord, domc))
+                    self.output_q.put((coord, domc))
                 except Exception as ew:
-                    errmess = f"ERR[{type(ew)}:{ew}]({tile.coord.x},{tile.coord.y})"
+                    errmess = f"ERR[{type(ew)}:{ew}]({coord.x},{coord.y})"
                     print(errmess, end="", flush=True)
                     self.err_q.put(errmess)
-                    self.coordfail_q.put_nowait((tile.coord, ew))
-                else:
-                    tile = None
+                    self.coordfail_q.put_nowait((coord, ew))
 
                 count += 1
                 if count >= 100:
@@ -93,17 +101,14 @@ class TileProcessor(Worker):
                         print("*", end="", flush=True)
                     count = 0
         except (KeyboardInterrupt, Exception) as ee:
-            if isinstance(tile, MapTile):
-                self.coordfail_q.put((tile.coord, ee))
+            if coord:
+                self.coordfail_q.put((coord, ee))
             if not isinstance(ee, KeyboardInterrupt):
                 raise
         finally:
-            # noinspection PyBroadException
-            try:
-                self.state = WorkerState.DEAD
-                self.input_q.close()
-                self.output_q.close()
-                self.err_q.close()
-                self.coordfail_q.close()
-            except Exception:
-                pass
+            self.input_q.close()
+            self.output_q.close()
+            self.err_q.close()
+            self.coordfail_q.close()
+            self.state = WorkerState.DEAD
+            time.sleep(1.0)

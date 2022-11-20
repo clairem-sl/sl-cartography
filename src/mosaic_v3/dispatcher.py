@@ -4,19 +4,18 @@
 from __future__ import annotations
 
 import asyncio
-import multiprocessing as MP
 import time
 from asyncio import Task
 from collections import defaultdict
-from typing import Dict, Generator, Iterable, List, Optional, Set, Tuple, Union
+from typing import Callable, Dict, Generator, Iterable, List, Optional, Set, Tuple
 
 import httpx
 
-from sl_maptools import MapCoord, MapTile
-from sl_maptools.fetcher import MapFetcher
+from sl_maptools import MapCoord
+from sl_maptools.fetcher import MapFetcher, RawTile
 
 BATCH_SIZE = 2000
-BATCH_WAIT = 5.0
+BATCH_WAIT = 2.5
 ABORT_WAIT = 5.0
 MAX_IN_FLIGHT = 500
 DEFA_LOW_WATER = MAX_IN_FLIGHT * 2
@@ -44,11 +43,11 @@ class BoundedFetcher:
         self.fetcher = MapFetcher(a_session=async_session)
         self.retries = retries
 
-    async def fetch(self, coord: MapCoord) -> Optional[MapTile]:
+    async def fetch(self, coord: MapCoord) -> Optional[RawTile]:
         """Perform async fetch, but won't actually start fetching if semaphore is depleted."""
         async with self.sema:
             try:
-                return await self.fetcher.async_get_tile(coord, quiet=True, retries=self.retries)
+                return await self.fetcher.async_get_tile_raw(coord, quiet=True, retries=self.retries)
             except asyncio.CancelledError:
                 print(f"{coord} cancelled")
                 return None
@@ -111,7 +110,7 @@ async def async_fetch_area(
     x_max: int,
     y_min: int,
     y_max: int,
-    output_q: MP.Queue[Union[str, MapTile]] = None,
+    callback: Callable[[str | RawTile], None] = None,
     redo_rows: Iterable[int] = None,
     skip_rows: Set[int] = None,
     low_water: int = DEFA_LOW_WATER,
@@ -127,7 +126,8 @@ async def async_fetch_area(
     :param x_max: Rightmost coordinate
     :param y_min: Bottommost coordinate
     :param y_max: Topmost coordinate
-    :param output_q: Every successful fetches will be put here
+    :param callback: A function that will be invoked with each successful fetch. The callback must accept either
+    a tuple of (coord, bytes) for successful fetch, or a str ("SAVE" or "ROW:n" [where n is row number])
     :param redo_rows: Rows to force redo of fetching. This takes precedence over skip_rows
     :param skip_rows: Rows to skip fetching
     :param low_water: If outstanding jobs are below this level, inject a new batch of jobs
@@ -137,13 +137,16 @@ async def async_fetch_area(
     :return: A tuple of final progress result (contains info such as which rows are still pending completion), and
     a list of error messages encountered during fetching.
     """
+    callback = callback or (lambda x: None)
     skip_rows = skip_rows or set()
     tasks_done_count: int = 0
     pending_tasks: Set[Task] = set()
     row_progress = RowProgress(x_max - x_min + 1)
-    rows_done_count: int = 0
     exc_count: int = 0
     redo_rows: Set[int] = set(redo_rows)
+    _run_rows_success: int = 0
+    _glob_rows_done: int = 0
+    _glob_rows_uptonow = y_max - y_min + 1
 
     def gen_coords() -> Generator[MapCoord, None, None]:
         """
@@ -158,11 +161,15 @@ async def async_fetch_area(
 
         :return: A generator that will emit a MapCoord every iteration
         """
+        nonlocal _glob_rows_done
         skipping = False
         rowset: Set[int] = set(y for y in range(y_max, y_min - 1, -1)) | redo_rows
+        # Reason why we don't just remove the skips from rowset, is so that we can put in a nice
+        # "Skipping rows nnn ... nnn" notification there.
         _skips = skip_rows - redo_rows
         for y in sorted(rowset, reverse=True):
             if y in row_progress or y in _skips:
+                _glob_rows_done += 1
                 if not skipping:
                     skipping = True
                     print(f"\nSkipping rows {y}..", end="", flush=True)
@@ -190,19 +197,13 @@ async def async_fetch_area(
         if not coords_g_done and len(pending_tasks) < low_water:
             print(f"\n### Adding (up to) {batch_size} jobs!", end="", flush=True)
             for i in range(0, batch_size):
-                try:
-                    coord = next(coords_g)
-                    row_progress.start(coord.y)
-                    new_task = asyncio.create_task(bfetcher.fetch(coord), name=f"fetch-{coord}")
-                    pending_tasks.add(new_task)
-                except StopIteration:
-                    print(
-                        f"\n### {i} jobs submitted, no more jobs available",
-                        end="",
-                        flush=True,
-                    )
+                if (coord := next(coords_g, None)) is None:
+                    print(f"\n### {i} jobs submitted, no more jobs available", end="", flush=True)
                     coords_g_done = True
                     break
+                row_progress.start(coord.y)
+                new_task = asyncio.create_task(bfetcher.fetch(coord), name=f"fetch-{coord}")
+                pending_tasks.add(new_task)
 
         try:
             done, pending_tasks = await asyncio.wait(pending_tasks, timeout=batch_wait)
@@ -224,39 +225,40 @@ async def async_fetch_area(
                 exc_count += 1
                 continue
 
-            result: MapTile = fut.result()
+            result: Optional[RawTile] = fut.result()
             if result is None:
                 continue
 
-            res_y = result.coord.y
-            if not result.is_void:
+            res_y = result[0].y
+            if result[1] is not None:
                 row_progress.inc_region(res_y)
 
             if row_progress.dec(res_y) == 0:
                 row_elapsed = row_progress.elapsed(res_y)
                 row_regs = row_progress.regions_per_row[res_y]
                 row_progress.complete(res_y)
-                rows_done_count += 1
+                _glob_rows_done += 1
+                _run_rows_success += 1
                 global_elapsed = time.monotonic() - global_start
-                row_avg_time = global_elapsed / rows_done_count
+                row_avg_time = global_elapsed / _run_rows_success
                 print(
                     f"\nRow {res_y} ({row_regs} regions) is done in {row_elapsed:,.2f} seconds,"
                     f" {row_avg_time:,.2f}s avg time per row",
                     end="",
                     flush=True,
                 )
+                callback(f"ROW:{res_y}")
 
-            if output_q is not None:
-                output_q.put(result)
-                count += 1
-                if count >= save_every:
-                    output_q.put("SAVE")
-                    count = 0
+            callback(result)
+            count += 1
+            if count >= save_every:
+                callback("SAVE")
+                count = 0
 
         print(
             f"\n"
-            f" {tasks_done_count:,} tasks done, {len(pending_tasks)} pending,"
-            f" {rows_done_count} rows done, {exc_count} exceptions",
+            f" Run: {tasks_done_count:,} done, {len(pending_tasks)} pending, {exc_count} exceptions."
+            f" Global: {_glob_rows_done:,}/{_glob_rows_uptonow:,} rows.)",
             end="",
             flush=True,
         )
