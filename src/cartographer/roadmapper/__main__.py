@@ -4,6 +4,7 @@
 import itertools
 import re
 import sys
+from collections import defaultdict
 from enum import IntEnum
 from pathlib import Path
 from pprint import PrettyPrinter
@@ -180,7 +181,7 @@ def execute(recs: list[str | PosRecord | tuple[str, str]]):
     route = None
     mode: DrawMode = DrawMode.SOLID
     casefolded = {k.casefold(): k for k in KNOWN_AREAS.keys()}
-    all_routes: dict[str, dict[str, list[Segment]]] = {}
+    all_routes: dict[str, dict[str, list[Segment]]] = defaultdict(lambda: defaultdict(list))
     segment = Segment(mode)
     _col: tuple[int, int, int] = (0, 0, 0)
     for rec in recs:
@@ -195,7 +196,6 @@ def execute(recs: list[str | PosRecord | tuple[str, str]]):
                     raise ValueError(f"Unknown continent: {v}")
                 print(f"Continent: {continent}")
                 bounds = KNOWN_AREAS[continent]
-                all_routes.setdefault(continent, {})
                 segment = Segment(DrawMode.SOLID)
             elif k == "route":
                 route = v
@@ -208,14 +208,14 @@ def execute(recs: list[str | PosRecord | tuple[str, str]]):
 
         elif isinstance(rec, str):
             if rec == "solid" and mode == DrawMode.DASHED:
-                all_routes[continent].setdefault(route, []).append(segment)
+                all_routes[continent][route].append(segment)
                 segment = Segment(DrawMode.SOLID)
             elif rec == "dashed" and mode == DrawMode.SOLID:
-                all_routes[continent].setdefault(route, []).append(segment)
+                all_routes[continent][route].append(segment)
                 segment = Segment(DrawMode.DASHED)
             elif rec == "endroute":
                 print(f"  {continent}::{route} ends...")
-                all_routes[continent].setdefault(route, []).append(segment)
+                all_routes[continent][route].append(segment)
                 segment = Segment(DrawMode.SOLID)
 
         elif isinstance(rec, PosRecord):
