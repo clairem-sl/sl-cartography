@@ -92,9 +92,6 @@ To see the options, use `--help`
 
 An executable module to generate mosaic map and nightlights map.
 
-> **WARNING:** This module takes _HOURS_ to finish if you use the default range of `y_min=0` to `y_max=2000`! And you may have to re-run it several times
-> for it to retrieve 'missing' tiles due to error during retrieval!
-
 To see how to use it:
 
 ```shell
@@ -103,6 +100,14 @@ python -Xfrozen_modules=off -m mosaic_v3 [options]
 ```
 
 To see the options, use `--help`
+
+> **WARNING:** This module takes _HOURS_ to finish if you use the default range of `y_min=0` to `y_max=2000`! And you may have to re-run it several times
+> for it to retrieve 'missing' tiles due to error during retrieval!
+> 
+> Usually you will want to invoke it using `--ymin xxxx` where xxxx is about
+> 200-300 rows lower than the previous invocation. So, start with, say
+> `--ymin 1800`, then run again with `--ymin 1600` and so on to build the map
+> gradually.
 
 
 ### `sl-maptools` Module
