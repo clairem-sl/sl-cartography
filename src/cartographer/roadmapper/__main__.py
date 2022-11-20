@@ -174,7 +174,7 @@ COLORS: dict[str, tuple[int, int, int]] = {
 }
 
 
-def execute(recs: list[str | PosRecord | tuple[str, str]]):
+def execute(recs: list[PosRecord | tuple[str, str]]):
     cols = itertools.cycle(tuple(COLORS.values()))
     bounds = set()
     continent = None
@@ -187,40 +187,36 @@ def execute(recs: list[str | PosRecord | tuple[str, str]]):
     for rec in recs:
         # print(rec)
         if isinstance(rec, tuple):
-            k: str
-            v: str
-            k, v = rec
-            k = k.casefold()
-            if k == "continent":
-                if (continent := casefolded.get(v.casefold())) is None:
-                    raise ValueError(f"Unknown continent: {v}")
-                print(f"Continent: {continent}")
-                bounds = KNOWN_AREAS[continent]
-                segment = Segment(DrawMode.SOLID)
-            elif k == "route":
-                route = v
-                print(f"  {continent}::{route} begins...")
-                segment = Segment(DrawMode.SOLID)
-            elif k == "color":
-                if v not in COLORS:
-                    print(f"    WARNING: Unknown Color '{v}'! Will use standard cycle")
-                segment.color = COLORS.get(v)
-
-        elif isinstance(rec, str):
-            if rec == "solid" and mode == DrawMode.DASHED:
-                all_routes[continent][route].append(segment)
-                segment = Segment(DrawMode.SOLID)
-            elif rec == "dashed" and mode == DrawMode.SOLID:
-                all_routes[continent][route].append(segment)
-                segment = Segment(DrawMode.DASHED)
-            elif rec == "endroute":
-                print(f"  {continent}::{route} ends...")
-                all_routes[continent][route].append(segment)
-                segment = Segment(DrawMode.SOLID)
-            elif rec == "break":
-                print(f"    Discontinuous break!")
-                all_routes[continent][route].append(segment)
-                segment = Segment(DrawMode.SOLID)
+            match rec:
+                case "continent", conti:
+                    if (continent := casefolded.get(conti.casefold())) is None:
+                        raise ValueError(f"Unknown continent: {conti}")
+                    print(f"Continent: {continent}")
+                    bounds = KNOWN_AREAS[continent]
+                    segment = Segment(DrawMode.SOLID)
+                case "route", route:
+                    print(f"  {continent}::{route} begins...")
+                    segment = Segment(DrawMode.SOLID)
+                case "color", color_name:
+                    if color_name not in COLORS:
+                        print(f"    WARNING: Unknown Color '{color_name}'! Will use standard cycle")
+                    segment.color = COLORS.get(color_name)
+                case "solid", _:
+                    if mode == DrawMode.DASHED:
+                        all_routes[continent][route].append(segment)
+                        segment = Segment(DrawMode.SOLID)
+                case "dashed", _:
+                    if mode == DrawMode.SOLID:
+                        all_routes[continent][route].append(segment)
+                        segment = Segment(DrawMode.DASHED)
+                case "endroute", _:
+                    print(f"  {continent}::{route} ends...")
+                    all_routes[continent][route].append(segment)
+                    segment = Segment(DrawMode.SOLID)
+                case "break", _:
+                    print(f"    Discontinuous break!")
+                    all_routes[continent][route].append(segment)
+                    segment = Segment(DrawMode.SOLID)
 
         elif isinstance(rec, PosRecord):
             coord = MapCoord(rec.reg_corner[0] // 256, rec.reg_corner[1] // 256)
@@ -261,7 +257,7 @@ def execute(recs: list[str | PosRecord | tuple[str, str]]):
             canvas.save(roadpath)
 
 
-def parse_stream(fin: TextIO, recs: list) -> bool:
+def parse_stream(fin: TextIO, recs: list[PosRecord | tuple[str, str]]) -> bool:
     found_err = False
     for lnum, ln in enumerate(fin, start=1):
         ln = ln.strip()
@@ -282,7 +278,7 @@ def parse_stream(fin: TextIO, recs: list) -> bool:
             recs.append((matches["key"], matches["value"]))
             continue
         elif (_cf := posrec_dat.casefold()) in POSREC_COMMANDS:
-            recs.append(_cf)
+            recs.append((_cf, ""))
             continue
         else:
             print(f"ERROR: Unrecognized syntax on line {lnum}")
