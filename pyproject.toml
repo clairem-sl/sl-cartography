@@ -1,6 +1,6 @@
 [project]
 name = "sl-cartography"
-version = "0.9"
+version = "0.12"
 requires-python = ">=3.11"
 description = "Libraries and tools for performing Second Life Cartography"
 keywords = ["sl", "secondlife", "second life", "cartography"]
@@ -31,6 +31,7 @@ dependencies = [
     "colorthief",
     "msgpack",
     "appdirs",
+    "beautifulsoup4",
 ]
 
 [build-system]
@@ -42,6 +43,7 @@ requires = [
     "colorthief",
     "msgpack",
     "appdirs",
+    "beautifulsoup4",
     #
     "black",
     "black[d]",
