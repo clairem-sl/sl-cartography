@@ -121,28 +121,28 @@ def build_mosaic(
         if world_has_all_of(c_n, c_e):
             if c_ne in regions:
                 tile_img.paste(sqw_3x3, (6, 0))
-                if world_has_none_of(c_se, c_s, c_sw, c_w, c_nw):
+                if world_has_none_of(c_s, c_sw, c_w):
                     draw.point((3, 5), fill=nl_black)
             else:
                 draw.point((6, 2), fill=nl_white)
         if world_has_all_of(c_n, c_w):
             if c_nw in regions:
                 tile_img.paste(sqw_3x3, (0, 0))
-                if world_has_none_of(c_sw, c_s, c_se, c_e, c_ne):
+                if world_has_none_of(c_s, c_se, c_e):
                     draw.point((5, 5), fill=nl_black)
             else:
                 draw.point((2, 2), fill=nl_white)
         if world_has_all_of(c_s, c_e):
             if c_se in regions:
                 tile_img.paste(sqw_3x3, (6, 6))
-                if world_has_none_of(c_ne, c_n, c_nw, c_w, c_sw):
+                if world_has_none_of(c_n, c_nw, c_w):
                     draw.point((3, 3), fill=nl_black)
             else:
                 draw.point((6, 6), fill=nl_white)
         if world_has_all_of(c_s, c_w):
             if c_sw in regions:
                 tile_img.paste(sqw_3x3, (0, 6))
-                if world_has_none_of(c_nw, c_n, c_ne, c_e, c_se):
+                if world_has_none_of(c_n, c_ne, c_e):
                     draw.point((5, 3), fill=nl_black)
             else:
                 draw.point((2, 6), fill=nl_white)
