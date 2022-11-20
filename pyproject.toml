@@ -60,3 +60,8 @@ py_version = 310
 
 [tool.black]
 line-length = 120
+
+[tool.pytest.ini_options]
+addopts = [
+    "--import-mode=importlib",
+]

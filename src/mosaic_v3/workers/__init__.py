@@ -8,7 +8,7 @@ import time
 import warnings
 from enum import IntEnum
 from multiprocessing import Process
-from typing import Any, ContextManager, Iterable, List, Protocol, Set, Tuple
+from typing import Any, ContextManager, Iterable, List, Protocol, Set, Tuple, Callable, Self
 
 
 class MPValueProtocol(Protocol):
@@ -101,11 +101,20 @@ class WorkTeam:
         self._workers: List[Worker] = []
         self.__safed = False
 
-    def start(self, quiet: bool = True, start_num: int = 0) -> None:
+    @property
+    def quiet(self) -> list[bool]:
+        return [bool(w.quiet) for w in self._workers]
+
+    @quiet.setter
+    def quiet(self, value: bool):
+        for w in self._workers:
+            w.quiet = value
+
+    def start(self, verbose: bool = False, start_num: int = 0) -> None:
         """
         Instantiates Workers and starts all of them
 
-        :param quiet: If true, suppresses counting of worker started
+        :param verbose: If False(default), suppresses counting of worker started
         :param start_num: Start counting from this number
         :return: None
         """
@@ -114,7 +123,7 @@ class WorkTeam:
             w = self.worker_class(*self.args, **self.kwargs)
             w.start()
             self._workers.append(w)
-            if not quiet:
+            if verbose:
                 print((i + start_num), end=" ", flush=True)
 
     @property
@@ -166,18 +175,13 @@ class WorkTeam:
             safed = self.safed_count
         self.__safed = True
 
-    def pre_disband(self) -> Any:
-        """Overridable method that will be called before disband() process begins"""
-        pass
-
-    def post_disband(self) -> Any:
-        """Overridable method that will be called after disband() process completes"""
-        pass
-
     def disband(
         self,
         managers: Iterable[MP.managers.SyncManager] = None,
-        queues: Iterable[MP.Queue] = None,
+        queues: List[MP.Queue] = None,
+        quiet: bool = True,
+        pre_disband: Callable[[Self, bool], Any] = None,
+        post_disband: Callable[[Self, bool], Any] = None,
     ) -> Tuple[Any, Any]:
         """
         Performs an orderly shutdown of the Workers.
@@ -185,13 +189,19 @@ class WorkTeam:
         :param managers: SyncManager's to shutdown as well, if any.
         They will be shutdown before sending the poison pill to the workers.
         :param queues: multiprocessing queues to close (in addition to the command_queue)
+        :param quiet: If True (default), suppress output from workers while disbanding
+        :param pre_disband: A function to call before disbanding. Will be invoked with (self, quiet)
+        :param post_disband: A function to call after disbanding. Will be invoked with (self, quiet).
+        Please note that at this point, workers are dead, SyncManager's are dead, and queues are closed.
         :return: Reports from pre_disband() and post_disband(), if implemented.
         Subclass the WorkTeam class and override those methods if you need custom pre- and post- behaviors.
         """
         if not self.__safed:
             warnings.warn("disband() before wait_safed() is not recommended!", RuntimeWarning)
 
-        pre = self.pre_disband()
+        self.quiet = quiet
+
+        pre = pre_disband(self, quiet) if pre_disband else None
 
         mgrs = []
         if managers is not None:
@@ -200,17 +210,22 @@ class WorkTeam:
             m.shutdown()
             m.join()
 
+        # This assumes that self.command_queue is empty, or else workers will not see the "DIE" signal
         [self.command_queue.put("DIE") for w in self._workers if w.is_alive()]
         time.sleep(1.0)
 
         if queues is not None:
-            for q in queues:
-                q.close()
-        self.command_queue.close()
+            queues.append(self.command_queue)
+        else:
+            queues = [self.command_queue]
+        for q in queues:
+            while not q.empty():
+                _ = q.get()
+            q.close()
 
         [w.join() for w in self._workers]
 
-        post = self.post_disband()
+        post = post_disband(self, quiet) if post_disband else None
         return pre, post
 
     @property
