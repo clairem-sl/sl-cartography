@@ -46,9 +46,11 @@ class PosRecord:
         parcel_name: str | None,
         region_corner: str,
         local_pos: str,
+        source: tuple[str, int] = (None, -1),
     ):
         self.region = region_name
         self.parcel = parcel_name
+        self.source = source
 
         def roundf(num: str):
             return round(float(num))
@@ -70,6 +72,17 @@ class PosRecord:
 
     def __repr__(self):
         return f"PosRecord('{self.region}', '{self.parcel}', {self.reg_corner}, {self.local_pos})"
+
+
+class Command:
+    def __init__(self, command, value, source: tuple[str, int] = (None, -1)):
+        self.command = command
+        self.value = value
+        self.source = source
+
+    @property
+    def kvp(self):
+        return self.command, self.value
 
 
 class SegmentSerialized(TypedDict):
@@ -186,8 +199,8 @@ def execute(recs: list[PosRecord | tuple[str, str]]):
     _col: tuple[int, int, int] = (0, 0, 0)
     for rec in recs:
         # print(rec)
-        if isinstance(rec, tuple):
-            match rec:
+        if isinstance(rec, Command):
+            match rec.kvp:
                 case "continent", conti:
                     if (continent := casefolded.get(conti.casefold())) is None:
                         raise ValueError(f"Unknown continent: {conti}")
@@ -212,6 +225,7 @@ def execute(recs: list[PosRecord | tuple[str, str]]):
                 case "endroute", _:
                     print(f"  {continent}::{route} ends...")
                     all_routes[continent][route].append(segment)
+                    route = None
                     segment = Segment(DrawMode.SOLID)
                 case "break", _:
                     print(f"    Discontinuous break!")
@@ -257,7 +271,7 @@ def execute(recs: list[PosRecord | tuple[str, str]]):
             canvas.save(roadpath)
 
 
-def parse_stream(fin: TextIO, recs: list[PosRecord | tuple[str, str]]) -> bool:
+def parse_stream(fin: TextIO, recs: list[PosRecord | Command]) -> bool:
     found_err = False
     for lnum, ln in enumerate(fin, start=1):
         ln = ln.strip()
@@ -268,6 +282,8 @@ def parse_stream(fin: TextIO, recs: list[PosRecord | tuple[str, str]]) -> bool:
         if posrec_dat.startswith("#"):
             continue
 
+        src = (fin.name, lnum)
+
         if posrec_dat.startswith("3;;"):
             items = posrec_dat.split(";;")[1:]
         elif "**" in posrec_dat:
@@ -275,10 +291,12 @@ def parse_stream(fin: TextIO, recs: list[PosRecord | tuple[str, str]]) -> bool:
         elif "*<" in posrec_dat:
             items = posrec_dat.split("*")
         elif (matches := RE_POSREC_KV.match(posrec_dat)) is not None:
-            recs.append((matches["key"], matches["value"]))
+            cmd = Command(matches["key"], matches["value"], src)
+            recs.append(cmd)
             continue
         elif (_cf := posrec_dat.casefold()) in POSREC_COMMANDS:
-            recs.append((_cf, ""))
+            cmd = Command(_cf, "", src)
+            recs.append(cmd)
             continue
         else:
             print(f"ERROR: Unrecognized syntax on line {lnum}")
@@ -288,9 +306,9 @@ def parse_stream(fin: TextIO, recs: list[PosRecord | tuple[str, str]]) -> bool:
 
         match items:
             case [regn, regc, locp]:
-                record = PosRecord(regn, None, regc, locp)
+                record = PosRecord(regn, None, regc, locp, source=src)
             case [regn, parn, regc, locp]:
-                record = PosRecord(regn, parn, regc, locp)
+                record = PosRecord(regn, parn, regc, locp, source=src)
             case _:
                 print(f"ERROR: Unrecognized syntax on line {lnum}")
                 print(">>>", ln)
