@@ -273,7 +273,7 @@ def execute(recs: list[PosRecord | tuple[str, str]]):
 
         if canvas:
             roadpath = SAVE_DIR / (continent + "_Roads.png")
-            print(f"    Saving to {roadpath}")
+            print(f"  Saving to {roadpath}")
             canvas.save(roadpath)
 
 
@@ -305,7 +305,7 @@ def parse_stream(fin: TextIO, recs: list[PosRecord | Command]) -> bool:
             recs.append(cmd)
             continue
         else:
-            print(f"ERROR: Unrecognized syntax on line {lnum}")
+            print(f"ERROR: Unrecognized syntax on line {lnum} of {fin.name}")
             print(">>>", ln)
             found_err = True
             continue
