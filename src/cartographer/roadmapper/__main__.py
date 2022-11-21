@@ -20,7 +20,7 @@ from sl_maptools.knowns import KNOWN_AREAS
 DEBUG = False
 
 
-RE_POSREC_LINE = re.compile(r"(?P<prefix>.*?)PosRecorder:\s+(?P<entry>.*)")
+RE_POSREC_LINE = re.compile(r"(?P<prefix>.*?)PosRecorder\s*(?P<ver>[^:]*):\s+(?P<entry>.*)")
 RE_POSREC_KV = re.compile(r"(?P<key>[^:\s]+)\s*:\s*(?P<value>.*)")
 RE_VECTOR = re.compile(r"\s*<\s*([\d.]+),\s*([\d.]+),\s*([\d.]+)\s*>\s*")
 
