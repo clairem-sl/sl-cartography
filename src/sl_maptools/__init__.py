@@ -24,10 +24,12 @@ class MapBounds(NamedTuple):
 
     @property
     def height(self):
+        """Height of map in Units of TILES"""
         return self.y_topmost - self.y_bottommost + 1
 
     @property
     def width(self):
+        """Width of map in Units of TILES"""
         return self.x_rightmost - self.x_leftmost + 1
 
     @classmethod
