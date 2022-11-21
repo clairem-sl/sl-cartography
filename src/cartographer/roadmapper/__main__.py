@@ -130,6 +130,8 @@ class Segment:
                 c = 0
                 blank = True
                 piece_points.clear()
+        if not blank and piece_points:
+            draw.line(piece_points, width=width, fill=color, joint="curve")
 
     def _draw_solid(
         self, draw: ImageDraw.ImageDraw, width: int, color: tuple[int, int, int]
