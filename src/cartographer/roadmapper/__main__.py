@@ -24,7 +24,7 @@ RE_POSREC_LINE = re.compile(r"(?P<prefix>.*?)PosRecorder\s*(?P<ver>[^:]*):\s+(?P
 RE_POSREC_KV = re.compile(r"(?P<key>[^:\s]+)\s*:\s*(?P<value>.*)")
 RE_VECTOR = re.compile(r"\s*<\s*([\d.]+),\s*([\d.]+),\s*([\d.]+)\s*>\s*")
 
-POSREC_COMMANDS = {"start", "stop", "endroute", "solid", "dashed", "break"}
+IGNORED_COMMANDS = {"start", "stop", "width"}
 
 
 class DrawMode(IntEnum):
@@ -231,6 +231,9 @@ def execute(recs: list[PosRecord | tuple[str, str]]):
                     print(f"    Discontinuous break!")
                     all_routes[continent][route].append(segment)
                     segment = Segment(DrawMode.SOLID)
+                case cmd, _:
+                    if cmd not in IGNORED_COMMANDS:
+                        print(f"    WARNING: Unrecognized command {rec.kvp} from {rec.source}")
 
         elif isinstance(rec, PosRecord):
             if continent is None:
@@ -298,14 +301,9 @@ def parse_stream(fin: TextIO, recs: list[PosRecord | Command]) -> bool:
             cmd = Command(matches["key"], matches["value"], src)
             recs.append(cmd)
             continue
-        elif (_cf := posrec_dat.casefold()) in POSREC_COMMANDS:
-            cmd = Command(_cf, "", src)
-            recs.append(cmd)
-            continue
         else:
-            print(f"ERROR: Unrecognized syntax on line {lnum} of {fin.name}")
-            print(">>>", ln)
-            found_err = True
+            cmd = Command(posrec_dat.casefold(), "", src)
+            recs.append(cmd)
             continue
 
         match items:
