@@ -90,8 +90,8 @@ class SegmentSerialized(TypedDict):
 
 
 class Segment:
-    BlackWidth = 40
-    ColorWidth = 30
+    BlackWidth = 35
+    ColorWidth = 25
 
     def __init__(self, mode: DrawMode, color: tuple[int, int, int] = None):
         self.mode: DrawMode = mode
