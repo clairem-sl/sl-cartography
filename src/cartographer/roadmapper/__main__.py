@@ -196,7 +196,7 @@ def execute(recs: list[PosRecord | tuple[str, str]]):
     casefolded = {k.casefold(): k for k in KNOWN_AREAS.keys()}
     all_routes: dict[str, dict[str, list[Segment]]] = defaultdict(lambda: defaultdict(list))
     segment = Segment(mode)
-    _col: tuple[int, int, int] = (0, 0, 0)
+    _col: tuple[int, int, int] = (-1, -1, -1)
     for rec in recs:
         # print(rec)
         if isinstance(rec, Command):
