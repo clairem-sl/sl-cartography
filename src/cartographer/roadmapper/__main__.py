@@ -333,6 +333,9 @@ def main(recfiles: list[Path]):
         print(f"Parsing {recfile}...")
         with recfile.open("rt") as fin:
             err |= parse_stream(fin, all_recs)
+    if err:
+        print("Errors found. Please fix them first!")
+        sys.exit(1)
     if DEBUG:
         pp = PrettyPrinter(width=160)
         pp.pprint(all_recs)
