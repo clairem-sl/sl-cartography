@@ -252,10 +252,8 @@ def execute(recs: list[PosRecord | tuple[str, str]]):
 
     for continent, lines in all_routes.items():
         print(f"Drawing continent {continent}...")
-        cont_img = SAVE_DIR / (continent + ".png")
-        with cont_img.open("rb") as fin:
-            im = Image.open(fin)
-            canvas = Image.new("RGBA", im.size)
+        bounds = KNOWN_AREAS[continent]
+        canvas = Image.new("RGBA", (bounds.width * 256, bounds.height * 256))
         draw = ImageDraw.Draw(canvas)
 
         print("  Drawing Black Outlines...")
