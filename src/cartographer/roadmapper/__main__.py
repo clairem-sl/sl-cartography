@@ -20,9 +20,7 @@ from sl_maptools.knowns import KNOWN_AREAS
 DEBUG = False
 
 
-RE_POSREC_LINE = re.compile(
-    r"\[\d{4}/\d{1,2}/\d{1,2}\s+\d{1,2}:\d{1,2}]\s+PosRecorder:\s+(.*)"
-)
+RE_POSREC_LINE = re.compile(r"(?P<prefix>.*?)PosRecorder:\s+(?P<entry>.*)")
 RE_POSREC_KV = re.compile(r"(?P<key>[^:\s]+)\s*:\s*(?P<value>.*)")
 RE_VECTOR = re.compile(r"\s*<\s*([\d.]+),\s*([\d.]+),\s*([\d.]+)\s*>\s*")
 
@@ -281,7 +279,7 @@ def parse_stream(fin: TextIO, recs: list[PosRecord | Command]) -> bool:
         ln = ln.strip()
         if (matches := RE_POSREC_LINE.match(ln)) is None:
             continue
-        posrec_dat = matches[1]
+        posrec_dat = matches["entry"]
 
         if posrec_dat.startswith("#"):
             continue
