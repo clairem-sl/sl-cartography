@@ -233,6 +233,12 @@ def execute(recs: list[PosRecord | tuple[str, str]]):
                     segment = Segment(DrawMode.SOLID)
 
         elif isinstance(rec, PosRecord):
+            if continent is None:
+                print(f"WARNING: PosRecord found but continent not set, at {rec.source}")
+                continue
+            if route is None:
+                print(f"WARNING: PosRecord found but route not set, at {rec.source}")
+                continue
             coord = MapCoord(rec.reg_corner[0] // 256, rec.reg_corner[1] // 256)
             if coord not in bounds:
                 raise ValueError(
