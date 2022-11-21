@@ -207,6 +207,7 @@ def execute(recs: list[PosRecord | tuple[str, str]]):
                     print(f"Continent: {continent}")
                     bounds = KNOWN_AREAS[continent]
                     segment = Segment(DrawMode.SOLID)
+                    route = None
                 case "route", route:
                     print(f"  {continent}::{route} begins...")
                     segment = Segment(DrawMode.SOLID)
