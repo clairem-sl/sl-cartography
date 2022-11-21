@@ -248,10 +248,10 @@ def execute(recs: list[PosRecord | tuple[str, str]]):
                 raise ValueError(
                     f"Region '{rec.region}' outside of continent '{continent}' at {rec.source}"
                 )
-            coffs_tiles: MapCoord = coord - MapCoord(bounds[0], bounds[1])
-            coffs_pixels = coffs_tiles * 256
-            canv_x = coffs_pixels[0] + rec.local_pos[0]
-            canv_y = (bounds.height * 256) - coffs_pixels[1] - rec.local_pos[1]
+            offset_tiles: MapCoord = coord - MapCoord(bounds[0], bounds[1])
+            offset_pixels = offset_tiles * 256
+            canv_x = offset_pixels.x + rec.local_pos[0]
+            canv_y = (bounds.height * 256) - offset_pixels.y - rec.local_pos[1]
             segment.add(Point(canv_x, canv_y))
 
     for continent, lines in all_routes.items():
