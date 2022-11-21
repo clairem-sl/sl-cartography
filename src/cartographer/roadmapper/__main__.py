@@ -212,7 +212,7 @@ def execute(recs: list[PosRecord | tuple[str, str]]):
                     segment = Segment(DrawMode.SOLID)
                 case "color", color_name:
                     if color_name not in COLORS:
-                        print(f"    WARNING: Unknown Color '{color_name}'! Will use standard cycle")
+                        print(f"    WARNING: Unknown Color '{color_name}' on {rec.source}")
                     segment.color = COLORS.get(color_name)
                 case "solid", _:
                     if mode == DrawMode.DASHED:
@@ -245,7 +245,7 @@ def execute(recs: list[PosRecord | tuple[str, str]]):
             coord = MapCoord(rec.reg_corner[0] // 256, rec.reg_corner[1] // 256)
             if coord not in bounds:
                 raise ValueError(
-                    f"Region '{rec.region}' outside of continent '{continent}'"
+                    f"Region '{rec.region}' outside of continent '{continent}' at {rec.source}"
                 )
             coffs_tiles: MapCoord = coord - MapCoord(bounds[0], bounds[1])
             coffs_pixels = coffs_tiles * 256
