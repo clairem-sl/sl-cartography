@@ -339,7 +339,7 @@ def main(recfiles: list[Path]):
             print(f"{recfile} not found!")
             sys.exit(1)
         print(f"Parsing {recfile}...")
-        with recfile.open("rt") as fin:
+        with recfile.open("rt", encoding="utf-8") as fin:
             err |= parse_stream(fin, all_recs)
     if err:
         print("Errors found. Please fix them first!")
