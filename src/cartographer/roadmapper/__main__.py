@@ -192,6 +192,11 @@ def bake(
             canv_y = (bounds.height * 256) - offset_pixels.y - rec.local_pos[1]
             segment.add(Point(canv_x, canv_y))
 
+    # If last route is not 'endroute'd, it's probably not yet appended
+    # So we append it now.
+    if route:
+        all_routes[continent][route].append(segment)
+
     # Remove segments that has empty list of points
     # Probably result of some 'endroute' and 'route' mishaps
     clean_routes: dict[str, dict[str, list[Segment]]] = defaultdict(lambda: defaultdict(list))
