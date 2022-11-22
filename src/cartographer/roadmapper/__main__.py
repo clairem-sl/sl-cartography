@@ -192,10 +192,19 @@ def bake(
             canv_y = (bounds.height * 256) - offset_pixels.y - rec.local_pos[1]
             segment.add(Point(canv_x, canv_y))
 
-    if saveto:
-        save_to_yaml(saveto, all_routes)
+    # Remove segments that has empty list of points
+    # Probably result of some 'endroute' and 'route' mishaps
+    clean_routes: dict[str, dict[str, list[Segment]]] = defaultdict(lambda: defaultdict(list))
+    for conti, routes in all_routes.items():
+        for route, segments in routes.items():
+            new_segs = [seg for seg in segments if seg.points]
+            if new_segs:
+                clean_routes[conti][route] = new_segs
 
-    return all_routes
+    if saveto:
+        save_to_yaml(saveto, clean_routes)
+
+    return clean_routes
 
 
 def parse_stream(fin: TextIO, recs: list[PosRecord | Command]) -> bool:
