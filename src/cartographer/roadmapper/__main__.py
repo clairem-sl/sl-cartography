@@ -20,9 +20,7 @@ from sl_maptools.knowns import KNOWN_AREAS
 DEBUG = False
 
 
-RE_POSREC_LINE = re.compile(
-    r"(?P<prefix>.*?)PosRecorder\s*(?P<ver>[^:]*):\s+(?P<entry>.*)"
-)
+RE_POSREC_LINE = re.compile(r"(?P<prefix>.*?)PosRecorder\s*(?P<ver>[^:]*):\s+(?P<entry>.*)")
 RE_POSREC_KV = re.compile(r"(?P<key>[^:\s]+)\s*:\s*(?P<value>.*)")
 RE_VECTOR = re.compile(r"\s*<\s*(-?[\d.]+),\s*(-?[\d.]+),\s*(-?[\d.]+)\s*>\s*")
 
@@ -47,15 +45,11 @@ class PosRecord:
 
         if (matches := RE_VECTOR.match(region_corner)) is None:
             raise ValueError(f"Can't parse region_corner = '{region_corner}'")
-        self.reg_corner: tuple[int, int, int] = cast(
-            tuple[int, int, int], tuple(map(roundf, matches.groups()))
-        )
+        self.reg_corner: tuple[int, int, int] = cast(tuple[int, int, int], tuple(map(roundf, matches.groups())))
 
         if (matches := RE_VECTOR.match(local_pos)) is None:
             raise ValueError(f"Can't parse local_pos = '{local_pos}'")
-        self.local_pos: tuple[int, int, int] = cast(
-            tuple[int, int, int], tuple(map(roundf, matches.groups()))
-        )
+        self.local_pos: tuple[int, int, int] = cast(tuple[int, int, int], tuple(map(roundf, matches.groups())))
 
     def __str__(self):
         return f"{self.region};;{self.parcel};;{self.reg_corner};;{self.local_pos}"
@@ -149,9 +143,7 @@ def execute(recs: list[PosRecord | tuple[str, str]]):
                 continue
             coord = MapCoord(rec.reg_corner[0] // 256, rec.reg_corner[1] // 256)
             if coord not in bounds:
-                raise ValueError(
-                    f"Region '{rec.region}' outside of continent '{continent}' at {rec.source}"
-                )
+                raise ValueError(f"Region '{rec.region}' outside of continent '{continent}' at {rec.source}")
             offset_tiles: MapCoord = coord - MapCoord(bounds[0], bounds[1])
             offset_pixels = offset_tiles * 256
             canv_x = offset_pixels.x + rec.local_pos[0]
