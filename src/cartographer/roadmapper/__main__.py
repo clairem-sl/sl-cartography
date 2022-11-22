@@ -16,7 +16,7 @@ from cartographer.roadmapper.road import Segment, DrawMode, Point
 from cartographer.roadmapper.yaml import load_from_yaml, save_to_yaml
 from sl_maptools import MapCoord
 from sl_maptools.knowns import KNOWN_AREAS
-
+from sl_maptools.utils import make_backup
 
 DEBUG = False
 
@@ -202,6 +202,7 @@ def bake(
                 clean_routes[conti][route] = new_segs
 
     if saveto:
+        make_backup(saveto, levels=3)
         save_to_yaml(saveto, clean_routes)
 
     return clean_routes
@@ -278,6 +279,7 @@ def main(recfiles: list[Path], saveto: Path | None, readfrom: Path | None):
     if DEBUG:
         pp = PrettyPrinter(width=160)
         pp.pprint(all_recs)
+
     final_routes = bake(all_recs, saved_routes, saveto)
     do_draw(final_routes)
 
