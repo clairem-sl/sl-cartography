@@ -94,10 +94,10 @@ def do_draw(all_routes: dict[str, dict[str, list[Segment]]]):
         draw = ImageDraw.Draw(canvas)
 
         print("  Drawing Black Outlines...")
-        for portions in lines.values():
-            for seg in portions:
+        for route, portions in lines.items():
+            for segnum, seg in enumerate(portions, start=1):
                 if len(seg.points) < 2:
-                    print(f"    WARNING: Not enough data points!")
+                    print(f"    WARNING: Not enough data points at {continent}::{route}::{segnum}")
                     continue
                 seg.draw_black(draw)
 
@@ -105,16 +105,16 @@ def do_draw(all_routes: dict[str, dict[str, list[Segment]]]):
             print(f"  Drawing {route}...")
             while (color := next(cols)) == _col:
                 pass
-            for seg in portions:
+            for segnum, seg in enumerate(portions, start=1):
                 if len(seg.points) < 2:
-                    print(f"    WARNING: Not enough data points!")
+                    print(f"    WARNING: Not enough data points at {continent}::{route}::{segnum}")
                     continue
                 _col = seg.color or color
                 seg.draw_color(draw, _col)
 
         if canvas:
             roadpath = SAVE_DIR / (continent + "_Roads.png")
-            print(f"  Saving to {roadpath}")
+            print(f"  ---\n  Saving to {roadpath}")
             canvas.save(roadpath)
 
 
