@@ -195,6 +195,8 @@ def bake(
     if saveto:
         save_to_yaml(saveto, all_routes)
 
+    return all_routes
+
 
 def parse_stream(fin: TextIO, recs: list[PosRecord | Command]) -> bool:
     found_err = False
@@ -267,7 +269,8 @@ def main(recfiles: list[Path], saveto: Path | None, readfrom: Path | None):
     if DEBUG:
         pp = PrettyPrinter(width=160)
         pp.pprint(all_recs)
-    bake(all_recs, saved_routes, saveto)
+    final_routes = bake(all_recs, saved_routes, saveto)
+    do_draw(final_routes)
 
 
 if __name__ == "__main__":
