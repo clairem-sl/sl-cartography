@@ -70,6 +70,7 @@ class Command:
         return self.command, self.value
 
 
+# region Palettes
 # Source: https://www.heavy.ai/blog/12-color-palettes-for-telling-better-stories-with-your-data
 DUTCH_FIELD_WEB = ["#e60049", "#0bb4ff", "#50e991", "#e6d800", "#9b19f5", "#ffa300", "#dc0ab4", "#b3d4ff", "#00bfa0"]
 RIVER_NIGHTS_WEB = ["#b30000", "#7c1158", "#4421af", "#1a53ff", "#0d88e6", "#00b7c7", "#5ad45a", "#8be04e", "#ebdc78"]
@@ -107,6 +108,7 @@ PALETTES: dict[str, dict[str, tuple[int, int, int]]] = {
     },
     "brewer_q_10": {f"bq10-{n}": c for n, c in enumerate(BREWER_Q_10, start=1)},
 }
+# endregion
 
 AUTO_COLORS = PALETTES["brewer_q_10"]
 
