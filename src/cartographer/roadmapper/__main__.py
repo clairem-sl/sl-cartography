@@ -83,12 +83,46 @@ COLORS: dict[str, tuple[int, int, int]] = {
 }
 
 
-def execute(
+def do_draw(all_routes: dict[str, dict[str, list[Segment]]]):
+    cols = itertools.cycle(tuple(COLORS.values()))
+    _col: tuple[int, int, int] = (-1, -1, -1)
+
+    for continent, lines in all_routes.items():
+        print(f"Drawing continent {continent}...")
+        bounds = KNOWN_AREAS[continent]
+        canvas = Image.new("RGBA", (bounds.width * 256, bounds.height * 256))
+        draw = ImageDraw.Draw(canvas)
+
+        print("  Drawing Black Outlines...")
+        for portions in lines.values():
+            for seg in portions:
+                if len(seg.points) < 2:
+                    print(f"    WARNING: Not enough data points!")
+                    continue
+                seg.draw_black(draw)
+
+        for route, portions in lines.items():
+            print(f"  Drawing {route}...")
+            while (color := next(cols)) == _col:
+                pass
+            for seg in portions:
+                if len(seg.points) < 2:
+                    print(f"    WARNING: Not enough data points!")
+                    continue
+                _col = seg.color or color
+                seg.draw_color(draw, _col)
+
+        if canvas:
+            roadpath = SAVE_DIR / (continent + "_Roads.png")
+            print(f"  Saving to {roadpath}")
+            canvas.save(roadpath)
+
+
+def bake(
     recs: list[PosRecord | tuple[str, str]],
     saved_routes: dict[str, dict[str, list[Segment]]],
     saveto: Path | None,
 ):
-    cols = itertools.cycle(tuple(COLORS.values()))
     bounds = set()
     continent = None
     route = None
@@ -100,7 +134,6 @@ def execute(
             for route, segments in routes.items():
                 all_routes[conti][route].extend(segments)
     segment = Segment(mode)
-    _col: tuple[int, int, int] = (-1, -1, -1)
     for rec in recs:
         # print(rec)
         if isinstance(rec, Command):
@@ -158,30 +191,6 @@ def execute(
             canv_x = offset_pixels.x + rec.local_pos[0]
             canv_y = (bounds.height * 256) - offset_pixels.y - rec.local_pos[1]
             segment.add(Point(canv_x, canv_y))
-
-    for continent, lines in all_routes.items():
-        print(f"Drawing continent {continent}...")
-        bounds = KNOWN_AREAS[continent]
-        canvas = Image.new("RGBA", (bounds.width * 256, bounds.height * 256))
-        draw = ImageDraw.Draw(canvas)
-
-        print("  Drawing Black Outlines...")
-        for portions in lines.values():
-            for seg in portions:
-                seg.draw_black(draw)
-
-        for route, portions in lines.items():
-            print(f"  Drawing {route}...")
-            while (color := next(cols)) == _col:
-                pass
-            for seg in portions:
-                _col = seg.color or color
-                seg.draw_color(draw, _col)
-
-        if canvas:
-            roadpath = SAVE_DIR / (continent + "_Roads.png")
-            print(f"  Saving to {roadpath}")
-            canvas.save(roadpath)
 
     if saveto:
         save_to_yaml(saveto, all_routes)
@@ -258,7 +267,7 @@ def main(recfiles: list[Path], saveto: Path | None, readfrom: Path | None):
     if DEBUG:
         pp = PrettyPrinter(width=160)
         pp.pprint(all_recs)
-    execute(all_recs, saved_routes, saveto)
+    bake(all_recs, saved_routes, saveto)
 
 
 if __name__ == "__main__":
