@@ -43,6 +43,8 @@ def load_from_yaml(yaml_file: Path) -> dict[str, dict[str, list[Segment]]]:
 
 
 def tuple_as_seq(self: Representer, data):
+    """Make tuple looks like a horizontal list"""
+    # Adapted from: https://stackoverflow.com/a/39611010/149900
     return self.represent_sequence(
         "tag:yaml.org,2002:seq",
         data,
