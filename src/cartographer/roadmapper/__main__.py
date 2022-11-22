@@ -165,14 +165,13 @@ def bake(
     bounds = set()
     continent = None
     route = None
-    mode: DrawMode = DrawMode.SOLID
     casefolded = {k.casefold(): k for k in KNOWN_AREAS.keys()}
     all_routes: dict[str, dict[str, list[Segment]]] = defaultdict(lambda: defaultdict(list))
     if saved_routes:
         for conti, routes in saved_routes.items():
             for route, segments in routes.items():
                 all_routes[conti][route].extend(segments)
-    segment = Segment(mode)
+    segment = Segment(DrawMode.SOLID)
     for rec in recs:
         # print(rec)
         if isinstance(rec, Command):
@@ -182,7 +181,6 @@ def bake(
                         raise ValueError(f"Unknown continent: {conti}")
                     print(f"Continent: {continent}")
                     bounds = KNOWN_AREAS[continent]
-                    mode = DrawMode.SOLID
                     segment = Segment(DrawMode.SOLID)
                     route = None
                 case "route", route_new:
@@ -190,32 +188,27 @@ def bake(
                         all_routes[continent][route].append(segment)
                     route = route_new
                     print(f"  {continent}::{route} begins...")
-                    mode = DrawMode.SOLID
                     segment = Segment(DrawMode.SOLID)
                 case "color", color_name:
                     if color_name not in ALL_COLORS:
                         print(f"    WARNING: Unknown Color {color_name} on {rec.source}")
                     segment.color = ALL_COLORS.get(color_name)
                 case "solid", _:
-                    if mode == DrawMode.DASHED:
-                        mode = DrawMode.SOLID
+                    if segment.mode == DrawMode.DASHED:
                         all_routes[continent][route].append(segment)
                         segment = Segment(DrawMode.SOLID)
                 case "dashed", _:
-                    if mode == DrawMode.SOLID:
-                        mode = DrawMode.DASHED
+                    if segment.mode == DrawMode.SOLID:
                         all_routes[continent][route].append(segment)
                         segment = Segment(DrawMode.DASHED)
                 case "endroute", _:
                     print(f"  {continent}::{route} ends...")
                     all_routes[continent][route].append(segment)
                     route = None
-                    mode = DrawMode.SOLID
                     segment = Segment(DrawMode.SOLID)
                 case "break", _:
                     print(f"    Discontinuous break!")
                     all_routes[continent][route].append(segment)
-                    mode = DrawMode.SOLID
                     segment = Segment(DrawMode.SOLID)
                 case cmd, _:
                     if cmd not in IGNORED_COMMANDS:
