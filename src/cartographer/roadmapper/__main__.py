@@ -13,6 +13,7 @@ from PIL import Image, ImageDraw
 
 from cartographer.roadmapper.config import options, SAVE_DIR
 from cartographer.roadmapper.road import Segment, DrawMode, Point
+from cartographer.roadmapper.yaml import load_from_yaml, save_to_yaml
 from sl_maptools import MapCoord
 from sl_maptools.knowns import KNOWN_AREAS
 
@@ -82,7 +83,11 @@ COLORS: dict[str, tuple[int, int, int]] = {
 }
 
 
-def execute(recs: list[PosRecord | tuple[str, str]]):
+def execute(
+    recs: list[PosRecord | tuple[str, str]],
+    saved_routes: dict[str, dict[str, list[Segment]]],
+    saveto: Path | None,
+):
     cols = itertools.cycle(tuple(COLORS.values()))
     bounds = set()
     continent = None
@@ -90,6 +95,10 @@ def execute(recs: list[PosRecord | tuple[str, str]]):
     mode: DrawMode = DrawMode.SOLID
     casefolded = {k.casefold(): k for k in KNOWN_AREAS.keys()}
     all_routes: dict[str, dict[str, list[Segment]]] = defaultdict(lambda: defaultdict(list))
+    if saved_routes:
+        for conti, routes in saved_routes.items():
+            for route, segments in routes.items():
+                all_routes[conti][route].extend(segments)
     segment = Segment(mode)
     _col: tuple[int, int, int] = (-1, -1, -1)
     for rec in recs:
@@ -174,6 +183,9 @@ def execute(recs: list[PosRecord | tuple[str, str]]):
             print(f"  Saving to {roadpath}")
             canvas.save(roadpath)
 
+    if saveto:
+        save_to_yaml(saveto, all_routes)
+
 
 def parse_stream(fin: TextIO, recs: list[PosRecord | Command]) -> bool:
     found_err = False
@@ -224,7 +236,13 @@ def parse_stream(fin: TextIO, recs: list[PosRecord | Command]) -> bool:
     return found_err
 
 
-def main(recfiles: list[Path]):
+def main(recfiles: list[Path], saveto: Path | None, readfrom: Path | None):
+    saved_routes: dict[str, dict[str, list[Segment]]] = {}
+    if readfrom is not None:
+        if not readfrom.exists():
+            raise FileNotFoundError(f"YAML_FILE {readfrom} not found!")
+        saved_routes = load_from_yaml(readfrom)
+
     all_recs = []
     err = False
     for recfile in recfiles:
@@ -240,7 +258,7 @@ def main(recfiles: list[Path]):
     if DEBUG:
         pp = PrettyPrinter(width=160)
         pp.pprint(all_recs)
-    execute(all_recs)
+    execute(all_recs, saved_routes, saveto)
 
 
 if __name__ == "__main__":

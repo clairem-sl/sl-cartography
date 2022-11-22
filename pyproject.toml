@@ -31,6 +31,7 @@ dependencies = [
     "msgpack",
     "appdirs",
     "beautifulsoup4",
+    "ruamel.yaml",
 ]
 
 [build-system]
@@ -42,6 +43,7 @@ requires = [
     "msgpack",
     "appdirs",
     "beautifulsoup4",
+    "ruamel.yaml",
     #
     "black",
     "black[d]",
