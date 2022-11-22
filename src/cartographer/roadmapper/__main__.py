@@ -7,7 +7,7 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 from pprint import PrettyPrinter
-from typing import cast, TextIO, TypedDict
+from typing import cast, TextIO
 
 from PIL import Image, ImageDraw
 
@@ -229,7 +229,7 @@ def parse_stream(fin: TextIO, recs: list[PosRecord | Command]) -> bool:
                     continue
 
             recs.append(record)
-    except UnicodeDecodeError as ude:
+    except UnicodeDecodeError:
         print(f"UnicodeDecodeError on {fin.name}:{lnum}")
         raise
     # pprint(recs)
