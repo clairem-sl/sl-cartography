@@ -105,7 +105,7 @@ PALETTES: dict[str, dict[str, tuple[int, int, int]]] = {
         "banana": (255, 239, 176),  # Banana Mania
         "tangerine": (245, 154, 142),  # Vivid Tangerine
     },
-    "brewer_q_10": {f"bq10-{n}": c for n, c in enumerate(BREWER_Q_10, start=1)}
+    "brewer_q_10": {f"bq10-{n}": c for n, c in enumerate(BREWER_Q_10, start=1)},
 }
 
 AUTO_COLORS = PALETTES["brewer_q_10"]
