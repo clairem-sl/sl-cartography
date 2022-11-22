@@ -114,6 +114,7 @@ RSVD_COLORS: dict[str, tuple[int, int, int]] = {
     "white": (255, 255, 255),
     "red": (255, 0, 0),
     "green": (0, 255, 0),
+    "yellow": (255, 255, 0),
 }
 
 ALL_COLORS = AUTO_COLORS | RSVD_COLORS
