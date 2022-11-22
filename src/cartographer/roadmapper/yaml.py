@@ -4,10 +4,10 @@
 from pathlib import Path
 from typing import Any, TypedDict
 
-from ruamel.yaml.representer import Representer
 from ruamel import yaml as ryaml
+from ruamel.yaml.representer import Representer
 
-from cartographer.roadmapper.road import Segment, DrawMode, Point
+from cartographer.roadmapper.road import DrawMode, Point, Segment
 
 
 def load_from_yaml(yaml_file: Path) -> dict[str, dict[str, list[Segment]]]:
@@ -61,14 +61,9 @@ def save_to_yaml(yaml_file: Path, all_routes: dict[str, dict[str, list[Segment]]
             for segment in segments:
                 points_data: list[list[int, int]] = [list(p) for p in segment.points]
                 segments_data.append({"mode": segment.mode.name, "color": segment.color, "points": points_data})
-            routes_data.append({
-                "route_name": route,
-                "segments": segments_data
-            })
+            routes_data.append({"route_name": route, "segments": segments_data})
         road_data.append({"continent": continent, "routes": routes_data})
-    data = {
-        "road_data": road_data
-    }
+    data = {"road_data": road_data}
     old_representer = Representer.represent_tuple
     try:
         Representer.represent_tuple = tuple_as_seq

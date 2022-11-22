@@ -7,12 +7,12 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 from pprint import PrettyPrinter
-from typing import cast, TextIO
+from typing import TextIO, cast
 
 from PIL import Image, ImageDraw
 
-from cartographer.roadmapper.config import options, SAVE_DIR
-from cartographer.roadmapper.road import Segment, DrawMode, Point
+from cartographer.roadmapper.config import SAVE_DIR, options
+from cartographer.roadmapper.road import DrawMode, Point, Segment
 from cartographer.roadmapper.yaml import load_from_yaml, save_to_yaml
 from sl_maptools import MapCoord
 from sl_maptools.knowns import KNOWN_AREAS

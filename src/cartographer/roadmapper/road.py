@@ -3,7 +3,7 @@
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 from enum import IntEnum
 from pathlib import Path
-from typing import TypedDict, NamedTuple
+from typing import NamedTuple, TypedDict
 
 import msgpack
 from PIL import ImageDraw
@@ -69,9 +69,7 @@ class Segment:
         if not blank and piece_points:
             draw.line(piece_points, width=width, fill=color, joint="curve")
 
-    def _draw_solid(
-        self, draw: ImageDraw.ImageDraw, width: int, color: tuple[int, int, int]
-    ):
+    def _draw_solid(self, draw: ImageDraw.ImageDraw, width: int, color: tuple[int, int, int]):
         draw.line(self.points, width=width, fill=color, joint="curve")
 
     def draw_black(self, draw: ImageDraw.ImageDraw):
