@@ -284,44 +284,49 @@ def execute(recs: list[PosRecord | tuple[str, str]]):
 
 def parse_stream(fin: TextIO, recs: list[PosRecord | Command]) -> bool:
     found_err = False
-    for lnum, ln in enumerate(fin, start=1):
-        ln = ln.strip()
-        if (matches := RE_POSREC_LINE.match(ln)) is None:
-            continue
-        posrec_dat = matches["entry"]
+    lnum = -1
+    try:
+        for lnum, ln in enumerate(fin, start=1):
+            ln = ln.strip()
+            if (matches := RE_POSREC_LINE.match(ln)) is None:
+                continue
+            cmdline = matches["entry"]
 
-        if posrec_dat.startswith("#"):
-            continue
-
-        src = (fin.name, lnum)
-
-        if posrec_dat.startswith("3;;"):
-            items = posrec_dat.split(";;")[1:]
-        elif "**" in posrec_dat:
-            items = posrec_dat.split("**")
-        elif "*<" in posrec_dat:
-            items = posrec_dat.split("*")
-        elif (matches := RE_POSREC_KV.match(posrec_dat)) is not None:
-            cmd = Command(matches["key"], matches["value"], src)
-            recs.append(cmd)
-            continue
-        else:
-            cmd = Command(posrec_dat.casefold(), "", src)
-            recs.append(cmd)
-            continue
-
-        match items:
-            case [regn, regc, locp]:
-                record = PosRecord(regn, None, regc, locp, source=src)
-            case [regn, parn, regc, locp]:
-                record = PosRecord(regn, parn, regc, locp, source=src)
-            case _:
-                print(f"ERROR: Unrecognized syntax on line {lnum}")
-                print(">>>", ln)
-                found_err = True
+            if cmdline.startswith("#"):
                 continue
 
-        recs.append(record)
+            src = (fin.name, lnum)
+
+            if cmdline.startswith("3;;"):
+                items = cmdline.split(";;")[1:]
+            elif "**" in cmdline:
+                items = cmdline.split("**")
+            elif "*<" in cmdline:
+                items = cmdline.split("*")
+            elif (matches := RE_POSREC_KV.match(cmdline)) is not None:
+                cmd = Command(matches["key"], matches["value"], src)
+                recs.append(cmd)
+                continue
+            else:
+                cmd = Command(cmdline.casefold(), "", src)
+                recs.append(cmd)
+                continue
+
+            match items:
+                case [regn, regc, locp]:
+                    record = PosRecord(regn, None, regc, locp, source=src)
+                case [regn, parn, regc, locp]:
+                    record = PosRecord(regn, parn, regc, locp, source=src)
+                case _:
+                    print(f"ERROR: Unrecognized syntax on line {lnum}")
+                    print(">>>", ln)
+                    found_err = True
+                    continue
+
+            recs.append(record)
+    except UnicodeDecodeError as ude:
+        print(f"UnicodeDecodeError on {fin.name}:{lnum}")
+        raise
     # pprint(recs)
     return found_err
 
