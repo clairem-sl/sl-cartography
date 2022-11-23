@@ -61,8 +61,7 @@ def save_to_yaml(yaml_file: Path, all_routes: dict[str, dict[str, list[Segment]]
         for route, segments in routes.items():
             segments_data = []
             for segment in segments:
-                points_data: list[list[int, int]] = [list(p) for p in segment.points]
-                segments_data.append({"mode": segment.mode.name, "color": segment.color, "points": points_data})
+                segments_data.append({"mode": segment.mode.name, "color": segment.color, "points": segment.points})
             routes_data.append({"route_name": route, "segments": segments_data})
         road_data.append({"continent": continent, "routes": routes_data})
     data = {"road_data": road_data}
