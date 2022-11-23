@@ -57,13 +57,13 @@ class Segment:
     def __init__(self, mode: DrawMode, color: tuple[int, int, int] = None):
         self.mode: DrawMode = mode
         self.color: None | tuple[int, int, int] = color
-        self.points: list[Point] = []
+        self.canvas_points: list[Point] = []
 
     def __repr__(self):
-        return f"Segment(" f"{self.mode}, " f"{self.color}, " f"{self.points}" f")"
+        return f"Segment(" f"{self.mode}, " f"{self.color}, " f"{self.canvas_points}" f")"
 
     def add(self, point: Point):
-        self.points.append(point)
+        self.canvas_points.append(point)
 
     @staticmethod
     def _draw_line(draw, points, width, fill, extend_by: int = 0):
@@ -97,7 +97,7 @@ class Segment:
         piece_points: list[Point] = []
         blank_len -= 1
         dash_len += 1
-        for point in self.points:
+        for point in self.canvas_points:
             c += 1
             if blank:
                 if c >= blank_len:
@@ -114,10 +114,10 @@ class Segment:
             self._draw_line(draw, piece_points, width=width, fill=color, extend_by=extend_by)
 
     def _draw_solid(self, draw: ImageDraw.ImageDraw, width: int, color: tuple[int, int, int], extend_by: int = 0):
-        self._draw_line(draw, self.points, width=width, fill=color, extend_by=extend_by)
+        self._draw_line(draw, self.canvas_points, width=width, fill=color, extend_by=extend_by)
 
     def draw_black(self, draw: ImageDraw.ImageDraw):
-        if not self.points:
+        if not self.canvas_points:
             return
         if self.mode == DrawMode.SOLID:
             self._draw_solid(draw, self.BlackWidth, (0, 0, 0), extend_by=3)
@@ -127,7 +127,7 @@ class Segment:
             raise NotImplementedError()
 
     def draw_color(self, draw: ImageDraw.ImageDraw, color: tuple[int, int, int]):
-        if not self.points:
+        if not self.canvas_points:
             return
         if self.mode == DrawMode.SOLID:
             self._draw_solid(draw, self.ColorWidth, color)
@@ -140,7 +140,7 @@ class Segment:
         return {
             "__mode": int(self.mode),
             "__color": self.color,
-            "__points": [(p.x, p.y) for p in self.points],
+            "__points": [(p.x, p.y) for p in self.canvas_points],
         }
 
     def save(self, dest: Path):
@@ -152,7 +152,7 @@ class Segment:
         mode = DrawMode(raw["__mode"])
         colr = raw["__color"]
         o = cls(mode, colr)
-        o.points = [Point(*i) for i in raw["__points"]]
+        o.canvas_points = [Point(*i) for i in raw["__points"]]
         return o
 
     @classmethod

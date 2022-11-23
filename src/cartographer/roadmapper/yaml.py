@@ -18,7 +18,7 @@ def load_from_yaml(yaml_file: Path) -> dict[str, dict[str, list[Segment]]]:
     class SegmentStruct(TypedDict):
         mode: str
         color: list[int, int, int] | None
-        points: list[list[int, int]]
+        canv_points: list[list[int, int]]
 
     class RouteStruct(TypedDict):
         route_name: str
@@ -37,7 +37,7 @@ def load_from_yaml(yaml_file: Path) -> dict[str, dict[str, list[Segment]]]:
                 if color := segment["color"]:
                     color = tuple(color)
                 new_seg = Segment(mode=mode, color=color)
-                new_seg.points = [Point(*p) for p in segment["points"]]
+                new_seg.canvas_points = [Point(*p) for p in segment["canv_points"]]
                 segs.append(new_seg)
             all_routes[continent][route["route_name"]] = segs
 
@@ -61,7 +61,9 @@ def save_to_yaml(yaml_file: Path, all_routes: dict[str, dict[str, list[Segment]]
         for route, segments in routes.items():
             segments_data = []
             for segment in segments:
-                segments_data.append({"mode": segment.mode.name, "color": segment.color, "points": segment.points})
+                segments_data.append(
+                    {"mode": segment.mode.name, "color": segment.color, "canv_points": segment.canvas_points}
+                )
             routes_data.append({"route_name": route, "segments": segments_data})
         road_data.append({"continent": continent, "routes": routes_data})
     data = {"road_data": road_data}

@@ -135,7 +135,7 @@ def do_draw(all_routes: dict[str, dict[str, list[Segment]]]):
         print("  Drawing Black Outlines...")
         for route, portions in lines.items():
             for segnum, seg in enumerate(portions, start=1):
-                if len(seg.points) < 2:
+                if len(seg.canvas_points) < 2:
                     print(f"    WARNING: Not enough data points at {continent}::{route}::{segnum}")
                     continue
                 seg.draw_black(draw)
@@ -145,7 +145,7 @@ def do_draw(all_routes: dict[str, dict[str, list[Segment]]]):
             while (color := next(cols)) == _col:
                 pass
             for segnum, seg in enumerate(portions, start=1):
-                if len(seg.points) < 2:
+                if len(seg.canvas_points) < 2:
                     print(f"    WARNING: Not enough data points at {continent}::{route}::{segnum}")
                     continue
                 _col = seg.color or color
@@ -244,14 +244,14 @@ def bake(
             for seg in segments:
                 seen = set()
                 uniqs = []
-                for p in seg.points:
+                for p in seg.canvas_points:
                     if p in seen:
                         continue
                     seen.add(p)
                     uniqs.append(p)
                 if len(uniqs) < 2:
                     continue
-                seg.points = uniqs
+                seg.canvas_points = uniqs
                 new_segs.append(seg)
             if new_segs:
                 clean_routes[conti][route] = new_segs
