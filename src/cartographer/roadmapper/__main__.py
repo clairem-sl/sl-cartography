@@ -80,8 +80,10 @@ def main(readchat: list[Path], saveto: Path | None, yamlfiles: list[Path]):
 
     final_routes = bake(all_recs, saved_routes)
 
-    make_backup(saveto, levels=3)
-    save_to_yaml(saveto, final_routes)
+    if saveto:
+        print(f"Saving Consolidated Routes to {saveto}")
+        make_backup(saveto, levels=3)
+        save_to_yaml(saveto, final_routes)
 
     do_draw(final_routes)
 

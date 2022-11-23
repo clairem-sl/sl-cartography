@@ -25,7 +25,7 @@ def options():
         "--saveto",
         metavar="YAML_FILE",
         type=Path,
-        help="If specified, save a YAML representation of the routes into YAML_FILE",
+        help="If specified, save a YAML representation of the final consolidated routes into YAML_FILE",
     )
 
     parser.add_argument("--readchat", metavar="CHAT_FILE", type=Path, nargs="+", help="If specified, parse chat files")
