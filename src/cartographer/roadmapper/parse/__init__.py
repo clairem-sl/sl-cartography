@@ -65,7 +65,6 @@ class PosRecord:
 def bake(
     recs: list[PosRecord | tuple[str, str]],
     saved_routes: dict[str, dict[str, list[Segment]]],
-    saveto: Path | None,
 ):
     bounds = set()
     continent = None
@@ -160,10 +159,6 @@ def bake(
                 new_segs.append(seg)
             if new_segs:
                 clean_routes[conti][route] = new_segs
-
-    if saveto:
-        make_backup(saveto, levels=3)
-        save_to_yaml(saveto, clean_routes)
 
     return clean_routes
 

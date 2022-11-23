@@ -7,6 +7,8 @@ from pprint import PrettyPrinter
 
 from cartographer.roadmapper.parse import bake, parse_stream
 from cartographer.roadmapper.parse.config import options
+from cartographer.roadmapper.yaml import save_to_yaml
+from sl_maptools.utils import make_backup
 
 DEBUG = False
 
@@ -28,7 +30,11 @@ def main(output: Path, recfiles: list[Path]):
         pp = PrettyPrinter(width=160)
         pp.pprint(all_recs)
 
-    bake(all_recs, {}, output)
+    clean_routes = bake(all_recs, {})
+
+    make_backup(output, levels=3)
+    save_to_yaml(output, clean_routes)
+
 
 
 if __name__ == '__main__':

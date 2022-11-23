@@ -12,8 +12,9 @@ from cartographer.roadmapper.colors import AUTO_COLORS
 from cartographer.roadmapper.config import SAVE_DIR, options
 from cartographer.roadmapper.parse import bake, parse_stream
 from cartographer.roadmapper.road import Segment
-from cartographer.roadmapper.yaml import load_from_yaml
+from cartographer.roadmapper.yaml import load_from_yaml, save_to_yaml
 from sl_maptools.knowns import KNOWN_AREAS
+from sl_maptools.utils import make_backup
 
 DEBUG = False
 
@@ -76,7 +77,11 @@ def main(recfiles: list[Path], saveto: Path | None, readfrom: Path | None):
         pp = PrettyPrinter(width=160)
         pp.pprint(all_recs)
 
-    final_routes = bake(all_recs, saved_routes, saveto)
+    final_routes = bake(all_recs, saved_routes)
+
+    make_backup(saveto, levels=3)
+    save_to_yaml(saveto, final_routes)
+
     do_draw(final_routes)
 
 
