@@ -21,23 +21,26 @@ def load_from_yaml(yaml_file: Path) -> dict[str, dict[str, list[Segment]]]:
         color: list[int, int, int] | None
         points: list[list[int, int]]
 
+    class RouteStruct(TypedDict):
+        route_name: str
+        segments: list[SegmentStruct]
+
     road_data: list[dict[str, Any]] = data["road_data"]
     for rd in road_data:
         continent = rd["continent"]
         all_routes[continent] = {}
-        routes: list[dict[str, Any]] = rd["routes_data"]
+        routes: list[RouteStruct] = rd["routes_data"]
         for route in routes:
             segs = []
-            all_routes[continent][route["route_name"]] = segs
-            segments: list[SegmentStruct] = route["segments"]
-            for segment in segments:
+            for segment in route["segments"]:
                 mode = DrawMode[segment["mode"].upper()]
+                color: tuple[int, int, int] | None
                 if color := segment["color"]:
                     color = tuple(color)
                 new_seg = Segment(mode=mode, color=color)
-                points: list[list[int, int]] = segment["points"]
-                new_seg.points = [Point(*p) for p in points]
+                new_seg.points = [Point(*p) for p in segment["points"]]
                 segs.append(new_seg)
+            all_routes[continent][route["route_name"]] = segs
 
     return all_routes
 
