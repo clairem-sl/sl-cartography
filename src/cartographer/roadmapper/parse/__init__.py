@@ -145,6 +145,7 @@ def bake(
     for conti, routes in all_routes.items():
         for route, segments in routes.items():
             new_segs: list[Segment] = []
+            # Removal of dupe canvas_points
             for seg in segments:
                 seen = set()
                 uniqs = []
@@ -153,6 +154,7 @@ def bake(
                         continue
                     seen.add(p)
                     uniqs.append(p)
+                # If we end up with too few points, skip adding this segment
                 if len(uniqs) < 2:
                     continue
                 seg.canvas_points = uniqs
