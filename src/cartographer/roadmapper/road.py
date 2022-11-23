@@ -3,7 +3,7 @@
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 from enum import IntEnum
 from pathlib import Path
-from typing import NamedTuple, TypedDict
+from typing import NamedTuple, Self, TypedDict
 
 import msgpack
 from PIL import ImageDraw
@@ -15,6 +15,7 @@ class DrawMode(IntEnum):
 
 
 class SegmentSerialized(TypedDict):
+    """A data structure serializable by MessagePack, derived from Segment"""
     __mode: int
     __color: None | tuple[int, int, int]
     __points: list[tuple[int, int]]
@@ -25,7 +26,7 @@ class Point(NamedTuple):
     y: int
 
 
-def extend_by_n(p1: Point, p2: Point, n: int):
+def extend_by_n(p1: Point, p2: Point, n: int) -> Point:
     """Extend by at least n pixels."""
     x1, y1 = p1
     x2, y2 = p2
@@ -53,6 +54,7 @@ def extend_by_n(p1: Point, p2: Point, n: int):
 
 
 class Segment:
+    """A segment of the Road."""
     BlackWidth = 35
     ColorWidth = 25
 
@@ -64,11 +66,13 @@ class Segment:
     def __repr__(self):
         return f"Segment(" f"{self.mode}, " f"{self.color}, " f"{self.canvas_points}" f")"
 
-    def add(self, point: Point):
+    def add(self, point: Point) -> None:
         self.canvas_points.append(point)
 
     @staticmethod
-    def _draw_line(draw, points, width, fill, extend_by: int = 0):
+    def _draw_line(
+        draw: ImageDraw, points: list[Point], width: int, fill: tuple[int, int, int], extend_by: int = 0
+    ) -> None:
         seen = set()
         uniques = []
         for p in points:
@@ -94,7 +98,8 @@ class Segment:
         dash_len: int = 6,
         blank_len: int = 4,
         extend_by: int = 0,
-    ):
+    ) -> None:
+        """Draw a dashed line."""
         c = -1 if (blank := start_blank) else 0
         piece_points: list[Point] = []
         blank_len -= 1
@@ -115,20 +120,25 @@ class Segment:
         if not blank and piece_points:
             self._draw_line(draw, piece_points, width=width, fill=color, extend_by=extend_by)
 
-    def _draw_solid(self, draw: ImageDraw.ImageDraw, width: int, color: tuple[int, int, int], extend_by: int = 0):
+    def _draw_solid(
+        self, draw: ImageDraw.ImageDraw, width: int, color: tuple[int, int, int], extend_by: int = 0
+    ) -> None:
+        """Draw a solid line."""
         self._draw_line(draw, self.canvas_points, width=width, fill=color, extend_by=extend_by)
 
-    def draw_black(self, draw: ImageDraw.ImageDraw):
+    def draw_black(self, draw: ImageDraw.ImageDraw, extend_by: int = 3) -> None:
+        """Draw using black color, with extension of segments."""
         if not self.canvas_points:
             return
         if self.mode == DrawMode.SOLID:
-            self._draw_solid(draw, self.BlackWidth, (0, 0, 0), extend_by=3)
+            self._draw_solid(draw, self.BlackWidth, (0, 0, 0), extend_by=extend_by)
         elif self.mode == DrawMode.DASHED:
-            self._draw_dashed(draw, self.BlackWidth, (0, 0, 0), extend_by=3)
+            self._draw_dashed(draw, self.BlackWidth, (0, 0, 0), extend_by=extend_by)
         else:
             raise NotImplementedError()
 
-    def draw_color(self, draw: ImageDraw.ImageDraw, color: tuple[int, int, int]):
+    def draw_color(self, draw: ImageDraw.ImageDraw, color: tuple[int, int, int]) -> None:
+        """Draw with specified color."""
         if not self.canvas_points:
             return
         if self.mode == DrawMode.SOLID:
@@ -138,19 +148,22 @@ class Segment:
         else:
             raise NotImplementedError()
 
-    def encode(self):
+    def encode(self) -> SegmentSerialized:
+        """Turn into data serializable by MessagePack."""
         return {
             "__mode": int(self.mode),
             "__color": self.color,
             "__points": [(p.x, p.y) for p in self.canvas_points],
         }
 
-    def save(self, dest: Path):
+    def save(self, dest: Path) -> None:
+        """Encode into MessagePack and save into file."""
         with dest.open("wb") as fout:
             msgpack.pack(self.encode(), fout)
 
     @classmethod
-    def from_raw(cls, raw: SegmentSerialized):
+    def from_raw(cls, raw: SegmentSerialized) -> Self:
+        """Instantiate from raw serialized data."""
         mode = DrawMode(raw["__mode"])
         colr = raw["__color"]
         o = cls(mode, colr)
@@ -158,7 +171,8 @@ class Segment:
         return o
 
     @classmethod
-    def load(cls, source: Path):
+    def load(cls, source: Path) -> Self:
+        """Load from a MessagePack file."""
         with source.open("rb") as fin:
             raw = msgpack.unpack(fin)
         return cls.from_raw(raw)
