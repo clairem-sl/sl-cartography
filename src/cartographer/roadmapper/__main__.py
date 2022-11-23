@@ -8,8 +8,9 @@ from pprint import PrettyPrinter
 
 from PIL import Image, ImageDraw
 
+from cartographer.roadmapper.colors import AUTO_COLORS
 from cartographer.roadmapper.config import SAVE_DIR, options
-from cartographer.roadmapper.parse_chat.__main__ import parse_stream, bake, AUTO_COLORS
+from cartographer.roadmapper.parse_chat.__main__ import parse_stream, bake
 from cartographer.roadmapper.road import Segment
 from cartographer.roadmapper.yaml import load_from_yaml
 from sl_maptools.knowns import KNOWN_AREAS
