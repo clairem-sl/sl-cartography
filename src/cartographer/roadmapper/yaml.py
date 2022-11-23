@@ -4,8 +4,7 @@
 from pathlib import Path
 from typing import Any, TypedDict
 
-from ruamel import yaml as ryaml
-from ruamel.yaml.representer import Representer
+import ruamel.yaml as ryaml
 
 from cartographer.roadmapper.road import DrawMode, Point, Segment
 
@@ -45,14 +44,14 @@ def load_from_yaml(yaml_file: Path) -> dict[str, dict[str, list[Segment]]]:
     return all_routes
 
 
-def tuple_as_seq(self: Representer, data):
-    """Make tuple looks like a horizontal list"""
-    # Adapted from: https://stackoverflow.com/a/39611010/149900
-    return self.represent_sequence(
-        "tag:yaml.org,2002:seq",
-        data,
-        flow_style=True,
-    )
+class MyRepresenter(ryaml.Representer):
+    def ignore_aliases(self, data):  # type: (Any) -> bool
+        return True
+
+    def represent_data(self, data):  # type: (Any) -> Any
+        if isinstance(data, tuple):
+            return self.represent_sequence("tag:yaml.org,2002:seq", list(data), flow_style=True)
+        return super().represent_data(data)
 
 
 def save_to_yaml(yaml_file: Path, all_routes: dict[str, dict[str, list[Segment]]]):
@@ -67,10 +66,11 @@ def save_to_yaml(yaml_file: Path, all_routes: dict[str, dict[str, list[Segment]]
             routes_data.append({"route_name": route, "segments": segments_data})
         road_data.append({"continent": continent, "routes": routes_data})
     data = {"road_data": road_data}
-    old_representer = Representer.represent_tuple
     try:
-        Representer.represent_tuple = tuple_as_seq
+        yml = ryaml.YAML()
+        yml.default_flow_style = None
+        yml.Representer = MyRepresenter
         with yaml_file.open("wt") as fout:
-            ryaml.dump(data, fout, allow_unicode=True)
+            yml.dump(data, fout)
     finally:
-        Representer.represent_tuple = old_representer
+        pass
