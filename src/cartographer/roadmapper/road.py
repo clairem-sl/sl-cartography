@@ -31,6 +31,8 @@ def extend_by_n(p1: Point, p2: Point, n: int):
     x2, y2 = p2
     dx = x2 - x1
     dy = y2 - y1
+    if dx == dy == 0:
+        raise ValueError("p1 and p2 are duplicates!")
     if abs(dx) > abs(dy):
         # Horizontally oriented
         _n = n if dx >= 0 else -n
