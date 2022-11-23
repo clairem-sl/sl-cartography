@@ -240,7 +240,19 @@ def bake(
     clean_routes: dict[str, dict[str, list[Segment]]] = defaultdict(lambda: defaultdict(list))
     for conti, routes in all_routes.items():
         for route, segments in routes.items():
-            new_segs = [seg for seg in segments if seg.points]
+            new_segs: list[Segment] = []
+            for seg in segments:
+                seen = set()
+                uniqs = []
+                for p in seg.points:
+                    if p in seen:
+                        continue
+                    seen.add(p)
+                    uniqs.append(p)
+                if len(uniqs) < 2:
+                    continue
+                seg.points = uniqs
+                new_segs.append(seg)
             if new_segs:
                 clean_routes[conti][route] = new_segs
 
