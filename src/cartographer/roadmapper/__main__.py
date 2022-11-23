@@ -54,16 +54,17 @@ def do_draw(all_routes: dict[str, dict[str, list[Segment]]]):
             canvas.save(roadpath)
 
 
-def main(recfiles: list[Path], saveto: Path | None, readfrom: Path | None):
+def main(readchat: list[Path], saveto: Path | None, yamlfiles: list[Path]):
     saved_routes: dict[str, dict[str, list[Segment]]] = {}
-    if readfrom is not None:
-        if not readfrom.exists():
-            raise FileNotFoundError(f"YAML_FILE {readfrom} not found!")
-        saved_routes = load_from_yaml(readfrom)
+
+    for yf in yamlfiles:
+        if not yf.exists():
+            raise FileNotFoundError(f"YAML_FILE {yf} not found!")
+        saved_routes.update(load_from_yaml(yf))
 
     all_recs = []
     err = False
-    for recfile in recfiles:
+    for recfile in readchat:
         if not recfile.exists():
             print(f"{recfile} not found!")
             sys.exit(1)

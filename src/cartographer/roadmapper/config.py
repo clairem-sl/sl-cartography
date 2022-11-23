@@ -18,7 +18,7 @@ def options():
     :return: A namespace containing the options
     """
     parser = argparse.ArgumentParser(
-        "SL Mosaic v3", epilog="You must specify either one (or several) FILE(s), or `--readfrom YAML_FILE`"
+        "SL RoadMapper", epilog="You must specify either one (or several) YAML_FILE(s), or `--readchat CHAT_FILE`"
     )
 
     parser.add_argument(
@@ -28,20 +28,18 @@ def options():
         help="If specified, save a YAML representation of the routes into YAML_FILE",
     )
 
-    parser.add_argument(
-        "--readfrom", metavar="YAML_FILE", type=Path, help="If specified, read road data from YAML_FILE"
-    )
+    parser.add_argument("--readchat", metavar="CHAT_FILE", type=Path, nargs="+", help="If specified, parse chat files")
 
     parser.add_argument(
-        "recfiles",
-        metavar="FILE",
+        "yamlfiles",
+        metavar="YAML_FILE",
         type=Path,
         nargs="*",
-        help="One (or more) chat transcript files",
+        help="One (or more) YAML files",
     )
 
     opts = parser.parse_args()
-    if not opts.recfiles and not opts.readfrom:
-        raise RuntimeError("Please specify FILE(s) or use `--readfrom YAML_FILE`!")
+    if not opts.readchat and not opts.yamlfiles:
+        raise RuntimeError("Please specify YAML_FILE(s) or use `--readchat CHAT_FILE`!")
 
     return opts
