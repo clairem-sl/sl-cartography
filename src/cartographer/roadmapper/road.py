@@ -14,13 +14,6 @@ class DrawMode(IntEnum):
     DASHED = 2
 
 
-class SegmentSerialized(TypedDict):
-    """A data structure serializable by MessagePack, derived from Segment"""
-    __mode: int
-    __color: None | tuple[int, int, int]
-    __points: list[tuple[int, int]]
-
-
 class Point(NamedTuple):
     x: int
     y: int
@@ -51,6 +44,13 @@ def extend_by_n(p1: Point, p2: Point, n: int) -> Point:
 # pp2 = Point(2, 3)
 # print(extend_by_n(pp1, pp2, 2))
 # print(extend_by_n(pp2, pp1, 2))
+
+
+class SegmentSerialized(TypedDict):
+    """A data structure serializable by MessagePack, derived from Segment"""
+    __mode: int
+    __color: None | tuple[int, int, int]
+    __points: list[tuple[int, int]]
 
 
 class Segment:
