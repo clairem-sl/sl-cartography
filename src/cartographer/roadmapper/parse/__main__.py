@@ -11,7 +11,7 @@ from typing import cast, TextIO
 from cartographer.roadmapper.colors import ALL_COLORS
 from cartographer.roadmapper.road import Segment, DrawMode, Point
 from cartographer.roadmapper.yaml import save_to_yaml
-from cartographer.roadmapper.parse_chat.config import options
+from cartographer.roadmapper.parse.config import options
 from sl_maptools import MapCoord
 from sl_maptools.knowns import KNOWN_AREAS
 from sl_maptools.utils import make_backup
