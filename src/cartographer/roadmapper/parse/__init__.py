@@ -3,15 +3,12 @@
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 import re
 from collections import defaultdict
-from pathlib import Path
 from typing import cast, TextIO
 
 from cartographer.roadmapper.colors import ALL_COLORS
 from cartographer.roadmapper.road import Segment, DrawMode, Point
-from cartographer.roadmapper.yaml import save_to_yaml
 from sl_maptools import MapCoord
 from sl_maptools.knowns import KNOWN_AREAS
-from sl_maptools.utils import make_backup
 
 RE_VECTOR = re.compile(r"\s*<\s*(-?[\d.]+),\s*(-?[\d.]+),\s*(-?[\d.]+)\s*>\s*")
 RE_POSREC_LINE = re.compile(r"(?P<prefix>.*?)PosRecorder\s*(?P<ver>[^:]*):\s+(?P<entry>.*)")
