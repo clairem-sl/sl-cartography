@@ -36,7 +36,6 @@ def main(output: Path, recfiles: list[Path]):
     save_to_yaml(output, clean_routes)
 
 
-
 if __name__ == '__main__':
     opts = options()
     main(**vars(opts))
