@@ -110,7 +110,7 @@ def bake(
                 case "break", _:
                     print(f"    Discontinuous break!")
                     all_routes[continent][route].append(segment)
-                    segment = Segment(DrawMode.SOLID)
+                    segment = Segment(DrawMode.SOLID, color=segment.color)
                 case cmd, _:
                     if cmd not in IGNORED_COMMANDS:
                         print(f"    WARNING: Unrecognized command {rec.kvp} from {rec.source}")
