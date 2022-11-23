@@ -196,11 +196,11 @@ def bake(
                 case "solid", _:
                     if segment.mode == DrawMode.DASHED:
                         all_routes[continent][route].append(segment)
-                        segment = Segment(DrawMode.SOLID)
+                        segment = Segment(DrawMode.SOLID, color=segment.color)
                 case "dashed", _:
                     if segment.mode == DrawMode.SOLID:
                         all_routes[continent][route].append(segment)
-                        segment = Segment(DrawMode.DASHED)
+                        segment = Segment(DrawMode.DASHED, color=segment.color)
                 case "endroute", _:
                     print(f"  {continent}::{route} ends...")
                     all_routes[continent][route].append(segment)
