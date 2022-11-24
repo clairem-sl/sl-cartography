@@ -73,5 +73,6 @@ def save_to_yaml(yaml_file: Path, all_routes: dict[str, dict[str, list[Segment]]
         yml.Representer = MyRepresenter
         with yaml_file.open("wt") as fout:
             yml.dump(data, fout)
+        print(f"Routes saved to {yaml_file}")
     finally:
         pass
