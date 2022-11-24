@@ -188,8 +188,8 @@ def parse_stream(fin: TextIO, recs: list[PosRecord | Command]) -> bool:
                 recs.append(cmd)
                 continue
             else:
-                cmd = Command(cmdline.casefold(), "", src)
-                recs.append(cmd)
+                cmd, *rest = cmdline.casefold().split()
+                recs.append(Command(cmd, " ".join(rest), src))
                 continue
 
             match items:
