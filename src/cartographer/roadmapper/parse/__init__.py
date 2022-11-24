@@ -18,7 +18,7 @@ IGNORED_COMMANDS = {"start", "stop", "width", "pos"}
 
 
 class Command:
-    def __init__(self, command, value, source: tuple[str, int] = (None, -1)):
+    def __init__(self, command: str, value: str, source: tuple[str, int] = (None, -1)):
         self.command = command
         self.value = value
         self.source = source
