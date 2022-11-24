@@ -2,6 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 from enum import IntEnum
+from itertools import cycle, islice
 from pathlib import Path
 from typing import NamedTuple, Self, TypedDict
 
@@ -12,6 +13,7 @@ from PIL import ImageDraw
 class DrawMode(IntEnum):
     SOLID = 1
     DASHED = 2
+    RAILS = 3
 
 
 class Point(NamedTuple):
@@ -51,6 +53,13 @@ class SegmentSerialized(TypedDict):
     __mode: int
     __color: None | tuple[int, int, int]
     __points: list[tuple[int, int]]
+
+
+class _RailsDrawMode(IntEnum):
+    solid = 0
+    rail1 = 1
+    gap = 2
+    rail2 = 3
 
 
 class Segment:
@@ -127,6 +136,38 @@ class Segment:
         if not blank and piece_points:
             self._draw_line(draw, piece_points, width=width, fill=color, extend_by=extend_by)
 
+    def _draw_rails(
+        self,
+        draw: ImageDraw.ImageDraw,
+        width: int,
+        color: tuple[int, int, int],
+        rails_color: tuple[int, int, int] = (0, 0, 0),
+        non_rails_len: int = 3,
+        rails_len: int = 1,
+        railgaps_len: int = 1,
+    ) -> None:
+        params: dict[_RailsDrawMode, tuple[int, tuple[int, int, int]]] = {
+            _RailsDrawMode.solid: (non_rails_len, color),
+            _RailsDrawMode.rail1: (rails_len, rails_color),
+            _RailsDrawMode.gap: (railgaps_len, color),
+            _RailsDrawMode.rail2: (rails_len, rails_color),
+        }
+        _crdm = cycle(_RailsDrawMode)
+        piece_points = [self.canvas_points[0]]
+        c = 0
+        limit, clr = params[next(_crdm)]
+        for point in islice(self.canvas_points, 1, None):
+            piece_points.append(point)
+            c += 1
+            if c >= limit:
+                self._draw_line(draw, piece_points, width=width, fill=clr)
+                piece_points = [piece_points[-1]]
+                c = 0
+                limit, clr = params[next(_crdm)]
+                continue
+        if len(piece_points) >= 2:
+            self._draw_line(draw, piece_points, width=width, fill=clr)
+
     def _draw_solid(
         self, draw: ImageDraw.ImageDraw, width: int, color: tuple[int, int, int], extend_by: int = 0
     ) -> None:
@@ -137,7 +178,7 @@ class Segment:
         """Draw using black color, with extension of segments."""
         if not self.canvas_points:
             return
-        if self.mode == DrawMode.SOLID:
+        if self.mode == DrawMode.SOLID or self.mode == DrawMode.RAILS:
             self._draw_solid(draw, self.BlackWidth, (0, 0, 0), extend_by=extend_by)
         elif self.mode == DrawMode.DASHED:
             self._draw_dashed(draw, self.BlackWidth, (0, 0, 0), extend_by=extend_by)
@@ -152,6 +193,8 @@ class Segment:
             self._draw_solid(draw, self.ColorWidth, color)
         elif self.mode == DrawMode.DASHED:
             self._draw_dashed(draw, self.ColorWidth, color)
+        elif self.mode == DrawMode.RAILS:
+            self._draw_rails(draw, self.ColorWidth, color)
         else:
             raise NotImplementedError()
 
