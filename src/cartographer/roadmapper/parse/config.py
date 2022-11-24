@@ -40,8 +40,8 @@ def options():
         "--start-from", "-s",
         metavar="TIMESTAMP",
         help=(
-            "An ISO8601-like timestamp. Parsing of chat files will begin only from this timestamp. "
-            "These are valid formats: 2022-11-22 16:53"
+            "An ISO8601-like timestamp. Parsing of chat files will begin only from this timestamp (inclusive). "
+            "These are valid formats: 2022-11-22 16:53, 2022/11/22 02:53, 2022-11-22T02:53"
         )
     )
 
