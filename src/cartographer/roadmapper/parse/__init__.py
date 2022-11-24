@@ -189,7 +189,7 @@ def parse_chat(chatfile: Path, recs: list[PosRecord | Command], start_from: date
     lnum = -1
     skips = 0
     try:
-        with chatfile.open("rt") as fin:
+        with chatfile.open("rt", encoding="utf-8") as fin:
             for lnum, ln in enumerate(fin, start=1):
                 ln = ln.strip()
 
