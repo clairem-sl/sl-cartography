@@ -94,6 +94,12 @@ def bake(
                     if color_name not in ALL_COLORS:
                         print(f"    WARNING: Unknown Color {color_name} on {rec.source}")
                     segment.color = ALL_COLORS.get(color_name)
+                case "mode", umode:
+                    umode: str
+                    wmode: DrawMode = DrawMode[umode.upper()]
+                    if segment.mode != wmode:
+                        all_routes[continent][route].append(segment)
+                        segment = Segment(DrawMode.SOLID, color=segment.color)
                 case "solid", _:
                     if segment.mode == DrawMode.DASHED:
                         all_routes[continent][route].append(segment)
