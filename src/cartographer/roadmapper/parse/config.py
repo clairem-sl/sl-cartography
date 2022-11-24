@@ -3,6 +3,7 @@
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import argparse
+import textwrap
 from pathlib import Path
 
 import appdirs
@@ -20,7 +21,15 @@ def options():
 
     :return: A namespace containing the options
     """
-    parser = argparse.ArgumentParser("parse")
+
+    epilog = textwrap.dedent("""
+    WARNING: The granularity for --merge-strategy is per named route (that is, Continent::RoadName).
+    If you are doing a piecemeal roadmapping of a route, e.g., say the grids of Bay City, you MUST
+    finish the whole route first. If not, then later segments will overwrite the earlier segments
+    and you will lose your earlier records _for_that_route_.
+    """)
+
+    parser = argparse.ArgumentParser("parse", epilog=epilog)
 
     parser.add_argument(
         "--merge-strategy", "-m",
