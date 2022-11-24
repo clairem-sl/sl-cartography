@@ -95,7 +95,7 @@ class Segment:
         width: int,
         color: tuple[int, int, int],
         start_blank: bool = True,
-        dash_len: int = 6,
+        dash_len: int = 5,
         blank_len: int = 4,
         extend_by: int = 0,
     ) -> None:
