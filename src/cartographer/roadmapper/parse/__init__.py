@@ -73,6 +73,7 @@ def bake(
             for route, segments in routes.items():
                 all_routes[conti][route].extend(segments)
     segment = Segment(DrawMode.SOLID)
+    doubled = False
     for rec in recs:
         # print(rec)
         if isinstance(rec, Command):
@@ -117,6 +118,8 @@ def bake(
                     print(f"    Discontinuous break!")
                     all_routes[continent][route].append(segment)
                     segment = Segment(DrawMode.SOLID, color=segment.color)
+                case "doubled", onoff:
+                    doubled = (onoff == "on")
                 case cmd, _:
                     if cmd not in IGNORED_COMMANDS:
                         print(f"    WARNING: Unrecognized command {rec.kvp} from {rec.source}")
@@ -135,7 +138,7 @@ def bake(
             offset_pixels = offset_tiles * 256
             canv_x = offset_pixels.x + rec.local_pos[0]
             canv_y = (bounds.height * 256) - offset_pixels.y - rec.local_pos[1]
-            segment.add(Point(canv_x, canv_y))
+            segment.add_point(Point(canv_x, canv_y), add_halfway=doubled)
 
     # If last route is not 'endroute'd, it's probably not yet appended
     # So we append it now.

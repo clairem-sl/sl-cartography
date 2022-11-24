@@ -66,7 +66,14 @@ class Segment:
     def __repr__(self):
         return f"Segment(" f"{self.mode}, " f"{self.color}, " f"{self.canvas_points}" f")"
 
-    def add(self, point: Point) -> None:
+    def add_point(self, point: Point, add_halfway: bool = False) -> None:
+        if self.canvas_points and add_halfway:
+            px, py = pp = self.canvas_points[-1]
+            hx = (point.x - px) // 2 + px
+            hy = (point.y - py) // 2 + py
+            hp = Point(hx, hy)
+            if (hp != pp) and (hx != point):
+                self.canvas_points.append(hp)
         self.canvas_points.append(point)
 
     @staticmethod
