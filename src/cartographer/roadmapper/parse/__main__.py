@@ -56,7 +56,7 @@ def main(output: Path, recfiles: list[Path], merge_strategy: str, start_from: st
             existing_routes[conti] = conti_routes
             continue
         ex_conti_routes = existing_routes[conti]
-        for route, route_vals in conti_routes:
+        for route, route_vals in conti_routes.items():
             if route not in ex_conti_routes:
                 ex_conti_routes[route] = route_vals
                 continue
