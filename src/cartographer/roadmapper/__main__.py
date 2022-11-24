@@ -10,7 +10,7 @@ from PIL import Image, ImageDraw
 
 from cartographer.roadmapper.colors import AUTO_COLORS
 from cartographer.roadmapper.config import SAVE_DIR, options
-from cartographer.roadmapper.parse import bake, parse_stream
+from cartographer.roadmapper.parse import bake, parse_chat
 from cartographer.roadmapper.road import Segment
 from cartographer.roadmapper.yaml import load_from_yaml, save_to_yaml
 from sl_maptools.knowns import KNOWN_AREAS
@@ -69,8 +69,7 @@ def main(readchat: list[Path], saveto: Path | None, yamlfiles: list[Path]):
             print(f"{recfile} not found!")
             sys.exit(1)
         print(f"Parsing {recfile}...")
-        with recfile.open("rt", encoding="utf-8") as fin:
-            err |= parse_stream(fin, all_recs)
+        err |= parse_chat(recfile, all_recs)
     if err:
         print("Errors found. Please fix them first!")
         sys.exit(1)

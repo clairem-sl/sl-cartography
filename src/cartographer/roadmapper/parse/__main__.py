@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 from pprint import PrettyPrinter
 
-from cartographer.roadmapper.parse import bake, parse_stream
+from cartographer.roadmapper.parse import bake, parse_chat
 from cartographer.roadmapper.parse.config import options
 from cartographer.roadmapper.yaml import save_to_yaml, load_from_yaml
 from sl_maptools.utils import make_backup
@@ -21,8 +21,7 @@ def main(output: Path, recfiles: list[Path], merge_strategy: str):
             print(f"{recfile} not found!")
             sys.exit(1)
         print(f"Parsing {recfile}...")
-        with recfile.open("rt", encoding="utf-8") as fin:
-            err |= parse_stream(fin, all_recs)
+        err |= parse_chat(recfile, all_recs)
     if err:
         print("Errors found. Please fix them first!")
         sys.exit(1)

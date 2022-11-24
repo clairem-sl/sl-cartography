@@ -3,7 +3,8 @@
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 import re
 from collections import defaultdict
-from typing import cast, TextIO
+from pathlib import Path
+from typing import cast
 
 from cartographer.roadmapper.colors import ALL_COLORS
 from cartographer.roadmapper.road import Segment, DrawMode, Point
@@ -171,48 +172,49 @@ def bake(
     return clean_routes
 
 
-def parse_stream(fin: TextIO, recs: list[PosRecord | Command]) -> bool:
+def parse_chat(chatfile: Path, recs: list[PosRecord | Command]) -> bool:
     found_err = False
     lnum = -1
     try:
-        for lnum, ln in enumerate(fin, start=1):
-            ln = ln.strip()
-            if (matches := RE_POSREC_LINE.match(ln)) is None:
-                continue
-            cmdline = matches["entry"]
+        with chatfile.open("rt") as fin:
+            for lnum, ln in enumerate(fin, start=1):
+                ln = ln.strip()
+                if (matches := RE_POSREC_LINE.match(ln)) is None:
+                    continue
+                cmdline = matches["entry"]
 
-            if cmdline.startswith("#"):
-                continue
-
-            src = (fin.name, lnum)
-
-            if cmdline.startswith("3;;"):
-                items = cmdline.split(";;")[1:]
-            elif "**" in cmdline:
-                items = cmdline.split("**")
-            elif "*<" in cmdline:
-                items = cmdline.split("*")
-            elif (matches := RE_POSREC_KV.match(cmdline)) is not None:
-                cmd = Command(matches["key"], matches["value"], src)
-                recs.append(cmd)
-                continue
-            else:
-                cmd, *rest = cmdline.casefold().split()
-                recs.append(Command(cmd, " ".join(rest), src))
-                continue
-
-            match items:
-                case [regn, regc, locp]:
-                    record = PosRecord(regn, None, regc, locp, source=src)
-                case [regn, parn, regc, locp]:
-                    record = PosRecord(regn, parn, regc, locp, source=src)
-                case _:
-                    print(f"ERROR: Unrecognized syntax on line {lnum}")
-                    print(">>>", ln)
-                    found_err = True
+                if cmdline.startswith("#"):
                     continue
 
-            recs.append(record)
+                src = (fin.name, lnum)
+
+                if cmdline.startswith("3;;"):
+                    items = cmdline.split(";;")[1:]
+                elif "**" in cmdline:
+                    items = cmdline.split("**")
+                elif "*<" in cmdline:
+                    items = cmdline.split("*")
+                elif (matches := RE_POSREC_KV.match(cmdline)) is not None:
+                    cmd = Command(matches["key"], matches["value"], src)
+                    recs.append(cmd)
+                    continue
+                else:
+                    cmd, *rest = cmdline.casefold().split()
+                    recs.append(Command(cmd, " ".join(rest), src))
+                    continue
+
+                match items:
+                    case [regn, regc, locp]:
+                        record = PosRecord(regn, None, regc, locp, source=src)
+                    case [regn, parn, regc, locp]:
+                        record = PosRecord(regn, parn, regc, locp, source=src)
+                    case _:
+                        print(f"ERROR: Unrecognized syntax on line {lnum}")
+                        print(">>>", ln)
+                        found_err = True
+                        continue
+
+                recs.append(record)
     except UnicodeDecodeError:
         print(f"UnicodeDecodeError on {fin.name}:{lnum}")
         raise
