@@ -44,7 +44,7 @@ def load_from_yaml(yaml_file: Path) -> dict[str, dict[str, list[Segment]]]:
     return all_routes
 
 
-class MyRepresenter(ryaml.Representer):
+class MyRepresenter(ryaml.RoundTripRepresenter):
     def ignore_aliases(self, data):  # type: (Any) -> bool
         return True
 
