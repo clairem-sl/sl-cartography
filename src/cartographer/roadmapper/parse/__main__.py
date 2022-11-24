@@ -7,13 +7,13 @@ from pprint import PrettyPrinter
 
 from cartographer.roadmapper.parse import bake, parse_stream
 from cartographer.roadmapper.parse.config import options
-from cartographer.roadmapper.yaml import save_to_yaml
+from cartographer.roadmapper.yaml import save_to_yaml, load_from_yaml
 from sl_maptools.utils import make_backup
 
 DEBUG = False
 
 
-def main(output: Path, recfiles: list[Path]):
+def main(output: Path, recfiles: list[Path], merge_strategy: str):
     all_recs = []
     err = False
     for recfile in recfiles:
@@ -32,7 +32,28 @@ def main(output: Path, recfiles: list[Path]):
 
     clean_routes = bake(all_recs, {})
 
+    if not output.exists():
+        save_to_yaml(output, clean_routes)
+        return
+
     make_backup(output, levels=3)
+    if merge_strategy == "overwrite":
+        print("WARNING: --merge-strategy is 'overwrite', overwriting existing YAML file")
+        save_to_yaml(output, clean_routes)
+        return
+
+    existing_routes = load_from_yaml(output)
+    for conti, conti_routes in clean_routes.items():
+        if conti not in existing_routes:
+            existing_routes[conti] = conti_routes
+            continue
+        ex_conti_routes = existing_routes[conti]
+        for route, route_vals in conti_routes:
+            if route not in ex_conti_routes:
+                ex_conti_routes[route] = route_vals
+                continue
+            if merge_strategy == 'update':
+                ex_conti_routes[route] = route_vals
     save_to_yaml(output, clean_routes)
 
 

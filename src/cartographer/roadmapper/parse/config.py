@@ -20,7 +20,21 @@ def options():
 
     :return: A namespace containing the options
     """
-    parser = argparse.ArgumentParser("RoadMapper Chat Parser")
+    parser = argparse.ArgumentParser("parse")
+
+    parser.add_argument(
+        "--merge-strategy", "-m",
+        metavar="STRATEGY",
+        choices=["overwrite", "update", "insert"],
+        default="update",
+        help=(
+            "Strategy to use if there's already existing YAML file. "
+            "'overwrite' means the file will be overwritten (DANGER! Might cause routes to be lost!), "
+            "'update' (default) means existing routes will have their points updated (if there "
+            "are any updates) and new routes added, "
+            "'insert' means only new routes will be added and existing routes will be untouched."
+        )
+    )
 
     parser.add_argument(
         "-o", "--output",
