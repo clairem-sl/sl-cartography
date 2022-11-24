@@ -37,7 +37,7 @@ def options():
     )
 
     parser.add_argument(
-        "-o", "--output",
+        "--output", "-o",
         required=True,
         metavar="YAML_FILE",
         type=Path,
