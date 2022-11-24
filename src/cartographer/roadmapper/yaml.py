@@ -28,7 +28,7 @@ def load_from_yaml(yaml_file: Path) -> dict[str, dict[str, list[Segment]]]:
     for rd in road_data:
         continent = rd["continent"]
         all_routes[continent] = {}
-        routes: list[RouteStruct] = rd["routes_data"]
+        routes: list[RouteStruct] = rd["routes"]
         for route in routes:
             segs = []
             for segment in route["segments"]:
