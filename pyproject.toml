@@ -32,6 +32,7 @@ dependencies = [
     "appdirs",
     "beautifulsoup4",
     "ruamel.yaml",
+    "pytz",
 ]
 
 [build-system]
@@ -44,6 +45,7 @@ requires = [
     "appdirs",
     "beautifulsoup4",
     "ruamel.yaml",
+    "pytz",
     #
     "black",
     "black[d]",

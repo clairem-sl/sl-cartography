@@ -37,6 +37,15 @@ def options():
     )
 
     parser.add_argument(
+        "--start-from", "-s",
+        metavar="TIMESTAMP",
+        help=(
+            "An ISO8601-like timestamp. Parsing of chat files will begin only from this timestamp. "
+            "These are valid formats: 2022-11-22 16:53"
+        )
+    )
+
+    parser.add_argument(
         "--output", "-o",
         required=True,
         metavar="YAML_FILE",

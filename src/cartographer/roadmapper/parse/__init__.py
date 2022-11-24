@@ -1,15 +1,27 @@
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
+import datetime
 import re
 from collections import defaultdict
 from pathlib import Path
 from typing import cast
 
+from pytz import timezone
+
 from cartographer.roadmapper.colors import ALL_COLORS
 from cartographer.roadmapper.road import Segment, DrawMode, Point
 from sl_maptools import MapCoord
 from sl_maptools.knowns import KNOWN_AREAS
+
+
+SLT_TIMEZONE = "US/Pacific"
+
+RE_TS = re.compile(
+    r"(?P<year>\d{4})[/-]?(?P<month>\d{2})[/-]?(?P<day>\d{2})"
+    r"\D+"
+    r"(?P<hour>\d{2})\D?(?P<minute>\d{2})(?:\D?(?P<second>\d{2}))?"
+)
 
 RE_VECTOR = re.compile(r"\s*<\s*(-?[\d.]+),\s*(-?[\d.]+),\s*(-?[\d.]+)\s*>\s*")
 RE_POSREC_LINE = re.compile(r"(?P<prefix>.*?)PosRecorder\s*(?P<ver>[^:]*):\s+(?P<entry>.*)")
@@ -172,13 +184,25 @@ def bake(
     return clean_routes
 
 
-def parse_chat(chatfile: Path, recs: list[PosRecord | Command]) -> bool:
+def parse_chat(chatfile: Path, recs: list[PosRecord | Command], start_from: datetime.datetime = None) -> bool:
     found_err = False
     lnum = -1
+    skips = 0
     try:
         with chatfile.open("rt") as fin:
             for lnum, ln in enumerate(fin, start=1):
                 ln = ln.strip()
+
+                if start_from and (mm := RE_TS.search(ln[:24])):
+                    dd = {k: int(v) for k, v in mm.groupdict(0).items()}
+                    dt = datetime.datetime(**dd, tzinfo=timezone(SLT_TIMEZONE))
+                    if dt < start_from:
+                        skips += 1
+                        continue
+                if skips:
+                    print(f"Skipped {skips} lines...")
+                    skips = 0
+
                 if (matches := RE_POSREC_LINE.match(ln)) is None:
                     continue
                 cmdline = matches["entry"]
