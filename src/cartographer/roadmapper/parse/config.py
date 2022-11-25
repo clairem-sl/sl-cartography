@@ -55,11 +55,14 @@ def options():
     )
 
     parser.add_argument(
-        "--output", "-o",
-        required=True,
+        "--output",
+        "-o",
         metavar="YAML_FILE",
         type=Path,
-        help="Save YAML representation in the specified yaml file",
+        help=(
+            "Save YAML representation in the specified yaml file. If not specified, a name based on the FIRST chat "
+            "transcript file will be used."
+        ),
     )
 
     parser.add_argument(

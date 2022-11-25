@@ -23,6 +23,10 @@ def main(output: Path, recfiles: list[Path], merge_strategy: str, start_from: st
             dt_dict = {k: int(v) for k, v in mm.groupdict(0).items()}
             dt_start = datetime.datetime(**dt_dict, tzinfo=timezone(SLT_TIMEZONE))
 
+    if output is None:
+        ts = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+        output = recfiles[0].with_suffix(f".{ts}.yaml")
+
     all_recs = []
     err = False
     for recfile in recfiles:
