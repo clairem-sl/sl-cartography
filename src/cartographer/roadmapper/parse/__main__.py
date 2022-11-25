@@ -25,7 +25,7 @@ def main(output: Path, recfiles: list[Path], merge_strategy: str, start_from: st
 
     if output is None:
         ts = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-        output = recfiles[0].with_suffix(f".{ts}.yaml")
+        output = Path(recfiles[0].name).with_suffix(f".{ts}.yaml")
 
     all_recs = []
     err = False
