@@ -56,6 +56,7 @@ def do_draw(all_routes: dict[str, dict[str, list[Segment]]]):
 
 def main(readchat: list[Path], saveto: Path | None, yamlfiles: list[Path]):
     saved_routes: dict[str, dict[str, list[Segment]]] = {}
+    readchat = [] if readchat is None else readchat
 
     for yf in yamlfiles:
         if not yf.exists():
