@@ -69,7 +69,7 @@ def options():
         "recfiles",
         metavar="FILE",
         type=Path,
-        nargs="*",
+        nargs="+",
         help="One (or more) chat transcript files",
     )
 
