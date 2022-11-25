@@ -37,13 +37,14 @@ def options():
         "--merge-strategy",
         "-m",
         metavar="STRATEGY",
-        choices=["overwrite", "update", "insert"],
+        choices=["overwrite", "replace", "append", "update", "insert"],
         default="update",
         help=(
             "Strategy to use if there's already existing YAML file. "
             "'overwrite' means the file will be overwritten (DANGER! Might cause routes to be lost!), "
-            "'update' (default) means existing routes will have their points updated (if there "
-            "are any updates) and new routes added, "
+            "'replace' means existing routes will have their segments replaced by segments from route of same name, "
+            "'append' means existing routes will have segments added, "
+            "'update' means existing routes will have segments added but only if the segments are new, "
             "'insert' means only new routes will be added and existing routes will be untouched."
         ),
     )

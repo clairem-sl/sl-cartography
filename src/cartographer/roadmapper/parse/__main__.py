@@ -53,20 +53,29 @@ def main(output: Path, recfiles: list[Path], merge_strategy: str, start_from: st
         print("WARNING: --merge-strategy is 'overwrite', overwriting existing YAML file")
         save_to_yaml(output, clean_routes)
         return
+    print("Merge strategy is:", merge_strategy)
 
-    existing_routes = load_from_yaml(output)
+    existing_data = load_from_yaml(output)
     for conti, conti_routes in clean_routes.items():
-        if conti not in existing_routes:
-            existing_routes[conti] = conti_routes
+        if conti not in existing_data:
+            existing_data[conti] = conti_routes
             continue
-        ex_conti_routes = existing_routes[conti]
-        for route, route_vals in conti_routes.items():
-            if route not in ex_conti_routes:
-                ex_conti_routes[route] = route_vals
+        existing_routes = existing_data[conti]
+        for route, segments in conti_routes.items():
+            if route not in existing_routes:
+                existing_routes[route] = segments
                 continue
-            if merge_strategy == 'update':
-                ex_conti_routes[route] = route_vals
-    save_to_yaml(output, clean_routes)
+            if merge_strategy == 'replace':
+                existing_routes[route] = segments
+                continue
+            if merge_strategy == 'append':
+                existing_routes[route].extend(segments)
+                continue
+            # merge_strategy is 'update'
+            ex_segments = existing_routes[route]
+            add_segs = [seg for seg in segments if not any(seg == eseg for eseg in ex_segments)]
+            ex_segments.extend(add_segs)
+    save_to_yaml(output, existing_data)
 
 
 if __name__ == '__main__':
