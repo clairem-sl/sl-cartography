@@ -85,6 +85,21 @@ class Segment:
     def __repr__(self):
         return f"Segment(" f"{self.mode}, " f"{self.color}, " f"{self.canvas_points}" f")"
 
+    def __eq__(self, other: Segment):
+        if self.mode != other.mode:
+            return False
+        if self.color != other.color:
+            return False
+        if len(self.canvas_points) != len(other.canvas_points):
+            return False
+        return all(a.is_close(b) for a, b in zip(self.canvas_points, other.canvas_points))
+
+    def __contains__(self, item: Point):
+        for p in self.canvas_points:
+            if p.is_close(item):
+                return True
+        return False
+
     def add_point(self, point: Point, add_halfway: bool = False) -> None:
         if self.canvas_points and add_halfway:
             px, py = pp = self.canvas_points[-1]
