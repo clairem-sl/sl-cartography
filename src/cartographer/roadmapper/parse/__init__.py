@@ -104,7 +104,8 @@ def bake(
                 all_routes[conti][route].extend(segments)
     segment = Segment(DrawMode.SOLID)
     doubled = False
-    for rec in recs:
+    irecs = iter(recs)
+    for rec in irecs:
         # print(rec)
         if isinstance(rec, Command):
             match rec.kvp:
@@ -139,6 +140,13 @@ def bake(
                     if segment.mode == DrawMode.SOLID:
                         all_routes[continent][route].append(segment)
                         segment = Segment(DrawMode.DASHED, color=segment.color)
+                case "arc", _:
+                    all_routes[continent][route].append(segment)
+                    segment = Segment(DrawMode.ARC, color=segment.color)
+                    for _ in range(3):
+                        segment.add_point(get_point(next(irecs)))
+                    all_routes[continent][route].append(segment)
+                    segment = Segment(DrawMode.SOLID, color=segment.color)
                 case "endroute", _:
                     print(f"  {continent}::{route} ends...")
                     all_routes[continent][route].append(segment)

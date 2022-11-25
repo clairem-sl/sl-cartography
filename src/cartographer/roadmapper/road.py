@@ -10,13 +10,14 @@ from pathlib import Path
 from typing import NamedTuple, Self, TypedDict
 
 import msgpack
-from PIL import ImageDraw
+from PIL import ImageDraw, Image
 
 
 class DrawMode(IntEnum):
     SOLID = 1
     DASHED = 2
     RAILS = 3
+    ARC = 4
 
 
 class Point(NamedTuple):
@@ -184,7 +185,53 @@ class Segment:
         """Draw a solid line."""
         self._draw_line(draw, self.canvas_points, width=width, fill=color, extend_by=extend_by)
 
-    def draw_black(self, draw: ImageDraw.ImageDraw, extend_by: int = 3) -> None:
+    def _draw_arc(self, canvas: Image.Image, draw: ImageDraw.ImageDraw, width, color, extend_by_deg: float = 0):
+        def fit_circle_cartes(
+            x1: float, y1: float, x2: float, y2: float, x3: float, y3: float
+        ) -> tuple[Point, float, bool] | None:
+            slope_a: float = (x2 - x1) / (y1 - y2)
+            slope_b: float = (x3 - x2) / (y2 - y3)
+            if math.isclose(slope_a, slope_b):
+                return None
+            if math.isclose(y1, y2):
+                x = (x1 + x2) / 2
+                y = slope_b * x + (((y2 + y3) / 2) - slope_b * ((x2 + x3) / 2))
+            elif math.isclose(y2, y3):
+                x = (x2 + x3) / 2
+                y = slope_a * x + (((y1 + y2) / 2) - slope_a * ((x1 + x2) / 2))
+            else:
+                u = ((y1 + y2) / 2) - slope_a * ((x1 + x2) / 2)
+                x = (((y2 + y3) / 2 - slope_b * (x2 + x3) / 2) - u) / (slope_a - slope_b)
+                y = slope_a * x + u
+            r = math.sqrt((x1 - x) ** 2 + (y1 - y) ** 2)
+            ccw = ((x3 - x1) * (y2 - y1) - (y3 - y1) * (x2 - x1)) >= 0
+            return Point(x, y), r, ccw
+
+        cx1, cy1 = self.canvas_points[0]
+        cx2, cy2 = self.canvas_points[1]
+        cx3, cy3 = self.canvas_points[2]
+
+        # Operate in Cartesian mode
+        cary1 = canvas.height - cy1
+        cary2 = canvas.height - cy2
+        cary3 = canvas.height - cy3
+        circle: tuple[Point, float, bool]
+        if (circle := fit_circle_cartes(cx1, cary1, cx2, cary2, cx3, cary3)) is None:
+            return None
+        center, radius, countercw = circle
+        ang1 = math.degrees(math.atan2(cary1 - center.y, cx1 - center.x))
+        ang2 = math.degrees(math.atan2(cary3 - center.y, cx3 - center.x))
+        # End Cartesian mode, back to Canvas mode
+
+        ang1 = 360.0 - ang1 - extend_by_deg
+        ang2 = 360.0 - ang2 + extend_by_deg
+
+        bx1, bx2 = sorted([(center.x - radius), (center.x + radius)])
+        by1, by2 = sorted([(canvas.height - (center.y - radius)), (canvas.height - (center.y + radius))])
+        bbox = (bx1, by1, bx2, by2)
+        draw.arc(bbox, ang1, ang2, fill=color, width=width)
+
+    def draw_black(self, canvas: Image.Image, draw: ImageDraw.ImageDraw, extend_by: int = 3) -> None:
         """Draw using black color, with extension of segments."""
         if not self.canvas_points:
             return
@@ -192,10 +239,12 @@ class Segment:
             self._draw_solid(draw, self.BlackWidth, (0, 0, 0), extend_by=extend_by)
         elif self.mode == DrawMode.DASHED:
             self._draw_dashed(draw, self.BlackWidth, (0, 0, 0), extend_by=extend_by)
+        elif self.mode == DrawMode.ARC:
+            self._draw_arc(canvas, draw, self.BlackWidth, (0, 0, 0), extend_by_deg=2)
         else:
             raise NotImplementedError()
 
-    def draw_color(self, draw: ImageDraw.ImageDraw, color: tuple[int, int, int]) -> None:
+    def draw_color(self, canvas: Image.Image, draw: ImageDraw.ImageDraw, color: tuple[int, int, int]) -> None:
         """Draw with specified color."""
         if not self.canvas_points:
             return
@@ -205,6 +254,8 @@ class Segment:
             self._draw_dashed(draw, self.ColorWidth, color)
         elif self.mode == DrawMode.RAILS:
             self._draw_rails(draw, self.ColorWidth, color)
+        elif self.mode == DrawMode.ARC:
+            self._draw_arc(canvas, draw, self.ColorWidth, color)
         else:
             raise NotImplementedError()
 

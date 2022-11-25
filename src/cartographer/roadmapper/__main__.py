@@ -35,7 +35,7 @@ def do_draw(all_routes: dict[str, dict[str, list[Segment]]]):
                 if len(seg.canvas_points) < 2:
                     print(f"    WARNING: Not enough data points at {continent}::{route}::{segnum}")
                     continue
-                seg.draw_black(draw)
+                seg.draw_black(canvas, draw)
 
         for route, portions in lines.items():
             print(f"  Drawing {route}...")
@@ -46,7 +46,7 @@ def do_draw(all_routes: dict[str, dict[str, list[Segment]]]):
                     print(f"    WARNING: Not enough data points at {continent}::{route}::{segnum}")
                     continue
                 _col = seg.color or color
-                seg.draw_color(draw, _col)
+                seg.draw_color(canvas, draw, _col)
 
         if canvas:
             roadpath = SAVE_DIR / (continent + "_Roads.png")
