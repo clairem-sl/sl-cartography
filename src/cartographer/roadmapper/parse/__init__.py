@@ -80,20 +80,20 @@ def bake(
     continent = None
     route = None
 
-    def get_point(rec: PosRecord, ndigits=3) -> Point | None:
+    def get_point(_rec: PosRecord, ndigits=3) -> Point | None:
         if continent is None:
-            print(f"WARNING: PosRecord found but continent not set, at {rec.source}")
+            print(f"WARNING: PosRecord found but continent not set, at {_rec.source}")
             return None
         if route is None:
-            print(f"WARNING: PosRecord found but route not set, at {rec.source}")
+            print(f"WARNING: PosRecord found but route not set, at {_rec.source}")
             return None
-        coord = MapCoord(rec.reg_corner[0] // 256, rec.reg_corner[1] // 256)
+        coord = MapCoord(_rec.reg_corner[0] // 256, _rec.reg_corner[1] // 256)
         if coord not in bounds:
-            raise ValueError(f"Region '{rec.region}' outside of continent '{continent}' at {rec.source}")
+            raise ValueError(f"Region '{_rec.region}' outside of continent '{continent}' at {_rec.source}")
         offset_tiles: MapCoord = coord - MapCoord(bounds[0], bounds[1])
         offset_pixels = offset_tiles * 256
-        canv_x = offset_pixels.x + rec.local_pos[0]
-        canv_y = (bounds.height * 256) - offset_pixels.y - rec.local_pos[1]
+        canv_x = offset_pixels.x + _rec.local_pos[0]
+        canv_y = (bounds.height * 256) - offset_pixels.y - _rec.local_pos[1]
         return Point(round(canv_x, ndigits=ndigits), round(canv_y, ndigits=ndigits))
 
     casefolded = {k.casefold(): k for k in KNOWN_AREAS.keys()}
