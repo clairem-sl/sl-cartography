@@ -79,6 +79,23 @@ def bake(
     bounds = set()
     continent = None
     route = None
+
+    def get_point(rec: PosRecord) -> Point | None:
+        if continent is None:
+            print(f"WARNING: PosRecord found but continent not set, at {rec.source}")
+            return None
+        if route is None:
+            print(f"WARNING: PosRecord found but route not set, at {rec.source}")
+            return None
+        coord = MapCoord(rec.reg_corner[0] // 256, rec.reg_corner[1] // 256)
+        if coord not in bounds:
+            raise ValueError(f"Region '{rec.region}' outside of continent '{continent}' at {rec.source}")
+        offset_tiles: MapCoord = coord - MapCoord(bounds[0], bounds[1])
+        offset_pixels = offset_tiles * 256
+        canv_x = offset_pixels.x + rec.local_pos[0]
+        canv_y = (bounds.height * 256) - offset_pixels.y - rec.local_pos[1]
+        return Point(canv_x, canv_y)
+
     casefolded = {k.casefold(): k for k in KNOWN_AREAS.keys()}
     all_routes: dict[str, dict[str, list[Segment]]] = defaultdict(lambda: defaultdict(list))
     if saved_routes:
@@ -138,20 +155,9 @@ def bake(
                         print(f"    WARNING: Unrecognized command {rec.kvp} from {rec.source}")
 
         elif isinstance(rec, PosRecord):
-            if continent is None:
-                print(f"WARNING: PosRecord found but continent not set, at {rec.source}")
+            if (canv_point := get_point(rec)) is None:
                 continue
-            if route is None:
-                print(f"WARNING: PosRecord found but route not set, at {rec.source}")
-                continue
-            coord = MapCoord(rec.reg_corner[0] // 256, rec.reg_corner[1] // 256)
-            if coord not in bounds:
-                raise ValueError(f"Region '{rec.region}' outside of continent '{continent}' at {rec.source}")
-            offset_tiles: MapCoord = coord - MapCoord(bounds[0], bounds[1])
-            offset_pixels = offset_tiles * 256
-            canv_x = offset_pixels.x + rec.local_pos[0]
-            canv_y = (bounds.height * 256) - offset_pixels.y - rec.local_pos[1]
-            segment.add_point(Point(canv_x, canv_y), add_halfway=doubled)
+            segment.add_point(canv_point, add_halfway=doubled)
 
     # If last route is not 'endroute'd, it's probably not yet appended
     # So we append it now.
