@@ -63,7 +63,7 @@ class PosRecord:
 
         if (matches := RE_VECTOR.match(local_pos)) is None:
             raise ValueError(f"Can't parse local_pos = '{local_pos}'")
-        self.local_pos: tuple[int, int, int] = cast(tuple[int, int, int], tuple(map(roundf, matches.groups())))
+        self.local_pos: tuple[float, float, float] = cast(tuple[int, int, int], tuple(map(float, matches.groups())))
 
     def __str__(self):
         return f"{self.region};;{self.parcel};;{self.reg_corner};;{self.local_pos}"

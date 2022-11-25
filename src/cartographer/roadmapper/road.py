@@ -1,6 +1,9 @@
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
+from __future__ import annotations
+
+import math
 from enum import IntEnum
 from itertools import cycle, islice
 from pathlib import Path
@@ -17,8 +20,14 @@ class DrawMode(IntEnum):
 
 
 class Point(NamedTuple):
-    x: int
-    y: int
+    x: float
+    y: float
+
+    def is_close(self, other: Point) -> bool:
+        return math.isclose(self.x, other.x) and math.isclose(self.y, other.y)
+
+    def rounded(self) -> tuple[int, int]:
+        return round(self.x), round(self.y)
 
 
 def extend_by_n(p1: Point, p2: Point, n: int) -> Point:
@@ -39,7 +48,7 @@ def extend_by_n(p1: Point, p2: Point, n: int) -> Point:
         _n = n if dy >= 0 else -n
         y3 = y2 + _n
         x3 = (y3 - y1) * dx / dy + x1
-    return Point(round(x3), round(y3))
+    return Point(x3, y3)
 
 
 # pp1 = Point(1, 1)
@@ -52,7 +61,7 @@ class SegmentSerialized(TypedDict):
     """A data structure serializable by MessagePack, derived from Segment"""
     __mode: int
     __color: None | tuple[int, int, int]
-    __points: list[tuple[int, int]]
+    __points: list[tuple[float, float]]
 
 
 class _RailsDrawMode(IntEnum):
@@ -78,10 +87,10 @@ class Segment:
     def add_point(self, point: Point, add_halfway: bool = False) -> None:
         if self.canvas_points and add_halfway:
             px, py = pp = self.canvas_points[-1]
-            hx = (point.x - px) // 2 + px
-            hy = (point.y - py) // 2 + py
+            hx = (point.x - px) / 2 + px
+            hy = (point.y - py) / 2 + py
             hp = Point(hx, hy)
-            if (hp != pp) and (hx != point):
+            if not hp.is_close(pp) and not hp.is_close(point):
                 self.canvas_points.append(hp)
         self.canvas_points.append(point)
 
@@ -103,7 +112,8 @@ class Segment:
             new_p0 = extend_by_n(points[1], points[0], extend_by)
             new_pz = extend_by_n(points[-2], points[-1], extend_by)
             points = [new_p0, *points[1:-1], new_pz]
-        draw.line(points, width=width, fill=fill, joint="curve")
+        int_points = [p.rounded() for p in points]
+        draw.line(int_points, width=width, fill=fill, joint="curve")
 
     def _draw_dashed(
         self,
