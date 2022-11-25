@@ -80,7 +80,7 @@ def bake(
     continent = None
     route = None
 
-    def get_point(rec: PosRecord) -> Point | None:
+    def get_point(rec: PosRecord, ndigits=3) -> Point | None:
         if continent is None:
             print(f"WARNING: PosRecord found but continent not set, at {rec.source}")
             return None
@@ -94,7 +94,7 @@ def bake(
         offset_pixels = offset_tiles * 256
         canv_x = offset_pixels.x + rec.local_pos[0]
         canv_y = (bounds.height * 256) - offset_pixels.y - rec.local_pos[1]
-        return Point(canv_x, canv_y)
+        return Point(round(canv_x, ndigits=ndigits), round(canv_y, ndigits=ndigits))
 
     casefolded = {k.casefold(): k for k in KNOWN_AREAS.keys()}
     all_routes: dict[str, dict[str, list[Segment]]] = defaultdict(lambda: defaultdict(list))
