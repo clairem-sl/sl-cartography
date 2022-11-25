@@ -22,17 +22,20 @@ def options():
     :return: A namespace containing the options
     """
 
-    epilog = textwrap.dedent("""
+    epilog = textwrap.dedent(
+        """
     WARNING: The granularity for --merge-strategy is per named route (that is, Continent::RoadName).
     If you are doing a piecemeal roadmapping of a route, e.g., say the grids of Bay City, you MUST
     finish the whole route first. If not, then later segments will overwrite the earlier segments
     and you will lose your earlier records _for_that_route_.
-    """)
+    """
+    )
 
     parser = argparse.ArgumentParser("parse", epilog=epilog)
 
     parser.add_argument(
-        "--merge-strategy", "-m",
+        "--merge-strategy",
+        "-m",
         metavar="STRATEGY",
         choices=["overwrite", "update", "insert"],
         default="update",
@@ -42,16 +45,17 @@ def options():
             "'update' (default) means existing routes will have their points updated (if there "
             "are any updates) and new routes added, "
             "'insert' means only new routes will be added and existing routes will be untouched."
-        )
+        ),
     )
 
     parser.add_argument(
-        "--start-from", "-s",
+        "--start-from",
+        "-s",
         metavar="TIMESTAMP",
         help=(
             "An ISO8601-like timestamp. Parsing of chat files will begin only from this timestamp (inclusive). "
             "These are valid formats: 2022-11-22 16:53, 2022/11/22 02:53, 2022-11-22T02:53"
-        )
+        ),
     )
 
     parser.add_argument(
