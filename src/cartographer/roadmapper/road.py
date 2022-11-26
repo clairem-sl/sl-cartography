@@ -238,6 +238,8 @@ class Segment:
         ang2 = math.degrees(math.atan2(cary3 - center.y, cx3 - center.x))
         # End Cartesian mode, back to Canvas mode
 
+        if not countercw:
+            ang1, ang2 = ang2, ang1
         ang1 = 360.0 - ang1 - extend_by_deg
         ang2 = 360.0 - ang2 + extend_by_deg
 
