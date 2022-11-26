@@ -29,24 +29,29 @@ def do_draw(all_routes: dict[str, dict[str, list[Segment]]]):
         canvas = Image.new("RGBA", (bounds.width * 256, bounds.height * 256))
         draw = ImageDraw.Draw(canvas)
 
-        print("  Drawing Black Outlines...")
-        for route, portions in lines.items():
-            for segnum, seg in enumerate(portions, start=1):
-                if len(seg.canvas_points) < 2:
-                    print(f"    WARNING: Not enough data points at {continent}::{route}::{segnum}")
-                    continue
-                seg.draw_black(canvas, draw)
+        continent = route = "???"
+        try:
+            print("  Drawing Black Outlines...")
+            for route, portions in lines.items():
+                for segnum, seg in enumerate(portions, start=1):
+                    if len(seg.canvas_points) < 2:
+                        print(f"    WARNING: Not enough data points at {continent}::{route}::{segnum}")
+                        continue
+                    seg.draw_black(canvas, draw)
 
-        for route, portions in lines.items():
-            print(f"  Drawing {route}...")
-            while (color := next(cols)) == _col:
-                pass
-            for segnum, seg in enumerate(portions, start=1):
-                if len(seg.canvas_points) < 2:
-                    print(f"    WARNING: Not enough data points at {continent}::{route}::{segnum}")
-                    continue
-                _col = seg.color or color
-                seg.draw_color(canvas, draw, _col)
+            for route, portions in lines.items():
+                print(f"  Drawing {route}...")
+                while (color := next(cols)) == _col:
+                    pass
+                for segnum, seg in enumerate(portions, start=1):
+                    if len(seg.canvas_points) < 2:
+                        print(f"    WARNING: Not enough data points at {continent}::{route}::{segnum}")
+                        continue
+                    _col = seg.color or color
+                    seg.draw_color(canvas, draw, _col)
+        except Exception as e:
+            print(f"ERROR: Exception <{type(e)}> processing {continent}::{route}")
+            raise
 
         if canvas:
             roadpath = SAVE_DIR / (continent + "_Roads.png")
