@@ -72,6 +72,10 @@ class _RailsDrawMode(IntEnum):
     rail2 = 3
 
 
+class SegmentError(ValueError):
+    pass
+
+
 class Segment:
     """A segment of the Road."""
     BlackWidth = 35
@@ -224,6 +228,9 @@ class Segment:
             r = math.sqrt((x1 - x) ** 2 + (y1 - y) ** 2)
             ccw = ((x3 - x1) * (y2 - y1) - (y3 - y1) * (x2 - x1)) >= 0
             return Point(x, y), r, ccw
+
+        if len(self.canvas_points) != 3:
+            raise SegmentError("'ARC' segments need EXACTLY 3 (three) points, no more, no less!")
 
         cx1, cy1 = self.canvas_points[0]
         cx2, cy2 = self.canvas_points[1]
