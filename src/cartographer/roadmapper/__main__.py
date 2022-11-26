@@ -29,7 +29,7 @@ def do_draw(all_routes: dict[str, dict[str, list[Segment]]]):
         canvas = Image.new("RGBA", (bounds.width * 256, bounds.height * 256))
         draw = ImageDraw.Draw(canvas)
 
-        continent = route = "???"
+        route = "???"
         try:
             print("  Drawing Black Outlines...")
             for route, portions in lines.items():
