@@ -10,10 +10,9 @@ from typing import cast
 from pytz import timezone
 
 from cartographer.roadmapper.colors import ALL_COLORS
-from cartographer.roadmapper.road import Segment, DrawMode, Point
+from cartographer.roadmapper.road import DrawMode, Point, Segment
 from sl_maptools import MapCoord
 from sl_maptools.knowns import KNOWN_AREAS
-
 
 SLT_TIMEZONE = "US/Pacific"
 
@@ -159,7 +158,7 @@ def bake(
                     all_routes[continent][route].append(segment)
                     segment = Segment(DrawMode.SOLID, color=segment.color)
                 case "doubled", onoff:
-                    doubled = (onoff == "on")
+                    doubled = onoff == "on"
                 case cmd, _:
                     if cmd not in IGNORED_COMMANDS:
                         print(f"    WARNING: Unrecognized command {rec.kvp} from {rec.source}")

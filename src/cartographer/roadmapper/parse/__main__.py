@@ -8,9 +8,9 @@ from pprint import PrettyPrinter
 
 from pytz import timezone
 
-from cartographer.roadmapper.parse import bake, parse_chat, RE_TS, SLT_TIMEZONE
+from cartographer.roadmapper.parse import RE_TS, SLT_TIMEZONE, bake, parse_chat
 from cartographer.roadmapper.parse.config import options
-from cartographer.roadmapper.yaml import save_to_yaml, load_from_yaml
+from cartographer.roadmapper.yaml import load_from_yaml, save_to_yaml
 from sl_maptools.utils import make_backup
 
 DEBUG = False
@@ -65,23 +65,20 @@ def main(output: Path, recfiles: list[Path], merge_strategy: str, start_from: st
             if route not in existing_routes:
                 existing_routes[route] = segments
                 continue
-            if merge_strategy == 'replace':
+            if merge_strategy == "replace":
                 existing_routes[route] = segments
                 continue
-            if merge_strategy == 'append':
+            if merge_strategy == "append":
                 existing_routes[route].extend(segments)
                 continue
             # merge_strategy is 'update'
             ex_segments = existing_routes[route]
             ex_points_set = {s.points_as_tuple() for s in ex_segments}
             # add_segs = [seg for seg in segments if not seg.points_as_tuple() in ex_points_set]
-            ex_segments.extend(
-                seg for seg in segments
-                if seg.points_as_tuple() not in ex_points_set
-            )
+            ex_segments.extend(seg for seg in segments if seg.points_as_tuple() not in ex_points_set)
     save_to_yaml(output, existing_data)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     opts = options()
     main(**vars(opts))

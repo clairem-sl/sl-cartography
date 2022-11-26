@@ -5,7 +5,6 @@
 import argparse
 from pathlib import Path
 
-
 SAVE_DIR = Path(r"~\Pictures\SLMap\Carto").expanduser().absolute()
 
 

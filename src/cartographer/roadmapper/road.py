@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import NamedTuple, Self, TypedDict
 
 import msgpack
-from PIL import ImageDraw, Image
+from PIL import Image, ImageDraw
 
 
 class DrawMode(IntEnum):
@@ -60,6 +60,7 @@ def extend_by_n(p1: Point, p2: Point, n: int) -> Point:
 
 class SegmentSerialized(TypedDict):
     """A data structure serializable by MessagePack, derived from Segment"""
+
     __mode: int
     __color: None | tuple[int, int, int]
     __points: list[tuple[float, float]]
@@ -78,6 +79,7 @@ class SegmentError(ValueError):
 
 class Segment:
     """A segment of the Road."""
+
     BlackWidth = 35
     ColorWidth = 25
 
