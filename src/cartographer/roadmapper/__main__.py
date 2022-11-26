@@ -11,7 +11,7 @@ from PIL import Image, ImageDraw
 from cartographer.roadmapper.colors import AUTO_COLORS
 from cartographer.roadmapper.config import SAVE_DIR, options
 from cartographer.roadmapper.parse import bake, parse_chat
-from cartographer.roadmapper.road import Segment
+from cartographer.roadmapper.road import DrawMode, Segment
 from cartographer.roadmapper.yaml import load_from_yaml, save_to_yaml
 from sl_maptools.knowns import KNOWN_AREAS
 from sl_maptools.utils import make_backup
@@ -23,6 +23,13 @@ def do_draw(all_routes: dict[str, dict[str, list[Segment]]]):
     cols = itertools.cycle(tuple(AUTO_COLORS.values()))
     _col: tuple[int, int, int] = (-1, -1, -1)
 
+    progchar: dict[DrawMode, str] = {
+        DrawMode.SOLID: ".",
+        DrawMode.DASHED: "-",
+        DrawMode.RAILS: "=",
+        DrawMode.ARC: "/",
+    }
+
     for continent, lines in all_routes.items():
         print(f"Drawing continent {continent}...")
         bounds = KNOWN_AREAS[continent]
@@ -31,24 +38,29 @@ def do_draw(all_routes: dict[str, dict[str, list[Segment]]]):
 
         route = "???"
         try:
-            print("  Drawing Black Outlines...")
+            print("  Drawing Black Outlines...", end="", flush=True)
             for route, portions in lines.items():
+                print(".", end="", flush=True)
                 for segnum, seg in enumerate(portions, start=1):
                     if len(seg.canvas_points) < 2:
                         print(f"    WARNING: Not enough data points at {continent}::{route}::{segnum}")
                         continue
                     seg.draw_black(canvas, draw)
+            print()
 
             for route, portions in lines.items():
-                print(f"  Drawing {route}...")
+                print(f"  Drawing {route}...", end="", flush=True)
                 while (color := next(cols)) == _col:
                     pass
+                segnum = 0
                 for segnum, seg in enumerate(portions, start=1):
+                    print(progchar[seg.mode], end="", flush=True)
                     if len(seg.canvas_points) < 2:
                         print(f"    WARNING: Not enough data points at {continent}::{route}::{segnum}")
                         continue
                     _col = seg.color or color
                     seg.draw_color(canvas, draw, _col)
+                print(segnum)
         except Exception as e:
             print(f"ERROR: Exception <{type(e)}> processing {continent}::{route}")
             raise
