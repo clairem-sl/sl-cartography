@@ -73,8 +73,12 @@ def main(output: Path, recfiles: list[Path], merge_strategy: str, start_from: st
                 continue
             # merge_strategy is 'update'
             ex_segments = existing_routes[route]
-            add_segs = [seg for seg in segments if not any(seg == eseg for eseg in ex_segments)]
-            ex_segments.extend(add_segs)
+            ex_points_set = {s.points_as_tuple() for s in ex_segments}
+            # add_segs = [seg for seg in segments if not seg.points_as_tuple() in ex_points_set]
+            ex_segments.extend(
+                seg for seg in segments
+                if seg.points_as_tuple() not in ex_points_set
+            )
     save_to_yaml(output, existing_data)
 
 

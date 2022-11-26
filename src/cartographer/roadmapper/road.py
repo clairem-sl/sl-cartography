@@ -100,6 +100,9 @@ class Segment:
                 return True
         return False
 
+    def points_as_tuple(self) -> tuple[tuple[int, int], ...]:
+        return tuple(cp.rounded() for cp in self.canvas_points)
+
     def add_point(self, point: Point, add_halfway: bool = False) -> None:
         if self.canvas_points and add_halfway:
             px, py = pp = self.canvas_points[-1]
