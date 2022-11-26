@@ -144,7 +144,9 @@ def bake(
                     all_routes[continent][route].append(segment)
                     segment = Segment(DrawMode.ARC, color=segment.color)
                     for _ in range(3):
-                        segment.add_point(get_point(next(irecs)))
+                        while not isinstance(arcp := next(irecs), PosRecord):
+                            pass
+                        segment.add_point(get_point(arcp))
                     all_routes[continent][route].append(segment)
                     segment = Segment(DrawMode.SOLID, color=segment.color)
                 case "endroute", _:
