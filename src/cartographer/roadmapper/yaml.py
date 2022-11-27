@@ -19,15 +19,8 @@ class UnsupportedVersion(NotImplementedError):
     pass
 
 
-def load_from_yaml(yaml_file: Path) -> dict[str, dict[str, list[Segment]]]:
+def _decode_v1(yaml_data: dict[str, Any]) -> dict[str, dict[str, list[Segment]]]:
     all_routes: dict[str, dict[str, list[Segment]]] = {}
-
-    with yaml_file.open("rt") as fin:
-        data: dict[str, Any] = ryaml.safe_load(fin)
-    if "version" not in data:
-        raise MissingVersion(f"'version' marker not found in {yaml_file}")
-    if (version := data["version"]) not in SUPPORTED_VERSIONS:
-        raise UnsupportedVersion(f"Version {version} is not supported ({yaml_file})")
 
     class SegmentStruct(TypedDict):
         mode: str
@@ -38,7 +31,7 @@ def load_from_yaml(yaml_file: Path) -> dict[str, dict[str, list[Segment]]]:
         route_name: str
         segments: list[SegmentStruct]
 
-    road_data: list[dict[str, Any]] = data["road_data"]
+    road_data: list[dict[str, Any]] = yaml_data["road_data"]
     for rd in road_data:
         continent = rd["continent"]
         all_routes[continent] = {}
@@ -56,6 +49,19 @@ def load_from_yaml(yaml_file: Path) -> dict[str, dict[str, list[Segment]]]:
             all_routes[continent][route["route_name"]] = segs
 
     return all_routes
+
+
+def load_from_yaml(yaml_file: Path) -> dict[str, dict[str, list[Segment]]]:
+    with yaml_file.open("rt") as fin:
+        data: dict[str, Any] = ryaml.safe_load(fin)
+
+    if (version := data["version"]) is None:
+        raise MissingVersion(f"'version' marker not found in {yaml_file}")
+
+    if version == 1:
+        return _decode_v1(data)
+
+    raise UnsupportedVersion(f"Version {version} is not supported ({yaml_file})")
 
 
 class MyRepresenter(ryaml.RoundTripRepresenter):
