@@ -199,7 +199,7 @@ def bake(
     return clean_routes
 
 
-def parse_chat(chatfile: Path, recs: list[PosRecord | Command], start_from: datetime.datetime = None) -> bool:
+def parse(chatfile: Path, recs: list[PosRecord | Command], start_from: datetime.datetime = None) -> bool:
     found_err = False
     lnum = -1
     skips = 0

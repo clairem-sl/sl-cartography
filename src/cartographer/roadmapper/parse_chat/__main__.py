@@ -8,7 +8,7 @@ from pprint import PrettyPrinter
 
 from pytz import timezone
 
-from cartographer.roadmapper.parse_chat import RE_TS, SLT_TIMEZONE, bake, parse_chat
+from cartographer.roadmapper.parse_chat import RE_TS, SLT_TIMEZONE, bake, parse
 from cartographer.roadmapper.parse_chat.config import options
 from cartographer.roadmapper.yaml import load_from_yaml, save_to_yaml
 from sl_maptools.utils import make_backup
@@ -34,7 +34,7 @@ def main(output: Path, recfiles: list[Path], merge_strategy: str, start_from: st
             print(f"{recfile} not found!")
             sys.exit(1)
         print(f"Parsing {recfile}...")
-        err |= parse_chat(recfile, all_recs, dt_start)
+        err |= parse(recfile, all_recs, dt_start)
     if err:
         print("Errors found. Please fix them first!")
         sys.exit(1)
