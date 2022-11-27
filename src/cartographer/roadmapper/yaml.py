@@ -8,12 +8,26 @@ import ruamel.yaml as ryaml
 
 from cartographer.roadmapper.road import DrawMode, Point, Segment
 
+SUPPORTED_VERSIONS = { 1 }
+
+
+class MissingVersion(ValueError):
+    pass
+
+
+class UnsupportedVersion(NotImplementedError):
+    pass
+
 
 def load_from_yaml(yaml_file: Path) -> dict[str, dict[str, list[Segment]]]:
     all_routes: dict[str, dict[str, list[Segment]]] = {}
 
     with yaml_file.open("rt") as fin:
         data: dict[str, Any] = ryaml.safe_load(fin)
+    if "version" not in data:
+        raise MissingVersion(f"'version' marker not found in {yaml_file}")
+    if (version := data["version"]) not in SUPPORTED_VERSIONS:
+        raise UnsupportedVersion(f"Version {version} is not supported ({yaml_file})")
 
     class SegmentStruct(TypedDict):
         mode: str
@@ -66,7 +80,10 @@ def save_to_yaml(yaml_file: Path, all_routes: dict[str, dict[str, list[Segment]]
                 )
             routes_data.append({"route_name": route, "segments": segments_data})
         road_data.append({"continent": continent, "routes": routes_data})
-    data = {"road_data": road_data}
+    data = {
+        "version": 1,
+        "road_data": road_data,
+    }
     try:
         yml = ryaml.YAML()
         yml.default_flow_style = None
