@@ -10,7 +10,7 @@ from PIL import Image, ImageDraw
 
 from cartographer.roadmapper.colors import AUTO_COLORS
 from cartographer.roadmapper.config import SAVE_DIR, options
-from cartographer.roadmapper.parse import bake, parse_chat
+from cartographer.roadmapper.parse_chat import bake, parse_chat
 from cartographer.roadmapper.road import DrawMode, Segment
 from cartographer.roadmapper.yaml import load_from_yaml, save_to_yaml
 from sl_maptools.knowns import KNOWN_AREAS
