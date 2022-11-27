@@ -51,6 +51,43 @@ python -Xfrozen_modules=off -m cartographer [options]
 To see the options, use `--help`
 
 
+### `cartographer.roadmapper` Module
+
+An executable module to generate "Road Overlays" from one or more YAML files.
+
+> A "Road Overlay" is a transparent PNG you can layer on top of a hi-res map generated
+> by the `cartographer` module. Since it relies on how `cartographer` generated
+> the maps, it is under the `cartographer` module and not standalone.
+
+For the syntax of the YAML file(s),
+please see `src/cartographer/roadmapper/README.md`
+
+To see how to use the module:
+
+```shell
+cd src
+python -Xfrozen_modules=off -m cartographer.roadmapper [options] 
+```
+
+To see the options, use `--help`
+
+
+### `cartographer.roadmapper.parse_chat` Module
+
+An executable module to parse chat transcript(s) into a YAML file that can be
+consumed by `cartographer.roadmapper`
+
+To see how to use it:
+
+```shell
+cd src
+python -Xfrozen_modules=off -m cartographer.roadmapper.parse_chat [options] 
+```
+
+To see the options, use `--help`
+
+
+
 ### `mosaic_v3` Module
 
 An executable module to generate mosaic map and nightlights map.
