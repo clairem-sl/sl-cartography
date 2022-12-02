@@ -10,7 +10,7 @@ from PIL import Image, ImageDraw
 
 from roadmapper_v3.draw import Point
 from roadmapper_v3.draw.colors import AUTO_COLORS
-from roadmapper_v3.model import Continent, Route, Segment, merge_all_routes
+from roadmapper_v3.model import Continent, Route, Segment, SegmentMode, merge_all_routes
 from roadmapper_v3.model.yaml import load_from
 
 
@@ -39,7 +39,14 @@ def route_cb(route: Route, phase: str, segment: Segment, color, drawer, sw):
     if segment is None:
         print(flush=True)
         return
-    print(".", end="", flush=True)
+    if segment.mode == SegmentMode.SOLID:
+        print(".", end="", flush=True)
+    elif segment.mode == SegmentMode.DASHED:
+        print("-", end="", flush=True)
+    elif segment.mode == SegmentMode.RAILS:
+        print("=", end="", flush=True)
+    elif segment.mode == SegmentMode.ARC:
+        print("(", end="", flush=True)
 
 
 def main(savedir: Path, conti: str, yaml_file: list[Path]):
@@ -52,6 +59,8 @@ def main(savedir: Path, conti: str, yaml_file: list[Path]):
     if nf:
         raise FileNotFoundError(f"These files are not found: {nf}")
 
+    conti_set = set(c.casefold() for c in conti.split(",")) if conti else None
+
     Continent.DrawCallback = conti_cb
     Route.DrawCallback = route_cb
     Route.ColorCycler = cycle(AUTO_COLORS.values())
@@ -62,6 +71,9 @@ def main(savedir: Path, conti: str, yaml_file: list[Path]):
         all_routes = merge_all_routes(all_routes, data)
 
     for conti_name, continent in all_routes.items():
+        if conti_set and conti_name.casefold() not in conti_set:
+            print(f"Skipping {conti_name}", flush=True)
+            continue
         canvas = Image.new("RGBA", continent.canvas_dim)
         draw = ImageDraw.Draw(canvas)
         continent.draw(draw)
