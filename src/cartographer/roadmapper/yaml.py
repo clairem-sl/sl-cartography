@@ -8,7 +8,7 @@ import ruamel.yaml as ryaml
 
 from cartographer.roadmapper.road import DrawMode, Point, Segment
 
-SUPPORTED_VERSIONS = { 1 }
+SUPPORTED_VERSIONS = {1}
 
 
 class MissingVersion(ValueError):
