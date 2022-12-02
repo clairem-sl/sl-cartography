@@ -323,7 +323,7 @@ class MapCanvas(object):
         if isinstance(dest, io.IOBase):
             if not image_format:
                 raise ValueError("image_format must be specified if dest is a stream")
-        if image_format.casefold() == "png" or dest.suffix == ".png":
+        if dest.suffix == ".png" or (image_format and image_format.casefold() == "png"):
             self.canvas.save(dest, format=image_format, optimize=optimize)
         else:
             self.canvas.save(dest, format=image_format)
