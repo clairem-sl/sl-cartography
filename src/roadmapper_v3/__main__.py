@@ -52,6 +52,8 @@ def main(savedir: Path, conti: str, yaml_file: list[Path]):
     if nf:
         raise FileNotFoundError(f"These files are not found: {nf}")
 
+    conti_set = set(c.casefold() for c in conti.split(",")) if conti else None
+
     Continent.DrawCallback = conti_cb
     Route.DrawCallback = route_cb
     Route.ColorCycler = cycle(AUTO_COLORS.values())
@@ -62,6 +64,9 @@ def main(savedir: Path, conti: str, yaml_file: list[Path]):
         all_routes = merge_all_routes(all_routes, data)
 
     for conti_name, continent in all_routes.items():
+        if conti_set and conti_name.casefold() not in conti_set:
+            print(f"Skipping {conti_name}", flush=True)
+            continue
         canvas = Image.new("RGBA", continent.canvas_dim)
         draw = ImageDraw.Draw(canvas)
         continent.draw(draw)
