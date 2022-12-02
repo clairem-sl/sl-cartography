@@ -10,7 +10,7 @@ from PIL import Image, ImageDraw
 
 from roadmapper_v3.draw import Point
 from roadmapper_v3.draw.colors import AUTO_COLORS
-from roadmapper_v3.model import Continent, Route, Segment, merge_all_routes
+from roadmapper_v3.model import Continent, Route, Segment, SegmentMode, merge_all_routes
 from roadmapper_v3.model.yaml import load_from
 
 
@@ -39,7 +39,14 @@ def route_cb(route: Route, phase: str, segment: Segment, color, drawer, sw):
     if segment is None:
         print(flush=True)
         return
-    print(".", end="", flush=True)
+    if segment.mode == SegmentMode.SOLID:
+        print(".", end="", flush=True)
+    elif segment.mode == SegmentMode.DASHED:
+        print("-", end="", flush=True)
+    elif segment.mode == SegmentMode.RAILS:
+        print("=", end="", flush=True)
+    elif segment.mode == SegmentMode.ARC:
+        print("(", end="", flush=True)
 
 
 def main(savedir: Path, conti: str, yaml_file: list[Path]):
