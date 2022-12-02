@@ -16,6 +16,7 @@ else:
 # fmt: on
 # isort: on
 
+import argparse
 import time
 from pathlib import Path
 from typing import Dict, Iterable, Set
@@ -28,6 +29,12 @@ from sl_maptools.knowns import KNOWN_AREAS
 
 SAVE_DIR = Path("~/Pictures/SLMap/Carto").expanduser()
 CONN_LIMIT = 20
+
+
+def options():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--conti", "-c", default="", help="Continents to fetch (case-insensitive, comma-separated)")
+    return parser.parse_args()
 
 
 class CartographerError(RuntimeError):
@@ -99,10 +106,15 @@ class Cartographer(object):
             print()
 
 
-def main():
+def main(conti: str):
+    conti_set = set(c.casefold() for c in conti.split(",")) if conti else None
+
     start_t = time.monotonic()
 
     for selector, area in KNOWN_AREAS.items():
+        if conti_set and selector.casefold() not in conti_set:
+            print(f"\n----- Skipping {selector} -----")
+            continue
         fetch_t = time.monotonic()
         print(f"\n===== Fetching {selector} =====")
         cartographer = Cartographer(*area)
@@ -123,4 +135,5 @@ def main():
 
 if __name__ == "__main__":
     SAVE_DIR.mkdir(parents=True, exist_ok=True)
-    main()
+    opts = options()
+    main(**vars(opts))
