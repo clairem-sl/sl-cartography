@@ -160,15 +160,16 @@ class SegmentMode(IntEnum):
 
 
 class Segment:
-    __slots__ = ("mode", "geopoints", "geopoints_intset", "desc")
+    __slots__ = ("mode", "geopoints", "geopoints_intset", "desc", "width")
     OutlineWidth = 35
     ActualWidth = 25
 
-    def __init__(self, mode: SegmentMode = SegmentMode.SOLID, desc: str = None):
+    def __init__(self, mode: SegmentMode = SegmentMode.SOLID, desc: str = None, width: int = None):
         self.mode: SegmentMode = mode
         self.geopoints: list[Point] = []
         self.geopoints_intset: set[tuple[int, int]] = set()
         self.desc = desc
+        self.width: int | None = width
 
     def as_inttuple(self) -> tuple[tuple[int, int], ...]:
         return tuple(p.rounded() for p in self.geopoints)
@@ -187,7 +188,10 @@ class Segment:
             return
         # noinspection PyUnresolvedReferences
         cwidth, cheight = draw.im.size
-        width = self.__class__.OutlineWidth
+        if self.width is None:
+            width = self.__class__.OutlineWidth
+        else:
+            width = round(self.width * 1.4)
         sw_x, sw_y = southwest
         canv_points = [Point(p.x - sw_x, cheight - (p.y - sw_y)) for p in self.geopoints]
         if self.mode == SegmentMode.SOLID or self.mode == SegmentMode.RAILS:
@@ -205,7 +209,10 @@ class Segment:
             return
         # noinspection PyUnresolvedReferences
         cwidth, cheight = draw.im.size
-        width = self.__class__.ActualWidth
+        if self.width is None:
+            width = self.__class__.ActualWidth
+        else:
+            width = self.width
         sw_x, sw_y = southwest
         canv_points = [Point(p.x - sw_x, cheight - (p.y - sw_y)) for p in self.geopoints]
         if self.mode == SegmentMode.SOLID:
