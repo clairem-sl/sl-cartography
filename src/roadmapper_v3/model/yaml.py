@@ -24,7 +24,7 @@ def decode(raw_data: dict[str, dict[str, dict[str, Any]]]) -> dict[str, Continen
             segments: list[dict[str, Any]] = route_data["segments"]
             for seg_data in segments:
                 mode = SegmentMode[seg_data["mode"].upper()]
-                segment = Segment(mode, desc=seg_data.get("desc"))
+                segment = Segment(mode, desc=seg_data.get("desc"), width=seg_data.get("width"))
                 for x, y in seg_data["geo_points"]:
                     segment.add_point(Point(x, y))
                 route.add_segment(segment)
@@ -60,6 +60,7 @@ def encode(all_routes: dict[str, Continent]) -> dict[str, dict[str, dict[str, An
                 seg_data = {
                     "mode": segment.mode.name,
                     "desc": segment.desc,
+                    "width": segment.width,
                     "geo_points": [(p.x, p.y) for p in segment.geopoints],
                 }
                 rout_seg_list.append(seg_data)
