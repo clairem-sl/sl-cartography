@@ -69,8 +69,12 @@ class PosRecord(ChatLine):
     __slots__ = ("region_name", "parcel_name", "region_corner", "pos_local")
 
     # noinspection PyUnusedLocal
-    def __init__(self, ver, regname, parname, regcorner, pos, *args, spath: Path, sline: int):
+    def __init__(self, line: str, spath: Path, sline: int):
         super().__init__(spath, sline)
+        assert line.startswith("3;;")
+        elems = line.split(";;")
+        assert len(elems) >= 5
+        _, regname, parname, regcorner, pos, *etc = elems
         self.region_name = regname
         self.parcel_name = parname
         if (matches := RE_VECTOR.match(regcorner)) is None:
@@ -87,10 +91,12 @@ class PosRecord(ChatLine):
 
 
 class ChatCommand(ChatLine):
-    def __init__(self, command: str, args: str = "", *, spath: Path, sline: int):
+    def __init__(self, line: str, *, spath: Path, sline: int):
         super().__init__(spath, sline)
-        self.command = command.strip().casefold()
-        self.args = args.strip()
+        elems = list(map(str.strip, line.split(":", maxsplit=1)))
+        command, *args = elems
+        self.command = command.casefold()
+        self.args = args[0] if args else ""
 
     def as_tuple(self) -> tuple[str, str]:
         return self.command, self.args
@@ -121,11 +127,10 @@ def parse(chat_file: Path, startfrom: str) -> list[PosRecord | ChatCommand]:
             if ln_ts < start_ts:
                 continue
             if entry.startswith("3;;"):
-                pos_record = PosRecord(*entry.split(";;"), spath=chat_file, sline=lnum)
+                pos_record = PosRecord(entry, spath=chat_file, sline=lnum)
                 parsed.append(pos_record)
                 continue
-            elems = entry.split(":", maxsplit=1)
-            command = ChatCommand(*elems, spath=chat_file, sline=lnum)
+            command = ChatCommand(entry, spath=chat_file, sline=lnum)
             parsed.append(command)
 
     return parsed
