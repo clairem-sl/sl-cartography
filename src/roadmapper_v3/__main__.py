@@ -67,8 +67,10 @@ def main(savedir: Path, conti: str, yaml_file: list[Path]):
 
     all_routes = {}
     for yf in yaml_file:
+        print(f"Reading {yf}...", end="", flush=True)
         data = load_from(yf)
         all_routes = merge_all_routes(all_routes, data)
+        print()
 
     for conti_name, continent in all_routes.items():
         if conti_set and conti_name.casefold() not in conti_set:
