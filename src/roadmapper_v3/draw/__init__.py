@@ -225,13 +225,15 @@ def drawarc(
     drawer.arc(bbox, ang1, ang2, fill=color, width=width)
 
 
-def get_arrow_endpoints(p1: Point, p2: Point, angle_deg: float = 15.0, arrow_len: float = 80.0) -> tuple[Point, Point]:
+def get_arrow_endpoints(p1: Point, p2: Point, theta_deg: float = 15.0, arrow_len: float = 80.0) -> tuple[Point, Point]:
     """
          p3
         /
     p2 <---- p1
         \
          p4
+
+    Angle p1-p2-p3 == angle p1-p2-p4 == "theta"
     """
     # Source: https://math.stackexchange.com/a/1314050/132442
     x1, y1 = p1
@@ -239,9 +241,9 @@ def get_arrow_endpoints(p1: Point, p2: Point, angle_deg: float = 15.0, arrow_len
     l1 = math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
     l2 = arrow_len
     l_ratio = l2 / l1
-    angle_rad = angle_deg / 180 * math.pi
-    cos_theta = math.cos(angle_rad)
-    sin_theta = math.sin(angle_rad)
+    theta_rad = theta_deg / 180 * math.pi
+    cos_theta = math.cos(theta_rad)
+    sin_theta = math.sin(theta_rad)
     x3 = x2 + l_ratio * ((x1 - x2) * cos_theta + (y1 - y2) * sin_theta)
     y3 = y2 + l_ratio * ((y1 - y2) * cos_theta - (x1 - x2) * sin_theta)
     x4 = x2 + l_ratio * ((x1 - x2) * cos_theta - (y1 - y2) * sin_theta)
