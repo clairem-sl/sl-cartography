@@ -47,6 +47,8 @@ def route_cb(route: Route, phase: str, segment: Segment, color, drawer, sw):
         print("=", end="", flush=True)
     elif segment.mode == SegmentMode.ARC:
         print("(", end="", flush=True)
+    elif segment.mode == SegmentMode.ARROW:
+        print(">", end="", flush=True)
 
 
 def main(savedir: Path, conti: str, yaml_file: list[Path]):

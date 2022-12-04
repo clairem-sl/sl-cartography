@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import warnings
 from enum import IntEnum
 from typing import Callable, Generator, Self
 
@@ -157,6 +158,7 @@ class SegmentMode(IntEnum):
     DASHED = 2
     RAILS = 3
     ARC = 4
+    ARROW = 5
 
 
 class Segment:
@@ -201,6 +203,8 @@ class Segment:
             drawline_patterned(draw, pattern, canv_points, width, extend_by=extend_by)
         elif self.mode == SegmentMode.ARC:
             drawarc(draw, canv_points, width, (0, 0, 0), extend_by_deg=extend_by_deg)
+        elif self.mode == SegmentMode.ARROW:
+            warnings.warn("ARROW drawing method has not been implemented.")
         else:
             raise NotImplementedError(f"Unkown mode: {self.mode!r}")
 
@@ -225,6 +229,8 @@ class Segment:
             drawline_patterned(draw, pattern, canv_points, width)
         elif self.mode == SegmentMode.ARC:
             drawarc(draw, canv_points, width, color)
+        elif self.mode == SegmentMode.ARROW:
+            warnings.warn("ARROW drawing method has not been implemented.")
         else:
             raise NotImplementedError(f"Unkown mode: {self.mode!r}")
 
