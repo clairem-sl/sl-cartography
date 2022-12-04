@@ -223,3 +223,48 @@ def drawarc(
     by1, by2 = sorted([(cheight - (center.y - radius)), (cheight - (center.y + radius))])
     bbox = (bx1, by1, bx2, by2)
     drawer.arc(bbox, ang1, ang2, fill=color, width=width)
+
+
+def get_arrow_endpoints(p1: Point, p2: Point, angle_deg: float = 15.0, arrow_len: float = 80.0) -> tuple[Point, Point]:
+    """
+         p3
+        /
+    p2 <---- p1
+        \
+         p4
+    """
+    # Source: https://math.stackexchange.com/a/1314050/132442
+    x1, y1 = p1
+    x2, y2 = p2
+    l1 = math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
+    l2 = arrow_len
+    l_ratio = l2 / l1
+    angle_rad = angle_deg / 180 * math.pi
+    cos_theta = math.cos(angle_rad)
+    sin_theta = math.sin(angle_rad)
+    x3 = x2 + l_ratio * ((x1 - x2) * cos_theta + (y1 - y2) * sin_theta)
+    y3 = y2 + l_ratio * ((y1 - y2) * cos_theta - (x1 - x2) * sin_theta)
+    x4 = x2 + l_ratio * ((x1 - x2) * cos_theta - (y1 - y2) * sin_theta)
+    y4 = y2 + l_ratio * ((y1 - y2) * cos_theta + (x1 - x2) * sin_theta)
+    return Point(x3, y3), Point(x4, y4)
+
+
+def drawarrow(
+    drawer: ImageDraw.ImageDraw, points: list[Point], width: int, color: tuple[int, int, int],
+    extend_by: float = None
+):
+    pattern = {
+        "dot": Pattern(20, color),
+        "gap": Pattern(40, None),
+    }
+    drawline_patterned(drawer, pattern, points, width, extend_by=extend_by)
+
+    p1 = points[1]
+    p2 = points[0]
+    p3, p4 = get_arrow_endpoints(p1, p2)
+    drawline_solid(drawer, [p3, p2, p4], width, color, extend_by)
+
+    p1 = points[-2]
+    p2 = points[-1]
+    p3, p4 = get_arrow_endpoints(p1, p2)
+    drawline_solid(drawer, [p3, p2, p4], width, color, extend_by)

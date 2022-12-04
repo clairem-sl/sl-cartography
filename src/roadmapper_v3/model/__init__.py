@@ -16,7 +16,7 @@ from roadmapper_v3.draw import (
     drawarc,
     drawline_patterned,
     drawline_solid,
-    rails_pattern,
+    rails_pattern, drawarrow,
 )
 from sl_maptools.knowns import KNOWN_AREAS
 
@@ -204,7 +204,7 @@ class Segment:
         elif self.mode == SegmentMode.ARC:
             drawarc(draw, canv_points, width, (0, 0, 0), extend_by_deg=extend_by_deg)
         elif self.mode == SegmentMode.ARROW:
-            warnings.warn("ARROW drawing method has not been implemented.")
+            drawarrow(draw, canv_points, width, (0, 0, 0), extend_by=extend_by)
         else:
             raise NotImplementedError(f"Unkown mode: {self.mode!r}")
 
@@ -230,7 +230,7 @@ class Segment:
         elif self.mode == SegmentMode.ARC:
             drawarc(draw, canv_points, width, color)
         elif self.mode == SegmentMode.ARROW:
-            warnings.warn("ARROW drawing method has not been implemented.")
+            drawarrow(draw, canv_points, width, color)
         else:
             raise NotImplementedError(f"Unkown mode: {self.mode!r}")
 
