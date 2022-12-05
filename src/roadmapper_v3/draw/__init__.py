@@ -58,14 +58,29 @@ class ParametricLine:
         return self.p1
 
 
-class Pattern(NamedTuple):
+class PhaseDesc(NamedTuple):
     length: float
     color: tuple[int, int, int] | None
 
 
+class LinePattern:
+    def __init__(self, color: tuple[int, int, int], *phases: tuple[str, float, bool | None | tuple[int, int, int]]):
+        self.color = color
+        self.phases: dict[str, PhaseDesc] = {}
+        for phase_name, phase_len, phase_clr in phases:
+            clr = None
+            if phase_clr is True:
+                clr = self.color
+            elif phase_clr is None or phase_clr is False:
+                clr = None
+            elif isinstance(phase_clr, tuple) and len(phase_clr) == 3:
+                clr = phase_clr
+            self.phases[phase_name] = PhaseDesc(phase_len, clr)
+
+
 def drawline_patterned(
     drawer: ImageDraw.ImageDraw,
-    patterns: dict[str, Pattern],
+    pattern: LinePattern,
     points: list[Point],
     width: int = 10,
     min_len: float = 0.01,
@@ -73,7 +88,7 @@ def drawline_patterned(
 ):
     segments: list[tuple[Point, Point]] = []
 
-    pattern_cycle = cycle(patterns.items())
+    pattern_cycle = cycle(pattern.phases.items())
     point_pairs = pairwise(points)
 
     phase, (phase_len, phase_clr) = next(pattern_cycle)
@@ -127,27 +142,30 @@ def drawline_patterned(
 
 
 # def dash_pattern(color: tuple[int, int, int], dash_len: int = 60, blank_len: int = 40):
-def dash_pattern(color: tuple[int, int, int], dash_len: int = 50, blank_len: int = 30):
-    return {
-        "blank": Pattern(blank_len, None),
-        "dash": Pattern(dash_len, color),
-    }
+def dash_pattern(color: tuple[int, int, int], dash_len: int = 50, blank_len: int = 30) -> LinePattern:
+    return LinePattern(
+        color,
+        ("blank", blank_len, None),
+        ("dash", dash_len, True),
+    )
 
 
-def rails_pattern(color: tuple[int, int, int], dash_len: int = 60, pip_len: int = 15, gap_len: int = 10):
-    return {
-        "dash": Pattern(dash_len, color),
-        "pip1": Pattern(pip_len, (0, 0, 0)),
-        "gapp": Pattern(gap_len, color),
-        "pip2": Pattern(pip_len, (0, 0, 0)),
-    }
+def rails_pattern(color: tuple[int, int, int], dash_len: int = 60, pip_len: int = 15, gap_len: int = 10) -> LinePattern:
+    return LinePattern(
+        color,
+        ("dash", dash_len, True),
+        ("pip1", pip_len, (0, 0, 0)),
+        ("gapp", gap_len, True),
+        ("pip2", pip_len, (0, 0, 0)),
+    )
 
 
-def dotgap_pattern(color: tuple[int, int, int], gap_len: int = 40):
-    return {
-        "dot": Pattern(20, color),
-        "gap": Pattern(gap_len, None),
-    }
+def dotgap_pattern(color: tuple[int, int, int], gap_len: int = 40) -> LinePattern:
+    return LinePattern(
+        color,
+        ("dot", 20, True),
+        ("gap", gap_len, False),
+    )
 
 
 def drawline_solid(
@@ -250,8 +268,7 @@ def drawarrow(
     drawer: ImageDraw.ImageDraw,
     points: list[Point],
     width: int,
-    pattern: dict[str, Pattern],
-    arrow_color: tuple[int, int, int],
+    pattern: LinePattern,
     both: bool = True,
     extend_by: float = None,
 ):
@@ -262,7 +279,6 @@ def drawarrow(
     :param points: List of canvas points
     :param width: Width of line and arrow head arms
     :param pattern: Pattern of the line
-    :param arrow_color: Color of the arrow head
     :param both: If True (default) draw arrow on both ends. If False, draw only at end
     :param extend_by: Extend the endings by this many pixels
     """
@@ -272,12 +288,12 @@ def drawarrow(
         p1 = points[1]
         p2 = points[0]
         p3, p4 = get_arrow_endpoints(p1, p2)
-        drawline_solid(drawer, [p3, p2, p4], width, arrow_color, extend_by)
+        drawline_solid(drawer, [p3, p2, p4], width, pattern.color, extend_by)
 
     p1 = points[-2]
     p2 = points[-1]
     p3, p4 = get_arrow_endpoints(p1, p2)
-    drawline_solid(drawer, [p3, p2, p4], width, arrow_color, extend_by)
+    drawline_solid(drawer, [p3, p2, p4], width, pattern.color, extend_by)
 
 
 class SegmentDrawer:
@@ -325,10 +341,10 @@ class SegmentDrawer:
             drawarc(draw, canv_points, width, (0, 0, 0), extend_by_deg=extend_by_deg)
         elif self.mode == SegmentMode.ARROW or self.mode == SegmentMode.ARROW2:
             pattern = dotgap_pattern((0, 0, 0))
-            drawarrow(draw, canv_points, width, pattern, (0, 0, 0), extend_by=extend_by)
+            drawarrow(draw, canv_points, width, pattern, extend_by=extend_by)
         elif self.mode == SegmentMode.ARROW1:
             pattern = dotgap_pattern((0, 0, 0))
-            drawarrow(draw, canv_points, width, pattern, (0, 0, 0), both=False, extend_by=extend_by)
+            drawarrow(draw, canv_points, width, pattern, both=False, extend_by=extend_by)
         else:
             raise NotImplementedError(f"Don't know how to draw mode: {self.mode!r}")
 
@@ -357,9 +373,9 @@ class SegmentDrawer:
             drawarc(draw, canv_points, width, color)
         elif self.mode == SegmentMode.ARROW or self.mode == SegmentMode.ARROW2:
             pattern = dotgap_pattern(color)
-            drawarrow(draw, canv_points, width, pattern, color)
+            drawarrow(draw, canv_points, width, pattern)
         elif self.mode == SegmentMode.ARROW1:
             pattern = dotgap_pattern(color)
-            drawarrow(draw, canv_points, width, pattern, color, both=False)
+            drawarrow(draw, canv_points, width, pattern, both=False)
         else:
             raise NotImplementedError(f"Don't know how to draw mode: {self.mode!r}")
