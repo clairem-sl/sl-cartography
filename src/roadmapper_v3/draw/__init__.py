@@ -34,6 +34,8 @@ def extend_ends(points: list[Point], extend_by: float):
 
 
 class ParametricLine:
+    __slots__ = ("p1", "p2")
+
     def __init__(self, p1: Point, p2: Point):
         self.p1 = p1
         self.p2 = p2
@@ -64,6 +66,8 @@ class PhaseDesc(NamedTuple):
 
 
 class LinePattern:
+    __slots__ = ("color", "phases")
+
     def __init__(self, color: tuple[int, int, int], *phases: tuple[str, float, bool | None | tuple[int, int, int]]):
         self.color = color
         self.phases: dict[str, PhaseDesc] = {}
@@ -297,6 +301,7 @@ def drawarrow(
 
 
 class SegmentDrawer:
+    __slots__ = ("route", "segment", "mode", "drawer", "geo_southwest")
     OutlineWidth = 35
     ActualWidth = 25
     ColorCycler: Generator[tuple[int, int, int], None, None] = None
