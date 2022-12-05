@@ -10,9 +10,8 @@ import math
 import re
 from pathlib import Path
 
-from roadmapper_v3.draw import Point
 from roadmapper_v3.draw.colors import ALL_COLORS
-from roadmapper_v3.model import Continent, Route, Segment, SegmentMode
+from roadmapper_v3.model import Continent, Point, Route, Segment, SegmentMode
 from roadmapper_v3.model.yaml import load_from, save_to
 
 RE_TS = re.compile(
@@ -139,7 +138,7 @@ def parse(chat_file: Path, startfrom: str) -> list[PosRecord | ChatCommand]:
 IGNORED_COMMANDS = {"pos", "endroute", "start", "stop"}
 
 
-def bake(parsed: list[PosRecord | ChatCommand]):
+def bake(parsed: list[PosRecord | ChatCommand]) -> dict[str, Continent]:
     all_roads: dict[str, Continent] = {}
     continent: Continent | None = None
     route: Route | None = None

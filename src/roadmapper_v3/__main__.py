@@ -8,9 +8,13 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw
 
-from roadmapper_v3.draw import Point
+from roadmapper_v3.draw import SegmentDrawer
 from roadmapper_v3.draw.colors import AUTO_COLORS
-from roadmapper_v3.model import Continent, Route, Segment, SegmentMode, merge_all_routes
+from roadmapper_v3.model import (
+    Point,
+    SegmentMode,
+    merge_all_routes,
+)
 from roadmapper_v3.model.yaml import load_from
 
 
@@ -20,35 +24,6 @@ def options():
     parser.add_argument("--conti", "-c", default="", help="Comma-separated continents to render (defaults to all)")
     parser.add_argument("yaml_file", nargs="+", type=Path, help="One (or more) YAML files to process & merge")
     return parser.parse_args()
-
-
-# noinspection PyUnusedLocal
-def conti_cb(continent: Continent, phase: str, route: Route, drawer: ImageDraw.ImageDraw, sw: Point):
-    if phase == "outline":
-        return
-    if route is None:
-        print(flush=True)
-        return
-    print(f"{continent.name}::{route.name}", end="", flush=True)
-
-
-# noinspection PyUnusedLocal
-def route_cb(route: Route, phase: str, segment: Segment, color, drawer, sw):
-    if phase == "outline":
-        return
-    if segment is None:
-        print(flush=True)
-        return
-    if segment.mode == SegmentMode.SOLID:
-        print(".", end="", flush=True)
-    elif segment.mode == SegmentMode.DASHED:
-        print("-", end="", flush=True)
-    elif segment.mode == SegmentMode.RAILS:
-        print("=", end="", flush=True)
-    elif segment.mode == SegmentMode.ARC:
-        print("(", end="", flush=True)
-    elif segment.mode == SegmentMode.ARROW:
-        print(">", end="", flush=True)
 
 
 def main(savedir: Path, conti: str, yaml_file: list[Path]):
@@ -63,10 +38,6 @@ def main(savedir: Path, conti: str, yaml_file: list[Path]):
 
     conti_set = set(c.casefold() for c in conti.split(",")) if conti else None
 
-    Continent.DrawCallback = conti_cb
-    Route.DrawCallback = route_cb
-    Route.ColorCycler = cycle(AUTO_COLORS.values())
-
     all_routes = {}
     for yf in yaml_file:
         print(f"Reading {yf}...", end="", flush=True)
@@ -74,13 +45,42 @@ def main(savedir: Path, conti: str, yaml_file: list[Path]):
         all_routes = merge_all_routes(all_routes, data)
         print()
 
+    SegmentDrawer.ColorCycler = cycle(AUTO_COLORS.values())
+
     for conti_name, continent in all_routes.items():
         if conti_set and conti_name.casefold() not in conti_set:
             print(f"Skipping {conti_name}", flush=True)
             continue
         canvas = Image.new("RGBA", continent.canvas_dim)
         draw = ImageDraw.Draw(canvas)
-        continent.draw(draw)
+
+        southwest = Point(continent.westmost, continent.southmost)
+        draw_ers = [
+            SegmentDrawer(route=route, segment=segment, drawer=draw, geo_southwest=southwest)
+            for route in continent.routes.values()
+            for segment in route.segments
+        ]
+        for drawer in draw_ers:
+            drawer.draw_outline()
+        prev_ro: str = ""
+        for drawer in draw_ers:
+            if drawer.route.name != prev_ro:
+                print(f"\n{continent.name}::{drawer.route.name}", end="", flush=True)
+                prev_ro = drawer.route.name
+            drawer.draw_actual()
+            segment = drawer.segment
+            if segment.mode == SegmentMode.SOLID:
+                print(".", end="", flush=True)
+            elif segment.mode == SegmentMode.DASHED:
+                print("-", end="", flush=True)
+            elif segment.mode == SegmentMode.RAILS:
+                print("=", end="", flush=True)
+            elif segment.mode == SegmentMode.ARC:
+                print("(", end="", flush=True)
+            elif segment.mode == SegmentMode.ARROW:
+                print(">", end="", flush=True)
+        print("\n==========")
+
         targ = savedir / f"{conti_name}_Roads3.png"
         print(f"Saving to {targ} ...", end="", flush=True)
         canvas.save(targ)

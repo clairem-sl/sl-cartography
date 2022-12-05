@@ -7,8 +7,7 @@ from typing import Any
 
 import ruamel.yaml as ryaml
 
-from roadmapper_v3.draw import Point
-from roadmapper_v3.model import Continent, Route, Segment, SegmentMode
+from roadmapper_v3.model import Continent, Point, Route, Segment, SegmentMode
 
 
 def decode(raw_data: dict[str, dict[str, dict[str, Any]]]) -> dict[str, Continent]:
