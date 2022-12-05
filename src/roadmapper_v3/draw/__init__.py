@@ -155,6 +155,13 @@ def rails_pattern(color: tuple[int, int, int], dash_len: int = 60, pip_len: int 
     }
 
 
+def dotgap_pattern(color: tuple[int, int, int], gap_len: int = 40):
+    return {
+        "dot": Pattern(20, color),
+        "gap": Pattern(gap_len, None),
+    }
+
+
 def drawline_solid(
     drawer: ImageDraw.ImageDraw, points: list[Point], width: int, color: tuple[int, int, int], extend_by: float = None
 ):
@@ -252,21 +259,34 @@ def get_arrow_endpoints(p1: Point, p2: Point, theta_deg: float = 15.0, arrow_len
 
 
 def drawarrow(
-    drawer: ImageDraw.ImageDraw, points: list[Point], width: int, color: tuple[int, int, int],
-    extend_by: float = None
+    drawer: ImageDraw.ImageDraw,
+    points: list[Point],
+    width: int,
+    pattern: dict[str, Pattern],
+    arrow_color: tuple[int, int, int],
+    both: bool = True,
+    extend_by: float = None,
 ):
-    pattern = {
-        "dot": Pattern(20, color),
-        "gap": Pattern(40, None),
-    }
+    """
+    Draw an arrow with patterned line.
+
+    :param drawer: ImageDraw.ImageDraw to draw with
+    :param points: List of canvas points
+    :param width: Width of line and arrow head arms
+    :param pattern: Pattern of the line
+    :param arrow_color: Color of the arrow head
+    :param both: If True (default) draw arrow on both ends. If False, draw only at end
+    :param extend_by: Extend the endings by this many pixels
+    """
     drawline_patterned(drawer, pattern, points, width, extend_by=extend_by)
 
-    p1 = points[1]
-    p2 = points[0]
-    p3, p4 = get_arrow_endpoints(p1, p2)
-    drawline_solid(drawer, [p3, p2, p4], width, color, extend_by)
+    if both:
+        p1 = points[1]
+        p2 = points[0]
+        p3, p4 = get_arrow_endpoints(p1, p2)
+        drawline_solid(drawer, [p3, p2, p4], width, arrow_color, extend_by)
 
     p1 = points[-2]
     p2 = points[-1]
     p3, p4 = get_arrow_endpoints(p1, p2)
-    drawline_solid(drawer, [p3, p2, p4], width, color, extend_by)
+    drawline_solid(drawer, [p3, p2, p4], width, arrow_color, extend_by)
