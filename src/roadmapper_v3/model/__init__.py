@@ -100,6 +100,13 @@ class Route:
         return item.as_inttuple() in self.segments_as_set
 
     def add_segment(self, seg: Segment, raises: bool = True):
+        """
+        Add a new segment into the route's segments list.
+
+        :param seg: new Segment to add
+        :param raises: If True (default), raises an exception if the segment is already added. If False, will discard
+        the addition silently.
+        """
         seg_inttuple = seg.as_inttuple()
         if seg_inttuple in self.segments_as_set:
             if raises:
