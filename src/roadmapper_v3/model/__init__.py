@@ -21,7 +21,7 @@ class Point(NamedTuple):
     def is_close(self, other: Point) -> bool:
         return math.isclose(self.x, other.x) and math.isclose(self.y, other.y)
 
-    def __mul__(self, multiplier: float):
+    def __mul__(self, multiplier: float) -> Point:
         return Point(self.x * multiplier, self.y * multiplier)
 
 
@@ -76,7 +76,7 @@ class Continent:
     def contains_geo(self, point: Point) -> bool:
         return self.westmost <= point.x <= self.eastmost and self.southmost <= point.y <= self.northmost
 
-    def add_route(self, route: Route):
+    def add_route(self, route: Route) -> None:
         if route.name in self.routes:
             raise ValueError()
         self.routes[route.name] = route
@@ -99,7 +99,7 @@ class Route:
             raise ValueError()
         return item.as_inttuple() in self.segments_as_set
 
-    def add_segment(self, seg: Segment, raises: bool = True):
+    def add_segment(self, seg: Segment, raises: bool = True) -> None:
         """
         Add a new segment into the route's segments list.
 
@@ -139,7 +139,7 @@ class Segment:
     def as_inttuple(self) -> tuple[tuple[int, int], ...]:
         return tuple(p.rounded() for p in self.geopoints)
 
-    def add_point(self, p: Point):
+    def add_point(self, p: Point) -> None:
         if p.rounded() in self.geopoints_intset:
             return
         x, y = p

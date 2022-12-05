@@ -27,7 +27,7 @@ def extend_by_t(p1: Point, p2: Point, t: float) -> Point:
     return Point(x3, y3)
 
 
-def extend_ends(points: list[Point], extend_by: float):
+def extend_ends(points: list[Point], extend_by: float) -> list[Point]:
     new_p0 = extend_by_t(points[1], points[0], extend_by)
     new_pz = extend_by_t(points[-2], points[-1], extend_by)
     return [new_p0, *points[1:-1], new_pz]
@@ -47,7 +47,7 @@ class ParametricLine:
         return Point((x2 - x1), (y2 - y1))
 
     @property
-    def length(self):
+    def length(self) -> float:
         dx, dy = self.displacement
         return math.sqrt(dx**2 + dy**2)
 
@@ -89,7 +89,7 @@ def drawline_patterned(
     width: int = 10,
     min_len: float = 0.01,
     extend_by: float = None,
-):
+) -> None:
     segments: list[tuple[Point, Point]] = []
 
     pattern_cycle = cycle(pattern.phases.items())
@@ -174,7 +174,7 @@ def dotgap_pattern(color: tuple[int, int, int], gap_len: int = 40) -> LinePatter
 
 def drawline_solid(
     drawer: ImageDraw.ImageDraw, points: list[Point], width: int, color: tuple[int, int, int], extend_by: float = None
-):
+) -> None:
     if extend_by:
         points = extend_ends(points, extend_by)
     int_points = [p.rounded() for p in points]
@@ -187,7 +187,7 @@ def drawarc(
     width: int,
     color: tuple[int, int, int],
     extend_by_deg: float = 0.0,
-):
+) -> None:
     def fit_circle_cartes(
         x1: float, y1: float, x2: float, y2: float, x3: float, y3: float
     ) -> tuple[Point, float, bool] | None:
@@ -275,7 +275,7 @@ def drawarrow(
     pattern: LinePattern,
     both: bool = True,
     extend_by: float = None,
-):
+) -> None:
     """
     Draw an arrow with patterned line.
 
@@ -325,7 +325,7 @@ class SegmentDrawer:
             _route_colors[self.route.name] = color
         return _route_colors[self.route.name]
 
-    def draw_outline(self, extend_by: float = 4.0, extend_by_deg: float = 2.0):
+    def draw_outline(self, extend_by: float = 4.0, extend_by_deg: float = 2.0) -> None:
         if not self.segment.geopoints:
             return
         draw = self.drawer
@@ -353,7 +353,7 @@ class SegmentDrawer:
         else:
             raise NotImplementedError(f"Don't know how to draw mode: {self.mode!r}")
 
-    def draw_actual(self):
+    def draw_actual(self) -> None:
         if not self.segment.geopoints:
             return
         draw = self.drawer

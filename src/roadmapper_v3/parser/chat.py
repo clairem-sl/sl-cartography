@@ -138,7 +138,7 @@ def parse(chat_file: Path, startfrom: str) -> list[PosRecord | ChatCommand]:
 IGNORED_COMMANDS = {"pos", "endroute", "start", "stop"}
 
 
-def bake(parsed: list[PosRecord | ChatCommand]):
+def bake(parsed: list[PosRecord | ChatCommand]) -> dict[str, Continent]:
     all_roads: dict[str, Continent] = {}
     continent: Continent | None = None
     route: Route | None = None
