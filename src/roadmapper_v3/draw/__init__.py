@@ -27,7 +27,7 @@ def extend_by_t(p1: Point, p2: Point, t: float) -> Point:
     return Point(x3, y3)
 
 
-def extend_points(points: list[Point], extend_by: float):
+def extend_ends(points: list[Point], extend_by: float):
     new_p0 = extend_by_t(points[1], points[0], extend_by)
     new_pz = extend_by_t(points[-2], points[-1], extend_by)
     return [new_p0, *points[1:-1], new_pz]
@@ -108,7 +108,7 @@ def drawline_patterned(
             prev_p2 = _p2
         drawpoints.append(_p2)
         if extend_by:
-            drawpoints = extend_points(drawpoints, extend_by)
+            drawpoints = extend_ends(drawpoints, extend_by)
         drawpoints_int = [p.rounded() for p in drawpoints]
         drawer.line(drawpoints_int, fill=phase_clr, width=width, joint="curve")
         segments.clear()
@@ -172,7 +172,7 @@ def drawline_solid(
     drawer: ImageDraw.ImageDraw, points: list[Point], width: int, color: tuple[int, int, int], extend_by: float = None
 ):
     if extend_by:
-        points = extend_points(points, extend_by)
+        points = extend_ends(points, extend_by)
     int_points = [p.rounded() for p in points]
     drawer.line(int_points, width=width, fill=color, joint="curve")
 
