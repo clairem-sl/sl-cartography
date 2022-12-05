@@ -7,8 +7,7 @@ from pprint import pprint
 
 import ruamel.yaml as ryaml
 
-from roadmapper_v3.draw import Point
-from roadmapper_v3.model import Continent, Route, Segment, SegmentMode
+from roadmapper_v3.model import Continent, Point, Route, Segment, SegmentMode
 from roadmapper_v3.model.yaml import save_to
 
 

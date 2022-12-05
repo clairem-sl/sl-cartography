@@ -10,9 +10,8 @@ import math
 import re
 from pathlib import Path
 
-from roadmapper_v3.draw import Point
 from roadmapper_v3.draw.colors import ALL_COLORS
-from roadmapper_v3.model import Continent, Route, Segment, SegmentMode
+from roadmapper_v3.model import Continent, Point, Route, Segment, SegmentMode
 from roadmapper_v3.model.yaml import load_from, save_to
 
 RE_TS = re.compile(

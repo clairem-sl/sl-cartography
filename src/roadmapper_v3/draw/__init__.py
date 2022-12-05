@@ -6,23 +6,11 @@ from __future__ import annotations
 
 import math
 from itertools import cycle, pairwise
-from typing import NamedTuple
+from typing import Generator, NamedTuple
 
 from PIL import ImageDraw
 
-
-class Point(NamedTuple):
-    x: float
-    y: float
-
-    def rounded(self) -> tuple[int, int]:
-        return round(self.x), round(self.y)
-
-    def is_close(self, other: Point) -> bool:
-        return math.isclose(self.x, other.x) and math.isclose(self.y, other.y)
-
-    def __mul__(self, multiplier: float):
-        return Point(self.x * multiplier, self.y * multiplier)
+from roadmapper_v3.model import Point, Route, Segment, SegmentMode
 
 
 def extend_by_t(p1: Point, p2: Point, t: float) -> Point:
@@ -290,3 +278,88 @@ def drawarrow(
     p2 = points[-1]
     p3, p4 = get_arrow_endpoints(p1, p2)
     drawline_solid(drawer, [p3, p2, p4], width, arrow_color, extend_by)
+
+
+class SegmentDrawer:
+    OutlineWidth = 35
+    ActualWidth = 25
+    ColorCycler: Generator[tuple[int, int, int], None, None] = None
+
+    _RouteColors: dict[str, tuple[int, int, int]] = {}
+
+    def __init__(self, route: Route, segment: Segment, drawer: ImageDraw.ImageDraw, geo_southwest: Point):
+        self.route = route
+        self.segment = segment
+        self.mode = segment.mode
+        self.drawer = drawer
+        self.geo_southwest = geo_southwest
+
+    def _route_color(self) -> tuple[int, int, int] | None:
+        _route_colors = self.__class__._RouteColors
+        if self.route.name not in _route_colors:
+            color = self.route.color
+            if color is None:
+                if self.__class__.ColorCycler is not None:
+                    color = next(self.__class__.ColorCycler)
+            _route_colors[self.route.name] = color
+        return _route_colors[self.route.name]
+
+    def draw_outline(self, extend_by: float = 4.0, extend_by_deg: float = 2.0):
+        if not self.segment.geopoints:
+            return
+        draw = self.drawer
+        # noinspection PyUnresolvedReferences
+        cwidth, cheight = draw.im.size
+        if self.segment.width is None:
+            width = self.__class__.OutlineWidth
+        else:
+            width = round(self.segment.width * 1.4)
+        sw_x, sw_y = self.geo_southwest
+        canv_points = [Point(p.x - sw_x, cheight - (p.y - sw_y)) for p in self.segment.geopoints]
+        if self.mode == SegmentMode.SOLID or self.mode == SegmentMode.RAILS:
+            drawline_solid(draw, canv_points, width, (0, 0, 0), extend_by=extend_by)
+        elif self.mode == SegmentMode.DASHED:
+            pattern = dash_pattern((0, 0, 0))
+            drawline_patterned(draw, pattern, canv_points, width, extend_by=extend_by)
+        elif self.mode == SegmentMode.ARC:
+            drawarc(draw, canv_points, width, (0, 0, 0), extend_by_deg=extend_by_deg)
+        elif self.mode == SegmentMode.ARROW or self.mode == SegmentMode.ARROW2:
+            pattern = dotgap_pattern((0, 0, 0))
+            drawarrow(draw, canv_points, width, pattern, (0, 0, 0), extend_by=extend_by)
+        elif self.mode == SegmentMode.ARROW1:
+            pattern = dotgap_pattern((0, 0, 0))
+            drawarrow(draw, canv_points, width, pattern, (0, 0, 0), both=False, extend_by=extend_by)
+        else:
+            raise NotImplementedError(f"Don't know how to draw mode: {self.mode!r}")
+
+    def draw_actual(self):
+        if not self.segment.geopoints:
+            return
+        draw = self.drawer
+        # noinspection PyUnresolvedReferences
+        cwidth, cheight = draw.im.size
+        if self.segment.width is None:
+            width = self.__class__.ActualWidth
+        else:
+            width = self.segment.width
+        sw_x, sw_y = self.geo_southwest
+        canv_points = [Point(p.x - sw_x, cheight - (p.y - sw_y)) for p in self.segment.geopoints]
+        color = self._route_color()
+        if self.mode == SegmentMode.SOLID:
+            drawline_solid(draw, canv_points, width, color)
+        elif self.mode == SegmentMode.RAILS:
+            pattern = rails_pattern(color)
+            drawline_patterned(draw, pattern, canv_points, width)
+        elif self.mode == SegmentMode.DASHED:
+            pattern = dash_pattern(color)
+            drawline_patterned(draw, pattern, canv_points, width)
+        elif self.mode == SegmentMode.ARC:
+            drawarc(draw, canv_points, width, color)
+        elif self.mode == SegmentMode.ARROW or self.mode == SegmentMode.ARROW2:
+            pattern = dotgap_pattern(color)
+            drawarrow(draw, canv_points, width, pattern, color)
+        elif self.mode == SegmentMode.ARROW1:
+            pattern = dotgap_pattern(color)
+            drawarrow(draw, canv_points, width, pattern, color, both=False)
+        else:
+            raise NotImplementedError(f"Don't know how to draw mode: {self.mode!r}")
