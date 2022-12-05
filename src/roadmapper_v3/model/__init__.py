@@ -12,7 +12,9 @@ from PIL import ImageDraw
 from roadmapper_v3.draw import (
     Point,
     dash_pattern,
+    dotgap_pattern,
     drawarc,
+    drawarrow,
     drawline_patterned,
     drawline_solid,
     rails_pattern,
@@ -157,6 +159,9 @@ class SegmentMode(IntEnum):
     DASHED = 2
     RAILS = 3
     ARC = 4
+    ARROW2 = 5  # Put this first so ARROW2 becomes the 'canonical' name for value 5
+    ARROW = 5
+    ARROW1 = 6
 
 
 class Segment:
@@ -201,6 +206,12 @@ class Segment:
             drawline_patterned(draw, pattern, canv_points, width, extend_by=extend_by)
         elif self.mode == SegmentMode.ARC:
             drawarc(draw, canv_points, width, (0, 0, 0), extend_by_deg=extend_by_deg)
+        elif self.mode == SegmentMode.ARROW or self.mode == SegmentMode.ARROW2:
+            pattern = dotgap_pattern((0, 0, 0))
+            drawarrow(draw, canv_points, width, pattern, (0, 0, 0), extend_by=extend_by)
+        elif self.mode == SegmentMode.ARROW1:
+            pattern = dotgap_pattern((0, 0, 0))
+            drawarrow(draw, canv_points, width, pattern, (0, 0, 0), both=False, extend_by=extend_by)
         else:
             raise NotImplementedError(f"Unkown mode: {self.mode!r}")
 
@@ -225,6 +236,12 @@ class Segment:
             drawline_patterned(draw, pattern, canv_points, width)
         elif self.mode == SegmentMode.ARC:
             drawarc(draw, canv_points, width, color)
+        elif self.mode == SegmentMode.ARROW or self.mode == SegmentMode.ARROW2:
+            pattern = dotgap_pattern(color)
+            drawarrow(draw, canv_points, width, pattern, color)
+        elif self.mode == SegmentMode.ARROW1:
+            pattern = dotgap_pattern(color)
+            drawarrow(draw, canv_points, width, pattern, color, both=False)
         else:
             raise NotImplementedError(f"Unkown mode: {self.mode!r}")
 

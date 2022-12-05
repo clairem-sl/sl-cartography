@@ -155,6 +155,13 @@ def rails_pattern(color: tuple[int, int, int], dash_len: int = 60, pip_len: int 
     }
 
 
+def dotgap_pattern(color: tuple[int, int, int], gap_len: int = 40):
+    return {
+        "dot": Pattern(20, color),
+        "gap": Pattern(gap_len, None),
+    }
+
+
 def drawline_solid(
     drawer: ImageDraw.ImageDraw, points: list[Point], width: int, color: tuple[int, int, int], extend_by: float = None
 ):
@@ -223,3 +230,63 @@ def drawarc(
     by1, by2 = sorted([(cheight - (center.y - radius)), (cheight - (center.y + radius))])
     bbox = (bx1, by1, bx2, by2)
     drawer.arc(bbox, ang1, ang2, fill=color, width=width)
+
+
+def get_arrow_endpoints(p1: Point, p2: Point, theta_deg: float = 15.0, arrow_len: float = 80.0) -> tuple[Point, Point]:
+    """
+         p3
+        /
+    p2 <---- p1
+        \
+         p4
+
+    Angle p1-p2-p3 == angle p1-p2-p4 == "theta"
+    """
+    # Source: https://math.stackexchange.com/a/1314050/132442
+    x1, y1 = p1
+    x2, y2 = p2
+    l1 = math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
+    l2 = arrow_len
+    l_ratio = l2 / l1
+    theta_rad = theta_deg / 180 * math.pi
+    cos_theta = math.cos(theta_rad)
+    sin_theta = math.sin(theta_rad)
+    x3 = x2 + l_ratio * ((x1 - x2) * cos_theta + (y1 - y2) * sin_theta)
+    y3 = y2 + l_ratio * ((y1 - y2) * cos_theta - (x1 - x2) * sin_theta)
+    x4 = x2 + l_ratio * ((x1 - x2) * cos_theta - (y1 - y2) * sin_theta)
+    y4 = y2 + l_ratio * ((y1 - y2) * cos_theta + (x1 - x2) * sin_theta)
+    return Point(x3, y3), Point(x4, y4)
+
+
+def drawarrow(
+    drawer: ImageDraw.ImageDraw,
+    points: list[Point],
+    width: int,
+    pattern: dict[str, Pattern],
+    arrow_color: tuple[int, int, int],
+    both: bool = True,
+    extend_by: float = None,
+):
+    """
+    Draw an arrow with patterned line.
+
+    :param drawer: ImageDraw.ImageDraw to draw with
+    :param points: List of canvas points
+    :param width: Width of line and arrow head arms
+    :param pattern: Pattern of the line
+    :param arrow_color: Color of the arrow head
+    :param both: If True (default) draw arrow on both ends. If False, draw only at end
+    :param extend_by: Extend the endings by this many pixels
+    """
+    drawline_patterned(drawer, pattern, points, width, extend_by=extend_by)
+
+    if both:
+        p1 = points[1]
+        p2 = points[0]
+        p3, p4 = get_arrow_endpoints(p1, p2)
+        drawline_solid(drawer, [p3, p2, p4], width, arrow_color, extend_by)
+
+    p1 = points[-2]
+    p2 = points[-1]
+    p3, p4 = get_arrow_endpoints(p1, p2)
+    drawline_solid(drawer, [p3, p2, p4], width, arrow_color, extend_by)
