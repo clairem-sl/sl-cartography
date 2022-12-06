@@ -210,6 +210,11 @@ def bake(parsed: list[PosRecord | ChatCommand]) -> dict[str, Continent]:
                             pass
                         segment.add_point(rec.to_point())
                     new_segment()
+                case "endroute", _:
+                    if segment.geopoints:
+                        route.add_segment(segment)
+                    route = None
+                    segment = None
                 case other, _:
                     if other not in IGNORED_COMMANDS:
                         print(f"WARNING: Unrecognized command '{other}' ({p.source})")
@@ -217,6 +222,9 @@ def bake(parsed: list[PosRecord | ChatCommand]) -> dict[str, Continent]:
         elif isinstance(p, PosRecord):
             if not continent.contains_geo((geop := p.to_point())):
                 print(f"WARNING: Coordinates {geop} outside of continent '{continent.name}' ({p.source})")
+            if route is None:
+                print(f"WARNING: New PosRecord but no route is active! Will be discarded! Please check {p.source}")
+                continue
             if geop.is_close(prev_point):
                 continue
             segment.add_point(geop)
