@@ -99,6 +99,11 @@ GetSLURLNavHead() {
     llRegionSayTo(gOwnerID, 0, "# With NAV Heading: " + NavHeading);
 }
 
+TimedOut() {
+    llSetTimerEvent(0);
+    llListenRemove(gListener);
+    llRegionSayTo(gOwnerID, 0, "# Timed out waiting for response");
+}
 
 // #################### State Machines
 
@@ -293,9 +298,7 @@ state set_contiroute {
     }
 
     timer() {
-        llSetTimerEvent(0);
-        llListenRemove(gListener);
-        llRegionSayTo(gOwnerID, 0, "# Timed out waiting for response");
+        TimedOut();
         state default;
     }
 }
@@ -350,9 +353,7 @@ state set_brush {
     }
 
     timer() {
-        llSetTimerEvent(0);
-        llListenRemove(gListener);
-        llRegionSayTo(gOwnerID, 0, "# Timed out waiting for response");
+        TimedOut();
         state default;
     }
 }
@@ -424,9 +425,7 @@ state other_cmds {
     }
 
     timer() {
-        llSetTimerEvent(0);
-        llListenRemove(gListener);
-        llRegionSayTo(gOwnerID, 0, "# Timed out waiting for response");
+        TimedOut();
         state default;
     }
 }
