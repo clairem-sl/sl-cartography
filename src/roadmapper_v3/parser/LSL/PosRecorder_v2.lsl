@@ -45,7 +45,24 @@ UpdBtnAll(list NewStates) {
     llSetLinkPrimitiveParamsFast(0, Params);
 }
 
+
+// #################### Global States
+
+key gOwnerID;
+integer gGreeted = FALSE;
+integer gArcPoints;
+float gLastRecTime;
+integer gListener;
+string gBrush = "SOLID";
+integer gRecording = FALSE;
+string gWantSet;
+float gEnterRecordingState;
+
+list gOtherCmds = ["--", "--", "Cancel", "GetSLURL", "--", "RecSpeed", "SetDesc(S)", "SetColor(R)", "EndRoute"];
+
+
 // #################### Logic
+
 
 RecordPos() {
     vector Pos = llGetPos();
@@ -64,20 +81,23 @@ RecordPos() {
     return;
 }
 
-
-// #################### States
-
-key gOwnerID;
-integer gGreeted = FALSE;
-integer gArcPoints;
-float gLastRecTime;
-integer gListener;
-string gBrush = "SOLID";
-integer gRecording = FALSE;
-string gWantSet;
-float gEnterRecordingState;
-
-list gOtherCmds = ["GetSLURL", "--", "Cancel", "SetDesc(S)", "SetColor(R)", "RecSpeed"];
+GetSLURLNavHead() {
+    llRegionSayTo(gOwnerID, 0, "# SLURL of current location:");
+    vector Pos = llGetPos();
+    llRegionSayTo(
+        gOwnerID, 0,
+        "# http://maps.secondlife.com/secondlife/" + llEscapeURL(llGetRegionName()) +
+        "/" + (string)((integer)Pos.x) +
+        "/" + (string)((integer)Pos.y) +
+        "/" + (string)((integer)Pos.z)
+    );
+    vector EulerRot = llRot2Euler(llGetRootRotation());
+    // Need to do this because SL Heading 000 is to the East, and North is 090 (ccw, opposite aviation)
+    integer Heading = (integer)(90.0 - (EulerRot.z * RAD_TO_DEG)) % 360;
+    while (Heading < 0) Heading += 360;
+    string NavHeading = llGetSubString("00" + (string)Heading, -3, -1);
+    llRegionSayTo(gOwnerID, 0, "# With NAV Heading: " + NavHeading);
+}
 
 
 // #################### State Machines
@@ -360,21 +380,13 @@ state other_cmds {
                 state default;
             }
             else if (message == "GetSLURL") {
-                llRegionSayTo(gOwnerID, 0, "# SLURL of current location:");
-                vector Pos = llGetPos();
-                llInstantMessage(
-                    gOwnerID,
-                    "# http://maps.secondlife.com/secondlife/" + llEscapeURL(llGetRegionName()) +
-                    "/" + (string)((integer)Pos.x) +
-                    "/" + (string)((integer)Pos.y) +
-                    "/" + (string)((integer)Pos.z)
-                );
-                vector EulerRot = llRot2Euler(llGetRootRotation());
-                // Need to do this because SL Heading 000 is to the East, and North is 090 (ccw, opposite aviation)
-                integer Heading = (integer)(90.0 - (EulerRot.z * RAD_TO_DEG)) % 360;
-                while (Heading < 0) Heading += 360;
-                string NavHeading = llGetSubString("00" + (string)Heading, -3, -1);
-                llRegionSayTo(gOwnerID, 0, "# With NAV Heading: " + NavHeading);
+                GetSLURLNavHead();
+                state default;
+            }
+            else if (message == "EndRoute") {
+                llOwnerSay("endroute");
+                llRegionSayTo(gOwnerID, 0, "# 'endroute' has been indicated");
+                llRegionSayTo(gOwnerID, 0, "# You *must* use the Route button again before recording new positions!");
                 state default;
             }
             else if (message == "SetDesc(S)") {
