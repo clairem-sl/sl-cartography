@@ -399,11 +399,9 @@ state other_cmds {
                 GetSLURLNavHead();
                 state default;
             }
-            else if (8 == idx) {
-                llOwnerSay("endroute");
-                llRegionSayTo(gOwnerID, 0, "# 'endroute' has been indicated");
-                llRegionSayTo(gOwnerID, 0, "# You *must* use the Route button again before recording new positions!");
-                state default;
+            else if (5 == idx) {
+                gListener = llListen(OTHMENU_RECSPD, "", gOwnerID, "");
+                llTextBox(gOwnerID, "Enter desired recording speed, must be a multiple of 0.25", OTHMENU_RECSPD);
             }
             else if (6 == idx) {
                 gListener = llListen(OTHMENU_SETDESC, "", gOwnerID, "");
@@ -413,9 +411,11 @@ state other_cmds {
                 gListener = llListen(OTHMENU_SETCOL, "", gOwnerID, "");
                 llTextBox(gOwnerID, "Please enter desired RGB, comma- or space-separated. Empty = cancel.", OTHMENU_SETCOL);
             }
-            else if (5 == idx) {
-                gListener = llListen(OTHMENU_RECSPD, "", gOwnerID, "");
-                llTextBox(gOwnerID, "Enter desired recording speed, must be a multiple of 0.25", OTHMENU_RECSPD);
+            else if (8 == idx) {
+                llOwnerSay("endroute");
+                llRegionSayTo(gOwnerID, 0, "# 'endroute' has been indicated");
+                llRegionSayTo(gOwnerID, 0, "# You *must* use the Route button again before recording new positions!");
+                state default;
             }
             llSetTimerEvent(60);
             return;
