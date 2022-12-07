@@ -138,7 +138,6 @@ default {
     }
 
     touch_end(integer total_number) {
-        integer linknum = llDetectedLinkNumber(0);
         integer facenum = llDetectedTouchFace(0);
         if (facenum == FACE_REC) {
             gEnterRecordingState = llGetTime();
@@ -243,7 +242,6 @@ state arcrecord {
     }
 
     touch_end(integer total_number) {
-        integer linknum = llDetectedLinkNumber(0);
         integer facenum = llDetectedTouchFace(0);
         if (facenum == FACE_POS) {
             ReportPos();
