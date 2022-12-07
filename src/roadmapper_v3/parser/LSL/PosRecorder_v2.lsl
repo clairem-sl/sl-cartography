@@ -384,29 +384,36 @@ state other_cmds {
         llSetTimerEvent(0);
         llListenRemove(gListener);
         if (channel == MENU_MAIN) {
-            if (message == "Cancel") {
+            integer idx = llListFindList(gOtherCmds, message);
+            // ["--", "--", "Cancel", "GetSLURL", "--", "RecSpeed", "SetDesc(S)", "SetColor(R)", "EndRoute"];
+            //  0     1     2         3           4     5           6             7              8
+            if (-1 == idx) {
+                llRegionSayTo(gOwnerID, 0, "# ERROR: Unknown command " + message);
+                state default;
+            }
+            else if (2 == idx) {
                 llRegionSayTo(gOwnerID, 0, "# Other commands cancelled");
                 state default;
             }
-            else if (message == "GetSLURL") {
+            else if (3 == idx) {
                 GetSLURLNavHead();
                 state default;
             }
-            else if (message == "EndRoute") {
+            else if (8 == idx) {
                 llOwnerSay("endroute");
                 llRegionSayTo(gOwnerID, 0, "# 'endroute' has been indicated");
                 llRegionSayTo(gOwnerID, 0, "# You *must* use the Route button again before recording new positions!");
                 state default;
             }
-            else if (message == "SetDesc(S)") {
+            else if (6 == idx) {
                 gListener = llListen(OTHMENU_SETDESC, "", gOwnerID, "");
                 llTextBox(gOwnerID, "Please enter Segment description, leave empty to cancel", OTHMENU_SETDESC);
             }
-            else if (message == "SetColor(R)") {
+            else if (7 == idx) {
                 gListener = llListen(OTHMENU_SETCOL, "", gOwnerID, "");
                 llTextBox(gOwnerID, "Please enter desired RGB, comma- or space-separated. Empty = cancel.", OTHMENU_SETCOL);
             }
-            else if (message == "RecSpeed") {
+            else if (5 == idx) {
                 gListener = llListen(OTHMENU_RECSPD, "", gOwnerID, "");
                 llTextBox(gOwnerID, "Enter desired recording speed, must be a multiple of 0.25", OTHMENU_RECSPD);
             }
