@@ -245,30 +245,31 @@ def main(output: Path, chat_file: list[Path], startfrom: str):
         print(f"Output '{output}' exists, reading previous data for merging...")
         targ_dict = load_from(output)
 
+    parsed: list[ChatLine] = []
     for cf in chat_file:
         print(f"Parsing {cf}...")
-        parsed = parse(cf, startfrom)
-        baked = bake(parsed)
+        parsed.extend(parse(cf, startfrom))
 
-        for conti_name, b_continent in baked.items():
-            if conti_name not in targ_dict:
-                targ_dict[conti_name] = b_continent
-                print(f"New continent added: {conti_name}")
+    baked = bake(parsed)
+    for conti_name, b_continent in baked.items():
+        if conti_name not in targ_dict:
+            targ_dict[conti_name] = b_continent
+            print(f"New continent added: {conti_name}")
+            continue
+        targ_conti = targ_dict[conti_name]
+        for route_name, b_route in b_continent.routes.items():
+            if route_name not in targ_conti:
+                targ_conti.add_route(b_route)
+                print(f"New route added: {conti_name}::{route_name}")
                 continue
-            targ_conti = targ_dict[conti_name]
-            for route_name, b_route in b_continent.routes.items():
-                if route_name not in targ_conti:
-                    targ_conti.add_route(b_route)
-                    print(f"New route added: {conti_name}::{route_name}")
+            targ_route = targ_conti[route_name]
+            print(f"Checking new segments for {conti_name}::{route_name} ", end="", flush=True)
+            for seg in b_route.segments:
+                if seg in targ_route:
                     continue
-                targ_route = targ_conti[route_name]
-                print(f"Checking new segments for {conti_name}::{route_name} ", end="", flush=True)
-                for seg in b_route.segments:
-                    if seg in targ_route:
-                        continue
-                    print("+", end="", flush=True)
-                    targ_route.add_segment(seg)
-                print()
+                print("+", end="", flush=True)
+                targ_route.add_segment(seg)
+            print()
 
     save_to(output, targ_dict)
 
