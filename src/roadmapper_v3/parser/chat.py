@@ -177,10 +177,13 @@ def bake(parsed: list[ChatLine]) -> dict[str, Continent]:
                         try:
                             rgb = tuple(int(c) for c in elems)
                         except ValueError:
-                            print(f"WARNING: Invalid number: {elems}")
+                            print(f"WARNING: Invalid number: {elems} ({p.source})")
                             continue
                         if not all(map(lambda x: 0 <= x <= 255, rgb)):
-                            print(f"WARNING: One of the RGB values are outside allowable range of 0~255: {rgb}")
+                            print(
+                                f"WARNING: One of the RGB values is outside allowable range of 0~255: "
+                                f"{rgb} ({p.source})"
+                            )
                         else:
                             route.color = rgb
                     else:
@@ -224,7 +227,7 @@ def bake(parsed: list[ChatLine]) -> dict[str, Continent]:
             if not continent.contains_geo((geop := p.to_point())):
                 print(f"WARNING: Coordinates {geop} outside of continent '{continent.name}' ({p.source})")
             if route is None:
-                print(f"WARNING: New PosRecord but no route is active! Will be discarded! Please check {p.source}")
+                print(f"WARNING: New PosRecord but no route is active! Will be discarded! ({p.source})")
                 continue
             if geop.is_close(prev_point):
                 continue
