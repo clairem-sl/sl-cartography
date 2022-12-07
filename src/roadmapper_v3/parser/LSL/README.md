@@ -38,3 +38,16 @@ https://github.com/clairem-sl/jetbrains-lsl-support
 
 So by keeping the file close to the Python files with which it interacts (indirectly)
 I can keep the file up-to-date using PyCharm as well!
+
+
+## The Texture
+
+The texture is a 512x512 px texture.
+
+Divided into 8 rows, each row (64-pixel height) corresponds to a face of the
+previously-mention 8-face display panel. For actual correlation, see the
+`FACE_*` and `BTN_Y` constants in the script.
+
+Each row is further divided into eight 64-pixel columns, although only three leftmost
+columns are used. The columns hold the images for a button in the READY, ON/ACTIVE,
+and DISABLED states, respectively. (See the `BTN_X` constant in the script).
