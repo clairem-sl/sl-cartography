@@ -185,8 +185,7 @@ state recording {
     touch_end(integer total_number) {
         integer facenum = llDetectedTouchFace(0);
 
-        integer idx = llListFindList([FACE_POS, FACE_BRUSH, FACE_BRK, FACE_ARC, FACE_REC], [facenum]);
-        if (idx == (integer)-1) {
+        if ((integer)-1 == llListFindList([FACE_POS, FACE_BRUSH, FACE_BRK, FACE_ARC, FACE_REC], [facenum])) {
             llRegionSayTo(gOwnerID, 0, "# Button " + (string)facenum + " is currently disabled.");
             return;
         }
