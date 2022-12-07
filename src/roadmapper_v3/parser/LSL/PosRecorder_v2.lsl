@@ -103,10 +103,9 @@ GetSLURLNavHead() {
         "/" + (string)((integer)Pos.y) +
         "/" + (string)((integer)Pos.z)
     );
-    vector EulerRot = llRot2Euler(llGetRootRotation());
-    // Need to do this because SL Heading 000 is to the East, and North is 090 (ccw, opposite aviation)
-    integer Heading = (integer)(90.0 - (EulerRot.z * RAD_TO_DEG)) % 360;
-    while (Heading < 0) Heading += 360;
+    vector v = llRot2Fwd(llGetRootRotation());
+    integer Heading = (integer)(RAD_TO_DEG*llAtan2(v.x,v.y)); // swapping the x,y axes converts from math angles to clock angles.
+    Heading+= 360*(Heading<0); // no conditional needed.
     string NavHeading = llGetSubString("00" + (string)Heading, -3, -1);
     llRegionSayTo(gOwnerID, 0, "# With NAV Heading: " + NavHeading);
 }
