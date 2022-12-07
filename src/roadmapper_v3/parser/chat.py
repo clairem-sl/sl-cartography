@@ -20,7 +20,7 @@ RE_TS = re.compile(
     r"(?P<hour>\d{1,2})\D?(?P<minute>\d{2})(?:\D?(?P<second>\d{2}))?"
 )
 RE_VECTOR = re.compile(r"\s*<\s*(-?[\d.]+),\s*(-?[\d.]+),\s*(-?[\d.]+)\s*>\s*")
-RE_POSREC_LINE = re.compile(r"(?P<prefix>.*?)PosRecorder\s*(?P<ver>[^:]*):\s+(?P<entry>.*)")
+RE_POSREC_LINE = re.compile(r"(?P<prefix>.*?)PosRecorder\s*(?P<ver>[^:]*):(?:\s+:)?\s+(?P<entry>.*)")
 RE_POSREC_KV = re.compile(r"(?P<key>[^:\s]+)\s*:\s*(?P<value>.*)")
 RE_SEPARATOR = re.compile(r"[;,\s]+")
 
