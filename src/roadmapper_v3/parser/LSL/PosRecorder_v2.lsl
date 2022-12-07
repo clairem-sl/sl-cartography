@@ -16,7 +16,7 @@ float CHECK_EVERY_S = 0.25;
 
 // #################### Other constants
 
-integer OTHMENU_MAIN = (integer)-8008135;
+integer MENU_MAIN = (integer)-8008135;
 integer OTHMENU_SETDESC = (integer)-80081351;
 integer OTHMENU_SETCOL = (integer)-80081352;
 integer OTHMENU_RECSPD = (integer)-80081353;
@@ -270,11 +270,11 @@ state set_contiroute {
         else UpdBtnAll([2, 2, 2, 1, 2, 2, 2, 2]);
         llRegionSayTo(gOwnerID, 0, "# Setting " + gWantSet + " requested.");
 
-        gListener = llListen((integer)-8008135, "", gOwnerID, "");
+        gListener = llListen(MENU_MAIN, "", gOwnerID, "");
         llTextBox(
             gOwnerID,
             "Please enter " + gWantSet + " name (case-sensitive), leave empty to cancel.",
-            (integer)-8008135
+            MENU_MAIN
         );
         llSetTimerEvent(60);
     }
@@ -317,12 +317,12 @@ state set_brush {
         else UpdBtnAll([2, 2, 2, 2, 2, 1, 2, 2]);
         llRegionSayTo(gOwnerID, 0, "# Setting brush requested.");
 
-        gListener = llListen((integer)-8008135, "", gOwnerID, "");
+        gListener = llListen(MENU_MAIN, "", gOwnerID, "");
         llDialog(
             gOwnerID,
             "Choose a brush:",
             ["ARROW2", "ARROW1", "Cancel", "SOLID", "DASHED", "RAILS"],
-            (integer)-8008135
+            MENU_MAIN
         );
         llSetTimerEvent(60);
     }
@@ -372,19 +372,19 @@ state other_cmds {
         UpdBtnAll([2, 2, 2, 2, 2, 2, 2, 1]);
         llRegionSayTo(gOwnerID, 0, "# Other commands.");
 
-        gListener = llListen(OTHMENU_MAIN, "", gOwnerID, "");
-        llDialog(gOwnerID, "Choose command", gOtherCmds, OTHMENU_MAIN);
+        gListener = llListen(MENU_MAIN, "", gOwnerID, "");
+        llDialog(gOwnerID, "Choose command", gOtherCmds, MENU_MAIN);
         llSetTimerEvent(60);
     }
 
     listen(integer channel, string name, key id, string message) {
         if (message == "--") {
-            llDialog(gOwnerID, "Choose command", gOtherCmds, OTHMENU_MAIN);
+            llDialog(gOwnerID, "Choose command", gOtherCmds, MENU_MAIN);
             return;
         }
         llSetTimerEvent(0);
         llListenRemove(gListener);
-        if (channel == OTHMENU_MAIN) {
+        if (channel == MENU_MAIN) {
             if (message == "Cancel") {
                 llRegionSayTo(gOwnerID, 0, "# Other commands cancelled");
                 state default;
