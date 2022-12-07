@@ -341,6 +341,7 @@ state set_brush {
                 if (message == "ARROW1") {
                     llRegionSayTo(gOwnerID, 0, "# IMPORTANT: ARROW1 chosen, so arrow will be drawn at the last Pos only!");
                 }
+                gBrush = message;
                 llOwnerSay("mode: " + message);
             }
         }
