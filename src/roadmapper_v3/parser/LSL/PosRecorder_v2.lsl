@@ -7,8 +7,20 @@
 
 // PLEASE ONLY RUN THIS IN MONO, NOT IN LSO!
 
+
+// #################### Configurables
+
 float RECORD_EVERY_S = 2.0;
 float CHECK_EVERY_S = 0.25;
+
+
+// #################### Other constants
+
+integer OTHMENU_MAIN = (integer)-8008135;
+integer OTHMENU_SETDESC = (integer)-80081351;
+integer OTHMENU_SETCOL = (integer)-80081352;
+integer OTHMENU_RECSPD = (integer)-80081353;
+
 
 // #################### HUD Interface
 
@@ -235,7 +247,7 @@ state arcrecord {
     touch_end(integer total_number) {
         integer linknum = llDetectedLinkNumber(0);
         integer facenum = llDetectedTouchFace(0);
-        if (facenum == 2) {
+        if (facenum == FACE_POS) {
             RecordPos();
             if (++gArcPoints == 3) {
                 llRegionSayTo(gOwnerID, 0, "# Arc points complete. Breaking & stopping...");
@@ -245,7 +257,7 @@ state arcrecord {
             }
             llRegionSayTo(gOwnerID, 0, "# Arc middlepoint recorded.");
             llRegionSayTo(gOwnerID, 0, "# Now please move to the end of the arc and press Pos");
-        } else if (facenum == 6) {
+        } else if (facenum == FACE_ARC) {
             llRegionSayTo(gOwnerID, 0, "# Cannot cancel Arc mode");
         } else {
             llRegionSayTo(gOwnerID, 0, "# Button " + (string)facenum + " is currently disabled.");
@@ -360,19 +372,19 @@ state other_cmds {
         UpdBtnAll([2, 2, 2, 2, 2, 2, 2, 1]);
         llRegionSayTo(gOwnerID, 0, "# Other commands.");
 
-        gListener = llListen((integer)-8008135, "", gOwnerID, "");
-        llDialog(gOwnerID, "Choose command", gOtherCmds, (integer)-8008135);
+        gListener = llListen(OTHMENU_MAIN, "", gOwnerID, "");
+        llDialog(gOwnerID, "Choose command", gOtherCmds, OTHMENU_MAIN);
         llSetTimerEvent(60);
     }
 
     listen(integer channel, string name, key id, string message) {
         if (message == "--") {
-            llDialog(gOwnerID, "Choose command", gOtherCmds, (integer)-8008135);
+            llDialog(gOwnerID, "Choose command", gOtherCmds, OTHMENU_MAIN);
             return;
         }
         llSetTimerEvent(0);
         llListenRemove(gListener);
-        if (channel == (integer)-8008135) {
+        if (channel == OTHMENU_MAIN) {
             if (message == "Cancel") {
                 llRegionSayTo(gOwnerID, 0, "# Other commands cancelled");
                 state default;
@@ -388,30 +400,30 @@ state other_cmds {
                 state default;
             }
             else if (message == "SetDesc(S)") {
-                gListener = llListen((integer)-80081351, "", gOwnerID, "");
-                llTextBox(gOwnerID, "Please enter Segment description, leave empty to cancel", (integer)-80081351);
+                gListener = llListen(OTHMENU_SETDESC, "", gOwnerID, "");
+                llTextBox(gOwnerID, "Please enter Segment description, leave empty to cancel", OTHMENU_SETDESC);
             }
             else if (message == "SetColor(R)") {
-                gListener = llListen((integer)-80081352, "", gOwnerID, "");
-                llTextBox(gOwnerID, "Please enter desired RGB, comma- or space-separated. Empty = cancel.", (integer)-80081352);
+                gListener = llListen(OTHMENU_SETCOL, "", gOwnerID, "");
+                llTextBox(gOwnerID, "Please enter desired RGB, comma- or space-separated. Empty = cancel.", OTHMENU_SETCOL);
             }
             else if (message == "RecSpeed") {
-                gListener = llListen((integer)-80081353, "", gOwnerID, "");
-                llTextBox(gOwnerID, "Enter desired recording speed, must be a multiple of 0.25", (integer)-80081353);
+                gListener = llListen(OTHMENU_RECSPD, "", gOwnerID, "");
+                llTextBox(gOwnerID, "Enter desired recording speed, must be a multiple of 0.25", OTHMENU_RECSPD);
             }
             llSetTimerEvent(60);
             return;
         }
         message = llStringTrim(message, STRING_TRIM);
-        if (channel == (integer)-80081351) {
+        if (channel == OTHMENU_SETDESC) {
             if (message) llOwnerSay("segdesc: " + message);
             else llRegionSayTo(gOwnerID, 0, "# Segment description cancelled");
         }
-        else if (channel == (integer)-80081352) {
+        else if (channel == OTHMENU_SETCOL) {
             if (message) llOwnerSay("color: " + message);
             else llRegionSayTo(gOwnerID, 0, "# RGB color cancelled");
         }
-        else if (channel == (integer)-80081353) {
+        else if (channel == OTHMENU_RECSPD) {
             if (message) {
                 RECORD_EVERY_S = (float)message;
                 llRegionSayTo(gOwnerID, 0, "# RecSpeed set to " + message + " seconds.");
