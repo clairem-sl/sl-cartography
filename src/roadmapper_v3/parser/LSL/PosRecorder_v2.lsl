@@ -76,7 +76,7 @@ list gOtherCmds = ["--", "--", "Cancel", "GetSLURL", "--", "RecSpeed", "SetDesc(
 // #################### Logic
 
 
-RecordPos() {
+ReportPos() {
     vector Pos = llGetPos();
     string regName = llGetRegionName();
     string parcelName = llList2String(llGetParcelDetails(Pos, [PARCEL_DETAILS_NAME]) ,0);
@@ -93,7 +93,7 @@ RecordPos() {
     return;
 }
 
-GetSLURLNavHead() {
+ReportSLURLNavHead() {
     llRegionSayTo(gOwnerID, 0, "# SLURL of current location:");
     vector Pos = llGetPos();
     llRegionSayTo(
@@ -144,7 +144,7 @@ default {
             gEnterRecordingState = llGetTime();
             state recording;
         } else if (facenum == FACE_POS) {
-            RecordPos();
+            ReportPos();
         } else if (facenum == FACE_BRK) {
             llOwnerSay("break");
             gBrush = "SOLID";
@@ -169,7 +169,7 @@ state recording {
         UpdBtnAll([1, 2, 0, 2, 0, 0, 0, 2]);
         llOwnerSay("# Recording begins");
         gRecording = TRUE;
-        RecordPos();
+        ReportPos();
         gLastRecTime = llGetTime();
         llSetTimerEvent(CHECK_EVERY_S);
     }
@@ -177,7 +177,7 @@ state recording {
     timer() {
         if ((llGetTime() - gLastRecTime) > RECORD_EVERY_S) {
             gLastRecTime = llGetTime();
-            RecordPos();
+            ReportPos();
         }
     }
 
@@ -189,7 +189,7 @@ state recording {
             return;
         }
 
-        RecordPos();
+        ReportPos();
         if (facenum == FACE_POS) return;
 
         // From this point onwards, state will change. So the timer event here will be out of scope.
@@ -235,7 +235,7 @@ state arcrecord {
     state_entry() {
         UpdBtnAll([2, 2, 0, 2, 2, 2, 1, 2]);
         llRegionSayTo(gOwnerID, 0, "# Arc mode. Recording arc startpoint.");
-        RecordPos();
+        ReportPos();
         gArcPoints = 1;
         gBrush = "SOLID";
 
@@ -246,7 +246,7 @@ state arcrecord {
         integer linknum = llDetectedLinkNumber(0);
         integer facenum = llDetectedTouchFace(0);
         if (facenum == FACE_POS) {
-            RecordPos();
+            ReportPos();
             if (++gArcPoints == 3) {
                 llRegionSayTo(gOwnerID, 0, "# Arc points complete. Breaking & stopping...");
                 llOwnerSay("break");
@@ -396,7 +396,7 @@ state other_cmds {
                 state default;
             }
             else if (3 == idx) {
-                GetSLURLNavHead();
+                ReportSLURLNavHead();
                 state default;
             }
             else if (5 == idx) {
