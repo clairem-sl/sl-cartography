@@ -3,7 +3,7 @@
 This script is supposed to go into a HUD that is constructed in the following way:
 
 > First, grab the [free full-perm 8-face display panel component on the
-> MarketPlace](marketplace.secondlife.com/p/Eight-face-display-panels/11026621).
+> MarketPlace](https://marketplace.secondlife.com/p/Eight-face-display-panels/11026621).
 > 
 > Rez it, and attach it to your HUD. You will need to rotate it in such a way that
 > it is full-frontal to you, with "face 0" on top left and "face 1" on top right.
