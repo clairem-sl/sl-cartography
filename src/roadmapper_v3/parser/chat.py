@@ -9,6 +9,7 @@ import datetime
 import math
 import re
 from pathlib import Path
+from typing import cast
 
 from roadmapper_v3.draw.colors import ALL_COLORS
 from roadmapper_v3.model import Continent, Point, Route, Segment, SegmentMode
@@ -138,7 +139,7 @@ def parse(chat_file: Path, startfrom: str) -> list[PosRecord | ChatCommand]:
 IGNORED_COMMANDS = {"pos", "endroute", "start", "stop"}
 
 
-def bake(parsed: list[PosRecord | ChatCommand]) -> dict[str, Continent]:
+def bake(parsed: list[ChatLine]) -> dict[str, Continent]:
     all_roads: dict[str, Continent] = {}
     continent: Continent | None = None
     route: Route | None = None
@@ -208,7 +209,7 @@ def bake(parsed: list[PosRecord | ChatCommand]) -> dict[str, Continent]:
                     for _ in range(3):
                         while not isinstance((rec := next(parsed_iter)), PosRecord):
                             pass
-                        segment.add_point(rec.to_point())
+                        segment.add_point(cast(PosRecord, rec).to_point())
                     new_segment()
                 case "endroute", _:
                     if segment.geopoints:
