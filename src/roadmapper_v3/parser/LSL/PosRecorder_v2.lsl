@@ -272,12 +272,9 @@ state set_contiroute {
         llListenRemove(gListener);
         llSetTimerEvent(0);
         message = llStringTrim(message, STRING_TRIM);
-        if (message == "") {
-            llRegionSayTo(gOwnerID, 0, "# Empty name, cancelled");
-            state default;
-        }
+        if (message) llOwnerSay(gWantSet + ": " + message);
+        else llRegionSayTo(gOwnerID, 0, "# Empty name, cancelled");
 
-        llOwnerSay(gWantSet + ": " + message);
         state default;
     }
 
@@ -407,19 +404,19 @@ state other_cmds {
         }
         message = llStringTrim(message, STRING_TRIM);
         if (channel == (integer)-80081351) {
-            if (message == "") llRegionSayTo(gOwnerID, 0, "# Segment description cancelled");
-            else llOwnerSay("segdesc: " + message);
+            if (message) llOwnerSay("segdesc: " + message);
+            else llRegionSayTo(gOwnerID, 0, "# Segment description cancelled");
         }
         else if (channel == (integer)-80081352) {
-            if (message == "") llRegionSayTo(gOwnerID, 0, "# RGB color cancelled");
-            else llOwnerSay("color: " + message);
+            if (message) llOwnerSay("color: " + message);
+            else llRegionSayTo(gOwnerID, 0, "# RGB color cancelled");
         }
         else if (channel == (integer)-80081353) {
-            if (message == "") llRegionSayTo(gOwnerID, 0, "# RecSpeed cancelled");
-            else {
+            if (message) {
                 RECORD_EVERY_S = (float)message;
                 llRegionSayTo(gOwnerID, 0, "# RecSpeed set to " + message + " seconds.");
             }
+            else llRegionSayTo(gOwnerID, 0, "# RecSpeed cancelled");
         }
         state default;
     }
