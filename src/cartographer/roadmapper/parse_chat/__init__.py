@@ -111,7 +111,7 @@ def bake(
                 case "continent", conti:
                     if (continent := casefolded.get(conti.casefold())) is None:
                         raise ValueError(f"Unknown continent: {conti}")
-                    print(f"Continent: {continent}")
+                    print(f"\nContinent: {continent}", end="", flush=True)
                     bounds = KNOWN_AREAS[continent]
                     segment = Segment(DrawMode.SOLID)
                     route = None
@@ -119,27 +119,31 @@ def bake(
                     if route is not None:
                         all_routes[continent][route].append(segment)
                     route = route_new
-                    print(f"  {continent}::{route} begins...")
+                    print(f"\n  {continent}::{route} begins...", end="", flush=True)
                     segment = Segment(DrawMode.SOLID)
                 case "color", color_name:
                     if color_name not in ALL_COLORS:
-                        print(f"    WARNING: Unknown Color {color_name} on {rec.source}")
+                        print(f"\n    WARNING: Unknown Color {color_name} on {rec.source}", end="", flush=True)
                     segment.color = ALL_COLORS.get(color_name)
                 case "mode", umode:
                     umode: str
                     wmode: DrawMode = DrawMode[umode.upper()]
                     if segment.mode != wmode:
+                        print("m", end="", flush=True)
                         all_routes[continent][route].append(segment)
                         segment = Segment(wmode, color=segment.color)
                 case "solid", _:
-                    if segment.mode == DrawMode.DASHED:
+                    if segment.mode != DrawMode.SOLID:
+                        print(".", end="", flush=True)
                         all_routes[continent][route].append(segment)
                         segment = Segment(DrawMode.SOLID, color=segment.color)
                 case "dashed", _:
-                    if segment.mode == DrawMode.SOLID:
+                    if segment.mode != DrawMode.DASHED:
+                        print("-", end="", flush=True)
                         all_routes[continent][route].append(segment)
                         segment = Segment(DrawMode.DASHED, color=segment.color)
                 case "arc", _:
+                    print("(", end="", flush=True)
                     all_routes[continent][route].append(segment)
                     segment = Segment(DrawMode.ARC, color=segment.color)
                     for _ in range(3):
@@ -149,24 +153,26 @@ def bake(
                     all_routes[continent][route].append(segment)
                     segment = Segment(DrawMode.SOLID, color=segment.color)
                 case "endroute", _:
-                    print(f"  {continent}::{route} ends...")
+                    print(f"\n  {continent}::{route} ends...", end="", flush=True)
                     all_routes[continent][route].append(segment)
                     route = None
                     segment = Segment(DrawMode.SOLID)
                 case "break", _:
-                    print(f"    Discontinuous break!")
+                    print(f"|", end="", flush=True)
                     all_routes[continent][route].append(segment)
                     segment = Segment(DrawMode.SOLID, color=segment.color)
                 case "doubled", onoff:
                     doubled = onoff == "on"
                 case cmd, _:
                     if cmd not in IGNORED_COMMANDS:
-                        print(f"    WARNING: Unrecognized command {rec.kvp} from {rec.source}")
+                        print(f"\n    WARNING: Unrecognized command {rec.kvp} from {rec.source}", end="", flush=True)
 
         elif isinstance(rec, PosRecord):
             if (canv_point := get_point(rec)) is None:
                 continue
             segment.add_point(canv_point, add_halfway=doubled)
+
+    print(flush=True)
 
     # If last route is not 'endroute'd, it's probably not yet appended
     # So we append it now.
