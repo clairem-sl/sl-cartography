@@ -36,7 +36,8 @@ KNOWN_AREAS: Dict[str, MapBounds] = {
     "EdenFruitIslands": MapBounds(456, 1700, 481, 1720),
     "WesternIsles": MapBounds(621, 1033, 632, 1050),
     "Caledon": MapBounds(904, 1020, 909, 1026),
-    "PlayaIsles": MapBounds(824, 1207, 831, 1217)
+    "PlayaIsles": MapBounds(824, 1207, 831, 1217),
+    "Freedom": MapBounds(750, 1013, 758, 1020),
     # endregion
 }
 VERIFIED_VOIDS: Dict["MapCoord", datetime.date] = {
