@@ -38,6 +38,7 @@ KNOWN_AREAS: Dict[str, MapBounds] = {
     "Caledon": MapBounds(904, 1020, 909, 1026),
     "PlayaIsles": MapBounds(824, 1207, 831, 1217),
     "Freedom": MapBounds(750, 1013, 758, 1020),
+    "Seychelles": MapBounds(1131, 1064, 1149, 1082),
     # endregion
 }
 VERIFIED_VOIDS: Dict["MapCoord", datetime.date] = {
