@@ -127,11 +127,12 @@ def main(conti: list[str], exclude: list[str]):
 
         print("Fetching done, saving ... ", end="")
         save_t = time.monotonic()
-        cartographer.save(SAVE_DIR / f"{selector}.png")
+        targ_p = SAVE_DIR / f"{selector}.png"
+        cartographer.save(targ_p)
         print(f"{time.monotonic() - save_t:,.2f} seconds")
-
-        print(f"{selector} ALL DONE. Image size is", cartographer.canvas.size)
-        print(f"  Finished in {time.monotonic() - fetch_t:,.2f} seconds.")
+        print(f"  => {targ_p}")
+        print(f"  Image size is", cartographer.canvas.size)
+        print(f"    Total time {time.monotonic() - fetch_t:,.2f} seconds.")
 
     print()
     print("=" * 40)
