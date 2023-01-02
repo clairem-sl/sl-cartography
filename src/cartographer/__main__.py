@@ -33,7 +33,10 @@ CONN_LIMIT = 20
 
 def options():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--conti", "-c", default="", help="Continents to fetch (case-insensitive, comma-separated)")
+    parser.add_argument("--conti", "-c", nargs="*", help="Continents to fetch (case-insensitive, space-separated)")
+    parser.add_argument(
+        "--exclude", "-x", nargs="*", help="Continents NOT to fetch (case-insensitive, space-separated)"
+    )
     return parser.parse_args()
 
 
@@ -106,13 +109,15 @@ class Cartographer(object):
             print()
 
 
-def main(conti: str):
-    conti_set = set(c.casefold() for c in conti.split(",")) if conti else None
+def main(conti: list[str], exclude: list[str]):
+    conti_set = set(c.casefold() for c in (conti or []))
+    excl_set = set(c.casefold() for c in (exclude or []))
 
     start_t = time.monotonic()
 
     for selector, area in KNOWN_AREAS.items():
-        if conti_set and selector.casefold() not in conti_set:
+        sel_cf = selector.casefold()
+        if (conti_set and sel_cf not in conti_set) or (sel_cf in excl_set):
             print(f"\n----- Skipping {selector} -----")
             continue
         fetch_t = time.monotonic()
