@@ -88,6 +88,11 @@ class WorldMapBuilder(metaclass=ABCMeta):
         """
         raise NotImplementedError
 
+    def save(self, target: Path, optimize: bool = True) -> Path:
+        target.parent.mkdir(parents=True, exist_ok=True)
+        self.canvas.save(target, optimize=optimize)
+        return target
+
     @staticmethod
     def box(value: int) -> Tuple[int, int]:
         return value, value
@@ -342,16 +347,13 @@ def build_world_maps(
     elapsed_t = time.monotonic() - start_t
     print(f"{count} tiles processed in {elapsed_t:,.2f} seconds")
 
-    print("Saving canvases ... ", end="", flush=True)
+    print("Saving canvases ... ", flush=True)
     start_t = time.monotonic()
 
-    nightlights_path.parent.mkdir(parents=True, exist_ok=True)
-    nightlights.canvas.save(nightlights_path, optimize=True)
-
-    mosaic_path.parent.mkdir(parents=True, exist_ok=True)
-    mosaic_1x1.canvas.save(mosaic_path.with_suffix(".1x1.png"), optimize=True)
-    mosaic_2x2.canvas.save(mosaic_path.with_suffix(".2x2.png"), optimize=True)
-    mosaic_3x3.canvas.save(mosaic_path.with_suffix(".3x3.png"), optimize=True)
+    print(f"  => {nightlights.save(nightlights_path)}", flush=True)
+    print(f"  => {mosaic_1x1.save(mosaic_path.with_suffix('.1x1.png'))}", flush=True)
+    print(f"  => {mosaic_2x2.save(mosaic_path.with_suffix('.2x2.png'))}", flush=True)
+    print(f"  => {mosaic_3x3.save(mosaic_path.with_suffix('.3x3.png'))}", flush=True)
 
     elapsed_t = time.monotonic() - start_t
-    print(f"{elapsed_t:,.2f} seconds")
+    print(f"  {elapsed_t:,.2f} seconds")
