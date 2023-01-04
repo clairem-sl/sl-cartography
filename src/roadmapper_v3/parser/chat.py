@@ -169,7 +169,9 @@ def bake(parsed: list[ChatLine]) -> dict[str, Continent]:
                     if name in continent:
                         route = continent[name]
                     else:
-                        continent.add_route((route := Route(name)))
+                        route = Route(name)
+                        if "*DISCARD*" not in route.name:
+                            continent.add_route(route)
                     segment = Segment()
                 case "color", region_color:
                     elems = RE_SEPARATOR.split(region_color)
