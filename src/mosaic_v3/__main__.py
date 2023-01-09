@@ -33,10 +33,10 @@ from mosaic_v3.config import *
 from mosaic_v3.dispatcher import async_fetch_area
 from mosaic_v3.progress import MosaicProgress, MosaicProgressProxy
 from mosaic_v3.workers import WorkTeam
-from mosaic_v3.workers.recorder import TileRecorder
-from mosaic_v3.workers.tile_processor import ProcessorJob, TileProcessor
+from mosaic_v3.workers.recorder import RegionRecorder
+from mosaic_v3.workers.processor import ProcessorJob, RegionProcessor
 from sl_maptools import MapCoord
-from sl_maptools.fetcher import RawTile
+from sl_maptools.fetcher import RawRegion
 from sl_maptools.utils import make_backup
 
 
@@ -51,20 +51,20 @@ async def async_main(
     workers: int,
 ) -> None:
     """
-    Manages/orchestrates the process of map tile fetching + mosaic building
+    Manages/orchestrates the process of Region fetching + mosaic building
 
-    :param xmin: Leftmost tile
-    :param xmax: Rightmost tile
-    :param ymin: Bottommost tile
-    :param ymax: Topmost tile
+    :param xmin: Leftmost Region
+    :param xmax: Rightmost Region
+    :param ymin: Bottommost Region
+    :param ymax: Topmost Region
     :param statefile: The name of the state file to record progress
     :param redo: List of rows to re-fetch explicitly
     :param savedir: Directory where images will be saved
-    :param workers: How many TileProcessor workers to launch
+    :param workers: How many RegionProcessor workers to launch
     :return: None
     """
     print(f"{platform.python_implementation()} {platform.python_version()}")
-    print(f"Retrieving tiles within ({xmin},{ymax})..({xmax},{ymin}) (inclusive), starting from the top")
+    print(f"Retrieving Regions within ({xmin},{ymax})..({xmax},{ymin}) (inclusive), starting from the top")
 
     redo_rows: Set[int] = set() if redo is None else set(redo)
 
@@ -90,7 +90,7 @@ async def async_main(
 
     recorder_team = WorkTeam(
         num_workers=1,
-        worker_class=TileRecorder,
+        worker_class=RegionRecorder,
         progress_proxy=progress_proxy,
         progress_file=state_file_path,
         coordfail_q=coordfail_q,
@@ -99,7 +99,7 @@ async def async_main(
 
     processor_team = WorkTeam(
         num_workers=workers,
-        worker_class=TileProcessor,
+        worker_class=RegionProcessor,
         output_q=recorder_team.command_queue,
         coordfail_q=coordfail_q,
         err_q=err_q,
@@ -110,7 +110,7 @@ async def async_main(
     processor_team.wait_ready()
     recorder_team.wait_ready()
 
-    def callback(signal: str | RawTile):
+    def callback(signal: str | RawRegion):
         if isinstance(signal, str):
             if signal.startswith("ROW:"):
                 rownum = int(signal.removeprefix("ROW:"))
@@ -130,7 +130,7 @@ async def async_main(
         If there are any jobs left, add the jobs to progress.failed_rows.
         This should NOT ever happen, but we put it here just in case.
 
-        :param pteam: An instance of WorkTeam that handles the TileProcessors
+        :param pteam: An instance of WorkTeam that handles the RegionProcessors
         :param quiet: Not used
         :return: None
         """

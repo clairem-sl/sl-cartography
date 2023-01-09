@@ -8,11 +8,11 @@ from typing import Dict, Iterable, List, Self, Tuple, cast
 
 from PIL import Image
 
-from sl_maptools import MapCoord, MapTile
+from sl_maptools import MapCoord, MapRegion
 
 EMERGENCY_TRANSFORM: Dict[MapCoord, Tuple[int, int, int]] = {
     # Region no longer exists as of 2022-11-09
-    # # Pure white tile called "Spartan Realms"
+    # # Pure white Region called "Spartan Realms"
     # MapCoord(1012, 1341): (255, 255, 255),
     # "Nos Nocte", pure white if zoomed all the way in, but like a beach if zoomed out slightly
     MapCoord(576, 1250): (255, 255, 255),
@@ -35,29 +35,29 @@ def getbox(splits: int, subreg_sz: int, x_offset: int, y_offset: int) -> Tuple[i
     """
     Returns proper box tuple for image cropping
 
-    :param splits: Split tile to how many squares per dimension (we'll get splits x splits number of squares)
-    :param subreg_sz: How many squares per subtile (subreg_sz x subreg_sz squares per subtile)
-    :param x_offset: Subtile offset from left
-    :param y_offset: Subtile offset from top
+    :param splits: Split region to how many fascias per dimension (we'll get splits x splits number of fascias)
+    :param subreg_sz: How many fascias per slab (subreg_sz x subreg_sz fascias per slab)
+    :param x_offset: Slab offset from left
+    :param y_offset: Slab offset from top
     :return: Box tuple suitable for pillow's Image.crop()
     """
-    subtile_size = 256 // splits
+    fascia_size = 256 // splits
     return (
-        x_offset * subtile_size,
-        y_offset * subtile_size,
-        (x_offset + subreg_sz) * subtile_size,
-        (y_offset + subreg_sz) * subtile_size,
+        x_offset * fascia_size,
+        y_offset * fascia_size,
+        (x_offset + subreg_sz) * fascia_size,
+        (y_offset + subreg_sz) * fascia_size,
     )
 
 
-# Quarters: Split region into 2x2 subtiles and 2x2 subregions (each subregion = 1x1 subtile)
+# Quarters: Split region into 2x2 Slabs and 2x2 Fascias (each Slab = 1x1 Fascias)
 getbox_q = functools.partial(getbox, 2, 1)
 
 
-# Ninths: Split region into 3x3 _overlapping_ subregions
-#         We first split the tile into 16x16 subtiles
-#         Then each subregion is 6x6 subtiles
-#         This gives 1-subtile overlap between adjacent subregions
+# Ninths: Split region into 3x3 _overlapping_ Slabs
+#         We first split the Region into 16x16 Fascias
+#         Then each Slab is 6x6 Fascias
+#         This gives 1-Fascia overlap between adjacent Slabs
 getbox_n = functools.partial(getbox, 16, 6)
 
 
@@ -83,19 +83,19 @@ getbox_n = functools.partial(getbox, 16, 6)
 
 class DominantColors:
     """
-    Calculates the dominant colors of a tile and its subtiles.
+    Calculates the dominant colors of a Region and its Slabs.
 
     Currently hardcoded into calculating the dominant colors of the following:
-    - The whole tile ("full")
-    - Non-overlapping 2x2 subtiles ("quarters" or "q"s)
-    - Slightly overlapping 3x3 subtiles ("ninths" or "n"s)
+    - The whole Region ("full")
+    - Non-overlapping 2x2 Slabs ("quarters" or "q"s)
+    - Slightly overlapping 3x3 Slabs ("ninths" or "n"s)
 
-    For the 3x3 subtiles, the strategy is to first split the tile into 16x16 squares,
-    then create 9 subtiles each of 6x6 squares. This will cause a 1-square overlap between
-    adjacent subtiles.
+    For the 3x3 Slabs, the strategy is to first split the Region into 16x16 Fascias,
+    then create 9 Slabs each of 6x6 Fascias. This will cause a 1-Fascia overlap between
+    adjacent Slabs.
 
     All calculated dominant colors are stored in a dict with a label that describes its
-    position in the tile.
+    position in the Region.
     """
 
     CropBox: Dict[str, Tuple[int, int, int, int]] = {
@@ -115,9 +115,9 @@ class DominantColors:
         "n_se": (getbox_n(10, 10)),
     }
     QualBySize = {
-        256: 3,  # full tile
-        128: 2,  # quarter tile, size is 256 // 2
-        96: 1,  # ninth tile, size is (256 // 16) * 6
+        256: 3,  # full Region
+        128: 2,  # quarter Region, size is 256 // 2
+        96: 1,  # ninth Region, size is (256 // 16) * 6
     }
 
     Keys_1x1 = ("full",)
@@ -151,18 +151,18 @@ class DominantColors:
         return getdom(im, qual)
 
     @classmethod
-    def from_tile(cls, tile: MapTile) -> DominantColors:
-        imcopy = tile.image.copy()
+    def from_region(cls, region: MapRegion) -> DominantColors:
+        imcopy = region.image.copy()
         domc = cls()
         for key in cls.CropBox.keys():
             # noinspection PyBroadException
             try:
                 col = cls.calc_domc(imcopy, key)
             except Exception:
-                if tile.coord not in EMERGENCY_TRANSFORM:
-                    print(f"get_color failure for {tile.coord} {key}")
+                if region.coord not in EMERGENCY_TRANSFORM:
+                    print(f"get_color failure for {region.coord} {key}")
                     raise
-                col = EMERGENCY_TRANSFORM[tile.coord]
+                col = EMERGENCY_TRANSFORM[region.coord]
             domc[key] = col
         return domc
 

@@ -23,7 +23,7 @@ from typing import Dict, Iterable, Set
 
 import httpx
 
-from sl_maptools import MapBounds, MapCoord, MapTile
+from sl_maptools import AreaBounds, MapCoord, MapRegion
 from sl_maptools.fetcher import MapCanvas, MapConnectionError, MapFetcher
 from sl_maptools.knowns import KNOWN_AREAS
 
@@ -54,10 +54,10 @@ class Cartographer(object):
         height = y_top - y_bott + 1
         self.canvas = MapCanvas(MapCoord(x_left, y_bott), width, height)
 
-        self._regions_data: Dict[MapCoord, MapTile] = {}
+        self._regions_data: Dict[MapCoord, MapRegion] = {}
 
-    def add_tile(self, tile: MapTile):
-        self.canvas.add_tile(tile)
+    def add_tile(self, tile: MapRegion):
+        self.canvas.add_region(tile)
         self._regions_data[tile.coord] = tile
 
     def save(self, dest: Path):
@@ -67,7 +67,7 @@ class Cartographer(object):
     async def fetch(
         self,
         skip_coords: Set[MapCoord] = None,
-        skip_subareas: Iterable[MapBounds] = None,
+        skip_subareas: Iterable[AreaBounds] = None,
         conn_limit: int = CONN_LIMIT,
         retries: int = 5,
         retry_pause: float = 3.0,
@@ -92,10 +92,10 @@ class Cartographer(object):
             fetcher = MapFetcher(a_session=client)
             print(f"{len(coords_to_fetch)} tiles to process", end="", flush=True)
             for _ in range(0, retries):
-                tasks = [fetcher.async_get_tile(coord) for coord in coords_to_fetch]
+                tasks = [fetcher.async_get_region(coord) for coord in coords_to_fetch]
                 for task in asyncio.as_completed(tasks):
                     try:
-                        result: MapTile = await task
+                        result: MapRegion = await task
                         self.add_tile(result)
                         coords_to_fetch.discard(result.coord)
                     except MapConnectionError:

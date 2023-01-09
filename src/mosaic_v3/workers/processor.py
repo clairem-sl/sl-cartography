@@ -13,25 +13,25 @@ from PIL import Image
 from mosaic_v3.color_processing import DominantColors
 from mosaic_v3.workers import Worker, WorkerState
 from mosaic_v3.workers.recorder import RecorderJob
-from sl_maptools import MapCoord, MapTile
-from sl_maptools.fetcher import RawTile
+from sl_maptools import MapCoord, MapRegion
+from sl_maptools.fetcher import RawRegion
 
 ProcessorSignals = Union[Literal["DIE"], Literal["SAVE"]]
-ProcessorJob = Union[ProcessorSignals, RawTile]
+ProcessorJob = Union[ProcessorSignals, RawRegion]
 
 
-class TileProcessor(Worker):
+class RegionProcessor(Worker):
     """
-    Processes tiles received through the input/command queue.
+    Processes Regions received through the input/command queue.
 
-    This class implements the logic that processes tiles received through the input/command queue.
+    This class implements the logic that processes Regions received through the input/command queue.
 
-    Currently, the process is just one: To find out the dominant color of every tile.
+    Currently, the process is just one: To find out the dominant color of every Region.
     The logic/maths to do that is implemented in the DominantColors class.
 
     This class recognizes the following 'jobs' in the input/command queue:
     - "DIE" instruction to wrap up and end
-    - MapTile -- actual fetched tile, will start the DominantColors processing
+    - RawRegion -- actual fetched Region, will start the DominantColors processing
     """
 
     def __init__(
@@ -85,7 +85,7 @@ class TileProcessor(Worker):
                         with io.BytesIO(rawdata) as bio:
                             img = Image.open(bio)
                             img.load()
-                        domc = DominantColors.from_tile(MapTile(coord, img))
+                        domc = DominantColors.from_region(MapRegion(coord, img))
                     else:
                         domc = None
                     self.output_q.put((coord, domc))

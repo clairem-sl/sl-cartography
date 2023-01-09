@@ -15,8 +15,8 @@ STATE_FILE_NAME = "mosaic-state-v3-2.msgp"
 WORKERS = 10
 
 SAVE_DIR = Path(r"~\Pictures\SLMap").expanduser().absolute()
-NIGHTLIGHTS_NAME = "world-nightlights-3.png"
-MOSAIC_NAME = "world-mosaic-3-pil.png"
+NIGHTLIGHTS_NAME = "world-nightlights-4.png"
+MOSAIC_NAME = "world-mosaic-4.png"
 
 WORLD_WIDTH = 2001
 WORLD_HEIGHT = 2001
@@ -40,7 +40,7 @@ def options():
 
     parser.add_argument("--savedir", type=Path, default=SAVE_DIR, help="Directory to save the PNG files")
 
-    parser.add_argument("--workers", type=int, default=WORKERS, help="Number of TileProcessor workers")
+    parser.add_argument("--workers", type=int, default=WORKERS, help="Number of Processor workers")
 
     opts = parser.parse_args()
 

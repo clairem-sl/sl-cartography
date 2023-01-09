@@ -19,7 +19,7 @@ from typing import Dict, Union, Tuple
 import httpx
 import msgpack
 
-from sl_maptools import MapTile, MapCoord
+from sl_maptools import MapRegion, MapCoord
 
 """
 status online x 1000 y 1000 access moderate estate Mainland firstseen 2008-03-09 lastseen 2022-11-06 \
@@ -119,7 +119,7 @@ class MapValidatorGridSurvey(object):
                 msgpack.pack(fout, [(tuple(coord), d.encode()) for coord, d in self.cache.items()])
         return coord, datum
 
-    async def validate_tile(self, tile: MapTile) -> bool:
+    async def validate_tile(self, tile: MapRegion) -> bool:
         _, gs_datum = await self.fetch_gs_data(tile.coord)
         if tile.is_void and gs_datum is GridSurvey_NotRegion:
             return True
@@ -161,7 +161,7 @@ class MapValidator(object):
                     return coord, not RE_ERROR.search(resp.text)
         raise ConnectionError()
 
-    async def validate_tile(self, tile: MapTile) -> Tuple[MapTile, bool]:
+    async def validate_tile(self, tile: MapRegion) -> Tuple[MapRegion, bool]:
         _, is_reg = await self.is_region(tile.coord)
         is_void: bool = tile.is_void
         # Both are bool so we can use bitwise-xor

@@ -10,7 +10,7 @@ from typing import NamedTuple, Optional
 from PIL import Image
 
 
-class MapBounds(NamedTuple):
+class AreaBounds(NamedTuple):
     x_leftmost: int
     y_bottommost: int
     x_rightmost: int
@@ -62,7 +62,7 @@ class MapCoord(NamedTuple):
         return self.x, self.y
 
 
-class MapTile(object):
+class MapRegion(object):
     def __init__(
         self,
         coord: MapCoord,
