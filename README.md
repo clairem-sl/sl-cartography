@@ -122,7 +122,8 @@ Not executable.
 **World** is the map of the whole Second Life world.
 
 A **Region** is a named region in Second Life, or can be a void. The size is nominally 256m x 256m.
-The location of a Region in the World is indicated using Coordinates (see below)
+The location of a Region in the World is indicated using Coordinates (see below). A **RegionImage**
+is the hi-res image of that Region.
 
 A **Slab** is a rectangular set of Fascias/Tiles within a Region; Slabs can be overlapping.
 
@@ -130,16 +131,31 @@ A **Fascia** is a rectangular grouping of Tiles, smaller than a Slab.
 
 A **Tile** is a 1m x 1m square within a region.
 
+So a Region comprises 65536 tiles (256 x 256).
+
 **Coordinates** is the pseudo-geo-coordinates on the world map, which follows the rules:
   * Increasing **X** towards the East (right)
   * Decreasing **X** towards the West (left)
   * Increasing **Y** towards the North (up)
   * Decreasing **Y** towards the South (down)
 
-As you can see, for the **Y** dimension, it is opposite to **canvas coordinates**:
+**Note:** There are actually several kinds of Coordinates:
+  * Region Coordinates / Map Coordinates (in unit of regions), which pinpoints a region in the World Map
+  * Global Coordinates (in unit of meters), which pinpoints a spot in the World Map
+  * Local Coordinates (in unit of meters), which pinpoints a location within a Region relative to the Region's SouthWest corner.
+
+The relation is as follows:
+
+```
+Global Coordinates = (Region Coordinates * 256) + Local Coordinates
+```
+
+**Canvas Coordinates** runs the opposite for the **Y** dimension:
 
   * **Canvas X** starts at 0 on the left edge, increasing to the right
   * **Canvas Y** starts at 0 on the top edge, increasing to the bottom
+
+Again, the modifiers "global" or "region/map" or "local" can also be applied as needed to clarify when necessary.
 
 Some **transform** methods subdivides the Region image into multiple overlapping
 **Slabs**. This is usually done by consolidating Tiles into Fascias, then group the
