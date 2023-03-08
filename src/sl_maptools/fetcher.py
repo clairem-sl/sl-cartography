@@ -294,6 +294,9 @@ class MapFetcher(object):
 
 
 class MapCanvas(object):
+    """
+    A canvas where the map will be drawn
+    """
     def __init__(
         self,
         south_west: MapCoord,

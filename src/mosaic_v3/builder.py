@@ -104,6 +104,7 @@ class NightlightsMap(WorldMapBuilder):
     """
 
     NightlightsRegionSize = 9
+    """Size of each region in the Nightlights map, in units of pixels"""
     Black = 0
     """Definition of 'black' color. You will need to ensure the data format is suitable for the image type."""
     White = 255
