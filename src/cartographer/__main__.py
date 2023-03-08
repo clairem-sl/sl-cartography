@@ -45,14 +45,14 @@ class CartographerError(RuntimeError):
 
 
 class Cartographer(object):
-    def __init__(self, x_left: int, y_bott: int, x_right: int, y_top: int):
-        self.x_left = x_left
-        self.x_right = x_right
-        self.y_bott = y_bott
-        self.y_top = y_top
-        width = x_right - x_left + 1
-        height = y_top - y_bott + 1
-        self.canvas = MapCanvas(MapCoord(x_left, y_bott), width, height)
+    def __init__(self, x_west: int, y_south: int, x_east: int, y_north: int):
+        self.x_west = x_west
+        self.x_east = x_east
+        self.y_south = y_south
+        self.y_north = y_north
+        width = x_east - x_west + 1
+        height = y_north - y_south + 1
+        self.canvas = MapCanvas(MapCoord(x_west, y_south), width, height)
 
         self._regions_data: Dict[MapCoord, MapRegion] = {}
 
@@ -83,8 +83,8 @@ class Cartographer(object):
 
         coords_to_fetch = {
             MapCoord(x, y)
-            for y in range(self.y_bott, self.y_top + 1)
-            for x in range(self.x_left, self.x_right + 1)
+            for y in range(self.y_south, self.y_north + 1)
+            for x in range(self.x_west, self.x_east + 1)
             if not skip_this(x, y)
         }
         limits = httpx.Limits(max_connections=conn_limit)

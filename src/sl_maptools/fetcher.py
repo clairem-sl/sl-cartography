@@ -293,7 +293,7 @@ class MapFetcher(object):
 class MapCanvas(object):
     def __init__(
         self,
-        lower_left: MapCoord,
+        south_west: MapCoord,
         width: int,
         height: int,
         region_size: int = 256,
@@ -304,12 +304,11 @@ class MapCanvas(object):
         canv_h = height * region_size
         self.canvas = Image.new("RGBA", (canv_w, canv_h), color=initial_tiles)
         self.void_image = void_image
-        self.region_size = region_size
-        self.lower_left = lower_left
+        self.south_west = south_west
         self.width = width
         self.height = height
-        self._min_x = self.lower_left.x
-        self._max_y = self.lower_left.y + self.height - 1
+        self._min_x = self.south_west.x
+        self._max_y = self.south_west.y + self.height - 1
 
     def add_region(self, region: MapRegion):
         if region.is_void and self.void_image is None:

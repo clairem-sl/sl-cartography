@@ -157,6 +157,9 @@ Global Coordinates = (Region Coordinates * 256) + Local Coordinates
 
 Again, the modifiers "global" or "region/map" or "local" can also be applied as needed to clarify when necessary.
 
+**Note:** To differ, when we use the Geo Coordinates, we usually say "South", or "North", or "West", or "East", i.e.,
+compass points. While when we use Canvas Coordinates, we usually say "down", or "up", or "left", or "right".
+
 Some **transform** methods subdivides the Region image into multiple overlapping
 **Slabs**. This is usually done by consolidating Tiles into Fascias, then group the
 Fascias into Slabs; adjacent Slabs might share a row/column of SuperTiles, according

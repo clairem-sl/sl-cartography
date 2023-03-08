@@ -40,19 +40,19 @@ class WorldMapBuilder(metaclass=ABCMeta):
 
     @property
     def xmin(self) -> int:
-        return self._world_bounds.x_leftmost
+        return self._world_bounds.x_westmost
 
     @property
     def xmax(self) -> int:
-        return self._world_bounds.x_rightmost
+        return self._world_bounds.x_eastmost
 
     @property
     def ymin(self) -> int:
-        return self._world_bounds.y_bottommost
+        return self._world_bounds.y_southmost
 
     @property
     def ymax(self) -> int:
-        return self._world_bounds.y_topmost
+        return self._world_bounds.y_northmost
 
     @property
     def width(self) -> int:

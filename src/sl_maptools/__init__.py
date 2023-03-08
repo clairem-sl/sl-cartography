@@ -11,26 +11,29 @@ from PIL import Image
 
 
 class AreaBounds(NamedTuple):
-    x_leftmost: int
-    y_bottommost: int
-    x_rightmost: int
-    y_topmost: int
+    """
+    Boundaries of an area, usually in terms of Map Coordinates
+    """
+    x_westmost: int
+    y_southmost: int
+    x_eastmost: int
+    y_northmost: int
 
     def __contains__(self, item: tuple[int, int]) -> bool:
         x, y = item
-        return (self.x_leftmost <= x <= self.x_rightmost) and (
-            self.y_bottommost <= y <= self.y_topmost
+        return (self.x_westmost <= x <= self.x_eastmost) and (
+                self.y_southmost <= y <= self.y_northmost
         )
 
     @property
     def height(self):
-        """Height of map in Units of TILES"""
-        return self.y_topmost - self.y_bottommost + 1
+        """Height of map in Units of Regions"""
+        return self.y_northmost - self.y_southmost + 1
 
     @property
     def width(self):
-        """Width of map in Units of TILES"""
-        return self.x_rightmost - self.x_leftmost + 1
+        """Width of map in Units of Regions"""
+        return self.x_eastmost - self.x_westmost + 1
 
     @classmethod
     def from_coords(cls, coord1: tuple[int, int], coord2: tuple[int, int]):

@@ -41,10 +41,10 @@ from sl_maptools.utils import make_backup
 
 
 async def async_main(
-    xmin,
-    xmax,
-    ymin,
-    ymax,
+    xwest,
+    xeast,
+    ysouth,
+    ynorth,
     statefile: str,
     redo: List[int],
     savedir: Path,
@@ -53,10 +53,10 @@ async def async_main(
     """
     Manages/orchestrates the process of Region fetching + mosaic building
 
-    :param xmin: Leftmost Region
-    :param xmax: Rightmost Region
-    :param ymin: Bottommost Region
-    :param ymax: Topmost Region
+    :param xwest: Westernmost "X" Map Coordinate
+    :param xeast: Easternmost "X" Map Coordinate
+    :param ysouth: Southernmost "Y" Map Coordinate
+    :param ynorth: Northernmost "Y" Map Coordinate
     :param statefile: The name of the state file to record progress
     :param redo: List of rows to re-fetch explicitly
     :param savedir: Directory where images will be saved
@@ -64,7 +64,7 @@ async def async_main(
     :return: None
     """
     print(f"{platform.python_implementation()} {platform.python_version()}")
-    print(f"Retrieving Regions within ({xmin},{ymax})..({xmax},{ymin}) (inclusive), starting from the top")
+    print(f"Retrieving Regions within ({xwest},{ynorth})..({xeast},{ysouth}) (inclusive), starting from the top")
 
     redo_rows: Set[int] = set() if redo is None else set(redo)
 
@@ -149,10 +149,10 @@ async def async_main(
         async with httpx.AsyncClient(limits=limits, timeout=10.0, http2=True) as client:
             fetch_progress, errs = await async_fetch_area(
                 client,
-                xmin,
-                xmax,
-                ymin,
-                ymax,
+                xwest,
+                xeast,
+                ysouth,
+                ynorth,
                 redo_rows=redo_rows,
                 skip_rows=skip_rows,
                 callback=callback,
