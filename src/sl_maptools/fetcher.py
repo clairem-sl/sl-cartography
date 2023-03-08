@@ -21,6 +21,9 @@ from sl_maptools.utils import QuietablePrint
 RawRegion = Tuple[MapCoord, bytes | None]
 
 
+_REGION_SIZE = 256
+
+
 class MapConnectionError(ConnectionError):
     def __init__(
         self, *args, internal_errors: List[Exception] = None, coord: MapCoord = None
@@ -296,12 +299,19 @@ class MapCanvas(object):
         south_west: MapCoord,
         width: int,
         height: int,
-        region_size: int = 256,
+        *,
         void_image: Image.Image = None,
         initial_tiles=None,
     ):
-        canv_w = width * region_size
-        canv_h = height * region_size
+        """
+        Creates a MapCanvas object.
+
+        :param south_west: Coordinates of the region that will be in the lower-left corner
+        :param width: Width of the canvas, in pixels
+        :param height: Height of the canvas, in pixels
+        """
+        canv_w = width * _REGION_SIZE
+        canv_h = height * _REGION_SIZE
         self.canvas = Image.new("RGBA", (canv_w, canv_h), color=initial_tiles)
         self.void_image = void_image
         self.south_west = south_west
@@ -314,8 +324,8 @@ class MapCanvas(object):
         if region.is_void and self.void_image is None:
             return
         tile_x, tile_y = region.coord
-        canv_x = (tile_x - self._min_x) * self.region_size
-        canv_y = (self._max_y - tile_y) * self.region_size
+        canv_x = (tile_x - self._min_x) * _REGION_SIZE
+        canv_y = (self._max_y - tile_y) * _REGION_SIZE
         self.canvas.paste(region.image, (canv_x, canv_y))
 
     def save_to(self, dest: Union[Path | io.IOBase], image_format: str = None, optimize: bool = True):
