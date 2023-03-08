@@ -115,6 +115,11 @@ class Route:
         self.segments.append(seg)
         self.segments_as_set.add(seg_inttuple)
 
+    def discard_last_segment(self) -> None:
+        last_seg = self.segments.pop()
+        last_seg_inttuple = last_seg.as_inttuple()
+        self.segments_as_set.remove(last_seg_inttuple)
+
 
 class SegmentMode(IntEnum):
     SOLID = 1
