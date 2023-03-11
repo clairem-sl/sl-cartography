@@ -21,9 +21,6 @@ from sl_maptools.cap_fetcher import BoundedNameFetcher, CookedTile
 # from sl_maptools.bb_fetcher import BoundedNameFetcher, CookedTile
 
 
-MIN_Y = 1400
-MAX_Y = 1600
-
 MIN_X = 0
 MAX_X = 2100
 
