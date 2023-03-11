@@ -36,7 +36,7 @@ import time
 
 import httpx
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from pprint import pprint
 from typing import Any
@@ -139,7 +139,10 @@ async def async_main():
                 f"{len(DataBase)} regions seen/known so far"
             )
             elapsed = time.monotonic() - start
-            print(f"  {elapsed:.2f} seconds since start, average of {total/elapsed:.2f} regions/s")
+            avg = total/elapsed
+            print(f"  {elapsed:.2f} seconds since start, average of {avg:.2f} regions/s")
+            eta = datetime.now() + timedelta(seconds=(len(OutstandingJobs) / avg))
+            print(f"    ETA: {eta.strftime('%H:%M:%S')}")
             tasks = pending_tasks
 
 
