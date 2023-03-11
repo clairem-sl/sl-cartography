@@ -4,32 +4,7 @@
 from __future__ import annotations
 
 
-# Logic
-#
-# For each coordinate
-# If region does not exist
-#   If item exists
-#     Record history
-#     current_name = seen_name
-# If region exists
-#   If item not exists
-#     Create item:
-#       first_seen = ts
-#   last_seen = ts
-#   Record history
-#   current_name = seen_name
-#
-# Record history (seen_name, current_name)
-#   If seen_name not in history
-#     Create history, with empty list
-#     Append ts
-#     Return
-#   if seen_name == current_name
-#     REPLACE last entry of item with ts
-#   else
-#     Append ts
-
-
+import argparse
 import asyncio
 import itertools
 import pickle
@@ -61,14 +36,28 @@ HTTP2 = False
 
 BATCH_WAIT = 5
 
-DB_FILEPATH = Path(r"C:\Cache\SL-Carto\RegionsDB.pkl")
-OJ_FILEPATH = Path(r"C:\Cache\SL-Carto\RegionsOJ.pkl")
-SJ_FILEPATH = Path(r"C:\Cache\SL-Carto\RegionsSJ.pkl")
+DEFA_DB_DIR = Path("C:\\Cache\\SL-Carto\\")
+DB_NAME = "RegionsDB.pkl"
+OJ_NAME = "RegionsOJ.pkl"
+SJ_NAME = "RegionsSJ.pkl"
 
 
 DataBase: dict[tuple[int, int], dict] = {}
 OutstandingJobs: set[tuple[int, int]] = set()
 SeenJobs: set[tuple[int, int]] = set()
+
+
+def options():
+    parser = argparse.ArgumentParser("RegionRecorder")
+
+    parser.add_argument("--miny", type=int)
+    parser.add_argument("--maxy", type=int)
+
+    parser.add_argument("--dbdir", type=Path, default=DEFA_DB_DIR)
+
+    opts = parser.parse_args()
+
+    return opts
 
 
 def process(tile: CookedTile):
@@ -122,7 +111,7 @@ def process(tile: CookedTile):
         DataBase[xy] = dbxy
 
 
-async def async_main():
+async def async_main(miny: int, maxy: int, dbdir: Path):
     global OutstandingJobs, SeenJobs
 
     limits = httpx.Limits(max_connections=CONN_LIMIT, max_keepalive_connections=CONN_LIMIT)
@@ -132,10 +121,10 @@ async def async_main():
 
         OutstandingJobs.update(
             coord
-            for coord in itertools.product(range(MIN_X, MAX_X + 1), range(MIN_Y, MAX_Y + 1))
+            for coord in itertools.product(range(MIN_X, MAX_X + 1), range(miny, maxy + 1))
             if coord not in SeenJobs
         )
-        with OJ_FILEPATH.open("wb") as fout:
+        with (dbdir / OJ_NAME).open("wb") as fout:
             pickle.dump(OutstandingJobs, fout, pickle.HIGHEST_PROTOCOL)
 
         tot_jobs = len(OutstandingJobs)
@@ -162,11 +151,11 @@ async def async_main():
                     else:
                         print(f"{rslt}", end=" ", flush=True)
             if c:
-                with DB_FILEPATH.open("wb") as fout:
+                with (dbdir / DB_NAME).open("wb") as fout:
                     pickle.dump(DataBase, fout, pickle.HIGHEST_PROTOCOL)
-                with OJ_FILEPATH.open("wb") as fout:
+                with (dbdir / OJ_NAME).open("wb") as fout:
                     pickle.dump(OutstandingJobs, fout, pickle.HIGHEST_PROTOCOL)
-                with SJ_FILEPATH.open("wb") as fout:
+                with (dbdir / SJ_NAME).open("wb") as fout:
                     pickle.dump(SeenJobs, fout, pickle.HIGHEST_PROTOCOL)
             print(
                 f"\n{c} results in last batch ----- "
@@ -181,38 +170,36 @@ async def async_main():
             tasks = pending_tasks
 
 
-def main():
+def main(miny: int, maxy: int, dbdir: Path):
     global DataBase, OutstandingJobs, SeenJobs
 
-    if DB_FILEPATH.exists():
-        with DB_FILEPATH.open("rb") as fin:
+    if (dbdir / DB_NAME).exists():
+        with (dbdir / DB_NAME).open("rb") as fin:
             DataBase = pickle.load(fin)
     else:
         DataBase = {}
     orig_len = len(DataBase)
     print(f"{orig_len} records on start.")
 
-    if OJ_FILEPATH.exists():
-        with OJ_FILEPATH.open("rb") as fin:
+    if (dbdir / OJ_NAME).exists():
+        with (dbdir / OJ_NAME).open("rb") as fin:
             OutstandingJobs = pickle.load(fin)
     else:
         OutstandingJobs = set()
     print(f"{len(OutstandingJobs)} jobs still outstanding")
 
-    if SJ_FILEPATH.exists():
-        with SJ_FILEPATH.open("rb") as fin:
+    if (dbdir / SJ_NAME).exists():
+        with (dbdir / SJ_NAME).open("rb") as fin:
             SeenJobs = pickle.load(fin)
     else:
         SeenJobs = set()
 
-    asyncio.run(async_main())
+    asyncio.run(async_main(miny, maxy, dbdir))
 
     # pprint(DataBase)
     print(f"{len(DataBase)} records now in DataBase (originally {orig_len} records)")
-    with DB_FILEPATH.open("wb") as fout:
-        pickle.dump(DataBase, fout, pickle.HIGHEST_PROTOCOL)
-    print(f"DataBase written to {DB_FILEPATH}")
+    print(f"DataBase written to {dbdir / DB_NAME}")
 
 
 if __name__ == "__main__":
-    main()
+    main(**vars(options()))
