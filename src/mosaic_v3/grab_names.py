@@ -24,11 +24,10 @@ async def async_main():
             c = 0
             for c, fut in enumerate(done, start=1):
                 rslt: CookedTile = fut.result()
-                if rslt.result:
-                    if rslt.result.isdigit():
-                        print(f"\n{rslt}")
-                    else:
-                        print(f"{rslt}", end=" ", flush=True)
+                if rslt.result and rslt.result.isdigit():
+                    print(f"\n{rslt}")
+                else:
+                    print(f"{rslt}", end=" ", flush=True)
             print(f"\n{c} results -----")
             tasks = pending_tasks
 
