@@ -201,6 +201,9 @@ async def async_main(miny: int, maxy: int):
             asyncio.create_task(fetcher.async_fetch(MapCoord(x, y)), name=f"fetch-{x},{y}")
             for x, y in OutstandingJobs
         ]
+        if not tasks:
+            print("No unseen jobs, exiting immediately!")
+            return
 
         start = time.monotonic()
         total = 0
