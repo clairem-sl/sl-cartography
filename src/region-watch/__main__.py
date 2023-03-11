@@ -1,37 +1,7 @@
-# (x, y):
-#   first_seen: <datestamp>
-#   last_seen: <datestamp>
-#   last_check: <datestamp>
-#   current_name: <name>
-#   name_history:
-#     <name1>: [<datestamps>, ...]
-#     <name2>: ...
-#     ...
-#
-#
-# Initial values:
-#   first_seen = None
-#   last_check = None
-#   current_name = ""
-#   name_history = {}
-#
-# If first_check == None
-#   Set first_check = datestamp
-# Get region name, "" if not exist
-# If name != current_name (incl. if current_name == None)
-#    If current_name == ""  (transition from not-exist to exist)
-#      Set first_seen = datestamp
-#    Find name in name_history (create new if not found)
-#    APPEND datestamp
-#    Set current_name = name
-# Else
-#    Find name in name_history
-#      If not found, create entry, with value = [datestamp]
-#      If found, get entry, REPLACE last value element with datestamp
-
-# Execution
-# - Async Concurrently get names of regions
-# - Parse the retrieved names and update the 'database'
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+from __future__ import annotations
 
 
 # Logic
