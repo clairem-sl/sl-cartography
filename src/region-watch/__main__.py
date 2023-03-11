@@ -14,7 +14,7 @@ import httpx
 
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 from sl_maptools import MapCoord
 from sl_maptools.cap_fetcher import BoundedNameFetcher, CookedTile
@@ -39,9 +39,71 @@ OJ_NAME = "RegionsOJ.pkl"
 SJ_NAME = "RegionsSJ.pkl"
 
 
-DataBase: dict[tuple[int, int], dict] = {}
-OutstandingJobs: set[tuple[int, int]] = set()
-SeenJobs: set[tuple[int, int]] = set()
+class FileBackedData:
+
+    def __init__(self, backing_file: Path, default_factory: Callable):
+        self.fp = backing_file
+        self._factory = default_factory
+        self._data = None
+
+    def load(self):
+        if self.fp.exists():
+            with self.fp.open("rb") as fin:
+                self._data = pickle.load(fin)
+        else:
+            self._data = self._factory()
+
+    def save(self):
+        with self.fp.open("wb") as fout:
+            pickle.dump(self._data, fout, protocol=pickle.HIGHEST_PROTOCOL)
+
+
+class RegionsDB(FileBackedData):
+
+    def __init__(self, backing_file: Path):
+        super().__init__(backing_file, dict)
+        self._data: dict[str, dict[str, Any]] = {}
+        self.load()
+
+    def __getitem__(self, item):
+        return self._data[item]
+
+    def get(self, key, default=None):
+        return self._data.get(key, default)
+
+    def update(self, other):
+        self._data.update(other)
+
+    def __setitem__(self, key, value):
+        self._data[key] = value
+
+    def __len__(self):
+        return len(self._data)
+
+
+class JobsSet(FileBackedData):
+
+    def __init__(self, backing_file: Path):
+        super().__init__(backing_file, set)
+        self._data: set[tuple[int, int]] = set()
+        self.load()
+
+    def add(self, item):
+        self._data.add(item)
+
+    def remove(self, item):
+        self._data.remove(item)
+
+    def update(self, iterable):
+        self._data.update(iterable)
+
+    def __len__(self):
+        return len(self._data)
+
+
+DataBase: RegionsDB
+OutstandingJobs: JobsSet
+SeenJobs: JobsSet
 
 
 def options():
@@ -108,7 +170,7 @@ def process(tile: CookedTile):
         DataBase[xy] = dbxy
 
 
-async def async_main(miny: int, maxy: int, dbdir: Path):
+async def async_main(miny: int, maxy: int):
     global OutstandingJobs, SeenJobs
 
     limits = httpx.Limits(max_connections=CONN_LIMIT, max_keepalive_connections=CONN_LIMIT)
@@ -121,8 +183,7 @@ async def async_main(miny: int, maxy: int, dbdir: Path):
             for coord in itertools.product(range(MIN_X, MAX_X + 1), range(miny, maxy + 1))
             if coord not in SeenJobs
         )
-        with (dbdir / OJ_NAME).open("wb") as fout:
-            pickle.dump(OutstandingJobs, fout, pickle.HIGHEST_PROTOCOL)
+        OutstandingJobs.save()
 
         tot_jobs = len(OutstandingJobs)
         print(f"{tot_jobs} jobs queued!")
@@ -148,12 +209,9 @@ async def async_main(miny: int, maxy: int, dbdir: Path):
                     else:
                         print(f"{rslt}", end=" ", flush=True)
             if c:
-                with (dbdir / DB_NAME).open("wb") as fout:
-                    pickle.dump(DataBase, fout, pickle.HIGHEST_PROTOCOL)
-                with (dbdir / OJ_NAME).open("wb") as fout:
-                    pickle.dump(OutstandingJobs, fout, pickle.HIGHEST_PROTOCOL)
-                with (dbdir / SJ_NAME).open("wb") as fout:
-                    pickle.dump(SeenJobs, fout, pickle.HIGHEST_PROTOCOL)
+                DataBase.save()
+                OutstandingJobs.save()
+                SeenJobs.save()
             print(
                 f"\n{c} results in last batch ----- "
                 f"{100*total/tot_jobs:.2f}% completed, "
@@ -170,28 +228,16 @@ async def async_main(miny: int, maxy: int, dbdir: Path):
 def main(miny: int, maxy: int, dbdir: Path):
     global DataBase, OutstandingJobs, SeenJobs
 
-    if (dbdir / DB_NAME).exists():
-        with (dbdir / DB_NAME).open("rb") as fin:
-            DataBase = pickle.load(fin)
-    else:
-        DataBase = {}
+    DataBase = RegionsDB(dbdir / DB_NAME)
     orig_len = len(DataBase)
     print(f"{orig_len} records on start.")
 
-    if (dbdir / OJ_NAME).exists():
-        with (dbdir / OJ_NAME).open("rb") as fin:
-            OutstandingJobs = pickle.load(fin)
-    else:
-        OutstandingJobs = set()
+    OutstandingJobs = JobsSet(dbdir / OJ_NAME)
     print(f"{len(OutstandingJobs)} jobs still outstanding")
 
-    if (dbdir / SJ_NAME).exists():
-        with (dbdir / SJ_NAME).open("rb") as fin:
-            SeenJobs = pickle.load(fin)
-    else:
-        SeenJobs = set()
+    SeenJobs = JobsSet(dbdir / SJ_NAME)
 
-    asyncio.run(async_main(miny, maxy, dbdir))
+    asyncio.run(async_main(miny, maxy))
 
     # pprint(DataBase)
     print(f"{len(DataBase)} records now in DataBase (originally {orig_len} records)")
