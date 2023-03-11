@@ -39,7 +39,6 @@ import httpx
 
 from datetime import datetime, timedelta
 from pathlib import Path
-from pprint import pprint
 from typing import Any
 
 from sl_maptools import MapCoord
