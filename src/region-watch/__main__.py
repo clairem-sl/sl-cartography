@@ -31,6 +31,7 @@ from __future__ import annotations
 
 
 import asyncio
+import itertools
 import pickle
 import time
 
@@ -46,6 +47,12 @@ from sl_maptools.cap_fetcher import BoundedNameFetcher, CookedTile
 # from sl_maptools.bb_fetcher import BoundedNameFetcher, CookedTile
 
 
+MIN_Y = 1400
+MAX_Y = 1600
+
+MIN_X = 0
+MAX_X = 2100
+
 CONN_LIMIT = 40
 SEMA_SIZE = 200
 HTTP2 = False
@@ -56,12 +63,18 @@ HTTP2 = False
 BATCH_WAIT = 5
 
 DB_FILEPATH = Path(r"C:\Cache\SL-Carto\RegionsDB.pkl")
+OJ_FILEPATH = Path(r"C:\Cache\SL-Carto\RegionsOJ.pkl")
+SJ_FILEPATH = Path(r"C:\Cache\SL-Carto\RegionsSJ.pkl")
 
 
 DataBase: dict[tuple[int, int], dict] = {}
+OutstandingJobs: set[tuple[int, int]] = set()
+SeenJobs: set[tuple[int, int]] = set()
 
 
 def process(tile: CookedTile):
+    global DataBase, OutstandingJobs, SeenJobs
+
     ts = datetime.now().astimezone().isoformat(timespec="minutes")
     xy = tuple(tile.coord)
     dbxy: dict[str, Any] = DataBase.get(xy)
@@ -82,6 +95,9 @@ def process(tile: CookedTile):
             history[seen_name].append(ts)
         else:
             history[seen_name][-1] = ts
+
+    OutstandingJobs.remove(xy)
+    SeenJobs.add(xy)
 
     if tile.result is None:
         if dbxy is None:
@@ -108,16 +124,29 @@ def process(tile: CookedTile):
 
 
 async def async_main():
+    global OutstandingJobs, SeenJobs
+
     limits = httpx.Limits(max_connections=CONN_LIMIT, max_keepalive_connections=CONN_LIMIT)
     async with httpx.AsyncClient(limits=limits, timeout=10.0, http2=HTTP2) as client:
         fetcher = BoundedNameFetcher(SEMA_SIZE, client, cooked=True)
-        tasks = []
         # coords = [MapCoord(x, y) for x in range(950, 1050) for y in range(950, 1050)]
-        coords = [MapCoord(x, y) for x in range(0, 2100) for y in range(2000, 2100)]
-        tot_jobs = len(coords)
+
+        OutstandingJobs.update(
+            coord
+            for coord in itertools.product(range(MIN_X, MAX_X + 1), range(MIN_Y, MAX_Y + 1))
+            if coord not in SeenJobs
+        )
+        with OJ_FILEPATH.open("wb") as fout:
+            pickle.dump(OutstandingJobs, fout, pickle.HIGHEST_PROTOCOL)
+
+        tot_jobs = len(OutstandingJobs)
         print(f"{tot_jobs} jobs queued!")
-        for c in coords:
-            tasks.append(asyncio.create_task(fetcher.async_fetch(c), name=f"fetch-{c}"))
+
+        tasks = [
+            asyncio.create_task(fetcher.async_fetch(MapCoord(x, y)), name=f"fetch-{x},{y}")
+            for x, y in OutstandingJobs
+        ]
+
         start = time.monotonic()
         total = 0
         pending_tasks = [1]
@@ -133,6 +162,13 @@ async def async_main():
                         print(f"\n{rslt}")
                     else:
                         print(f"{rslt}", end=" ", flush=True)
+            if c:
+                with DB_FILEPATH.open("wb") as fout:
+                    pickle.dump(DataBase, fout, pickle.HIGHEST_PROTOCOL)
+                with OJ_FILEPATH.open("wb") as fout:
+                    pickle.dump(OutstandingJobs, fout, pickle.HIGHEST_PROTOCOL)
+                with SJ_FILEPATH.open("wb") as fout:
+                    pickle.dump(SeenJobs, fout, pickle.HIGHEST_PROTOCOL)
             print(
                 f"\n{c} results in last batch ----- "
                 f"{100*total/tot_jobs:.2f}% completed, "
@@ -147,15 +183,33 @@ async def async_main():
 
 
 def main():
-    global DataBase
+    global DataBase, OutstandingJobs, SeenJobs
+
     if DB_FILEPATH.exists():
         with DB_FILEPATH.open("rb") as fin:
             DataBase = pickle.load(fin)
     else:
         DataBase = {}
-    print(f"{len(DataBase)} records so far.")
+    orig_len = len(DataBase)
+    print(f"{orig_len} records on start.")
+
+    if OJ_FILEPATH.exists():
+        with OJ_FILEPATH.open("rb") as fin:
+            OutstandingJobs = pickle.load(fin)
+    else:
+        OutstandingJobs = set()
+    print(f"{len(OutstandingJobs)} jobs still outstanding")
+
+    if SJ_FILEPATH.exists():
+        with SJ_FILEPATH.open("rb") as fin:
+            SeenJobs = pickle.load(fin)
+    else:
+        SeenJobs = set()
+
     asyncio.run(async_main())
-    pprint(DataBase)
+
+    # pprint(DataBase)
+    print(f"{len(DataBase)} records now in DataBase (originally {orig_len} records)")
     with DB_FILEPATH.open("wb") as fout:
         pickle.dump(DataBase, fout, pickle.HIGHEST_PROTOCOL)
     print(f"DataBase written to {DB_FILEPATH}")
