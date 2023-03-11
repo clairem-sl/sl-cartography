@@ -243,6 +243,8 @@ def main(miny: int, maxy: int, dbdir: Path):
     print(f"{len(DataBase)} records now in DataBase (originally {orig_len} records)")
     print(f"DataBase written to {dbdir / DB_NAME}")
 
+    print(f"Job done for Y = [{miny}, {maxy}]")
+
 
 if __name__ == "__main__":
     main(**vars(options()))
