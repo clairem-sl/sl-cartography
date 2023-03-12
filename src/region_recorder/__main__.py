@@ -220,8 +220,12 @@ async def async_main(miny: int, maxy: int):
         while pending_tasks:
             done, pending_tasks = await asyncio.wait(tasks, timeout=BATCH_WAIT)
             total += len(done)
-            c = 0
+            c = e = 0
             for c, fut in enumerate(done, start=1):
+                if exc := fut.exception():
+                    e += 1
+                    print(f"\n{fut.get_name()} raised Exception: <{type(exc)}> {exc}")
+                    continue
                 rslt: CookedTile = fut.result()
                 process(rslt)
                 if rslt.result:
@@ -233,6 +237,11 @@ async def async_main(miny: int, maxy: int):
                 DataBase.save()
                 OutstandingJobs.save()
                 SeenJobs.save()
+                if e == c:
+                    print("\nLast batch all raised Exceptions!")
+                    print("Cancelling the rest of the tasks...")
+                    for t in pending_tasks:
+                        t.cancel()
             print(
                 f"\n{c} results in last batch ----- "
                 f"{100*total/tot_jobs:.2f}% completed, "
