@@ -250,8 +250,9 @@ async def async_main(miny: int, maxy: int):
             elapsed = time.monotonic() - start
             avg = total/elapsed
             print(f"  {elapsed:.2f} seconds since start, average of {avg:.2f} regions/s")
-            eta = datetime.now() + timedelta(seconds=(len(OutstandingJobs) / avg))
-            print(f"    ETA: {eta.strftime('%H:%M:%S')}")
+            if avg > 0:
+                eta = datetime.now() + timedelta(seconds=(len(OutstandingJobs) / avg))
+                print(f"    ETA: {eta.strftime('%H:%M:%S')}")
             tasks = pending_tasks
 
 
