@@ -215,7 +215,8 @@ async def async_main(miny: int, maxy: int):
 
         start = time.monotonic()
         total = 0
-        pending_tasks = [1]
+        done: set[asyncio.Task]
+        pending_tasks: set[asyncio.Task] = {tasks[0]}  # Dummy, just to enable us to enter the loop
         while pending_tasks:
             done, pending_tasks = await asyncio.wait(tasks, timeout=BATCH_WAIT)
             total += len(done)
