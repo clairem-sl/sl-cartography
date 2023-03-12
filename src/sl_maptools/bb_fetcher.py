@@ -160,6 +160,6 @@ class BoundedNameFetcher(NameFetcher):
             except asyncio.CancelledError:
                 print(f"{coord} cancelled")
                 return None
-            except asyncio.TimeoutError:
+            except (asyncio.TimeoutError, httpx.PoolTimeout):
                 print(f"{coord} Timeout!")
                 return None
