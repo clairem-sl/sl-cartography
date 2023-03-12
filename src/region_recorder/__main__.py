@@ -14,7 +14,7 @@ import httpx
 
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Callable
+from typing import Callable, TypedDict
 
 from sl_maptools import MapCoord
 from sl_maptools.cap_fetcher import BoundedNameFetcher, CookedTile
@@ -58,11 +58,19 @@ class FileBackedData:
             pickle.dump(self._data, fout, protocol=pickle.HIGHEST_PROTOCOL)
 
 
+class RegionsDBRecord(TypedDict):
+    first_seen: str
+    last_seen: str
+    last_check: str
+    current_name: str
+    name_history: dict[str, list[str]]
+
+
 class RegionsDB(FileBackedData):
 
     def __init__(self, backing_file: Path):
         super().__init__(backing_file, dict)
-        self._data: dict[str, dict[str, Any]] = {}
+        self._data: dict[str, RegionsDBRecord] = {}
         self.load()
 
     def __getitem__(self, item):
@@ -133,10 +141,10 @@ def process(tile: CookedTile):
 
     ts = datetime.now().astimezone().isoformat(timespec="minutes")
     xy = tuple(tile.coord)
-    dbxy: dict[str, Any] = DataBase.get(xy)
+    dbxy: RegionsDBRecord = DataBase.get(xy)
 
     def record_history():
-        assert isinstance(dbxy, dict)
+        nonlocal dbxy
         seen_name = "" if tile.result is None else tile.result
         prev_name = dbxy["current_name"]
         dbxy["current_name"] = seen_name
@@ -163,7 +171,7 @@ def process(tile: CookedTile):
     else:
         assert isinstance(tile.result, str)
         if dbxy is None:
-            dbxy = {
+            dbxy: RegionsDBRecord = {
                 "first_seen": ts,
                 "last_seen": "",
                 "last_check": "",
