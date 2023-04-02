@@ -18,13 +18,13 @@ RecorderSignals = Union[Literal["DIE"], Literal["FLUSH"], Literal["SAVE"]]
 RecorderJob = Union[RecorderSignals, Tuple[MapCoord, DominantColors]]
 
 
-class TileRecorder(Worker):
+class RegionRecorder(Worker):
     """
-    Receives tiles that have been processed, and record them.
+    Receives Regions that have been processed, and record them.
 
     This will record not just into a proxied Progress object, but also (optionally) to disk.
 
-    IN ADDITION, this worker will also gather the failed tiles and record them also into the proxied Progress object.
+    IN ADDITION, this worker will also gather the failed Regions and record them also into the proxied Progress object.
 
     This class recognizes the following 'jobs' in the input/command queue:
     - "DIE" instruction to wrap up and end
@@ -47,7 +47,7 @@ class TileRecorder(Worker):
         :param args: Non-keyword arguments to pass to the superclass
         :param progress_proxy: A 'proxified' version of MapProgress
         :param progress_file: The path to which the Progress is to be saved
-        :param coordfail_q: A queue containing failed tiles in the form of
+        :param coordfail_q: A queue containing failed Regions in the form of (Coordinate, Exception)
         :param kwargs: Keyword arguments to pass to the superclass
         """
         super().__init__(*args, **kwargs)

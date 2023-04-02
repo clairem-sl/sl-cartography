@@ -13,12 +13,15 @@ from typing import Any, Callable, Dict, FrozenSet, List, Optional, Protocol, Set
 import httpx
 from PIL import Image
 
-from sl_maptools import MapCoord, MapTile
+from sl_maptools import MapCoord, MapRegion
 from sl_maptools.knowns import VERIFIED_VOIDS
 from sl_maptools.utils import QuietablePrint
 
 
-RawTile = Tuple[MapCoord, bytes | None]
+RawRegion = Tuple[MapCoord, bytes | None]
+
+
+_REGION_SIZE = 256
 
 
 class MapConnectionError(ConnectionError):
@@ -61,13 +64,13 @@ class MapFetcher(object):
         self.skip_tiles: Set[MapCoord] = set() if skip_tiles is None else skip_tiles
         self.a_session: httpx.AsyncClient = a_session
 
-    async def async_get_tile_raw(
+    async def async_get_region_raw(
         self,
         coord: MapCoord,
         quiet: bool = False,
         retries: int = 2,
         raise_err: bool = True,
-    ) -> RawTile:
+    ) -> RawRegion:
         """
         Asynchronously fetch a map tile from a given coordinate
 
@@ -133,28 +136,28 @@ class MapFetcher(object):
         if raise_err:
             raise MapConnectionError(internal_errors=internal_errors, coord=coord)
 
-    async def async_get_tile(
+    async def async_get_region(
         self,
         coord: MapCoord,
         quiet: bool = False,
         retries: int = 2,
         raise_err: bool = True,
-    ) -> MapTile:
-        coord, raw = await self.async_get_tile_raw(coord, quiet, retries, raise_err)
+    ) -> MapRegion:
+        coord, raw = await self.async_get_region_raw(coord, quiet, retries, raise_err)
         if raw is None:
-            return MapTile(coord, None)
+            return MapRegion(coord, None)
 
         with io.BytesIO(raw) as bio:
             grabbed = Image.open(bio)
             # Need to call .load() because .open() is lazy
             grabbed.load()
-        return MapTile(coord, grabbed)
+        return MapRegion(coord, grabbed)
 
     async def async_get_area(
         self,
         corner1: MapCoord,
         corner2: MapCoord,
-        tile_callback: Callable[[Union[MapTile, str]], None],
+        tile_callback: Callable[[Union[MapRegion, str]], None],
         save_every: int = 451,
         stats_every: int = 20,
         force_rows: Optional[FrozenSet[int]] = None,
@@ -208,7 +211,7 @@ class MapFetcher(object):
                     coord = MapCoord(x, y)
                     if coord in progress.seen and y not in force_rows:
                         continue
-                    tasks.append(self.async_get_tile(coord, quiet=True))
+                    tasks.append(self.async_get_region(coord, quiet=True))
 
                 if not tasks:
                     if not skipping:
@@ -221,7 +224,7 @@ class MapFetcher(object):
                         print(y + 1)
 
                 qprint(f"Waiting for row {y}...", end="", flush=True)
-                tile: Optional[MapTile] = None
+                tile: Optional[MapRegion] = None
                 row_nonvoids = 0
 
                 aborting_exception = None
@@ -291,33 +294,42 @@ class MapFetcher(object):
 
 
 class MapCanvas(object):
+    """
+    A canvas where the map will be drawn
+    """
     def __init__(
         self,
-        lower_left: MapCoord,
+        south_west: MapCoord,
         width: int,
         height: int,
-        tile_size: int = 256,
+        *,
         void_image: Image.Image = None,
         initial_tiles=None,
     ):
-        canv_w = width * tile_size
-        canv_h = height * tile_size
+        """
+        Creates a MapCanvas object.
+
+        :param south_west: Coordinates of the region that will be in the lower-left corner
+        :param width: Width of the canvas, in pixels
+        :param height: Height of the canvas, in pixels
+        """
+        canv_w = width * _REGION_SIZE
+        canv_h = height * _REGION_SIZE
         self.canvas = Image.new("RGBA", (canv_w, canv_h), color=initial_tiles)
         self.void_image = void_image
-        self.tile_size = tile_size
-        self.lower_left = lower_left
+        self.south_west = south_west
         self.width = width
         self.height = height
-        self._min_x = self.lower_left.x
-        self._max_y = self.lower_left.y + self.height - 1
+        self._min_x = self.south_west.x
+        self._max_y = self.south_west.y + self.height - 1
 
-    def add_tile(self, tile: MapTile):
-        if tile.is_void and self.void_image is None:
+    def add_region(self, region: MapRegion):
+        if region.is_void and self.void_image is None:
             return
-        tile_x, tile_y = tile.coord
-        canv_x = (tile_x - self._min_x) * self.tile_size
-        canv_y = (self._max_y - tile_y) * self.tile_size
-        self.canvas.paste(tile.image, (canv_x, canv_y))
+        tile_x, tile_y = region.coord
+        canv_x = (tile_x - self._min_x) * _REGION_SIZE
+        canv_y = (self._max_y - tile_y) * _REGION_SIZE
+        self.canvas.paste(region.image, (canv_x, canv_y))
 
     def save_to(self, dest: Union[Path | io.IOBase], image_format: str = None, optimize: bool = True):
         if isinstance(dest, io.IOBase):
@@ -355,11 +367,11 @@ class BoundedMapFetcher(MapFetcher):
         self.sema = asyncio.Semaphore(sema_size)
         self.retries = retries
 
-    async def async_fetch(self, coord: MapCoord) -> Optional[RawTile]:
+    async def async_fetch(self, coord: MapCoord) -> Optional[RawRegion]:
         """Perform async fetch, but won't actually start fetching if semaphore is depleted."""
         async with self.sema:
             try:
-                return await self.async_get_tile_raw(coord, quiet=True, retries=self.retries)
+                return await self.async_get_region_raw(coord, quiet=True, retries=self.retries)
             except asyncio.CancelledError:
                 print(f"{coord} cancelled")
                 return None

@@ -119,7 +119,19 @@ Not executable.
 
 ## Nomenclature
 
-A **tile** is a location on the map, indicated by **coordinates**.
+**World** is the map of the whole Second Life world.
+
+A **Region** is a named region in Second Life, or can be a void. The size is nominally 256m x 256m.
+The location of a Region in the World is indicated using Coordinates (see below). A **RegionImage**
+is the hi-res image of that Region.
+
+A **Slab** is a rectangular set of Fascias/Tiles within a Region; Slabs can be overlapping.
+
+A **Fascia** is a rectangular grouping of Tiles, smaller than a Slab.
+
+A **Tile** is a 1m x 1m square within a region.
+
+So a Region comprises 65536 tiles (256 x 256).
 
 **Coordinates** is the pseudo-geo-coordinates on the world map, which follows the rules:
   * Increasing **X** towards the East (right)
@@ -127,41 +139,46 @@ A **tile** is a location on the map, indicated by **coordinates**.
   * Increasing **Y** towards the North (up)
   * Decreasing **Y** towards the South (down)
 
-As you can see, for the **Y** dimension, it is opposite to **canvas coordinates**:
+**Note:** There are actually several kinds of Coordinates:
+  * Region Coordinates / Map Coordinates (in unit of regions), which pinpoints a region in the World Map
+  * Global Coordinates (in unit of meters), which pinpoints a spot in the World Map
+  * Local Coordinates (in unit of meters), which pinpoints a location within a Region relative to the Region's SouthWest corner.
+
+The relation is as follows:
+
+```
+Global Coordinates = (Region Coordinates * 256) + Local Coordinates
+```
+
+**Canvas Coordinates** runs the opposite for the **Y** dimension:
 
   * **Canvas X** starts at 0 on the left edge, increasing to the right
   * **Canvas Y** starts at 0 on the top edge, increasing to the bottom
 
-A **tile** also means a graphic element that will be pasted to the **canvas** at
-canvas coordinates that represents the correct location of coordinates in the map.
+Again, the modifiers "global" or "region/map" or "local" can also be applied as needed to clarify when necessary.
 
-A **tile** can contain a **region** or a **void** (that is, no regions at the
-location). A **region** is indicated then a **tile image** is returned by the
-SL Map server.
+**Note:** To differ, when we use the Geo Coordinates, we usually say "South", or "North", or "West", or "East", i.e.,
+compass points. While when we use Canvas Coordinates, we usually say "down", or "up", or "left", or "right".
 
-Some map generation procedures subdivides the **tile** into **subtiles**.
+Some **transform** methods subdivides the Region image into multiple overlapping
+**Slabs**. This is usually done by consolidating Tiles into Fascias, then group the
+Fascias into Slabs; adjacent Slabs might share a row/column of SuperTiles, according
+to the transform method.
 
-A **subtile** is usually a **transform** of part of a **region**, or in other
-words, a subtile is the result of some image processing involving part of the
-tile image.
+For example:
 
-Some **transform** methods subdivides the tile image into multiple overlapping
-**areas**/**subregions**. This is usually done by first subdividing the region
-(tile image) into a lot of small **squares**/**pieces**, then consolidating
-some squares/pieces into subtiles. For example:
+  * For a 2x2 Slab arrangement, we subdivide the region into 2x2 Fascias, each Fascia
+    containing 128 x 128 Tiles, then we put each Fascia into a Slab.
 
-  * For a 2x2 subtile arrangement, we subdivide the region into 2x2 squares,
-    then consolidate each area of 1x1 square into a subtile.
+    This will result in 2x2 non-overlapping Slabs, so each Slab stands
+    alone and does not get influenced by adjacent Slabs.
 
-    This will result in 2x2 non-overlapping areas, so each subtile stands
-    alone and does not get influenced by adjacent subtiles.
+  * For a 3x3 Slab arrangement, we subdivide the region into 16x16 Fascias, each Fascia
+    containing 16x16 Tiles; then we build the Slabs out of 6x6 Fascias.
 
-  * For a 3x3 subtile arrangement, we subdivide the region into 16x16 squares,
-    then consolidate each area of 6x6 square into a subtile.
-
-    This will result in 3x3 overlapping areas, each area overlaping adjacent
-    areas in a 1-square-wide **strip**. This means every subtile might be
-    subtly influenced by adjacent subtiles.
+    This will result in 3x3 overlapping Slabs, each Slab overlaping adjacent
+    Slabs in a 1-Fascia-wide **strip**. This means every Slab might be
+    subtly influenced by adjacent Slabs.
 
 
 ## Contributing

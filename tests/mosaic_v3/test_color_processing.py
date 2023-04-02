@@ -5,7 +5,7 @@ import pytest
 from _pytest.mark import ParameterSet
 from PIL import Image
 
-from sl_maptools import MapCoord, MapTile
+from sl_maptools import MapCoord, MapRegion
 from src.mosaic_v3.color_processing import DominantColors, getbox, getdom
 
 ThreeInts = tuple[int, int, int]
@@ -114,6 +114,6 @@ test_files_expect_domc = [
 def test_dominant_colors(fpath: Path, expekt: dict[str, ThreeInts]):
     with Image.open(fpath) as im:
         im.load()
-        tile = MapTile(MapCoord(0, 0), im)
-        domc = DominantColors.from_tile(tile)
+        tile = MapRegion(MapCoord(0, 0), im)
+        domc = DominantColors.from_region(tile)
         assert domc._domc == expekt

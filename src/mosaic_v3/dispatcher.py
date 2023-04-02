@@ -12,7 +12,7 @@ from typing import Callable, Dict, Generator, Iterable, List, Optional, Set, Tup
 import httpx
 
 from sl_maptools import MapCoord
-from sl_maptools.fetcher import BoundedMapFetcher, RawTile
+from sl_maptools.fetcher import BoundedMapFetcher, RawRegion
 
 BATCH_SIZE = 2000
 BATCH_WAIT = 2.5
@@ -78,7 +78,7 @@ async def async_fetch_area(
     x_max: int,
     y_min: int,
     y_max: int,
-    callback: Callable[[str | RawTile], None] = None,
+    callback: Callable[[str | RawRegion], None] = None,
     redo_rows: Iterable[int] = None,
     skip_rows: Set[int] = None,
     low_water: int = DEFA_LOW_WATER,
@@ -193,7 +193,7 @@ async def async_fetch_area(
                 exc_count += 1
                 continue
 
-            result: Optional[RawTile] = fut.result()
+            result: Optional[RawRegion] = fut.result()
             if result is None:
                 continue
 

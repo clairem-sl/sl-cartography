@@ -93,7 +93,7 @@ def test_smoothing(coords: Iterable[tuple[int, int]], expekt: Image.Image):
     kwargs = gen_dummy(*coords)
     nl = NightlightsMap(**kwargs)
     for co, dum in nl.regions.items():
-        nl.add_tile(co, dum)
+        nl.add_region(co, dum)
 
     irgb = nl.canvas.convert("RGB")
     irgb.save("irgb.png")
