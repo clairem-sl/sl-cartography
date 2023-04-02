@@ -4,11 +4,11 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Dict
+from typing import Final
 
 from sl_maptools import AreaBounds, MapCoord
 
-KNOWN_AREAS: Dict[str, AreaBounds] = {
+KNOWN_AREAS: Final[dict[str, AreaBounds]] = {
     # region ### Linden Continents
     "BellisseriaSouth": AreaBounds(1038, 950, 1063, 977),
     "BellisseriaWest": AreaBounds(1023, 940, 1045, 977),
@@ -41,7 +41,7 @@ KNOWN_AREAS: Dict[str, AreaBounds] = {
     "TuaruaFiji": AreaBounds(1131, 1064, 1149, 1082),
     # endregion
 }
-VERIFIED_VOIDS: Dict["MapCoord", datetime.date] = {
+VERIFIED_VOIDS: Final[dict["MapCoord", datetime.date]] = {
     # Contains voids that we manually verify using GridSurvey APIs
     # Reason for this CONST is that map sometimes return an image even though there's no actual region/sim at the
     # location.

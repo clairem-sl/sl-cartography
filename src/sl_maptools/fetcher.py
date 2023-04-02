@@ -8,7 +8,7 @@ import io
 import random
 import time
 from pathlib import Path
-from typing import Any, Callable, Dict, FrozenSet, List, Optional, Protocol, Set, Tuple, Union
+from typing import Any, Callable, Dict, Final, FrozenSet, List, Optional, Protocol, Set, Tuple, Union
 
 import httpx
 from PIL import Image
@@ -21,7 +21,7 @@ from sl_maptools.utils import QuietablePrint
 RawRegion = Tuple[MapCoord, bytes | None]
 
 
-_REGION_SIZE = 256
+_REGION_SIZE: Final[int] = 256
 
 
 class MapConnectionError(ConnectionError):

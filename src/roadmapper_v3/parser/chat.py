@@ -9,21 +9,21 @@ import datetime
 import math
 import re
 from pathlib import Path
-from typing import cast
+from typing import cast, Final
 
 from roadmapper_v3.draw.colors import ALL_COLORS
 from roadmapper_v3.model import Continent, Point, Route, Segment, SegmentMode
 from roadmapper_v3.model.yaml import load_from, save_to
 
-RE_TS = re.compile(
+RE_TS: Final = re.compile(
     r"(?P<year>\d{4})[/-]?(?P<month>\d{1,2})[/-]?(?P<day>\d{1,2})"
     r"\D+"
     r"(?P<hour>\d{1,2})\D?(?P<minute>\d{2})(?:\D?(?P<second>\d{2}))?"
 )
-RE_VECTOR = re.compile(r"\s*<\s*(-?[\d.]+),\s*(-?[\d.]+),\s*(-?[\d.]+)\s*>\s*")
-RE_POSREC_LINE = re.compile(r"(?P<prefix>.*?)PosRecorder\s*(?P<ver>[^:]*):(?:\s+:)?\s+(?P<entry>.*)")
-RE_POSREC_KV = re.compile(r"(?P<key>[^:\s]+)\s*:\s*(?P<value>.*)")
-RE_SEPARATOR = re.compile(r"[;,\s]+")
+RE_VECTOR: Final = re.compile(r"\s*<\s*(-?[\d.]+),\s*(-?[\d.]+),\s*(-?[\d.]+)\s*>\s*")
+RE_POSREC_LINE: Final = re.compile(r"(?P<prefix>.*?)PosRecorder\s*(?P<ver>[^:]*):(?:\s+:)?\s+(?P<entry>.*)")
+RE_POSREC_KV: Final = re.compile(r"(?P<key>[^:\s]+)\s*:\s*(?P<value>.*)")
+RE_SEPARATOR: Final = re.compile(r"[;,\s]+")
 
 
 def options():

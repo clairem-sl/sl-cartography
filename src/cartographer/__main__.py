@@ -19,7 +19,7 @@ else:
 import argparse
 import time
 from pathlib import Path
-from typing import Dict, Iterable, Set
+from typing import Dict, Final, Iterable, Set
 
 import httpx
 
@@ -27,8 +27,8 @@ from sl_maptools import AreaBounds, MapCoord, MapRegion
 from sl_maptools.fetcher import MapCanvas, MapConnectionError, MapFetcher
 from sl_maptools.knowns import KNOWN_AREAS
 
-SAVE_DIR = Path("~/Pictures/SLMap/Carto").expanduser()
-CONN_LIMIT = 20
+SAVE_DIR: Final[Path] = Path("~/Pictures/SLMap/Carto").expanduser()
+CONN_LIMIT: Final[int] = 20
 
 
 def options():

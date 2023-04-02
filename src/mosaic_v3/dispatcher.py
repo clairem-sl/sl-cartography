@@ -7,18 +7,18 @@ import asyncio
 import time
 from asyncio import Task
 from collections import defaultdict
-from typing import Callable, Dict, Generator, Iterable, List, Optional, Set, Tuple
+from typing import Callable, Dict, Final, Generator, Iterable, List, Optional, Set, Tuple
 
 import httpx
 
 from sl_maptools import MapCoord
 from sl_maptools.fetcher import BoundedMapFetcher, RawRegion
 
-BATCH_SIZE = 2000
-BATCH_WAIT = 2.5
-ABORT_WAIT = 5.0
-MAX_IN_FLIGHT = 500
-DEFA_LOW_WATER = MAX_IN_FLIGHT * 2
+BATCH_SIZE: Final[int] = 2000
+BATCH_WAIT: Final[float] = 2.5
+ABORT_WAIT: Final[float] = 5.0
+MAX_IN_FLIGHT: Final[int] = 500
+DEFA_LOW_WATER: Final[int] = MAX_IN_FLIGHT * 2
 
 
 class FetchProgress:

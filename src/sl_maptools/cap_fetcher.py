@@ -6,7 +6,7 @@ from __future__ import annotations
 import asyncio
 import random
 import re
-from typing import Any, Dict, List, NamedTuple, Optional, Protocol, Set
+from typing import Any, Dict, Final, List, NamedTuple, Optional, Protocol, Set
 
 import httpx
 
@@ -14,7 +14,7 @@ from sl_maptools import MapCoord
 from sl_maptools.utils import QuietablePrint
 
 
-RE_REGION_NAME = re.compile(r"\s*var\s*region\s*=\s*(['\"])([^'\"]+)\1")
+RE_REGION_NAME: Final = re.compile(r"\s*var\s*region\s*=\s*(['\"])([^'\"]+)\1")
 
 
 class RawTile(NamedTuple):

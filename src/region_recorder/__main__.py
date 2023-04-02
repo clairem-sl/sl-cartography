@@ -14,30 +14,30 @@ import httpx
 
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Callable, TypedDict
+from typing import Callable, Final, TypedDict
 
 from sl_maptools import MapCoord
 from sl_maptools.cap_fetcher import BoundedNameFetcher, CookedTile
 # from sl_maptools.bb_fetcher import BoundedNameFetcher, CookedTile
 
 
-MIN_X = 0
-MAX_X = 2100
+MIN_X: Final[int] = 0
+MAX_X: Final[int] = 2100
 
-CONN_LIMIT = 40
-SEMA_SIZE = 200
-HTTP2 = False
+CONN_LIMIT: Final[int] = 40
+SEMA_SIZE: Final[int] = 200
+HTTP2: Final[bool] = False
 # CONN_LIMIT = 20
 # SEMA_SIZE = 100
 # HTTP2 = True
 
-BATCH_WAIT = 5
+BATCH_WAIT: Final[float] = 5.0
 
-DEFA_DB_DIR = Path("C:\\Cache\\SL-Carto\\")
-DB_NAME = "RegionsDB.pkl"
-OJ_NAME = "RegionsOJ.pkl"
-SJ_NAME = "RegionsSJ.pkl"
-LP_NAME = "RegionsLP.pkl"
+DEFA_DB_DIR: Final[Path] = Path("C:\\Cache\\SL-Carto\\")
+DB_NAME: Final[str] = "RegionsDB.pkl"
+OJ_NAME: Final[str] = "RegionsOJ.pkl"
+SJ_NAME: Final[str] = "RegionsSJ.pkl"
+LP_NAME: Final[str] = "RegionsLP.pkl"
 
 
 class FileBackedData:
