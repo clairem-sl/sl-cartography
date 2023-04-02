@@ -37,6 +37,7 @@ DEFA_DB_DIR = Path("C:\\Cache\\SL-Carto\\")
 DB_NAME = "RegionsDB.pkl"
 OJ_NAME = "RegionsOJ.pkl"
 SJ_NAME = "RegionsSJ.pkl"
+LP_NAME = "RegionsLP.pkl"
 
 
 class FileBackedData:
@@ -108,6 +109,9 @@ class JobsSet(FileBackedData):
     def update(self, iterable):
         self._data.update(iterable)
 
+    def clear(self):
+        self._data.clear()
+
     def __len__(self):
         return len(self._data)
 
@@ -118,18 +122,52 @@ class JobsSet(FileBackedData):
         return self._data.__iter__()
 
 
+class WorkParamsDict(TypedDict):
+    miny: int
+    maxy: int
+
+class WorkParams(FileBackedData):
+    def __init__(self, backing_file: Path):
+        self._data: WorkParamsDict
+        super().__init__(backing_file, WorkParamsDict)
+        self.load()
+        self._data.setdefault("miny", -1)
+        self._data.setdefault("maxy", -1)
+
+    @property
+    def miny(self) -> int:
+        return self._data["miny"]
+
+    @miny.setter
+    def miny(self, value: int):
+        self._data["miny"] = value
+
+    @property
+    def maxy(self) -> int:
+        return self._data["maxy"]
+
+    @maxy.setter
+    def maxy(self, value: int):
+        self._data["maxy"] = value
+
+
 DataBase: RegionsDB
 OutstandingJobs: JobsSet
 SeenJobs: JobsSet
+SessionParams: WorkParams
 
 
 def options():
     parser = argparse.ArgumentParser("RegionRecorder")
 
-    parser.add_argument("--miny", type=int)
-    parser.add_argument("--maxy", type=int)
+    parser.add_argument("--fromlast", type=int, default=-1)
+
+    parser.add_argument("--miny", type=int, default=-1)
+    parser.add_argument("--maxy", type=int, default=-1)
 
     parser.add_argument("--dbdir", type=Path, default=DEFA_DB_DIR)
+
+    parser.add_argument("--ignoreseen", action="store_true", default=False)
 
     opts = parser.parse_args()
 
@@ -187,8 +225,10 @@ def process(tile: CookedTile):
         DataBase[xy] = dbxy
 
 
-async def async_main(miny: int, maxy: int):
-    global OutstandingJobs, SeenJobs
+async def async_main(ignoreseen: bool):
+    global OutstandingJobs, SeenJobs, SessionParams
+    miny = SessionParams.miny
+    maxy = SessionParams.maxy
 
     limits = httpx.Limits(max_connections=CONN_LIMIT, max_keepalive_connections=CONN_LIMIT)
     async with httpx.AsyncClient(limits=limits, timeout=10.0, http2=HTTP2) as client:
@@ -198,7 +238,7 @@ async def async_main(miny: int, maxy: int):
         OutstandingJobs.update(
             coord
             for coord in itertools.product(range(MIN_X, MAX_X + 1), range(miny, maxy + 1))
-            if coord not in SeenJobs
+            if not ignoreseen and (coord not in SeenJobs)
         )
         OutstandingJobs.save()
 
@@ -256,8 +296,8 @@ async def async_main(miny: int, maxy: int):
             tasks = pending_tasks
 
 
-def main(miny: int, maxy: int, dbdir: Path):
-    global DataBase, OutstandingJobs, SeenJobs
+def main(miny: int, maxy: int, dbdir: Path, fromlast: int, ignoreseen: bool):
+    global DataBase, OutstandingJobs, SeenJobs, SessionParams
 
     DataBase = RegionsDB(dbdir / DB_NAME)
     orig_len = len(DataBase)
@@ -268,7 +308,22 @@ def main(miny: int, maxy: int, dbdir: Path):
 
     SeenJobs = JobsSet(dbdir / SJ_NAME)
 
-    asyncio.run(async_main(miny, maxy))
+    SessionParams = WorkParams(dbdir / LP_NAME)
+    print(f"{fromlast=} {maxy=} {miny=}")
+    if fromlast != -1:
+        maxy = SessionParams.miny
+        miny = maxy - fromlast
+        if miny < 0:
+            miny = 0
+            if maxy <= miny:
+                maxy = 2100
+                miny = 2100 - fromlast
+                SeenJobs.clear()
+    SessionParams.maxy = maxy
+    SessionParams.miny = miny
+    SessionParams.save()
+
+    asyncio.run(async_main(ignoreseen))
 
     # pprint(DataBase)
     print(f"{len(DataBase)} records now in DataBase (originally {orig_len} records)")
