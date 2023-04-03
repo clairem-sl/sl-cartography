@@ -309,7 +309,6 @@ def main(miny: int, maxy: int, dbdir: Path, fromlast: int, ignoreseen: bool):
     SeenJobs = JobsSet(dbdir / SJ_NAME)
 
     SessionParams = WorkParams(dbdir / LP_NAME)
-    print(f"{fromlast=} {maxy=} {miny=}")
     if fromlast != -1:
         maxy = SessionParams.miny
         miny = maxy - fromlast
@@ -323,6 +322,7 @@ def main(miny: int, maxy: int, dbdir: Path, fromlast: int, ignoreseen: bool):
     SessionParams.miny = miny
     SessionParams.save()
 
+    print(f"Getting region names from range [{maxy}, {miny}]")
     asyncio.run(async_main(ignoreseen))
 
     # pprint(DataBase)
