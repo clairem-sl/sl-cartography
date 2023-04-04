@@ -11,7 +11,7 @@ import sys
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Callable, Final, TypedDict
+from typing import cast, Callable, Final, TypedDict
 
 import httpx
 
@@ -72,7 +72,7 @@ class RegionsDB(FileBackedData):
         self._data: dict[str, RegionsDBRecord] = {}
         self.load()
 
-    def __getitem__(self, item):
+    def __getitem__(self, item) -> RegionsDBRecord:
         return self._data[item]
 
     def get(self, key, default=None):
@@ -226,7 +226,7 @@ def process(tile: CookedTile):
         record_history()
 
     if xy in DataBase:
-        DataBase[xy].update(dbxy)
+        DataBase[xy].update(cast(dbxy, dict))
     else:
         DataBase[xy] = dbxy
 
