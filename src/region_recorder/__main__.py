@@ -103,6 +103,9 @@ class JobsSet(FileBackedData):
     def remove(self, item):
         self._data.remove(item)
 
+    def discard(self, element):
+        self._data.discard(element)
+
     def update(self, iterable):
         self._data.update(iterable)
 
@@ -204,7 +207,7 @@ def process(tile: CookedTile):
         else:
             history[seen_name][-1] = ts
 
-    OutstandingJobs.remove(xy)
+    OutstandingJobs.discard(xy)
     SeenJobs.add(xy)
 
     if tile.result is None:
