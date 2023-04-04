@@ -8,6 +8,7 @@ import argparse
 import asyncio
 import itertools
 import pickle
+import sys
 import time
 
 import httpx
@@ -158,14 +159,22 @@ SessionParams: WorkParams
 
 
 def options():
-    parser = argparse.ArgumentParser("RegionRecorder")
+    parser = argparse.ArgumentParser("RegionRecorder", epilog="Use EITHER --fromlast XOR ( --miny AND --maxy )")
 
-    parser.add_argument("--fromlast", type=int, default=-1)
+    group = parser.add_argument_group("Automatic Range (based on last scanned range)")
+    group.add_argument(
+        "--fromlast",
+        metavar="ROWS",
+        type=int,
+        default=-1,
+        help="How many rows to continue from the previous session. If row wraps, will start from 2100 down.",
+    )
 
-    parser.add_argument("--miny", type=int, default=-1)
-    parser.add_argument("--maxy", type=int, default=-1)
+    group = parser.add_argument_group("Explicit Range")
+    group.add_argument("--miny", metavar="NUM", type=int, default=-1)
+    group.add_argument("--maxy", metavar="NUM", type=int, default=-1)
 
-    parser.add_argument("--dbdir", type=Path, default=DEFA_DB_DIR)
+    parser.add_argument("--dbdir", metavar="DIR", type=Path, default=DEFA_DB_DIR)
 
     parser.add_argument("--ignoreseen", action="store_true", default=False)
 
@@ -298,6 +307,18 @@ async def async_main(ignoreseen: bool):
 
 def main(miny: int, maxy: int, dbdir: Path, fromlast: int, ignoreseen: bool):
     global DataBase, OutstandingJobs, SeenJobs, SessionParams
+
+    if fromlast == -1:
+        if miny == maxy == -1:
+            print("Must specify EITHER --fromlast XOR (--miny AND --maxy)", file=sys.stderr)
+            sys.exit(1)
+        elif miny == -1 or maxy == -1:
+            print("Must specify BOTH --miny AND --maxy", file=sys.stderr)
+            sys.exit(1)
+    else:
+        if miny != -1 or maxy != -1:
+            print("If using --fromlast, NEITHER --miny NOR --maxy may be specified", file=sys.stderr)
+            sys.exit(1)
 
     DataBase = RegionsDB(dbdir / DB_NAME)
     orig_len = len(DataBase)
