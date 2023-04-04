@@ -344,13 +344,15 @@ def main(miny: int, maxy: int, dbdir: Path, fromlast: int, ignoreseen: bool):
     SessionParams.save()
 
     print(f"Getting region names from range [{maxy}, {miny}]")
+    start = time.monotonic()
     asyncio.run(async_main(ignoreseen))
+    elapsed = time.monotonic() - start
 
     # pprint(DataBase)
     print(f"{len(DataBase)} records now in DataBase (originally {orig_len} records)")
     print(f"DataBase written to {dbdir / DB_NAME}")
 
-    print(f"Job done for Y = [{miny}, {maxy}]")
+    print(f"Job done for Y = [{miny}, {maxy}] in {elapsed:_.2f} seconds")
 
 
 if __name__ == "__main__":
