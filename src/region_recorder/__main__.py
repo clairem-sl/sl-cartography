@@ -3,22 +3,21 @@
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 from __future__ import annotations
 
-
 import argparse
 import asyncio
 import itertools
 import pickle
 import sys
 import time
-
-import httpx
-
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Callable, Final, TypedDict
 
+import httpx
+
 from sl_maptools import MapCoord
 from sl_maptools.cap_fetcher import BoundedNameFetcher, CookedTile
+
 # from sl_maptools.bb_fetcher import BoundedNameFetcher, CookedTile
 
 
@@ -42,7 +41,6 @@ LP_NAME: Final[str] = "RegionsLP.pkl"
 
 
 class FileBackedData:
-
     def __init__(self, backing_file: Path, default_factory: Callable):
         self.fp = backing_file
         self._factory = default_factory
@@ -69,7 +67,6 @@ class RegionsDBRecord(TypedDict):
 
 
 class RegionsDB(FileBackedData):
-
     def __init__(self, backing_file: Path):
         super().__init__(backing_file, dict)
         self._data: dict[str, RegionsDBRecord] = {}
@@ -95,7 +92,6 @@ class RegionsDB(FileBackedData):
 
 
 class JobsSet(FileBackedData):
-
     def __init__(self, backing_file: Path):
         super().__init__(backing_file, set)
         self._data: set[tuple[int, int]] = set()
@@ -126,6 +122,7 @@ class JobsSet(FileBackedData):
 class WorkParamsDict(TypedDict):
     miny: int
     maxy: int
+
 
 class WorkParams(FileBackedData):
     def __init__(self, backing_file: Path):
@@ -297,7 +294,7 @@ async def async_main(ignoreseen: bool):
                 f"{len(DataBase)} regions seen/known so far"
             )
             elapsed = time.monotonic() - start
-            avg = total/elapsed
+            avg = total / elapsed
             print(f"  {elapsed:.2f} seconds since start, average of {avg:.2f} regions/s")
             if avg > 0:
                 eta = datetime.now() + timedelta(seconds=(len(OutstandingJobs) / avg))
