@@ -81,7 +81,7 @@ class RegionsDB(FileBackedData):
     def get(self, key, default=None):
         return self._data.get(key, default)
 
-    def update(self, other):
+    def update(self, other: dict | RegionsDBRecord):
         self._data.update(other)
 
     def __setitem__(self, key, value):
