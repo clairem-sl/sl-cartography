@@ -11,7 +11,7 @@ import sys
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import cast, Callable, Final, TypedDict
+from typing import cast, Callable, Final, Iterable, TypedDict
 
 import httpx
 
@@ -31,6 +31,7 @@ HTTP2: Final[bool] = False
 # SEMA_SIZE = 100
 # HTTP2 = True
 
+BATCH_SIZE: Final[int] = 2000
 BATCH_WAIT: Final[float] = 5.0
 
 DEFA_DB_DIR: Final[Path] = Path("C:\\Cache\\SL-Carto\\")
@@ -254,10 +255,16 @@ async def async_main(ignoreseen: bool):
         tot_jobs = len(OutstandingJobs)
         print(f"{tot_jobs} jobs queued!")
 
-        tasks = [
-            asyncio.create_task(fetcher.async_fetch(MapCoord(x, y)), name=f"fetch-{x},{y}")
-            for x, y in OutstandingJobs
-        ]
+        async def batch(coll: Iterable, size: int):
+            for j, item in enumerate(coll, start=1):
+                yield item
+                if j >= size:
+                    return
+
+        tasks: set[asyncio.Task] = set()
+        async for coord in batch(OutstandingJobs, BATCH_SIZE):
+            tasks.add(asyncio.create_task(fetcher.async_fetch(MapCoord(*coord))))
+
         if not tasks:
             print("No unseen jobs, exiting immediately!")
             return
@@ -265,8 +272,9 @@ async def async_main(ignoreseen: bool):
         start = time.monotonic()
         total = 0
         done: set[asyncio.Task]
-        pending_tasks: set[asyncio.Task] = {tasks[0]}  # Dummy, just to enable us to enter the loop
+        pending_tasks: set[asyncio.Task | None] = {None}  # Dummy, just to enable us to enter the loop
         while pending_tasks:
+            print(f"{len(tasks)} async jobs =>")
             done, pending_tasks = await asyncio.wait(tasks, timeout=BATCH_WAIT)
             total += len(done)
             c = e = 0
@@ -303,6 +311,9 @@ async def async_main(ignoreseen: bool):
                 eta = datetime.now() + timedelta(seconds=(len(OutstandingJobs) / avg))
                 print(f"    ETA: {eta.strftime('%H:%M:%S')}")
             tasks = pending_tasks
+            if (2 * len(tasks)) < BATCH_SIZE:
+                async for coord in batch(OutstandingJobs, BATCH_SIZE):
+                    tasks.add(asyncio.create_task(fetcher.async_fetch(MapCoord(*coord))))
 
 
 def main(miny: int, maxy: int, dbdir: Path, fromlast: int, ignoreseen: bool):
