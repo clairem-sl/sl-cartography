@@ -226,7 +226,7 @@ def process(tile: CookedTile):
         record_history()
 
     if xy in DataBase:
-        DataBase[xy].update(cast(dbxy, dict))
+        DataBase[xy].update(cast(dict, dbxy))
     else:
         DataBase[xy] = dbxy
 
