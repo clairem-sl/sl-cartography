@@ -253,7 +253,7 @@ async def async_main(ignoreseen: bool):
         OutstandingJobs.save()
 
         tot_jobs = len(OutstandingJobs)
-        print(f"{tot_jobs} jobs queued!")
+        print(f"{tot_jobs} jobs to do in this session!")
 
         async def batch(coll: Iterable, size: int):
             for j, item in enumerate(coll, start=1):
