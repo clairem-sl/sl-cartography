@@ -11,7 +11,7 @@ import sys
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import cast, Callable, Final, Iterable, TypedDict
+from typing import cast, Callable, Final, TypedDict
 
 import httpx
 
