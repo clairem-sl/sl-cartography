@@ -255,14 +255,16 @@ async def async_main(ignoreseen: bool):
         tot_jobs = len(OutstandingJobs)
         print(f"{tot_jobs} jobs to do in this session!")
 
-        async def batch(coll: Iterable, size: int):
-            for j, item in enumerate(coll, start=1):
-                yield item
-                if j >= size:
+        undispatched_jobs: set[tuple[int, int]] = {r for r in OutstandingJobs}
+
+        async def batch(size: int):
+            for _ in range(size):
+                if not undispatched_jobs:
                     return
+                yield undispatched_jobs.pop()
 
         tasks: set[asyncio.Task] = set()
-        async for coord in batch(OutstandingJobs, BATCH_SIZE):
+        async for coord in batch(BATCH_SIZE):
             tasks.add(asyncio.create_task(fetcher.async_fetch(MapCoord(*coord))))
 
         if not tasks:
@@ -312,7 +314,7 @@ async def async_main(ignoreseen: bool):
                 print(f"    ETA: {eta.strftime('%H:%M:%S')}")
             tasks = pending_tasks
             if (2 * len(tasks)) < BATCH_SIZE:
-                async for coord in batch(OutstandingJobs, BATCH_SIZE):
+                async for coord in batch(BATCH_SIZE):
                     tasks.add(asyncio.create_task(fetcher.async_fetch(MapCoord(*coord))))
 
 
