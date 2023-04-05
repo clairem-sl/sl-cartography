@@ -276,7 +276,7 @@ async def async_main(ignoreseen: bool):
         done: set[asyncio.Task]
         pending_tasks: set[asyncio.Task | None] = {None}  # Dummy, just to enable us to enter the loop
         while pending_tasks:
-            print(f"{len(tasks)} async jobs =>")
+            print(f"{len(tasks)} async jobs =>", end=" ")
             done, pending_tasks = await asyncio.wait(tasks, timeout=BATCH_WAIT)
             total += len(done)
             c = e = 0
