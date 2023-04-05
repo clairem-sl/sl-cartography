@@ -248,7 +248,7 @@ async def async_main(ignoreseen: bool):
         OutstandingJobs.update(
             coord
             for coord in itertools.product(range(MIN_X, MAX_X + 1), range(miny, maxy + 1))
-            if not ignoreseen and (coord not in SeenJobs)
+            if ignoreseen or (coord not in SeenJobs)
         )
         OutstandingJobs.save()
 
