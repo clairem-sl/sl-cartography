@@ -65,6 +65,7 @@ class RegionsDBRecord(TypedDict):
     last_check: str
     current_name: str
     name_history: dict[str, list[str]]
+    sources: set[str]
 
 
 class RegionsDB(FileBackedData):
@@ -90,6 +91,9 @@ class RegionsDB(FileBackedData):
 
     def __contains__(self, item):
         return item in self._data
+
+    def items(self):
+        return self._data.items()
 
 
 class JobsSet(FileBackedData):
@@ -225,6 +229,7 @@ def process(tile: CookedTile):
                 "last_check": "",
                 "current_name": "",
                 "name_history": {},
+                "sources": {"cap"},
             }
         assert isinstance(dbxy, dict)
         record_history()
@@ -336,6 +341,9 @@ def main(miny: int, maxy: int, dbdir: Path, fromlast: int, ignoreseen: bool):
     DataBase = RegionsDB(dbdir / DB_NAME)
     orig_len = len(DataBase)
     print(f"{orig_len} records on start.")
+    for k, v in DataBase.items():
+        if "sources" not in v:
+            v["sources"] = {"cap"}
 
     OutstandingJobs = JobsSet(dbdir / OJ_NAME)
     print(f"{len(OutstandingJobs)} jobs still outstanding")
