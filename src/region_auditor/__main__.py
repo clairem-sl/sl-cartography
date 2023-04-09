@@ -374,6 +374,7 @@ def main(miny: int, maxy: int, dbdir: Path, fromlast: int, ignoreseen: bool):
     print(f"DataBase written to {dbdir / DB_NAME}")
 
     print(f"Job done for Y = [{miny}, {maxy}] in {elapsed:_.2f} seconds")
+    print(f"  {len(OutstandingJobs)} outstanding jobs left.")
 
 
 if __name__ == "__main__":
