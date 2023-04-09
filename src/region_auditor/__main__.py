@@ -312,10 +312,10 @@ async def async_main(ignoreseen: bool):
                 f"{len(DataBase)} regions seen/known so far"
             )
             elapsed = time.monotonic() - start
-            avg = total / elapsed
-            print(f"  {elapsed:.2f} seconds since start, average of {avg:.2f} regions/s")
-            if avg > 0:
-                eta = datetime.now() + timedelta(seconds=(len(OutstandingJobs) / avg))
+            avg_rate = total / elapsed
+            print(f"  {elapsed:.2f} seconds since start, average of {avg_rate:.2f} regions/s")
+            if avg_rate > 0:
+                eta = datetime.now() + timedelta(seconds=(len(OutstandingJobs) / avg_rate))
                 print(f"    ETA: {eta.strftime('%H:%M:%S')}")
             tasks = pending_tasks
             if (2 * len(tasks)) < BATCH_SIZE:
