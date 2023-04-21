@@ -48,7 +48,7 @@ def main():
     }
     yml_path = DB_PATH.with_suffix(".yaml")
     with yml_path.open("wt") as fout:
-        ryaml.dump(exported, fout)
+        ryaml.dump(exported, fout, default_flow_style=False)
 
     print(f"\nExported to {yml_path}")
     # with yml_path.open("rt") as fin:
