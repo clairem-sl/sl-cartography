@@ -268,18 +268,13 @@ async def async_main(ignoreseen: bool):
                     return
                 yield undispatched_jobs.pop()
 
-        tasks: set[asyncio.Task] = set()
+        def make_task(coord: tuple[int, int]):
+            return asyncio.create_task(
+                fetcher.async_fetch(MapCoord(*coord)),
+                name=str(coord)
+            )
 
-        def get_tasks():
-            async for coord in batch(BATCH_SIZE):
-                tasks.add(
-                    asyncio.create_task(
-                        fetcher.async_fetch(MapCoord(*coord)),
-                        name=str(coord)
-                    )
-                )
-
-        get_tasks()
+        tasks: set[asyncio.Task] = {make_task(coord) async for coord in batch(BATCH_SIZE)}
         if not tasks:
             print("No unseen jobs, exiting immediately!")
             return
@@ -327,7 +322,7 @@ async def async_main(ignoreseen: bool):
                 print(f"    ETA: {eta.strftime('%H:%M:%S')}")
             tasks = pending_tasks
             if (2 * len(tasks)) < BATCH_SIZE:
-                get_tasks()
+                tasks.update(make_task(coord) async for coord in batch(BATCH_SIZE))
 
 
 def main(miny: int, maxy: int, dbdir: Path, fromlast: int, ignoreseen: bool):
