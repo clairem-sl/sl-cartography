@@ -39,6 +39,7 @@ DEFA_DB_DIR: Final[Path] = Path("C:\\Cache\\SL-Carto\\")
 DB_NAME: Final[str] = "RegionsDB.pkl"
 OJ_NAME: Final[str] = "RegionsOJ.pkl"
 LP_NAME: Final[str] = "RegionsLP.pkl"
+LOCK_NAME: Final[str] = "RegionsDB.lock"
 
 
 class FileBackedData:
@@ -182,9 +183,9 @@ def options():
 
     parser.add_argument("--no-export", action="store_true", default=False, help="If specified, don't export DB as YAML")
 
-    opts = parser.parse_args()
+    _opts = parser.parse_args()
 
-    return opts
+    return _opts
 
 
 def process(tile: CookedTile):
@@ -378,4 +379,17 @@ def main(miny: int, maxy: int, dbdir: Path, fromlast: int, no_export: bool):
 
 
 if __name__ == "__main__":
-    main(**vars(options()))
+    opts = options()
+
+    lockf: Path = opts.dbdir / LOCK_NAME
+    try:
+        try:
+            lockf.touch(exist_ok=False)
+        except FileExistsError:
+            print(f"Lock file {lockf} exists!", file=sys.stderr)
+            print("You must not run multiple audits at the same time.", file=sys.stderr)
+            print("If no other audit is running, delete the lock file to continue.", file=sys.stderr)
+            sys.exit(1)
+        main(**vars(opts))
+    finally:
+        lockf.unlink(missing_ok=True)
