@@ -164,7 +164,7 @@ SessionParams: WorkParams
 
 
 def options():
-    parser = argparse.ArgumentParser("RegionRecorder", epilog="Use EITHER --fromlast XOR ( --miny AND --maxy )")
+    parser = argparse.ArgumentParser("region_auditor", epilog="Use EITHER --fromlast XOR ( --miny AND --maxy )")
 
     group = parser.add_argument_group("Automatic Range (based on last scanned range)")
     group.add_argument(
