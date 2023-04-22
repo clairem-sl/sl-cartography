@@ -17,6 +17,7 @@ import httpx
 
 from sl_maptools import MapCoord
 from sl_maptools.cap_fetcher import BoundedNameFetcher, CookedTile
+from .exportDB import export
 
 # from sl_maptools.bb_fetcher import BoundedNameFetcher, CookedTile
 
@@ -183,6 +184,8 @@ def options():
 
     parser.add_argument("--ignoreseen", action="store_true", default=False)
 
+    parser.add_argument("--no-export", action="store_true", default=False, help="If specified, don't export DB as YAML")
+
     opts = parser.parse_args()
 
     return opts
@@ -326,7 +329,7 @@ async def async_main(ignoreseen: bool):
                     tasks.add(make_task(coord))
 
 
-def main(miny: int, maxy: int, dbdir: Path, fromlast: int, ignoreseen: bool):
+def main(miny: int, maxy: int, dbdir: Path, fromlast: int, ignoreseen: bool, no_export: bool):
     global DataBase, OutstandingJobs, SeenJobs, SessionParams
 
     if fromlast == -1:
@@ -378,6 +381,10 @@ def main(miny: int, maxy: int, dbdir: Path, fromlast: int, ignoreseen: bool):
 
     print(f"Job done for Y = [{miny}, {maxy}] in {elapsed:_.2f} seconds")
     print(f"  {len(OutstandingJobs)} outstanding jobs left.")
+
+    if not no_export:
+        print("Exporting DB ... ", end="")
+        print(str(export(dbdir / DB_NAME, quiet=True)))
 
 
 if __name__ == "__main__":
