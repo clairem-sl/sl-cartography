@@ -17,7 +17,7 @@ import httpx
 
 from sl_maptools import MapCoord
 from sl_maptools.cap_fetcher import BoundedNameFetcher, CookedTile
-from .exportDB import export
+from region_auditor.exportDB import export
 
 # from sl_maptools.bb_fetcher import BoundedNameFetcher, CookedTile
 
