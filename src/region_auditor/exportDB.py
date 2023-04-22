@@ -10,17 +10,19 @@ from typing import Any
 
 DB_PATH = Path(r"C:\Cache\SL-Carto\RegionsDB.pkl")
 
-def main():
+def export(db_path: Path, quiet: bool = False) -> Path:
     result: dict[str, dict[str, Any]] = {}
-    with DB_PATH.open("rb") as fin:
+    with db_path.open("rb") as fin:
         data: dict[tuple[int, int], dict[str, Any]] = pickle.load(fin)
-    print(f"Retrieved {len(data)} records. Transforming...", end="", flush=True)
+    if not quiet:
+        print(f"Retrieved {len(data)} records. Transforming...", end="", flush=True)
     for coord, info in data.items():
         x, y = coord
         info["sources"] = list(info["sources"])
         result[f"{x},{y}"] = info
 
-    print("\nRecords transformed. Exporting...", end="", flush=True)
+    if not quiet:
+        print("\nRecords transformed. Exporting...", end="", flush=True)
     exported = {
         "_schema": {
             "name": "sl-carto-regionsdb",
@@ -50,9 +52,16 @@ def main():
     with yml_path.open("wt") as fout:
         ryaml.dump(exported, fout, default_flow_style=False)
 
-    print(f"\nExported to {yml_path}")
+    if not quiet:
+        print(f"\nExported to {yml_path}")
     # with yml_path.open("rt") as fin:
     #     print(fin.read())
+
+    return yml_path
+
+
+def main():
+    export(DB_PATH)
 
 
 if __name__ == '__main__':
