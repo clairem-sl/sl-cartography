@@ -295,7 +295,7 @@ async def async_main():
                 process(rslt)
                 if rslt.result:
                     if rslt.result.isdigit():
-                        print(f"\n{rslt}")
+                        print(f"\n({rslt.coord.x},{rslt.coord.y}){rslt.result}", end="? ", flush=True)
                     else:
                         print(f"{rslt}", end=" ", flush=True)
             if c:
