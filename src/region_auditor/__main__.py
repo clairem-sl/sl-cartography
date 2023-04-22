@@ -322,7 +322,8 @@ async def async_main(ignoreseen: bool):
                 print(f"    ETA: {eta.strftime('%H:%M:%S')}")
             tasks = pending_tasks
             if (2 * len(tasks)) < BATCH_SIZE:
-                tasks.update(make_task(coord) async for coord in batch(BATCH_SIZE))
+                async for coord in batch(BATCH_SIZE):
+                    tasks.add(make_task(coord))
 
 
 def main(miny: int, maxy: int, dbdir: Path, fromlast: int, ignoreseen: bool):
