@@ -38,7 +38,6 @@ BATCH_WAIT: Final[float] = 5.0
 DEFA_DB_DIR: Final[Path] = Path("C:\\Cache\\SL-Carto\\")
 DB_NAME: Final[str] = "RegionsDB.pkl"
 OJ_NAME: Final[str] = "RegionsOJ.pkl"
-SJ_NAME: Final[str] = "RegionsSJ.pkl"
 LP_NAME: Final[str] = "RegionsLP.pkl"
 
 
@@ -160,7 +159,6 @@ class WorkParams(FileBackedData):
 
 DataBase: RegionsDB
 OutstandingJobs: JobsSet
-SeenJobs: JobsSet
 SessionParams: WorkParams
 
 
@@ -182,8 +180,6 @@ def options():
 
     parser.add_argument("--dbdir", metavar="DIR", type=Path, default=DEFA_DB_DIR)
 
-    parser.add_argument("--ignoreseen", action="store_true", default=False)
-
     parser.add_argument("--no-export", action="store_true", default=False, help="If specified, don't export DB as YAML")
 
     opts = parser.parse_args()
@@ -192,7 +188,7 @@ def options():
 
 
 def process(tile: CookedTile):
-    global DataBase, OutstandingJobs, SeenJobs
+    global DataBase, OutstandingJobs
 
     ts = datetime.now().astimezone().isoformat(timespec="minutes")
     xy = tuple(tile.coord)
@@ -216,7 +212,6 @@ def process(tile: CookedTile):
             history[seen_name][-1] = ts
 
     OutstandingJobs.discard(xy)
-    SeenJobs.add(xy)
 
     if tile.result is None:
         if dbxy is None:
@@ -243,8 +238,8 @@ def process(tile: CookedTile):
         DataBase[xy] = dbxy
 
 
-async def async_main(ignoreseen: bool):
-    global OutstandingJobs, SeenJobs, SessionParams
+async def async_main():
+    global OutstandingJobs, SessionParams
     miny = SessionParams.miny
     maxy = SessionParams.maxy
 
@@ -256,7 +251,6 @@ async def async_main(ignoreseen: bool):
         OutstandingJobs.update(
             coord
             for coord in itertools.product(range(MIN_X, MAX_X + 1), range(miny, maxy + 1))
-            if ignoreseen or (coord not in SeenJobs)
         )
         OutstandingJobs.save()
 
@@ -306,7 +300,6 @@ async def async_main(ignoreseen: bool):
             if c:
                 DataBase.save()
                 OutstandingJobs.save()
-                SeenJobs.save()
                 if e == c:
                     print("\nLast batch all raised Exceptions!")
                     print("Cancelling the rest of the tasks...")
@@ -329,8 +322,8 @@ async def async_main(ignoreseen: bool):
                     tasks.add(make_task(coord))
 
 
-def main(miny: int, maxy: int, dbdir: Path, fromlast: int, ignoreseen: bool, no_export: bool):
-    global DataBase, OutstandingJobs, SeenJobs, SessionParams
+def main(miny: int, maxy: int, dbdir: Path, fromlast: int, no_export: bool):
+    global DataBase, OutstandingJobs, SessionParams
 
     if fromlast == -1:
         if miny == maxy == -1:
@@ -354,8 +347,6 @@ def main(miny: int, maxy: int, dbdir: Path, fromlast: int, ignoreseen: bool, no_
     OutstandingJobs = JobsSet(dbdir / OJ_NAME)
     print(f"{len(OutstandingJobs)} jobs still outstanding")
 
-    SeenJobs = JobsSet(dbdir / SJ_NAME)
-
     SessionParams = WorkParams(dbdir / LP_NAME)
     if fromlast != -1:
         maxy = SessionParams.miny
@@ -365,14 +356,13 @@ def main(miny: int, maxy: int, dbdir: Path, fromlast: int, ignoreseen: bool, no_
             if maxy <= miny:
                 maxy = 2100
                 miny = 2100 - fromlast
-                SeenJobs.clear()
     SessionParams.maxy = maxy
     SessionParams.miny = miny
     SessionParams.save()
 
     print(f"Getting region names from range [{maxy}, {miny}]")
     start = time.monotonic()
-    asyncio.run(async_main(ignoreseen))
+    asyncio.run(async_main())
     elapsed = time.monotonic() - start
 
     # pprint(DataBase)
