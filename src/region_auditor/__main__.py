@@ -32,6 +32,14 @@ HTTP2: Final[bool] = False
 # SEMA_SIZE = 100
 # HTTP2 = True
 
+# BATCH_SIZE should be set to AT LEAST 3x (# of results per BATCH_WAIT period = rslt_per_batch)
+# so the number needs to be determined empirically.
+# On my laptop, rslt_per_batch is about ~600, so on my laptop
+# the number needs to be > 1800; I chose 2000.
+# Larger BATCH_SIZE will result in a linearly larger usage of RAM, though.
+# So if you don't have much RAM available, reduce BOTH BATCH_SIZE AND BATCH_WAIT
+# (E.g., setting BATCH_WAIT to 1.0 will likely reduce rslt_per_batch
+# to one-fifth, meaning you can also reduce BATCH_SIZE to one-fifth)
 BATCH_SIZE: Final[int] = 2000
 BATCH_WAIT: Final[float] = 5.0
 
