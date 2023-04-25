@@ -36,6 +36,7 @@ dependencies = [
 ]
 
 [build-system]
+build-backend = "setuptools.build_meta"
 requires = [
     "pillow",
     "httpx",
@@ -54,6 +55,14 @@ requires = [
     #
     "setuptools>=40.8.0",
     "wheel",
+]
+
+[project.optional-dependencies]
+# Dev dependencies.
+dev = [
+    "black",
+    "black[d]",
+    "isort",
 ]
 
 [tool.isort]
