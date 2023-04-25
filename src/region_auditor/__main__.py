@@ -172,7 +172,9 @@ SessionParams: WorkParams
 
 
 def options():
-    parser = argparse.ArgumentParser("region_auditor", epilog="Use EITHER --fromlast XOR ( --miny AND --maxy )")
+    parser = argparse.ArgumentParser(
+        "region_auditor", epilog="Use EITHER --fromlast XOR ( --miny AND --maxy )"
+    )
 
     group = parser.add_argument_group("Automatic Range (based on last scanned range)")
     group.add_argument(
@@ -189,7 +191,19 @@ def options():
 
     parser.add_argument("--dbdir", metavar="DIR", type=Path, default=DEFA_DB_DIR)
 
-    parser.add_argument("--no-export", action="store_true", default=False, help="If specified, don't export DB as YAML")
+    parser.add_argument(
+        "--no-export",
+        action="store_true",
+        default=False,
+        help="If specified, don't export DB as YAML",
+    )
+
+    # parser.add_argument(
+    #     "--source",
+    #     nargs="*",
+    #     choices=VALID_SOURCES,
+    #     help=f"Space-separated source to use for audit. Valid values are one or more combination from {VALID_SOURCES}",
+    # )
 
     _opts = parser.parse_args()
 
@@ -252,14 +266,18 @@ async def async_main():
     miny = SessionParams.miny
     maxy = SessionParams.maxy
 
-    limits = httpx.Limits(max_connections=CONN_LIMIT, max_keepalive_connections=CONN_LIMIT)
+    limits = httpx.Limits(
+        max_connections=CONN_LIMIT, max_keepalive_connections=CONN_LIMIT
+    )
     async with httpx.AsyncClient(limits=limits, timeout=10.0, http2=HTTP2) as client:
         fetcher = BoundedNameFetcher(SEMA_SIZE, client, cooked=True)
         # coords = [MapCoord(x, y) for x in range(950, 1050) for y in range(950, 1050)]
 
         OutstandingJobs.update(
             coord
-            for coord in itertools.product(range(MIN_X, MAX_X + 1), range(miny, maxy + 1))
+            for coord in itertools.product(
+                range(MIN_X, MAX_X + 1), range(miny, maxy + 1)
+            )
         )
         OutstandingJobs.save()
 
@@ -276,11 +294,12 @@ async def async_main():
 
         def make_task(coord: tuple[int, int]):
             return asyncio.create_task(
-                fetcher.async_fetch(MapCoord(*coord)),
-                name=str(coord)
+                fetcher.async_fetch(MapCoord(*coord)), name=str(coord)
             )
 
-        tasks: set[asyncio.Task] = {make_task(coord) async for coord in batch(BATCH_SIZE)}
+        tasks: set[asyncio.Task] = {
+            make_task(coord) async for coord in batch(BATCH_SIZE)
+        }
         if not tasks:
             print("No unseen jobs, exiting immediately!")
             return
@@ -303,7 +322,11 @@ async def async_main():
                 process(rslt)
                 if rslt.result:
                     if rslt.result.isdigit():
-                        print(f"\n({rslt.coord.x},{rslt.coord.y}){rslt.result}", end="? ", flush=True)
+                        print(
+                            f"\n({rslt.coord.x},{rslt.coord.y}){rslt.result}",
+                            end="? ",
+                            flush=True,
+                        )
                     else:
                         print(f"{rslt}", end=" ", flush=True)
             if c:
@@ -321,9 +344,13 @@ async def async_main():
             )
             elapsed = time.monotonic() - start
             avg_rate = total / elapsed
-            print(f"  {elapsed:.2f} seconds since start, average of {avg_rate:.2f} regions/s")
+            print(
+                f"  {elapsed:.2f} seconds since start, average of {avg_rate:.2f} regions/s"
+            )
             if avg_rate > 0:
-                eta = datetime.now() + timedelta(seconds=(len(OutstandingJobs) / avg_rate))
+                eta = datetime.now() + timedelta(
+                    seconds=(len(OutstandingJobs) / avg_rate)
+                )
                 print(f"    ETA: {eta.strftime('%H:%M:%S')}")
             tasks = pending_tasks
             if (2 * len(tasks)) < BATCH_SIZE:
@@ -336,14 +363,20 @@ def main(miny: int, maxy: int, dbdir: Path, fromlast: int, no_export: bool):
 
     if fromlast == -1:
         if miny == maxy == -1:
-            print("Must specify EITHER --fromlast XOR (--miny AND --maxy)", file=sys.stderr)
+            print(
+                "Must specify EITHER --fromlast XOR (--miny AND --maxy)",
+                file=sys.stderr,
+            )
             sys.exit(1)
         elif miny == -1 or maxy == -1:
             print("Must specify BOTH --miny AND --maxy", file=sys.stderr)
             sys.exit(1)
     else:
         if miny != -1 or maxy != -1:
-            print("If using --fromlast, NEITHER --miny NOR --maxy may be specified", file=sys.stderr)
+            print(
+                "If using --fromlast, NEITHER --miny NOR --maxy may be specified",
+                file=sys.stderr,
+            )
             sys.exit(1)
 
     DataBase = RegionsDB(dbdir / DB_NAME)
@@ -396,7 +429,10 @@ if __name__ == "__main__":
         except FileExistsError:
             print(f"Lock file {lockf} exists!", file=sys.stderr)
             print("You must not run multiple audits at the same time.", file=sys.stderr)
-            print("If no other audit is running, delete the lock file to continue.", file=sys.stderr)
+            print(
+                "If no other audit is running, delete the lock file to continue.",
+                file=sys.stderr,
+            )
             sys.exit(1)
         main(**vars(opts))
     finally:
