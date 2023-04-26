@@ -8,12 +8,13 @@ import io
 import random
 import time
 from pathlib import Path
-from typing import Any, Callable, Dict, Final, FrozenSet, List, Optional, Protocol, Set, Tuple, Union
+from typing import Any, Callable, Dict, Final, FrozenSet, Optional, Protocol, Set, Tuple, Union
 
 import httpx
 from PIL import Image
 
 from sl_maptools import MapCoord, MapRegion
+from sl_maptools.fetchers import FetcherConnectionError
 from sl_maptools.knowns import VERIFIED_VOIDS
 from sl_maptools.utils import QuietablePrint
 
@@ -22,18 +23,6 @@ RawRegion = Tuple[MapCoord, bytes | None]
 
 
 _REGION_SIZE: Final[int] = 256
-
-
-class MapConnectionError(ConnectionError):
-    def __init__(
-        self, *args, internal_errors: List[Exception] = None, coord: MapCoord = None
-    ):
-        super(MapConnectionError, self).__init__(*args)
-        self.internal_errors = internal_errors or []
-        self.coord = coord
-
-    def __str__(self):
-        return f"MapConnectionError({self.coord.x}, {self.coord.y}): {self.internal_errors}"
 
 
 class MapProgressProtocol(Protocol):
@@ -105,7 +94,7 @@ class MapFetcher(object):
                     mul2 *= 2.0
                     continue
                 except Exception as e:
-                    raise MapConnectionError(internal_errors=[e], coord=coord)
+                    raise FetcherConnectionError(internal_errors=[e], coord=coord)
             else:
                 break
 
@@ -134,7 +123,7 @@ class MapFetcher(object):
             await asyncio.sleep(0.5)
         print(f"ERR({coord})", end="", flush=True)
         if raise_err:
-            raise MapConnectionError(internal_errors=internal_errors, coord=coord)
+            raise FetcherConnectionError(internal_errors=internal_errors, coord=coord)
 
     async def async_get_region(
         self,
@@ -236,7 +225,7 @@ class MapFetcher(object):
                         progress.last_fail_rows.add(y)
                         aborting_exception = e
                     except Exception as e:
-                        if not isinstance(e, MapConnectionError):
+                        if not isinstance(e, FetcherConnectionError):
                             print(str(e), flush=True)
                         if err_callback:
                             err_callback(str(e))

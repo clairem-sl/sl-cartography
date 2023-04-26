@@ -24,7 +24,8 @@ from typing import Dict, Final, Iterable, Set
 import httpx
 
 from sl_maptools import AreaBounds, MapCoord, MapRegion
-from sl_maptools.fetchers.map import MapCanvas, MapConnectionError, MapFetcher
+from sl_maptools.fetchers import FetcherConnectionError
+from sl_maptools.fetchers.map import MapCanvas, MapFetcher
 from sl_maptools.knowns import KNOWN_AREAS
 
 SAVE_DIR: Final[Path] = Path("~/Pictures/SLMap/Carto").expanduser()
@@ -98,7 +99,7 @@ class Cartographer(object):
                         result: MapRegion = await task
                         self.add_tile(result)
                         coords_to_fetch.discard(result.coord)
-                    except MapConnectionError:
+                    except FetcherConnectionError:
                         pass
                 if not coords_to_fetch:
                     break

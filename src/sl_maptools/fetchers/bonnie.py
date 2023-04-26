@@ -5,11 +5,12 @@ from __future__ import annotations
 
 import asyncio
 import random
-from typing import Any, Dict, List, NamedTuple, Optional, Protocol, Set
+from typing import Any, Dict, NamedTuple, Optional, Protocol, Set
 
 import httpx
 
 from sl_maptools import MapCoord
+from sl_maptools.fetchers import FetcherConnectionError
 from sl_maptools.utils import QuietablePrint
 
 
@@ -21,18 +22,6 @@ class RawTile(NamedTuple):
 class CookedTile(NamedTuple):
     coord: MapCoord
     result: str | None
-
-
-class MapConnectionError(ConnectionError):
-    def __init__(
-        self, *args, internal_errors: List[Exception] = None, coord: MapCoord = None
-    ):
-        super(MapConnectionError, self).__init__(*args)
-        self.internal_errors = internal_errors or []
-        self.coord = coord
-
-    def __str__(self):
-        return f"MapConnectionError({self.coord.x}, {self.coord.y}): {self.internal_errors}"
 
 
 class MapProgressProtocol(Protocol):
@@ -88,7 +77,7 @@ class NameFetcher(object):
                     mul2 *= 2.0
                     continue
                 except Exception as e:
-                    raise MapConnectionError(internal_errors=[e], coord=coord)
+                    raise FetcherConnectionError(internal_errors=[e], coord=coord)
             else:
                 break
 
@@ -109,7 +98,7 @@ class NameFetcher(object):
             await asyncio.sleep(0.5)
         print(f"ERR({coord})", end="", flush=True)
         if raise_err:
-            raise MapConnectionError(internal_errors=internal_errors, coord=coord)
+            raise FetcherConnectionError(internal_errors=internal_errors, coord=coord)
 
     async def async_get_name(
         self,
