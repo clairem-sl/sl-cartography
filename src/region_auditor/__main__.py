@@ -202,7 +202,10 @@ def options():
     #     "--source",
     #     nargs="*",
     #     choices=VALID_SOURCES,
-    #     help=f"Space-separated source to use for audit. Valid values are one or more combination from {VALID_SOURCES}",
+    #     help=(
+    #         f"Space-separated source to use for audit. "
+    #         f"Valid values are one or more combination from {VALID_SOURCES}"
+    #     ),
     # )
 
     _opts = parser.parse_args()
