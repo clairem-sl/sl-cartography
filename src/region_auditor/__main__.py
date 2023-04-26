@@ -16,7 +16,7 @@ from typing import cast, Callable, Final, TypedDict
 import httpx
 
 from sl_maptools import MapCoord
-from sl_maptools.cap_fetcher import BoundedNameFetcher, CookedTile
+from sl_maptools.fetchers.cap import BoundedNameFetcher, CookedTile
 from region_auditor.exportDB import export
 
 # from sl_maptools.bb_fetcher import BoundedNameFetcher, CookedTile

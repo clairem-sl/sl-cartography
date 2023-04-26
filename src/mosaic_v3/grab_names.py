@@ -2,7 +2,7 @@ import asyncio
 import httpx
 
 from sl_maptools import MapCoord
-from sl_maptools.cap_fetcher import BoundedNameFetcher, CookedTile
+from sl_maptools.fetchers.cap import BoundedNameFetcher, CookedTile
 
 
 CONN_LIMIT = 30

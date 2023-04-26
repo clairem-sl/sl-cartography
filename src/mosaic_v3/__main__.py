@@ -36,7 +36,7 @@ from mosaic_v3.workers import WorkTeam
 from mosaic_v3.workers.recorder import RegionRecorder
 from mosaic_v3.workers.processor import ProcessorJob, RegionProcessor
 from sl_maptools import MapCoord
-from sl_maptools.fetcher import RawRegion
+from sl_maptools.fetchers.map import RawRegion
 from sl_maptools.utils import make_backup
 
 

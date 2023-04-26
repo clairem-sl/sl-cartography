@@ -12,7 +12,7 @@ from typing import Callable, Dict, Final, Generator, Iterable, List, Optional, S
 import httpx
 
 from sl_maptools import MapCoord
-from sl_maptools.fetcher import BoundedMapFetcher, RawRegion
+from sl_maptools.fetchers.map import BoundedMapFetcher, RawRegion
 
 BATCH_SIZE: Final[int] = 2000
 BATCH_WAIT: Final[float] = 2.5

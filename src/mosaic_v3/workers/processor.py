@@ -14,7 +14,7 @@ from mosaic_v3.color_processing import DominantColors
 from mosaic_v3.workers import Worker, WorkerState
 from mosaic_v3.workers.recorder import RecorderJob
 from sl_maptools import MapCoord, MapRegion
-from sl_maptools.fetcher import RawRegion
+from sl_maptools.fetchers.map import RawRegion
 
 ProcessorSignals = Union[Literal["DIE"], Literal["SAVE"]]
 ProcessorJob = Union[ProcessorSignals, RawRegion]
