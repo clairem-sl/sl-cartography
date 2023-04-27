@@ -6,18 +6,18 @@ from __future__ import annotations
 import argparse
 import asyncio
 import itertools
-import pickle
 import sys
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import cast, Callable, Final, TypedDict
+from typing import cast, Final, TypedDict
 
 import httpx
 
+from region_auditor import FileBackedData
+from region_auditor.exportDB import export
 from sl_maptools import MapCoord
 from sl_maptools.fetchers.cap import BoundedNameFetcher, CookedTile
-from region_auditor.exportDB import export
 
 # from sl_maptools.bb_fetcher import BoundedNameFetcher, CookedTile
 
@@ -48,24 +48,6 @@ DB_NAME: Final[str] = "RegionsDB.pkl"
 OJ_NAME: Final[str] = "RegionsOJ.pkl"
 LP_NAME: Final[str] = "RegionsLP.pkl"
 LOCK_NAME: Final[str] = "RegionsDB.lock"
-
-
-class FileBackedData:
-    def __init__(self, backing_file: Path, default_factory: Callable):
-        self.fp = backing_file
-        self._factory = default_factory
-        self._data = None
-
-    def load(self):
-        if self.fp.exists():
-            with self.fp.open("rb") as fin:
-                self._data = pickle.load(fin)
-        else:
-            self._data = self._factory()
-
-    def save(self):
-        with self.fp.open("wb") as fout:
-            pickle.dump(self._data, fout, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 class RegionsDBRecord(TypedDict):
