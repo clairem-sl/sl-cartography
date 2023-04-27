@@ -24,11 +24,11 @@ class MapProgressProtocol(Protocol):
     last_fail_rows: Set[int] = set()
 
 
-_RETRYABLE_EX = (httpx.ConnectTimeout, httpx.ReadTimeout, httpx.ReadError)
+_RETRYABLE_EX: Final[tuple] = (httpx.ConnectTimeout, httpx.ReadTimeout, httpx.ReadError)
 
 
 class MapFetcher(object):
-    URL_TEMPLATE = (
+    URL_TEMPLATE: Final[str] = (
         "https://secondlife-maps-cdn.akamaized.net/map-1-{map_x}-{map_y}-objects.jpg"
     )
 

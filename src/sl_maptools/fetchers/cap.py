@@ -15,7 +15,7 @@ from sl_maptools.fetchers import FetcherConnectionError, RawResult, CookedResult
 from sl_maptools.utils import QuietablePrint
 
 
-RE_REGION_NAME: Final = re.compile(r"\s*var\s*region\s*=\s*(['\"])([^'\"]+)\1")
+RE_REGION_NAME: Final[re.Pattern] = re.compile(r"\s*var\s*region\s*=\s*(['\"])([^'\"]+)\1")
 
 
 class MapProgressProtocol(Protocol):
@@ -24,11 +24,11 @@ class MapProgressProtocol(Protocol):
     last_fail_rows: Set[int] = set()
 
 
-_RETRYABLE_EX = (httpx.ConnectTimeout, httpx.ReadTimeout, httpx.ReadError)
+_RETRYABLE_EX: Final[tuple] = (httpx.ConnectTimeout, httpx.ReadTimeout, httpx.ReadError)
 
 
 class NameFetcher(object):
-    URL_TEMPLATE = (
+    URL_TEMPLATE: Final[str] = (
         "https://cap.secondlife.com/cap/0/b713fe80-283b-4585-af4d-a3b7d9a32492?"
         "var=region&grid_x={x}&grid_y={y}"
     )
