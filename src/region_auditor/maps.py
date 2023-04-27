@@ -10,7 +10,7 @@ import sys
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import cast, Final, TypedDict
+from typing import Final, TypedDict, cast
 
 import httpx
 from PIL import Image
@@ -288,7 +288,9 @@ async def async_main(mapdir: Path):
                     tasks.add(make_task(coord))
 
 
-def main(miny: int, maxy: int, dbdir: Path, mapdir: Path, fromlast: int, no_export: bool):
+def main(
+    miny: int, maxy: int, dbdir: Path, mapdir: Path, fromlast: int, no_export: bool
+):
     global DataBase, OutstandingJobs, SessionParams
 
     if fromlast == -1:

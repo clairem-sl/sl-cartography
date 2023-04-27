@@ -28,9 +28,9 @@ _RETRYABLE_EX: Final[tuple] = (httpx.ConnectTimeout, httpx.ReadTimeout, httpx.Re
 
 
 class MapFetcher(object):
-    URL_TEMPLATE: Final[str] = (
-        "https://secondlife-maps-cdn.akamaized.net/map-1-{map_x}-{map_y}-objects.jpg"
-    )
+    URL_TEMPLATE: Final[
+        str
+    ] = "https://secondlife-maps-cdn.akamaized.net/map-1-{map_x}-{map_y}-objects.jpg"
 
     def __init__(
         self,
@@ -125,7 +125,9 @@ class MapFetcher(object):
         retries: int = 2,
         raise_err: bool = True,
     ) -> MapRegion:
-        raw_rslt: RawResult = await self.async_get_region_raw(coord, quiet, retries, raise_err)
+        raw_rslt: RawResult = await self.async_get_region_raw(
+            coord, quiet, retries, raise_err
+        )
         if raw_rslt.result is None:
             return MapRegion(coord, None)
 
@@ -286,7 +288,13 @@ class BoundedMapFetcher(MapFetcher):
     that if there are too many in-flight requests, we get throttled.
     """
 
-    def __init__(self, sema_size: int, async_session: httpx.AsyncClient, retries: int = 3, cooked: bool = False):
+    def __init__(
+        self,
+        sema_size: int,
+        async_session: httpx.AsyncClient,
+        retries: int = 3,
+        cooked: bool = False,
+    ):
         """
 
         :param sema_size: Size of semaphore, which limits the number of in-flight requests
@@ -303,9 +311,13 @@ class BoundedMapFetcher(MapFetcher):
         async with self.sema:
             try:
                 if self.cooked:
-                    return await self.async_get_region(coord, quiet=True, retries=self.retries)
+                    return await self.async_get_region(
+                        coord, quiet=True, retries=self.retries
+                    )
                 else:
-                    return await self.async_get_region_raw(coord, quiet=True, retries=self.retries)
+                    return await self.async_get_region_raw(
+                        coord, quiet=True, retries=self.retries
+                    )
             except asyncio.CancelledError:
                 print(f"{coord} cancelled")
                 return None

@@ -10,7 +10,7 @@ import sys
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import cast, Final, TypedDict
+from typing import Final, TypedDict, cast
 
 import httpx
 

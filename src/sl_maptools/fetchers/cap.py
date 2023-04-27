@@ -11,11 +11,12 @@ from typing import Any, Dict, Final, NamedTuple, Optional, Protocol, Set
 import httpx
 
 from sl_maptools import MapCoord
-from sl_maptools.fetchers import FetcherConnectionError, RawResult, CookedResult
+from sl_maptools.fetchers import CookedResult, FetcherConnectionError, RawResult
 from sl_maptools.utils import QuietablePrint
 
-
-RE_REGION_NAME: Final[re.Pattern] = re.compile(r"\s*var\s*region\s*=\s*(['\"])([^'\"]+)\1")
+RE_REGION_NAME: Final[re.Pattern] = re.compile(
+    r"\s*var\s*region\s*=\s*(['\"])([^'\"]+)\1"
+)
 
 
 class MapProgressProtocol(Protocol):
@@ -48,8 +49,7 @@ class NameFetcher(object):
         retries: int = 2,
         raise_err: bool = True,
     ) -> RawResult:
-        """
-        """
+        """ """
         qprint = QuietablePrint(quiet)
         qprint(".", end="", flush=True)
         url = self.URL_TEMPLATE.format(x=coord.x, y=coord.y)
@@ -135,7 +135,13 @@ class BoundedNameFetcher(NameFetcher):
     that if there are too many in-flight requests, we get throttled.
     """
 
-    def __init__(self, sema_size: int, async_session: httpx.AsyncClient, retries: int = 3, cooked: bool = False):
+    def __init__(
+        self,
+        sema_size: int,
+        async_session: httpx.AsyncClient,
+        retries: int = 3,
+        cooked: bool = False,
+    ):
         """
 
         :param sema_size: Size of semaphore, which limits the number of in-flight requests
@@ -152,9 +158,13 @@ class BoundedNameFetcher(NameFetcher):
         async with self.sema:
             try:
                 if self.cooked:
-                    return await self.async_get_name(coord, quiet=True, retries=self.retries)
+                    return await self.async_get_name(
+                        coord, quiet=True, retries=self.retries
+                    )
                 else:
-                    return await self.async_get_name_raw(coord, quiet=True, retries=self.retries)
+                    return await self.async_get_name_raw(
+                        coord, quiet=True, retries=self.retries
+                    )
             except asyncio.CancelledError:
                 print(f"{coord} cancelled")
                 return None
