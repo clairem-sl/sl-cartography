@@ -2,7 +2,7 @@ import asyncio
 import httpx
 
 from sl_maptools import MapCoord
-from sl_maptools.fetchers.cap import BoundedNameFetcher, CookedTile
+from sl_maptools.fetchers.cap import BoundedNameFetcher, CookedResult
 
 
 CONN_LIMIT = 30
@@ -23,7 +23,7 @@ async def async_main():
             done, pending_tasks = await asyncio.wait(tasks, timeout=BATCH_WAIT)
             c = 0
             for c, fut in enumerate(done, start=1):
-                rslt: CookedTile = fut.result()
+                rslt: CookedResult = fut.result()
                 if rslt.result and rslt.result.isdigit():
                     print(f"\n{rslt}")
                 else:

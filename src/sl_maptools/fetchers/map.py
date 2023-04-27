@@ -14,12 +14,9 @@ import httpx
 from PIL import Image
 
 from sl_maptools import MapCoord, MapRegion
-from sl_maptools.fetchers import FetcherConnectionError
+from sl_maptools.fetchers import FetcherConnectionError, RawResult
 from sl_maptools.knowns import VERIFIED_VOIDS
 from sl_maptools.utils import QuietablePrint
-
-
-RawRegion = Tuple[MapCoord, bytes | None]
 
 
 _REGION_SIZE: Final[int] = 256
@@ -59,7 +56,7 @@ class MapFetcher(object):
         quiet: bool = False,
         retries: int = 2,
         raise_err: bool = True,
-    ) -> RawRegion:
+    ) -> RawResult:
         """
         Asynchronously fetch a map tile from a given coordinate
 
@@ -73,7 +70,7 @@ class MapFetcher(object):
         qprint(".", end="", flush=True)
         if coord in self.skip_tiles or coord in VERIFIED_VOIDS:
             # return MapTile(coord, None)
-            return coord, None
+            return RawResult(coord, None)
         url = self.URL_TEMPLATE.format(map_x=coord.x, map_y=coord.y)
         internal_errors = []
         multiplier = 0.25
@@ -104,7 +101,7 @@ class MapFetcher(object):
                 # "403 Forbidden" means the tile is a void
                 qprint("-", end="", flush=True)
                 # return MapTile(coord, None)
-                return coord, None
+                return RawResult(coord, None, status_code)
 
             if status_code == 200:
                 qprint("+", end="", flush=True)
@@ -113,7 +110,7 @@ class MapFetcher(object):
                 #     # Need to call .load() because .open() is lazy
                 #     grabbed.load()
                 # return MapTile(coord, grabbed)
-                return coord, response.content
+                return RawResult(coord, response.content, status_code)
 
             # Don't quiet this
             print(f"{status_code}?", end="", flush=True)
@@ -132,11 +129,11 @@ class MapFetcher(object):
         retries: int = 2,
         raise_err: bool = True,
     ) -> MapRegion:
-        coord, raw = await self.async_get_region_raw(coord, quiet, retries, raise_err)
-        if raw is None:
+        raw_rslt: RawResult = await self.async_get_region_raw(coord, quiet, retries, raise_err)
+        if raw_rslt.result is None:
             return MapRegion(coord, None)
 
-        with io.BytesIO(raw) as bio:
+        with io.BytesIO(raw_rslt.result) as bio:
             grabbed = Image.open(bio)
             # Need to call .load() because .open() is lazy
             grabbed.load()
@@ -356,7 +353,7 @@ class BoundedMapFetcher(MapFetcher):
         self.sema = asyncio.Semaphore(sema_size)
         self.retries = retries
 
-    async def async_fetch(self, coord: MapCoord) -> Optional[RawRegion]:
+    async def async_fetch(self, coord: MapCoord) -> Optional[RawResult]:
         """Perform async fetch, but won't actually start fetching if semaphore is depleted."""
         async with self.sema:
             try:

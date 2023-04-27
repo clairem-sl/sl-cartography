@@ -17,7 +17,7 @@ import httpx
 from region_auditor import FileBackedData
 from region_auditor.exportDB import export
 from sl_maptools import MapCoord
-from sl_maptools.fetchers.cap import BoundedNameFetcher, CookedTile
+from sl_maptools.fetchers.cap import BoundedNameFetcher, CookedResult
 
 # from sl_maptools.bb_fetcher import BoundedNameFetcher, CookedTile
 
@@ -195,7 +195,7 @@ def options():
     return _opts
 
 
-def process(tile: CookedTile):
+def process(tile: CookedResult):
     global DataBase, OutstandingJobs
 
     ts = datetime.now().astimezone().isoformat(timespec="minutes")
@@ -303,7 +303,7 @@ async def async_main():
                     e += 1
                     print(f"\n{fut.get_name()} raised Exception: <{type(exc)}> {exc}")
                     continue
-                rslt: CookedTile = fut.result()
+                rslt: CookedResult = fut.result()
                 process(rslt)
                 if rslt.result:
                     if rslt.result.isdigit():

@@ -11,21 +11,11 @@ from typing import Any, Dict, Final, NamedTuple, Optional, Protocol, Set
 import httpx
 
 from sl_maptools import MapCoord
-from sl_maptools.fetchers import FetcherConnectionError
+from sl_maptools.fetchers import FetcherConnectionError, RawResult, CookedResult
 from sl_maptools.utils import QuietablePrint
 
 
 RE_REGION_NAME: Final = re.compile(r"\s*var\s*region\s*=\s*(['\"])([^'\"]+)\1")
-
-
-class RawTile(NamedTuple):
-    coord: MapCoord
-    result: bytes | None
-
-
-class CookedTile(NamedTuple):
-    coord: MapCoord
-    result: str | None
 
 
 class MapProgressProtocol(Protocol):
@@ -57,7 +47,7 @@ class NameFetcher(object):
         quiet: bool = False,
         retries: int = 2,
         raise_err: bool = True,
-    ) -> RawTile:
+    ) -> RawResult:
         """
         """
         qprint = QuietablePrint(quiet)
@@ -92,7 +82,7 @@ class NameFetcher(object):
                 # "403 Forbidden" means the tile is a void
                 qprint(status_code, end=" ", flush=True)
                 # return MapTile(coord, None)
-                return RawTile(coord, str(status_code).encode("utf-8"))
+                return RawResult(coord, str(status_code).encode("utf-8"), status_code)
 
             if status_code == 200:
                 qprint("+", end="", flush=True)
@@ -101,7 +91,7 @@ class NameFetcher(object):
                 #     # Need to call .load() because .open() is lazy
                 #     grabbed.load()
                 # return MapTile(coord, grabbed)
-                return RawTile(coord, response.content)
+                return RawResult(coord, response.content, status_code)
 
             # Don't quiet this
             print(f"{status_code}?", end="", flush=True)
@@ -119,18 +109,19 @@ class NameFetcher(object):
         quiet: bool = False,
         retries: int = 2,
         raise_err: bool = True,
-    ) -> CookedTile:
-        _, rsltb = await self.async_get_name_raw(coord, quiet, retries, raise_err)
-        if rsltb is None:
-            return CookedTile(coord, None)
+    ) -> CookedResult:
+        raw_result = await self.async_get_name_raw(coord, quiet, retries, raise_err)
+        if raw_result.result is None:
+            return CookedResult(coord, None)
+        rsltb: bytes = raw_result.result
         assert isinstance(rsltb, bytes)
         rslt: str = rsltb.decode("utf-8")
         if rslt.isdigit():
-            return CookedTile(coord, rslt)
+            return CookedResult(coord, rslt, raw_result.status_code)
         matches = RE_REGION_NAME.match(rslt)
         if not matches:  # Void
-            return CookedTile(coord, None)
-        return CookedTile(coord, matches.group(2))
+            return CookedResult(coord, None, raw_result.status_code)
+        return CookedResult(coord, matches.group(2), raw_result.status_code)
 
 
 class BoundedNameFetcher(NameFetcher):
@@ -156,7 +147,7 @@ class BoundedNameFetcher(NameFetcher):
         self.retries = retries
         self.cooked = cooked
 
-    async def async_fetch(self, coord: MapCoord) -> Optional[RawTile|CookedTile]:
+    async def async_fetch(self, coord: MapCoord) -> Optional[RawResult | CookedResult]:
         """Perform async fetch, but won't actually start fetching if semaphore is depleted."""
         async with self.sema:
             try:
