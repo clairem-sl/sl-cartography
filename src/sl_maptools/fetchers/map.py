@@ -286,7 +286,7 @@ class BoundedMapFetcher(MapFetcher):
     that if there are too many in-flight requests, we get throttled.
     """
 
-    def __init__(self, sema_size: int, async_session: httpx.AsyncClient, retries: int = 3):
+    def __init__(self, sema_size: int, async_session: httpx.AsyncClient, retries: int = 3, cooked: bool = False):
         """
 
         :param sema_size: Size of semaphore, which limits the number of in-flight requests
@@ -296,12 +296,16 @@ class BoundedMapFetcher(MapFetcher):
         super().__init__(a_session=async_session)
         self.sema = asyncio.Semaphore(sema_size)
         self.retries = retries
+        self.cooked = cooked
 
-    async def async_fetch(self, coord: MapCoord) -> Optional[RawResult]:
+    async def async_fetch(self, coord: MapCoord) -> Optional[MapRegion | RawResult]:
         """Perform async fetch, but won't actually start fetching if semaphore is depleted."""
         async with self.sema:
             try:
-                return await self.async_get_region_raw(coord, quiet=True, retries=self.retries)
+                if self.cooked:
+                    return await self.async_get_region(coord, quiet=True, retries=self.retries)
+                else:
+                    return await self.async_get_region_raw(coord, quiet=True, retries=self.retries)
             except asyncio.CancelledError:
                 print(f"{coord} cancelled")
                 return None
