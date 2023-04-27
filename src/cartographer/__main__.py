@@ -23,9 +23,9 @@ from typing import Dict, Final, Iterable, Set
 
 import httpx
 
-from sl_maptools import AreaBounds, MapCoord, MapRegion
+from sl_maptools import AreaBounds, MapCoord, MapRegion, MapCanvas
 from sl_maptools.fetchers import FetcherConnectionError
-from sl_maptools.fetchers.map import MapCanvas, MapFetcher
+from sl_maptools.fetchers.map import MapFetcher
 from sl_maptools.knowns import KNOWN_AREAS
 
 SAVE_DIR: Final[Path] = Path("~/Pictures/SLMap/Carto").expanduser()

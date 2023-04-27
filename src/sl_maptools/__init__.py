@@ -3,11 +3,16 @@
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 from __future__ import annotations
 
+import io
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import NamedTuple, Optional
+from pathlib import Path
+from typing import Final, NamedTuple, Optional, Union
 
 from PIL import Image
+
+
+_REGION_SIZE: Final[int] = 256
 
 
 class AreaBounds(NamedTuple):
@@ -113,3 +118,55 @@ class MapStats:
     timestamp: datetime = field(
         repr=False, compare=False, default_factory=get_utc_timestamp
     )
+
+
+class MapCanvas(object):
+    """
+    A canvas where the map will be drawn
+    """
+    def __init__(
+        self,
+        south_west: MapCoord,
+        width: int,
+        height: int,
+        *,
+        void_image: Image.Image = None,
+        initial_tiles=None,
+    ):
+        """
+        Creates a MapCanvas object.
+
+        :param south_west: Coordinates of the region that will be in the lower-left corner
+        :param width: Width of the canvas, in pixels
+        :param height: Height of the canvas, in pixels
+        """
+        canv_w = width * _REGION_SIZE
+        canv_h = height * _REGION_SIZE
+        self.canvas = Image.new("RGBA", (canv_w, canv_h), color=initial_tiles)
+        self.void_image = void_image
+        self.south_west = south_west
+        self.width = width
+        self.height = height
+        self._min_x = self.south_west.x
+        self._max_y = self.south_west.y + self.height - 1
+
+    def add_region(self, region: MapRegion):
+        if region.is_void and self.void_image is None:
+            return
+        tile_x, tile_y = region.coord
+        canv_x = (tile_x - self._min_x) * _REGION_SIZE
+        canv_y = (self._max_y - tile_y) * _REGION_SIZE
+        self.canvas.paste(region.image, (canv_x, canv_y))
+
+    def save_to(self, dest: Union[Path | io.IOBase], image_format: str = None, optimize: bool = True):
+        if isinstance(dest, io.IOBase):
+            if not image_format:
+                raise ValueError("image_format must be specified if dest is a stream")
+        if dest.suffix == ".png" or (image_format and image_format.casefold() == "png"):
+            self.canvas.save(dest, format=image_format, optimize=optimize)
+        else:
+            self.canvas.save(dest, format=image_format)
+
+    @property
+    def size(self):
+        return self.canvas.size
