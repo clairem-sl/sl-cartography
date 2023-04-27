@@ -126,6 +126,17 @@ def make_nightlights(regions: set[MapCoord], *, region_size: int = DEFA_REGION_S
         # endregion
 
         # region Diagonals
+
+        # Far all these:
+        # if has_vert_neighbor and has_horiz_neighbor:
+        #   if also has_diag_neighbor_between_vert_and_horiz:
+        #     plop a slab
+        #   else:
+        #     chamfer_inner_corner
+        #   -plus-
+        #   if no_neighbor_on_other_sides:
+        #     chamfer_outer_corner
+
         if world_has_all_of(c_n, c_e):
             if world_has_all_of(c_ne):
                 region_img.paste(slab_w, (slab_sz * 2, 0))
