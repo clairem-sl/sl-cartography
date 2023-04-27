@@ -14,7 +14,7 @@ from typing import cast, Final, TypedDict
 
 import httpx
 
-from region_auditor import FileBackedData
+from region_auditor import FileBackedData, JobsSet
 from region_auditor.exportDB import export
 from sl_maptools import MapCoord
 from sl_maptools.fetchers.cap import BoundedNameFetcher, CookedResult
@@ -85,37 +85,6 @@ class RegionsDB(FileBackedData):
 
     def items(self):
         return self._data.items()
-
-
-class JobsSet(FileBackedData):
-    def __init__(self, backing_file: Path):
-        super().__init__(backing_file, set)
-        self._data: set[tuple[int, int]] = set()
-        self.load()
-
-    def add(self, item):
-        self._data.add(item)
-
-    def remove(self, item):
-        self._data.remove(item)
-
-    def discard(self, element):
-        self._data.discard(element)
-
-    def update(self, iterable):
-        self._data.update(iterable)
-
-    def clear(self):
-        self._data.clear()
-
-    def __len__(self):
-        return len(self._data)
-
-    def __contains__(self, item):
-        return item in self._data
-
-    def __iter__(self):
-        return self._data.__iter__()
 
 
 class WorkParamsDict(TypedDict):

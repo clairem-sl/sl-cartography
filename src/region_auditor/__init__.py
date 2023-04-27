@@ -21,3 +21,34 @@ class FileBackedData:
     def save(self):
         with self.fp.open("wb") as fout:
             pickle.dump(self._data, fout, protocol=pickle.HIGHEST_PROTOCOL)
+
+
+class JobsSet(FileBackedData):
+    def __init__(self, backing_file: Path):
+        super().__init__(backing_file, set)
+        self._data: set[tuple[int, int]] = set()
+        self.load()
+
+    def add(self, item):
+        self._data.add(item)
+
+    def remove(self, item):
+        self._data.remove(item)
+
+    def discard(self, element):
+        self._data.discard(element)
+
+    def update(self, iterable):
+        self._data.update(iterable)
+
+    def clear(self):
+        self._data.clear()
+
+    def __len__(self):
+        return len(self._data)
+
+    def __contains__(self, item):
+        return item in self._data
+
+    def __iter__(self):
+        return self._data.__iter__()
