@@ -16,7 +16,7 @@ import httpx
 from PIL import Image
 
 from region_auditor import FileBackedData, JobsSet
-from region_auditor.exportDB import export
+from region_auditor.xchg.exportDB import export
 from sl_maptools import MapCoord, MapRegion
 from sl_maptools.fetchers.map import BoundedMapFetcher
 

@@ -15,7 +15,7 @@ from typing import Final, TypedDict, cast
 import httpx
 
 from region_auditor import FileBackedData, JobsSet
-from region_auditor.exportDB import export
+from region_auditor.xchg.exportDB import export
 from sl_maptools import MapCoord
 from sl_maptools.fetchers.cap import BoundedNameFetcher, CookedResult
 
