@@ -26,9 +26,9 @@ from sl_maptools.fetchers.map import BoundedMapFetcher
 MIN_X: Final[int] = 0
 MAX_X: Final[int] = 2100
 
-CONN_LIMIT: Final[int] = 40
-SEMA_SIZE: Final[int] = 200
-HTTP2: Final[bool] = False
+CONN_LIMIT: Final[int] = 20
+SEMA_SIZE: Final[int] = 100
+HTTP2: Final[bool] = True
 # CONN_LIMIT = 20
 # SEMA_SIZE = 100
 # HTTP2 = True
