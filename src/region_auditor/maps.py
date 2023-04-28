@@ -278,7 +278,7 @@ async def async_main(mapdir: Path):
                 rslt: MapRegion = fut.result()
                 process(rslt, mapdir)
                 if rslt.image:
-                    print(f"({rslt.coord.x},{rslt.coord.y})")
+                    print(f"({rslt.coord.x},{rslt.coord.y})✔", end=" ")
             if c:
                 DataBase.save()
                 OutstandingJobs.save()
