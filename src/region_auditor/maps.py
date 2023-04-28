@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import itertools
+import multiprocessing as MP
 import sys
 import time
 from datetime import datetime, timedelta
@@ -118,6 +119,7 @@ class WorkParams(FileBackedData):
 DataBase: RegionsDB
 OutstandingJobs: JobsSet
 SessionParams: WorkParams
+SaverQueue: MP.Queue
 
 
 def options():
@@ -156,6 +158,28 @@ def options():
     return _opts
 
 
+class QJob(TypedDict):
+    coord: MapCoord
+    tsf: str
+    image: Image.Image
+
+
+def saver(mapdir: Path, queue: MP.Queue):
+    while True:
+        if queue.empty():
+            time.sleep(1)
+            continue
+        item = queue.get()
+        if item is None:
+            break
+        regmap: QJob = cast(QJob, item)
+        coord = regmap["coord"]
+        tsf = regmap["tsf"]
+        targf = mapdir / f"{coord.x}-{coord.y}_{tsf}.jpg"
+        regmap["image"].save(targf)
+        print("💾", end="")
+
+
 def process(tile: MapRegion, mapdir: Path):
     global DataBase, OutstandingJobs
 
@@ -179,8 +203,13 @@ def process(tile: MapRegion, mapdir: Path):
 
     if tile.image is not None:
         assert isinstance(tile.image, Image.Image)
-        targf = mapdir / f"{tile.coord.x}-{tile.coord.y}_{tsf}.jpg"
-        tile.image.save(targf)
+        # targf = mapdir / f"{tile.coord.x}-{tile.coord.y}_{tsf}.jpg"
+        # tile.image.save(targf)
+        SaverQueue.put({
+            "coord": tile.coord,
+            "tsf": tsf,
+            "image": tile.image,
+        })
         dbxy["last_seen"] = ts
 
     if xy in DataBase:
@@ -282,7 +311,7 @@ async def async_main(mapdir: Path):
 def main(
     miny: int, maxy: int, dbdir: Path, mapdir: Path, fromlast: int
 ):
-    global DataBase, OutstandingJobs, SessionParams
+    global DataBase, OutstandingJobs, SessionParams, SaverQueue
 
     if fromlast == -1:
         if miny == maxy == -1:
@@ -322,9 +351,16 @@ def main(
     SessionParams.miny = miny
     SessionParams.save()
 
-    print(f"Getting region names from range [{maxy}, {miny}]")
+    print(f"Getting maps from range [{maxy}, {miny}]")
+    mapdir.mkdir(parents=True, exist_ok=True)
+    SaverQueue = MP.Queue()
+    saver_worker = MP.Process(target=saver, args=(mapdir, SaverQueue))
+    saver_worker.start()
     start = time.monotonic()
     asyncio.run(async_main(mapdir))
+    SaverQueue.put(None)
+    print("Waiting for saver worker to join...", end="")
+    saver_worker.join()
     elapsed = time.monotonic() - start
 
     # pprint(DataBase)
