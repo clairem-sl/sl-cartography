@@ -16,7 +16,6 @@ import httpx
 from PIL import Image
 
 from region_auditor import FileBackedData, JobsSet
-from region_auditor.xchg.exportDB import export
 from sl_maptools import MapCoord, MapRegion
 from sl_maptools.fetchers.map import BoundedMapFetcher
 
@@ -141,13 +140,6 @@ def options():
 
     parser.add_argument("--dbdir", metavar="DIR", type=Path, default=DEFA_DB_DIR)
     parser.add_argument("--mapdir", metavar="DIR", type=Path, default=DEFA_MAPS_DIR)
-
-    parser.add_argument(
-        "--no-export",
-        action="store_true",
-        default=False,
-        help="If specified, don't export DB as YAML",
-    )
 
     # parser.add_argument(
     #     "--source",
@@ -289,7 +281,7 @@ async def async_main(mapdir: Path):
 
 
 def main(
-    miny: int, maxy: int, dbdir: Path, mapdir: Path, fromlast: int, no_export: bool
+    miny: int, maxy: int, dbdir: Path, mapdir: Path, fromlast: int
 ):
     global DataBase, OutstandingJobs, SessionParams
 
@@ -342,10 +334,6 @@ def main(
 
     print(f"Job done for Y = [{miny}, {maxy}] in {elapsed:_.2f} seconds")
     print(f"  {len(OutstandingJobs)} outstanding jobs left.")
-
-    if not no_export:
-        print("Exporting DB ... ", end="")
-        print(str(export(dbdir / DB_NAME, quiet=True)))
 
 
 if __name__ == "__main__":
