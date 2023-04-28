@@ -175,7 +175,6 @@ def process(tile: MapRegion, mapdir: Path):
             "last_seen": "",
             "last_check": "",
         }
-    assert isinstance(dbxy, MapsDBRecord)
     dbxy["last_check"] = ts
 
     if tile.image is not None:
