@@ -47,7 +47,7 @@ class BonnieRegionData(TypedDict):
 
 
 def get_opts():
-    parser = argparse.ArgumentParser("mosaic_v4.nightlights")
+    parser = argparse.ArgumentParser("worldmap_v4.nightlights")
 
     parser.add_argument("--dbpath", type=Path, default=DEFA_DB_PATH)
 
