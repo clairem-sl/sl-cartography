@@ -294,6 +294,7 @@ class BoundedMapFetcher(MapFetcher):
         async_session: httpx.AsyncClient,
         retries: int = 3,
         cooked: bool = False,
+        cancel_flag: asyncio.Event = None,
     ):
         """
 
@@ -305,10 +306,14 @@ class BoundedMapFetcher(MapFetcher):
         self.sema = asyncio.Semaphore(sema_size)
         self.retries = retries
         self.cooked = cooked
+        self.cancel_flag = cancel_flag
 
     async def async_fetch(self, coord: MapCoord) -> Optional[MapRegion | RawResult]:
         """Perform async fetch, but won't actually start fetching if semaphore is depleted."""
         async with self.sema:
+            if self.cancel_flag is not None:
+                if self.cancel_flag.is_set():
+                    return None
             try:
                 if self.cooked:
                     return await self.async_get_region(
