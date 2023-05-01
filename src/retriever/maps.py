@@ -152,6 +152,7 @@ async def async_main(duration: int):
             done, pending_tasks = await asyncio.wait(tasks, timeout=BATCH_WAIT)
             total += len(done)
             c = e = 0
+            shown = False
             for c, fut in enumerate(done, start=1):
                 if exc := fut.exception():
                     e += 1
@@ -161,6 +162,7 @@ async def async_main(duration: int):
                 if rslt is None:
                     continue
                 if rslt.image:
+                    shown = True
                     print(f"({rslt.coord.x},{rslt.coord.y})✔", end=" ")
                     SaverQueue.put(
                         {
@@ -184,6 +186,8 @@ async def async_main(duration: int):
                     print("Cancelling the rest of the tasks...")
                     for t in pending_tasks:
                         t.cancel()
+            if not shown:
+                print("No maps retrieved", end="")
             elapsed = time.monotonic() - start
             avg_rate = total / elapsed
             print(
