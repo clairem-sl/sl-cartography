@@ -45,6 +45,7 @@ class MapFetcher(object):
         """
         self.skip_tiles: Set[MapCoord] = set() if skip_tiles is None else skip_tiles
         self.a_session: httpx.AsyncClient = a_session
+        self.seen_http_vers: set[str] = set()
 
     async def async_get_region_raw(
         self,
@@ -91,6 +92,7 @@ class MapFetcher(object):
             else:
                 break
 
+            self.seen_http_vers.add(response.http_version)
             status_code = response.status_code
 
             if status_code == 403:
