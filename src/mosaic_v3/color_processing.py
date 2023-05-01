@@ -62,11 +62,13 @@ getbox_n = functools.partial(getbox, 16, 6)
 
 
 # For 5x5, use one of these strategies:
-# n=5 c=52 b=1  gcd=1  ==> splits=256 sz=52 offset=51
-# n=5 c=56 b=6  gcd=2  ==> splits=128 sz=28 offset=25
-# n=5 c=60 b=11 gcd=1  ==> splits=256 sz=60 offset=49
-# n=5 c=64 b=16 gcd=16 ==> splits=16  sz=4  offset=3
+# n=5 c=52 b=1  gcd=1  ==> splits=256 sz=52 offset=51 (256x256 fascias, 52x52 fascia per slab, 52-51=1 fascia overlap)
+# n=5 c=56 b=6  gcd=2  ==> splits=128 sz=28 offset=25 (128x128 ... 28x28 ... 28-25=3 ...)
+# n=5 c=60 b=11 gcd=1  ==> splits=256 sz=60 offset=49 (256x256 ... 60x60 ... 60-49=11 ...)
+# n=5 c=64 b=16 gcd=16 ==> splits=16  sz=4  offset=3  (16x16 ... 4x4 ... 4-3=1 ...)
 #
+# % overlap of above respectively: 1/52 ~~ 2%, 3/28 ~~ 10%, 11/60 ~~ 17%, 1/4 ~~ 25%
+
 # Then:
 #   1) create the partial func getbox_25 (or getbox_5) with the above params
 #   2) create the relevant key:value pairs in DominantColors.CropBox
