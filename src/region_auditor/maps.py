@@ -165,6 +165,7 @@ class QJob(TypedDict):
 
 
 def saver(mapdir: Path, queue: MP.Queue):
+    mapdir.mkdir(parents=True, exist_ok=True)
     while True:
         if queue.empty():
             time.sleep(1)
@@ -177,7 +178,7 @@ def saver(mapdir: Path, queue: MP.Queue):
         tsf = regmap["tsf"]
         targf = mapdir / f"{coord.x}-{coord.y}_{tsf}.jpg"
         regmap["image"].save(targf)
-        print("💾", end="")
+        print("💾", end="", flush=True)
 
 
 def process(tile: MapRegion, mapdir: Path):
@@ -352,15 +353,17 @@ def main(
     SessionParams.save()
 
     print(f"Getting maps from range [{maxy}, {miny}]")
-    mapdir.mkdir(parents=True, exist_ok=True)
+    print("Starting saver worker...", end="", flush=True)
     SaverQueue = MP.Queue()
     saver_worker = MP.Process(target=saver, args=(mapdir, SaverQueue))
     saver_worker.start()
+    print("started.\nDispatching async fetchers!", flush=True)
     start = time.monotonic()
     asyncio.run(async_main(mapdir))
     SaverQueue.put(None)
-    print("Waiting for saver worker to join...", end="")
+    print("Waiting for saver worker to join...", end="", flush=True)
     saver_worker.join()
+    print("joined", flush=True)
     elapsed = time.monotonic() - start
 
     # pprint(DataBase)
