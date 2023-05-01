@@ -186,7 +186,11 @@ async def async_main(duration: int):
                         t.cancel()
             elapsed = time.monotonic() - start
             avg_rate = total / elapsed
-            print(f"\n  {elapsed:.2f} seconds since start, average of {avg_rate:.2f} regions/s")
+            print(
+                f"\n  {elapsed:.2f} seconds since start, "
+                f"average of {avg_rate:.2f} regions/s, "
+                f"using {fetcher.seen_http_vers}"
+            )
             tasks = pending_tasks
             if elapsed >= duration:
                 AbortRequested.set()
