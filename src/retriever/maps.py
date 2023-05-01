@@ -29,7 +29,7 @@ MIN_X: Final[int] = 0
 MAX_X: Final[int] = 2100
 
 CONN_LIMIT: Final[int] = 40
-SEMA_SIZE: Final[int] = 100
+SEMA_SIZE: Final[int] = 120
 HTTP2: Final[bool] = True
 # CONN_LIMIT = 20
 # SEMA_SIZE = 100
