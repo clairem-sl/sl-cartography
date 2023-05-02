@@ -65,7 +65,10 @@ def sigint(_, __):
         print("Cleaning up in-flight job (if any)...", flush=True)
         AbortRequested.set()
     else:
-        print("\nUser already interrupted, please wait while retiring in-flight retrievals...", flush=True)
+        print(
+            "\nUser already interrupted, please wait while retiring in-flight retrievals...",
+            flush=True,
+        )
 
 
 class OptionsProtocol(Protocol):
@@ -156,15 +159,23 @@ def saver(mapdir: Path, save_queue: MP.Queue, success_queue: MP.Queue):
 
 async def async_main(duration: int):
     global AbortRequested
-    limits = httpx.Limits(max_connections=CONN_LIMIT, max_keepalive_connections=CONN_LIMIT)
+    limits = httpx.Limits(
+        max_connections=CONN_LIMIT, max_keepalive_connections=CONN_LIMIT
+    )
     async with httpx.AsyncClient(limits=limits, timeout=10.0, http2=HTTP2) as client:
-        fetcher = BoundedMapFetcher(SEMA_SIZE, client, cooked=True, cancel_flag=AbortRequested)
+        fetcher = BoundedMapFetcher(
+            SEMA_SIZE, client, cooked=True, cancel_flag=AbortRequested
+        )
         # coords = [MapCoord(x, y) for x in range(950, 1050) for y in range(950, 1050)]
 
         def make_task(coord: tuple[int, int]):
-            return asyncio.create_task(fetcher.async_fetch(MapCoord(*coord)), name=str(coord))
+            return asyncio.create_task(
+                fetcher.async_fetch(MapCoord(*coord)), name=str(coord)
+            )
 
-        tasks: set[asyncio.Task] = {make_task(coord) async for coord in Progress.abatch(START_BATCH_SIZE)}
+        tasks: set[asyncio.Task] = {
+            make_task(coord) async for coord in Progress.abatch(START_BATCH_SIZE)
+        }
         if not tasks:
             print("No unseen jobs, exiting immediately!")
             return
