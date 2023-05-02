@@ -8,10 +8,11 @@ import asyncio
 import math
 import multiprocessing as MP
 import queue
+import re
 import signal
 import sys
 import time
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Final, TypedDict, cast, Protocol
 
@@ -73,20 +74,45 @@ class OptionsProtocol(Protocol):
     no_auto_reset: bool
 
 
+RE_HHMM = re.compile(r"^\d{1,2}:\d{1,2}$")
+
+
+class HourMinute(argparse.Action):
+    def __call__(self, parser, namespace, values, option_string=None):
+        if RE_HHMM.match(values) is None:
+            parser.error("Please enter time in 24h HH:MM format!")
+        setattr(namespace, self.dest, values)
+
+
 def options() -> OptionsProtocol:
     parser = argparse.ArgumentParser("region_auditor")
 
     parser.add_argument("--mapdir", metavar="DIR", type=Path, default=DEFA_MAPS_DIR)
-    parser.add_argument(
+
+    grp = parser.add_mutually_exclusive_group()
+    grp.add_argument(
         "--duration",
         metavar="SECS",
         type=int,
-        default=0,
         help=(
             "Dispatch jobs for SECS seconds. When the duration is reached, stop dispatching new jobs "
             "and try to retire still-in-flight jobs, then exit. If less than 1, that means run forever "
             "until interrupted (Ctrl-C)"
         ),
+    )
+    grp.add_argument(
+        "--until",
+        metavar="HH:MM",
+        action=HourMinute,
+        default="",
+        help="Stop dispatching new jobs when wallclock hits this time. WARNING: Does not take DST into account!",
+    )
+    grp.add_argument(
+        "--until-utc",
+        metavar="HH:MM",
+        action=HourMinute,
+        default="",
+        help="Same as --until but using UTC time (no DST problem)",
     )
     parser.add_argument(
         "--no-auto-reset",
@@ -206,11 +232,27 @@ async def async_main(duration: int):
                         tasks.add(make_task(coord))
 
 
-def main(mapdir: Path, duration: int, no_auto_reset: bool):
+def main(mapdir: Path, duration: int, until: str, until_utc: str, no_auto_reset: bool):
     global Progress, SaverQueue, SaveSuccessQueue
 
-    if duration < 1:
-        duration = math.inf
+    nao = datetime.now()
+    if duration > 0:
+        dur = duration
+    elif until:
+        hh, mm = until.split(":")
+        unt = nao.replace(hour=int(hh), minute=int(mm), second=0, microsecond=0)
+        if unt < nao:
+            unt = unt + timedelta(days=1)
+        dur = (unt - nao).seconds
+    elif until_utc:
+        hh, mm = until_utc.split(":")
+        nao = nao.astimezone(timezone.utc)
+        unt = nao.replace(hour=int(hh), minute=int(mm), second=0, microsecond=0)
+        if unt < nao:
+            unt = unt + timedelta(days=1)
+        dur = (unt - nao).seconds
+    else:
+        dur = math.inf
 
     progress_file = mapdir / PROG_NAME
     Progress = RetrieverProgress(progress_file, auto_reset=(not no_auto_reset))
@@ -223,7 +265,7 @@ def main(mapdir: Path, duration: int, no_auto_reset: bool):
     saver_worker = MP.Process(target=saver, args=(mapdir, SaverQueue, SaveSuccessQueue))
     saver_worker.start()
     print("started.\nDispatching async fetchers!", flush=True)
-    asyncio.run(async_main(duration))
+    asyncio.run(async_main(dur))
     SaverQueue.put(None)
     try:
         print("Flushing SaveSuccess queue ... ", end="", flush=True)
