@@ -144,7 +144,7 @@ async def async_main(duration: int):
             return
 
         start = time.monotonic()
-        total = 0
+        total = hasmap_count = 0
         done: set[asyncio.Task]
         pending_tasks: set[asyncio.Task]
         while tasks:
@@ -163,6 +163,7 @@ async def async_main(duration: int):
                     continue
                 if rslt.image:
                     shown = True
+                    hasmap_count += 1
                     print(f"({rslt.coord.x},{rslt.coord.y})✔", end=" ")
                     SaverQueue.put(
                         {
@@ -191,10 +192,10 @@ async def async_main(duration: int):
             elapsed = time.monotonic() - start
             avg_rate = total / elapsed
             print(
-                f"\n  {elapsed:.2f} seconds since start, "
-                f"average of {avg_rate:.2f} regions/s, "
-                f"using {fetcher.seen_http_vers}"
+                f"\n  {elapsed:.2f}s since start, {total:_} coords scanned "
+                f"(avg. {avg_rate:.2f} r/s), {hasmap_count} maps retrieved"
             )
+            # print(f"  using {fetcher.seen_http_vers}")
             tasks = pending_tasks
             if elapsed >= duration:
                 AbortRequested.set()
