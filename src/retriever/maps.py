@@ -43,7 +43,7 @@ HTTP2: Final[bool] = True
 # So if you don't have much RAM available, reduce BOTH BATCH_SIZE AND BATCH_WAIT
 # (E.g., setting BATCH_WAIT to 1.0 will likely reduce rslt_per_batch
 # to one-fifth, meaning you can also reduce BATCH_SIZE to one-fifth)
-BATCH_SIZE: Final[int] = 2000
+START_BATCH_SIZE: Final[int] = 2000
 BATCH_WAIT: Final[float] = 5.0
 
 DEFA_MAPS_DIR: Final[Path] = Path("C:\\Cache\\SL-Carto\\Maps2\\")
@@ -138,19 +138,20 @@ async def async_main(duration: int):
         def make_task(coord: tuple[int, int]):
             return asyncio.create_task(fetcher.async_fetch(MapCoord(*coord)), name=str(coord))
 
-        tasks: set[asyncio.Task] = {make_task(coord) async for coord in Progress.abatch(BATCH_SIZE)}
+        tasks: set[asyncio.Task] = {make_task(coord) async for coord in Progress.abatch(START_BATCH_SIZE)}
         if not tasks:
             print("No unseen jobs, exiting immediately!")
             return
 
         start = time.monotonic()
-        total = hasmap_count = 0
+        total = hasmap_count = batch_size = 0
         done: set[asyncio.Task]
         pending_tasks: set[asyncio.Task]
         while tasks:
             print(f"{len(tasks)} async jobs =>", end=" ")
             done, pending_tasks = await asyncio.wait(tasks, timeout=BATCH_WAIT)
             total += len(done)
+            batch_size = max(batch_size, len(done) * 3)
             c = e = 0
             shown = False
             for c, fut in enumerate(done, start=1):
@@ -200,8 +201,8 @@ async def async_main(duration: int):
             if elapsed >= duration:
                 AbortRequested.set()
             if not AbortRequested.is_set():
-                if (2 * len(tasks)) < BATCH_SIZE:
-                    async for coord in Progress.abatch(BATCH_SIZE):
+                if (2 * len(tasks)) < batch_size:
+                    async for coord in Progress.abatch(batch_size):
                         tasks.add(make_task(coord))
 
 
