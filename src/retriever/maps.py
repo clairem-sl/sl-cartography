@@ -7,6 +7,9 @@ import argparse
 import asyncio
 import math
 import multiprocessing as MP
+import multiprocessing.pool as MPPool
+import multiprocessing.synchronize as MPSync
+import pickle
 import queue
 import re
 import signal
@@ -21,6 +24,7 @@ from PIL import Image
 
 from retriever import RetrieverProgress
 from sl_maptools import MapCoord, MapRegion
+from sl_maptools.image_processing import calculate_dominant_colors, FASCIA_COORDS, RGBTuple
 from sl_maptools.fetchers.map import BoundedMapFetcher
 
 # from sl_maptools.bb_fetcher import BoundedNameFetcher, CookedTile
@@ -50,11 +54,13 @@ BATCH_WAIT: Final[float] = 5.0
 DEFA_MAPS_DIR: Final[Path] = Path("C:\\Cache\\SL-Carto\\Maps2\\")
 LOCK_NAME: Final[str] = "Maps.lock"
 PROG_NAME: Final[str] = "MapsProgress.yaml"
-
+DOMC_NAME: Final[str] = "DominantColors.pkl"
 
 SaverQueue: MP.Queue
 SaveSuccessQueue: MP.Queue
 Progress: RetrieverProgress
+TriggerCondition: MPSync.Condition
+EndingEvent: MPSync.Event
 AbortRequested = asyncio.Event()
 
 
@@ -73,30 +79,38 @@ def sigint(_, __):
 
 class OptionsProtocol(Protocol):
     mapdir: Path
+    workers: int
+    nodom: bool
     duration: int
+    until: tuple[int, int]
+    until_utc: tuple[int, int]
     no_auto_reset: bool
 
 
-RE_HHMM = re.compile(r"^\d{1,2}:\d{1,2}$")
+RE_HHMM = re.compile(r"^(\d{1,2}):(\d{1,2})$")
 
 
 class HourMinute(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
-        if RE_HHMM.match(values) is None:
+        m = RE_HHMM.match(values)
+        if m is None:
             parser.error("Please enter time in 24h HH:MM format!")
-        setattr(namespace, self.dest, values)
+        setattr(namespace, self.dest, (int(m.group(1)), int(m.group(2))))
 
 
 def options() -> OptionsProtocol:
     parser = argparse.ArgumentParser("region_auditor")
 
     parser.add_argument("--mapdir", metavar="DIR", type=Path, default=DEFA_MAPS_DIR)
+    parser.add_argument("--nodom", action="store_true", help="If specified, do not calculate dominant color")
+    parser.add_argument("--workers", type=int, default=(MP.cpu_count() - 2))
 
     grp = parser.add_mutually_exclusive_group()
     grp.add_argument(
         "--duration",
         metavar="SECS",
         type=int,
+        default=0,
         help=(
             "Dispatch jobs for SECS seconds. When the duration is reached, stop dispatching new jobs "
             "and try to retire still-in-flight jobs, then exit. If less than 1, that means run forever "
@@ -107,14 +121,12 @@ def options() -> OptionsProtocol:
         "--until",
         metavar="HH:MM",
         action=HourMinute,
-        default="",
         help="Stop dispatching new jobs when wallclock hits this time. WARNING: Does not take DST into account!",
     )
     grp.add_argument(
         "--until-utc",
         metavar="HH:MM",
         action=HourMinute,
-        default="",
         help="Same as --until but using UTC time (no DST problem)",
     )
     parser.add_argument(
@@ -134,7 +146,33 @@ class QJob(TypedDict):
     image: Image.Image
 
 
-def saver(mapdir: Path, save_queue: MP.Queue, success_queue: MP.Queue):
+def save_domc(
+    mapdir: Path,
+    trigger_condition: MPSync.Condition,
+    ending_event: MPSync.Event,
+    dominant_colors: None | dict[tuple[int, int], dict[int, list[RGBTuple]]],
+):
+    signal.signal(signal.SIGINT, signal.SIG_IGN)
+    if dominant_colors is None:
+        return
+    while True:
+        trigger_condition.acquire()
+        trigger_condition.wait()
+        if ending_event.is_set():
+            break
+        domc = {k: dominant_colors[k] for k in list(dominant_colors.keys())}
+        with (mapdir / DOMC_NAME).open("wb") as fout:
+            pickle.dump(domc, fout)
+        print("📕")
+        domc.clear()
+
+
+def saver(
+    mapdir: Path,
+    save_queue: MP.Queue,
+    success_queue: MP.Queue,
+    dominant_colors: None | dict[tuple[int, int], dict[int, list[RGBTuple]]],
+):
     signal.signal(signal.SIGINT, signal.SIG_IGN)
     mapdir.mkdir(parents=True, exist_ok=True)
     while True:
@@ -145,8 +183,14 @@ def saver(mapdir: Path, save_queue: MP.Queue, success_queue: MP.Queue):
         if item is None:
             break
         regmap: QJob = cast(QJob, item)
+        coord: MapCoord = regmap["coord"]
+        img: Image.Image = regmap["image"]
+        if dominant_colors is not None:
+            domc: dict[int, list[RGBTuple]] = {}
+            for fasz in FASCIA_COORDS:
+                domc[fasz] = calculate_dominant_colors(img, fasz)
+            dominant_colors[tuple(coord)] = domc
         try:
-            coord = regmap["coord"]
             tsf = regmap["tsf"]
             targf = mapdir / f"{coord.x}-{coord.y}_{tsf}.jpg"
             regmap["image"].save(targf)
@@ -159,23 +203,15 @@ def saver(mapdir: Path, save_queue: MP.Queue, success_queue: MP.Queue):
 
 async def async_main(duration: int):
     global AbortRequested
-    limits = httpx.Limits(
-        max_connections=CONN_LIMIT, max_keepalive_connections=CONN_LIMIT
-    )
+    limits = httpx.Limits(max_connections=CONN_LIMIT, max_keepalive_connections=CONN_LIMIT)
     async with httpx.AsyncClient(limits=limits, timeout=10.0, http2=HTTP2) as client:
-        fetcher = BoundedMapFetcher(
-            SEMA_SIZE, client, cooked=True, cancel_flag=AbortRequested
-        )
+        fetcher = BoundedMapFetcher(SEMA_SIZE, client, cooked=True, cancel_flag=AbortRequested)
         # coords = [MapCoord(x, y) for x in range(950, 1050) for y in range(950, 1050)]
 
         def make_task(coord: tuple[int, int]):
-            return asyncio.create_task(
-                fetcher.async_fetch(MapCoord(*coord)), name=str(coord)
-            )
+            return asyncio.create_task(fetcher.async_fetch(MapCoord(*coord)), name=str(coord))
 
-        tasks: set[asyncio.Task] = {
-            make_task(coord) async for coord in Progress.abatch(START_BATCH_SIZE)
-        }
+        tasks: set[asyncio.Task] = {make_task(coord) async for coord in Progress.abatch(START_BATCH_SIZE)}
         if not tasks:
             print("No unseen jobs, exiting immediately!")
             return
@@ -218,6 +254,9 @@ async def async_main(duration: int):
                     await Progress.aretire(success_coord)
             except queue.Empty:
                 pass
+            TriggerCondition.acquire()
+            TriggerCondition.notify_all()
+            TriggerCondition.release()
             if c:
                 Progress.save()
                 if e == c:
@@ -243,22 +282,30 @@ async def async_main(duration: int):
                         tasks.add(make_task(coord))
 
 
-def main(mapdir: Path, duration: int, until: str, until_utc: str, no_auto_reset: bool):
-    global Progress, SaverQueue, SaveSuccessQueue
+def main(
+    mapdir: Path,
+    duration: int,
+    until: tuple[int, int],
+    until_utc: tuple[int, int],
+    no_auto_reset: bool,
+    nodom: bool,
+    workers: int,
+):
+    global Progress, SaverQueue, SaveSuccessQueue, TriggerCondition, EndingEvent
 
     nao = datetime.now()
     if duration > 0:
         dur = duration
     elif until:
-        hh, mm = until.split(":")
-        unt = nao.replace(hour=int(hh), minute=int(mm), second=0, microsecond=0)
+        hh, mm = until
+        unt = nao.replace(hour=hh, minute=mm, second=0, microsecond=0)
         if unt < nao:
             unt = unt + timedelta(days=1)
         dur = (unt - nao).seconds
     elif until_utc:
-        hh, mm = until_utc.split(":")
+        hh, mm = until_utc
         nao = nao.astimezone(timezone.utc)
-        unt = nao.replace(hour=int(hh), minute=int(mm), second=0, microsecond=0)
+        unt = nao.replace(hour=hh, minute=mm, second=0, microsecond=0)
         if unt < nao:
             unt = unt + timedelta(days=1)
         dur = (unt - nao).seconds
@@ -270,29 +317,48 @@ def main(mapdir: Path, duration: int, until: str, until_utc: str, no_auto_reset:
     if Progress.to_dispatch:
         print(f"{len(Progress.to_dispatch)} jobs still outstanding from last session")
 
-    print("Starting saver worker...", end="", flush=True)
-    SaverQueue = MP.Queue()
-    SaveSuccessQueue = MP.Queue()
-    saver_worker = MP.Process(target=saver, args=(mapdir, SaverQueue, SaveSuccessQueue))
-    saver_worker.start()
-    print("started.\nDispatching async fetchers!", flush=True)
-    asyncio.run(async_main(dur))
-    SaverQueue.put(None)
-    try:
-        print("Flushing SaveSuccess queue ... ", end="", flush=True)
-        while True:
-            fini = SaveSuccessQueue.get(timeout=5)
-            if fini is None:
-                break
-            Progress.retire(fini)
-    except queue.Empty:
-        pass
-    finally:
-        print("flushed")
-        Progress.save()
-    print("Waiting for saver worker to join ... ", end="", flush=True)
-    saver_worker.join()
-    print("joined", flush=True)
+    with MP.Manager() as manager:
+        print("Starting saver worker...", end="", flush=True)
+        SaverQueue = MP.Queue()
+        SaveSuccessQueue = MP.Queue()
+        dominant_colors: None | dict[tuple[int, int], dict[int, list[RGBTuple]]]
+        if nodom:
+            dominant_colors = None
+        else:
+            dominant_colors = manager.dict()
+        pool_args = (mapdir, SaverQueue, SaveSuccessQueue, dominant_colors)
+        TriggerCondition = manager.Condition()
+        EndingEvent = manager.Event()
+        EndingEvent.clear()
+        save_domc_args = (mapdir, TriggerCondition, EndingEvent, dominant_colors)
+        pool: MPPool.Pool
+        with MP.Pool(workers, saver, pool_args) as pool, MP.Pool(1, save_domc, save_domc_args):
+            print("started.\nDispatching async fetchers!", flush=True)
+            asyncio.run(async_main(dur))
+            for _ in range(workers):
+                SaverQueue.put(None)
+            SaverQueue.close()
+            SaverQueue.join_thread()
+            print("Waiting for saver worker to join ... ", end="", flush=True)
+            pool.close()
+            pool.join()
+            try:
+                print("Flushing SaveSuccess queue ... ", end="", flush=True)
+                while True:
+                    fini = SaveSuccessQueue.get(timeout=5)
+                    if fini is None:
+                        break
+                    Progress.retire(fini)
+            except queue.Empty:
+                pass
+            finally:
+                print("flushed")
+                Progress.save()
+            EndingEvent.set()
+            TriggerCondition.acquire()
+            TriggerCondition.notify_all()
+            TriggerCondition.release()
+            print("joined", flush=True)
     print(f"{Progress.outstanding_count:_} outstanding jobs left.")
 
 
