@@ -163,7 +163,7 @@ def save_domc(
         domc = {k: dominant_colors[k] for k in list(dominant_colors.keys())}
         with (mapdir / DOMC_NAME).open("wb") as fout:
             pickle.dump(domc, fout)
-        print("📕")
+        print("📝", end="", flush=True)
         domc.clear()
 
 
