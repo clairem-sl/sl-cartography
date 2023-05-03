@@ -159,16 +159,41 @@ def save_domc(
     signal.signal(signal.SIGINT, signal.SIG_IGN)
     if dominant_colors is None:
         return
+
+    def deeply_equal(d1: dict, d2: dict):
+        if len(d1) != len(d2):
+            return False
+        if sorted(d1.keys()) != sorted(d2.keys()):
+            return False
+        for k, v1 in d1.items():
+            v2 = d2[k]
+            if type(v1) != type(v2):
+                return False
+            if isinstance(v1, dict):
+                if not deeply_equal(v1, v2):
+                    return False
+            else:
+                if v1 != v2:
+                    return False
+        return True
+
+    domc_pkl_path = mapdir / DOMC_NAME
+    domc = {}
     while True:
         trigger_condition.acquire()
         trigger_condition.wait()
         if ending_event.is_set():
             break
-        domc = {k: dominant_colors[k] for k in list(dominant_colors.keys())}
-        with (mapdir / DOMC_NAME).open("wb") as fout:
-            pickle.dump(domc, fout)
+
+        # Copy dominant_colors, which is a manager.dict(), so that when we process it there won't be any changes
+        curr_domc = {k: dominant_colors[k] for k in list(dominant_colors.keys())}
+        if deeply_equal(domc, curr_domc):
+            continue
+
+        domc = curr_domc
+        with domc_pkl_path.open("wb") as fout:
+            pickle.dump(domc, fout, protocol=pickle.HIGHEST_PROTOCOL)
         print("📝", end="", flush=True)
-        domc.clear()
 
 
 def saver(
