@@ -229,30 +229,25 @@ def saver(
         except Exception:
             raise
 
-        # Prune similar files in the same coordinate
+        # Prune older file of same coordinate if really similar
         coordfiles = sorted(mapdir.glob(f"{coord.x}-{coord.y}_*.jpg"), reverse=True)
         if len(coordfiles) < 2:
             continue
-        for i, f1 in enumerate(coordfiles, start=1):
-            if not f1.exists():
-                continue
-            with f1.open("rb") as fin:
-                f1_img = Image.open(fin)
-                f1_img.load()
-            f1_arr = np.asarray(f1_img.convert("L"))
-            for j in range(i, len(coordfiles)):
-                f2 = coordfiles[j]
-                if not f2.exists():
-                    continue
-                with f2.open("rb") as fin:
-                    f2_img = Image.open(fin)
-                    f2_img.load()
-                f2_arr = np.asarray(f2_img.convert("L"))
-                # Image similarity test using Structural Similarity Index,
-                # see https://pyimagesearch.com/2014/09/15/python-compare-two-images/
-                if ssim(f1_arr, f2_arr) > SSIM_THRESHOLD:
-                    f2.unlink()
-                    print("❌", end="", flush=True)
+        f1 = coordfiles[0]
+        f2 = coordfiles[1]
+        with f1.open("rb") as fin:
+            f1_img = Image.open(fin)
+            f1_img.load()
+        f1_arr = np.asarray(f1_img.convert("L"))
+        with f2.open("rb") as fin:
+            f2_img = Image.open(fin)
+            f2_img.load()
+        f2_arr = np.asarray(f2_img.convert("L"))
+        # Image similarity test using Structural Similarity Index,
+        # see https://pyimagesearch.com/2014/09/15/python-compare-two-images/
+        if ssim(f1_arr, f2_arr) > SSIM_THRESHOLD:
+            f2.unlink()
+            print("❌", end="", flush=True)
 
 
 async def async_main(duration: int):
