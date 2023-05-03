@@ -84,7 +84,7 @@ class OptionsProtocol(Protocol):
     duration: int
     until: tuple[int, int]
     until_utc: tuple[int, int]
-    no_auto_reset: bool
+    auto_reset: bool
 
 
 RE_HHMM = re.compile(r"^(\d{1,2}):(\d{1,2})$")
@@ -104,6 +104,11 @@ def options() -> OptionsProtocol:
     parser.add_argument("--mapdir", metavar="DIR", type=Path, default=DEFA_MAPS_DIR)
     parser.add_argument("--nodom", action="store_true", help="If specified, do not calculate dominant color")
     parser.add_argument("--workers", type=int, default=(MP.cpu_count() - 2))
+    parser.add_argument(
+        "--auto-reset",
+        action="store_true",
+        help="If specified, retriever will wrap up back to maxrow (2100) upon finishing row 0",
+    )
 
     grp = parser.add_mutually_exclusive_group()
     grp.add_argument(
@@ -128,11 +133,6 @@ def options() -> OptionsProtocol:
         metavar="HH:MM",
         action=HourMinute,
         help="Same as --until but using UTC time (no DST problem)",
-    )
-    parser.add_argument(
-        "--no-auto-reset",
-        action="store_true",
-        help="If specified, retriever will not wrap up back to maxrow (2100) upon finishing row 0",
     )
 
     _opts = parser.parse_args()
@@ -287,7 +287,7 @@ def main(
     duration: int,
     until: tuple[int, int],
     until_utc: tuple[int, int],
-    no_auto_reset: bool,
+    auto_reset: bool,
     nodom: bool,
     workers: int,
 ):
@@ -313,9 +313,13 @@ def main(
         dur = math.inf
 
     progress_file = mapdir / PROG_NAME
-    Progress = RetrieverProgress(progress_file, auto_reset=(not no_auto_reset))
+    Progress = RetrieverProgress(progress_file, auto_reset=auto_reset)
     if Progress.to_dispatch:
         print(f"{len(Progress.to_dispatch)} jobs still outstanding from last session")
+    else:
+        if Progress.max_unprocessed_y < 0:
+            print("No rows left to process.")
+            print(f"Delete the file {progress_file} to reset. (Or specify --auto-reset)")
 
     with MP.Manager() as manager:
         print("Starting saver worker...", end="", flush=True)
