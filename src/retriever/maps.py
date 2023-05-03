@@ -178,7 +178,8 @@ def save_domc(
         return True
 
     domc_pkl_path = mapdir / DOMC_NAME
-    domc = {}
+    # Make a copy first so we can detect changes later.
+    domc = dominant_colors.copy()
     while True:
         trigger_condition.acquire()
         trigger_condition.wait()
