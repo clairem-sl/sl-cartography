@@ -13,9 +13,8 @@ from typing import Any, Final, Protocol, TypedDict, cast
 from PIL import Image, ImageDraw
 
 from sl_maptools import MapCoord
+from worldmap_v4 import BONNIE_REGDB_URL, get_bonnie_coords
 
-
-BONNIE_REGDB_URL = "https://www.bonniebots.com/static-api/regions/index.json"
 DEFA_DB_PATH: Final[Path] = Path(r"C:\Cache\SL-Carto\RegionsDB.pkl")
 
 MIN_X: Final[int] = 0
@@ -192,17 +191,7 @@ def make_map(opts: Options):
     print(flush=True)
 
     regions: set[tuple[int, int]] = set(data_raw)
-    bdb_data_raw = {}
-    if bonniedb:
-        print(f"Reading BonnieBots Regions DB from {bonniedb} ... ", end="", flush=True)
-        with bonniedb.open("rb") as fin:
-            bdb_data_raw = ryaml.safe_load(fin)
-    elif opts.fetchbonnie:
-        print(f"Fetching BonnieBots Regions DB ... ", end="", flush=True)
-        with httpx.Client(timeout=10) as client:
-            resp = client.get(BONNIE_REGDB_URL)
-            bdb_data_raw = resp.json()
-    bonnie_coords = {(record["region_x"], record["region_y"]) for record in bdb_data_raw["regions"]}
+    bonnie_coords = get_bonnie_coords(bonniedb, opts.fetchbonnie)
     if bonnie_coords:
         regions = regions.intersection(bonnie_coords)
         print(flush=True)
