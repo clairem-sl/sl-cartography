@@ -341,6 +341,7 @@ def main(
     if Progress.to_dispatch:
         print(f"{len(Progress.to_dispatch)} jobs still outstanding from last session")
     else:
+        print("No outstanding jobs from last session.")
         if Progress.max_unprocessed_y < 0:
             print("No rows left to process.")
             print(f"Delete the file {progress_file} to reset. (Or specify --auto-reset)")
