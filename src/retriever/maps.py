@@ -269,7 +269,7 @@ async def async_main(duration: int):
             elapsed = time.monotonic() - start
             avg_rate = total / elapsed
             print(
-                f"\n  {elapsed:.2f}s since start, {total:_} coords scanned "
+                f"\n  {elapsed:_.2f}s since start, {total:_} coords scanned "
                 f"(avg. {avg_rate:.2f} r/s), {hasmap_count} maps retrieved"
             )
             # print(f"  using {fetcher.seen_http_vers}")
@@ -339,9 +339,10 @@ def main(
                 SaverQueue.put(None)
             SaverQueue.close()
             SaverQueue.join_thread()
-            print("Waiting for saver worker to join ... ", end="", flush=True)
+            print("\nClosing worker pool ... ", end="", flush=True)
             pool.close()
             pool.join()
+            print("closed")
             try:
                 print("Flushing SaveSuccess queue ... ", end="", flush=True)
                 while True:
@@ -354,11 +355,11 @@ def main(
             finally:
                 print("flushed")
                 Progress.save()
+            print("Send signal to save_domc to finish", flush=True)
             EndingEvent.set()
             TriggerCondition.acquire()
             TriggerCondition.notify_all()
             TriggerCondition.release()
-            print("joined", flush=True)
     print(f"{Progress.outstanding_count:_} outstanding jobs left.")
 
 
