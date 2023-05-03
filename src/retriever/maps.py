@@ -193,7 +193,7 @@ def save_domc(
         domc = curr_domc
         with domc_pkl_path.open("wb") as fout:
             pickle.dump(domc, fout, protocol=pickle.HIGHEST_PROTOCOL)
-        print("📝", end="", flush=True)
+        print(f"⏬[{len(domc)}]", end="", flush=True)
 
 
 def saver(
