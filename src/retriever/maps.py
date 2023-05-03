@@ -375,8 +375,6 @@ def main(
                 print("Flushing SaveSuccess queue ... ", end="", flush=True)
                 while True:
                     fini = SaveSuccessQueue.get(timeout=5)
-                    if fini is None:
-                        break
                     Progress.retire(fini)
             except queue.Empty:
                 pass
