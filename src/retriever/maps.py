@@ -20,6 +20,7 @@ from pathlib import Path
 from typing import Final, TypedDict, cast, Protocol
 
 import httpx
+import numpy as np
 from PIL import Image
 from skimage.metrics import structural_similarity as ssim
 
@@ -212,6 +213,7 @@ def saver(
             with f1.open("rb") as fin:
                 f1_img = Image.open(fin)
                 f1_img.load()
+            f1_arr = np.asarray(f1_img.convert("L"))
             for j in range(i, len(coordfiles)):
                 f2 = coordfiles[j]
                 if not f2.exists():
@@ -219,10 +221,12 @@ def saver(
                 with f2.open("rb") as fin:
                     f2_img = Image.open(fin)
                     f2_img.load()
+                f2_arr = np.asarray(f2_img.convert("L"))
                 # Image similarity test using Structural Similarity Index,
                 # see https://pyimagesearch.com/2014/09/15/python-compare-two-images/
-                if ssim(f1_img, f2_img) > SSIM_THRESHOLD:
+                if ssim(f1_arr, f2_arr) > SSIM_THRESHOLD:
                     f2.unlink()
+                    print("❌", end="", flush=True)
 
 
 async def async_main(duration: int):
