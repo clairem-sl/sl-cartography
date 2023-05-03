@@ -186,7 +186,7 @@ def save_domc(
             break
 
         # Copy dominant_colors, which is a manager.dict(), so that when we process it there won't be any changes
-        curr_domc = {k: dominant_colors[k] for k in list(dominant_colors.keys())}
+        curr_domc = dominant_colors.copy()
         if deeply_equal(domc, curr_domc):
             continue
 
