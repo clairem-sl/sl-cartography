@@ -358,7 +358,14 @@ def main(
         if nodom:
             dominant_colors = None
         else:
-            dominant_colors = manager.dict()
+            domc_pkl_path = mapdir / DOMC_NAME
+            if not domc_pkl_path.exists():
+                with domc_pkl_path.open("wb") as fout:
+                    pickle.dump({}, fout, protocol=pickle.HIGHEST_PROTOCOL)
+                dominant_colors = manager.dict()
+            else:
+                with domc_pkl_path.open("rb") as fin:
+                    dominant_colors = manager.dict(pickle.load(fin))
         pool_args = (mapdir, SaverQueue, SaveSuccessQueue, dominant_colors)
         TriggerCondition = manager.Condition()
         EndingEvent = manager.Event()
