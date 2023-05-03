@@ -33,6 +33,7 @@ dependencies = [
     "beautifulsoup4",
     "ruamel.yaml",
     "pytz",
+    "scikit-image",
 ]
 
 [build-system]

@@ -21,6 +21,7 @@ from typing import Final, TypedDict, cast, Protocol
 
 import httpx
 from PIL import Image
+from skimage.metrics import structural_similarity as ssim
 
 from retriever import RetrieverProgress
 from sl_maptools import MapCoord, MapRegion
@@ -29,6 +30,8 @@ from sl_maptools.fetchers.map import BoundedMapFetcher
 
 # from sl_maptools.bb_fetcher import BoundedNameFetcher, CookedTile
 
+
+SSIM_THRESHOLD: Final[float] = 0.98
 
 MIN_X: Final[int] = 0
 MAX_X: Final[int] = 2100
@@ -198,7 +201,28 @@ def saver(
             success_queue.put(coord)
         except Exception:
             raise
-    success_queue.put(None)
+
+        # Prune similar files in the same coordinate
+        coordfiles = sorted(mapdir.glob(f"{coord.x}-{coord.y}_*.jpg"), reverse=True)
+        if len(coordfiles) < 2:
+            continue
+        for i, f1 in enumerate(coordfiles, start=1):
+            if not f1.exists():
+                continue
+            with f1.open("rb") as fin:
+                f1_img = Image.open(fin)
+                f1_img.load()
+            for j in range(i, len(coordfiles)):
+                f2 = coordfiles[j]
+                if not f2.exists():
+                    continue
+                with f2.open("rb") as fin:
+                    f2_img = Image.open(fin)
+                    f2_img.load()
+                # Image similarity test using Structural Similarity Index,
+                # see https://pyimagesearch.com/2014/09/15/python-compare-two-images/
+                if ssim(f1_img, f2_img) > SSIM_THRESHOLD:
+                    f2.unlink()
 
 
 async def async_main(duration: int):
