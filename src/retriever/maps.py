@@ -12,7 +12,7 @@ import multiprocessing.managers as MPMgr
 import multiprocessing.pool as MPPool
 import multiprocessing.shared_memory as MPSharedMem
 import multiprocessing.synchronize as MPSync
-import pickle
+# import pickle
 import queue
 import re
 import signal
@@ -30,7 +30,7 @@ from skimage.metrics import structural_similarity as ssim
 from retriever import RetrieverProgress
 from sl_maptools import MapCoord
 from sl_maptools.fetchers import RawResult
-from sl_maptools.image_processing import calculate_dominant_colors, FASCIA_COORDS, RGBTuple
+# from sl_maptools.image_processing import calculate_dominant_colors, FASCIA_COORDS, RGBTuple
 from sl_maptools.fetchers.map import BoundedMapFetcher
 
 
@@ -89,7 +89,7 @@ def sigint_handler(_, __):
 class OptionsProtocol(Protocol):
     mapdir: Path
     workers: int
-    nodom: bool
+    # nodom: bool
     duration: int
     until: tuple[int, int]
     until_utc: tuple[int, int]
@@ -113,8 +113,10 @@ def options() -> OptionsProtocol:
 
     parser.add_argument("--force", action="store_true")
     parser.add_argument("--mapdir", metavar="DIR", type=Path, default=DEFA_MAPS_DIR)
-    parser.add_argument("--nodom", action="store_true", help="If specified, do not calculate dominant color")
-    parser.add_argument("--workers", type=int, default=max(1, MP.cpu_count() - 2))
+    # parser.add_argument("--nodom", action="store_true", help="If specified, do not calculate dominant color")
+    parser.add_argument(
+        "--workers", metavar="N", type=int, default=max(1, MP.cpu_count() - 2), help="Launch N saver workers"
+    )
     parser.add_argument(
         "--auto-reset",
         action="store_true",
@@ -157,51 +159,49 @@ class QJob(TypedDict):
     shm: MPSharedMem.SharedMemory
 
 
-def save_domc(
-    mapdir: Path,
-    trigger_condition: MPSync.Condition,
-    ending_event: MPSync.Event,
-    dominant_colors: None | dict[tuple[int, int], dict[int, list[RGBTuple]]],
-):
-    signal.signal(signal.SIGINT, signal.SIG_IGN)
-    if dominant_colors is None:
-        return
-
-    def deeply_equal(d1: dict, d2: dict):
-        if len(d1) != len(d2):
-            return False
-        if sorted(d1.keys()) != sorted(d2.keys()):
-            return False
-        for k, v1 in d1.items():
-            v2 = d2[k]
-            if type(v1) != type(v2):
-                return False
-            if isinstance(v1, dict):
-                if not deeply_equal(v1, v2):
-                    return False
-            else:
-                if v1 != v2:
-                    return False
-        return True
-
-    domc_pkl_path = mapdir / DOMC_NAME
-    # Make a copy first, so we can detect changes later.
-    domc = dominant_colors.copy()
-    while True:
-        trigger_condition.acquire()
-        trigger_condition.wait()
-        if ending_event.is_set():
-            break
-
-        # Copy dominant_colors, which is a manager.dict(), so that when we process it there won't be any changes
-        curr_domc = dominant_colors.copy()
-        if deeply_equal(domc, curr_domc):
-            continue
-
-        domc = curr_domc
-        with domc_pkl_path.open("wb") as fout:
-            pickle.dump(domc, fout, protocol=pickle.HIGHEST_PROTOCOL)
-        print(f"⏬[{len(domc)}]", end="", flush=True)
+# def save_domc(
+#     mapdir: Path,
+#     trigger_condition: MPSync.Condition,
+#     ending_event: MPSync.Event,
+#     dominant_colors: None | dict[tuple[int, int], dict[int, list[RGBTuple]]],
+# ):
+#     signal.signal(signal.SIGINT, signal.SIG_IGN)
+#     if dominant_colors is None:
+#         return
+#
+#     def deeply_equal(d1: dict, d2: dict):
+#         if len(d1) != len(d2):
+#             return False
+#         if sorted(d1.keys()) != sorted(d2.keys()):
+#             return False
+#         for k, v1 in d1.items():
+#             v2 = d2[k]
+#             if type(v1) != type(v2):
+#                 return False
+#             if isinstance(v1, dict):
+#                 if not deeply_equal(v1, v2):
+#                     return False
+#             else:
+#                 if v1 != v2:
+#                     return False
+#         return True
+#
+#     domc_pkl_path = mapdir / DOMC_NAME
+#     # Make a copy first, so we can detect changes later.
+#     domc = dominant_colors.copy()
+#     while not ending_event.is_set():
+#         trigger_condition.acquire()
+#         trigger_condition.wait()
+#
+#         # Copy dominant_colors, which is a manager.dict(), so that when we process it there won't be any changes
+#         curr_domc = dominant_colors.copy()
+#         if deeply_equal(domc, curr_domc):
+#             continue
+#
+#         domc = curr_domc
+#         with domc_pkl_path.open("wb") as fout:
+#             pickle.dump(domc, fout, protocol=pickle.HIGHEST_PROTOCOL)
+#         print(f"⏬[{len(domc)}]", end="", flush=True)
 
 
 def saver(
@@ -209,7 +209,7 @@ def saver(
     mapfilesets: dict[tuple[int, int], list[Path]],
     save_queue: MP.Queue,
     success_queue: MP.Queue,
-    dominant_colors: None | dict[tuple[int, int], dict[int, list[RGBTuple]]],
+    # dominant_colors: None | dict[tuple[int, int], dict[int, list[RGBTuple]]],
 ):
     signal.signal(signal.SIGINT, signal.SIG_IGN)
     mapdir.mkdir(parents=True, exist_ok=True)
@@ -238,11 +238,12 @@ def saver(
             with io.BytesIO(blob) as bio:
                 img: Image.Image = Image.open(bio)
                 img.load()
-            if dominant_colors is not None:
-                domc: dict[int, list[RGBTuple]] = {}
-                for fasz in FASCIA_COORDS:
-                    domc[fasz] = calculate_dominant_colors(img, fasz)
-                dominant_colors[tuple(coord)] = domc
+
+            # if dominant_colors is not None:
+            #     domc: dict[int, list[RGBTuple]] = {}
+            #     for fasz in FASCIA_COORDS:
+            #         domc[fasz] = calculate_dominant_colors(img, fasz)
+            #     dominant_colors[tuple(coord)] = domc
 
             # Prune older file of same coordinate if really similar
             if not (coordfiles := mapfilesets.get(coord, [])):
@@ -365,7 +366,7 @@ def main(
     until: tuple[int, int],
     until_utc: tuple[int, int],
     auto_reset: bool,
-    nodom: bool,
+    # nodom: bool,
     workers: int,
     force: bool,
 ):
@@ -405,18 +406,18 @@ def main(
         SaverQueue = MP.Queue()
         SaveSuccessQueue = MP.Queue()
 
-        dominant_colors: None | dict[tuple[int, int], dict[int, list[RGBTuple]]]
-        if nodom:
-            dominant_colors = None
-        else:
-            domc_pkl_path = mapdir / DOMC_NAME
-            if not domc_pkl_path.exists():
-                with domc_pkl_path.open("wb") as fout:
-                    pickle.dump({}, fout, protocol=pickle.HIGHEST_PROTOCOL)
-                dominant_colors = manager.dict()
-            else:
-                with domc_pkl_path.open("rb") as fin:
-                    dominant_colors = manager.dict(pickle.load(fin))
+        # dominant_colors: None | dict[tuple[int, int], dict[int, list[RGBTuple]]]
+        # if nodom:
+        #     dominant_colors = None
+        # else:
+        #     domc_pkl_path = mapdir / DOMC_NAME
+        #     if not domc_pkl_path.exists():
+        #         with domc_pkl_path.open("wb") as fout:
+        #             pickle.dump({}, fout, protocol=pickle.HIGHEST_PROTOCOL)
+        #         dominant_colors = manager.dict()
+        #     else:
+        #         with domc_pkl_path.open("rb") as fin:
+        #             dominant_colors = manager.dict(pickle.load(fin))
 
         _mapfilesets: dict[tuple[int, int], list[Path]] = {}
         m: re.Match
@@ -428,15 +429,17 @@ def main(
             _mapfilesets.setdefault(coord, []).append(mapfile)
         mapfilesets = manager.dict(_mapfilesets)
 
-        saver_args = (mapdir, mapfilesets, SaverQueue, SaveSuccessQueue, dominant_colors)
+        # saver_args = (mapdir, mapfilesets, SaverQueue, SaveSuccessQueue, dominant_colors)
+        saver_args = (mapdir, mapfilesets, SaverQueue, SaveSuccessQueue)
         #
         TriggerCondition = manager.Condition()
         EndingEvent = manager.Event()
         EndingEvent.clear()
-        save_domc_args = (mapdir, TriggerCondition, EndingEvent, dominant_colors)
+        # save_domc_args = (mapdir, TriggerCondition, EndingEvent, dominant_colors)
         #
         pool: MPPool.Pool
-        with MP.Pool(workers, saver, saver_args) as pool, MP.Pool(1, save_domc, save_domc_args):
+        # with MP.Pool(workers, saver, saver_args) as pool, MP.Pool(1, save_domc, save_domc_args) as pool2:
+        with MP.Pool(workers, saver, saver_args) as pool:
 
             print("started.\nDispatching async fetchers!", flush=True)
             try:
@@ -464,14 +467,15 @@ def main(
             finally:
                 print("flushed")
                 Progress.save()
-            print("Send signal to save_domc to finish", flush=True)
-            TriggerCondition.acquire()
-            TriggerCondition.notify_all()
-            TriggerCondition.release()
-            EndingEvent.set()
-            TriggerCondition.acquire()
-            TriggerCondition.notify_all()
-            TriggerCondition.release()
+            # print("Send signal to save_domc to finish ... ", end="", flush=True)
+            # pool2.close()
+            # EndingEvent.set()
+            # TriggerCondition.acquire()
+            # TriggerCondition.notify_all()
+            # TriggerCondition.release()
+            # print("sent", end=" ", flush=True)
+            # pool2.join()
+            # print("joined", flush=True)
     print(f"{Progress.outstanding_count:_} outstanding jobs left.")
 
 
