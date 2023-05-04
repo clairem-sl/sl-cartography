@@ -5,9 +5,12 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import io
 import math
 import multiprocessing as MP
+import multiprocessing.managers as MPMgr
 import multiprocessing.pool as MPPool
+import multiprocessing.shared_memory as MPSharedMem
 import multiprocessing.synchronize as MPSync
 import pickle
 import queue
@@ -25,7 +28,8 @@ from PIL import Image
 from skimage.metrics import structural_similarity as ssim
 
 from retriever import RetrieverProgress
-from sl_maptools import MapCoord, MapRegion
+from sl_maptools import MapCoord
+from sl_maptools.fetchers import RawResult
 from sl_maptools.image_processing import calculate_dominant_colors, FASCIA_COORDS, RGBTuple
 from sl_maptools.fetchers.map import BoundedMapFetcher
 
@@ -68,6 +72,7 @@ Progress: RetrieverProgress
 TriggerCondition: MPSync.Condition
 EndingEvent: MPSync.Event
 AbortRequested = asyncio.Event()
+SharedMemoryAllocations: dict[tuple[int, int], MPSharedMem.SharedMemory] = {}
 
 
 def sigint(_, __):
@@ -149,7 +154,7 @@ def options() -> OptionsProtocol:
 class QJob(TypedDict):
     coord: MapCoord
     tsf: str
-    image: Image.Image
+    shm: MPSharedMem.SharedMemory
 
 
 def save_domc(
@@ -215,52 +220,64 @@ def saver(
         item = save_queue.get()
         if item is None:
             break
+
         regmap: QJob = cast(QJob, item)
         coord: MapCoord = regmap["coord"]
-        img: Image.Image = regmap["image"]
-        if dominant_colors is not None:
-            domc: dict[int, list[RGBTuple]] = {}
-            for fasz in FASCIA_COORDS:
-                domc[fasz] = calculate_dominant_colors(img, fasz)
-            dominant_colors[tuple(coord)] = domc
+        shm: MPSharedMem.SharedMemory = regmap["shm"]
+        blob = cast(bytes, shm.buf)
         try:
-            tsf = regmap["tsf"]
-            targf = mapdir / f"{coord.x}-{coord.y}_{tsf}.jpg"
-            img.save(targf)
-            print("💾", end="", flush=True)
-            success_queue.put(coord)
-        except Exception:
-            raise
+            try:
+                tsf = regmap["tsf"]
+                targf = mapdir / f"{coord.x}-{coord.y}_{tsf}.jpg"
+                with targf.open("wb") as fout:
+                    fout.write(blob)
+                # img.save(targf)
+                print("💾", end="", flush=True)
+            except Exception:
+                raise
 
-        # Prune older file of same coordinate if really similar
-        if not (coordfiles := mapfilesets.get(coord, [])):
-            continue
-        f2 = coordfiles[-1]
-        # noinspection PyTypeChecker
-        f1_arr = np.asarray(img.convert("L"))
-        try:
-            with f2.open("rb") as fin:
-                f2_img = Image.open(fin)
-                f2_img.load()
+            with io.BytesIO(blob) as bio:
+                img: Image.Image = Image.open(bio)
+                img.load()
+            if dominant_colors is not None:
+                domc: dict[int, list[RGBTuple]] = {}
+                for fasz in FASCIA_COORDS:
+                    domc[fasz] = calculate_dominant_colors(img, fasz)
+                dominant_colors[tuple(coord)] = domc
+
+            # Prune older file of same coordinate if really similar
+            if not (coordfiles := mapfilesets.get(coord, [])):
+                continue
+            f2 = coordfiles[-1]
             # noinspection PyTypeChecker
-            f2_arr = np.asarray(f2_img.convert("L"))
-            # Image similarity test using Structural Similarity Index,
-            # see https://pyimagesearch.com/2014/09/15/python-compare-two-images/
-            if ssim(f1_arr, f2_arr) > SSIM_THRESHOLD:
-                f2.unlink()
+            f1_arr = np.asarray(img.convert("L"))
+            try:
+                with f2.open("rb") as fin:
+                    f2_img = Image.open(fin)
+                    f2_img.load()
+                # noinspection PyTypeChecker
+                f2_arr = np.asarray(f2_img.convert("L"))
+                # Image similarity test using Structural Similarity Index,
+                # see https://pyimagesearch.com/2014/09/15/python-compare-two-images/
+                if ssim(f1_arr, f2_arr) > SSIM_THRESHOLD:
+                    f2.unlink()
+                    coordfiles.pop()
+                    print("❌", end="", flush=True)
+            except FileNotFoundError:
                 coordfiles.pop()
-                print("❌", end="", flush=True)
-        except FileNotFoundError:
-            coordfiles.pop()
-        coordfiles.append(targf)
-        mapfilesets[coord] = coordfiles
+            coordfiles.append(targf)
+            mapfilesets[coord] = coordfiles
+
+            success_queue.put(coord)
+        finally:
+            shm.close()
 
 
-async def async_main(duration: int):
+async def async_main(duration: int, shm_mgr: MPMgr.SharedMemoryManager):
     global AbortRequested
     limits = httpx.Limits(max_connections=CONN_LIMIT, max_keepalive_connections=CONN_LIMIT)
     async with httpx.AsyncClient(limits=limits, timeout=10.0, http2=HTTP2) as client:
-        fetcher = BoundedMapFetcher(SEMA_SIZE, client, cooked=True, cancel_flag=AbortRequested)
+        fetcher = BoundedMapFetcher(SEMA_SIZE, client, cooked=False, cancel_flag=AbortRequested)
         # coords = [MapCoord(x, y) for x in range(950, 1050) for y in range(950, 1050)]
 
         def make_task(coord: tuple[int, int]):
@@ -287,26 +304,32 @@ async def async_main(duration: int):
                     e += 1
                     print(f"\n{fut.get_name()} raised Exception: <{type(exc)}> {exc}")
                     continue
-                rslt: MapRegion = fut.result()
+                rslt: None | RawResult = fut.result()
                 if rslt is None:
                     continue
-                if rslt.image:
+                if rslt.result:
                     shown = True
                     hasmap_count += 1
                     print(f"({rslt.coord.x},{rslt.coord.y})✔", end=" ")
+                    shm = shm_mgr.SharedMemory(len(rslt.result))
+                    shm.buf[:] = rslt.result
                     SaverQueue.put(
                         {
                             "coord": rslt.coord,
                             "tsf": datetime.strftime(datetime.now(), "%y%m%d-%H%M"),
-                            "image": rslt.image,
+                            "shm": shm,
                         }
                     )
+                    SharedMemoryAllocations[rslt.coord] = shm
                 else:
                     await Progress.aretire(rslt.coord)
             try:
                 while True:
                     success_coord: MapCoord = SaveSuccessQueue.get_nowait()
                     await Progress.aretire(success_coord)
+                    shm = SharedMemoryAllocations[success_coord]
+                    shm.close()
+                    shm.unlink()
             except queue.Empty:
                 pass
             TriggerCondition.acquire()
@@ -377,7 +400,7 @@ def main(
             print("No rows left to process.")
             print(f"Delete the file {progress_file} to reset. (Or specify --auto-reset)")
 
-    with MP.Manager() as manager:
+    with MP.Manager() as manager, MPMgr.SharedMemoryManager() as shm_manager:
         print("Starting saver worker...", end="", flush=True)
         SaverQueue = MP.Queue()
         SaveSuccessQueue = MP.Queue()
@@ -406,14 +429,18 @@ def main(
         mapfilesets = manager.dict(_mapfilesets)
 
         saver_args = (mapdir, mapfilesets, SaverQueue, SaveSuccessQueue, dominant_colors)
+        #
         TriggerCondition = manager.Condition()
         EndingEvent = manager.Event()
         EndingEvent.clear()
         save_domc_args = (mapdir, TriggerCondition, EndingEvent, dominant_colors)
+        #
         pool: MPPool.Pool
         with MP.Pool(workers, saver, saver_args) as pool, MP.Pool(1, save_domc, save_domc_args):
+
             print("started.\nDispatching async fetchers!", flush=True)
-            asyncio.run(async_main(dur))
+            asyncio.run(async_main(dur, shm_manager))
+
             for _ in range(workers):
                 SaverQueue.put(None)
             print("\nClosing worker pool ... ", end="", flush=True)
@@ -425,8 +452,9 @@ def main(
             try:
                 print("Flushing SaveSuccess queue ... ", end="", flush=True)
                 while True:
-                    fini = SaveSuccessQueue.get(timeout=5)
-                    Progress.retire(fini)
+                    fini_coord = SaveSuccessQueue.get(timeout=5)
+                    SharedMemoryAllocations[fini_coord].close()
+                    Progress.retire(fini_coord)
             except queue.Empty:
                 pass
             finally:
