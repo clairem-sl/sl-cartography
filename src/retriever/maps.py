@@ -330,6 +330,7 @@ async def async_main(duration: int, shm_mgr: MPMgr.SharedMemoryManager):
                     shm = SharedMemoryAllocations[success_coord]
                     shm.close()
                     shm.unlink()
+                    del SharedMemoryAllocations[success_coord]
             except queue.Empty:
                 pass
             TriggerCondition.acquire()
@@ -459,9 +460,12 @@ def main(
             try:
                 print("Flushing SaveSuccess queue ... ", end="", flush=True)
                 while True:
-                    fini_coord = SaveSuccessQueue.get(timeout=5)
-                    SharedMemoryAllocations[fini_coord].close()
-                    Progress.retire(fini_coord)
+                    coord = SaveSuccessQueue.get(timeout=5)
+                    shm = SharedMemoryAllocations[coord]
+                    shm.close()
+                    shm.unlink()
+                    del SharedMemoryAllocations[coord]
+                    Progress.retire(coord)
             except queue.Empty:
                 pass
             finally:
