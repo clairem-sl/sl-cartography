@@ -469,6 +469,8 @@ def main(
             except queue.Empty:
                 pass
             finally:
+                SaveSuccessQueue.close()
+                SaveSuccessQueue.join_thread()
                 print("flushed")
                 Progress.save()
             # print("Send signal to save_domc to finish ... ", end="", flush=True)
