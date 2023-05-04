@@ -34,7 +34,7 @@ from sl_maptools.image_processing import calculate_dominant_colors, FASCIA_COORD
 from sl_maptools.fetchers.map import BoundedMapFetcher
 
 
-RE_MAPFILENAME: re.Pattern = re.compile(r"^(?P<x>\d+)-(?P<y>\d+)_(?P<ts>[0-9_]+)\.jpg$")
+RE_MAPFILENAME: re.Pattern = re.compile(r"^(?P<x>\d+)-(?P<y>\d+)_(?P<ts>[0-9-]+)\.jpg$")
 
 SSIM_THRESHOLD: Final[float] = 0.98
 MIN_COORDS: Final[MapCoord] = MapCoord(0, 0)
@@ -419,7 +419,7 @@ def main(
         m: re.Match
         flist: list[Path]
         for mapfile in sorted(mapdir.glob("*.jpg")):
-            if m := RE_MAPFILENAME.match(mapfile.name) is None:
+            if (m := RE_MAPFILENAME.match(mapfile.name)) is None:
                 continue
             coord = (int(m.group("x")), int(m.group("y")))
             _mapfilesets.setdefault(coord, []).append(mapfile)
