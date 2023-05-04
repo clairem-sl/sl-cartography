@@ -231,9 +231,10 @@ def saver(
                 targf = mapdir / f"{coord.x}-{coord.y}_{tsf}.jpg"
                 with targf.open("wb") as fout:
                     fout.write(blob)
-                print("💾", end="", flush=True)
             except Exception:
                 raise
+
+            print("💾", end="", flush=True)
 
             with io.BytesIO(blob) as bio:
                 img: Image.Image = Image.open(bio)
