@@ -94,6 +94,7 @@ class OptionsProtocol(Protocol):
     until: tuple[int, int]
     until_utc: tuple[int, int]
     auto_reset: bool
+    force: bool
 
 
 RE_HHMM = re.compile(r"^(\d{1,2}):(\d{1,2})$")
@@ -110,6 +111,7 @@ class HourMinute(argparse.Action):
 def options() -> OptionsProtocol:
     parser = argparse.ArgumentParser("region_auditor")
 
+    parser.add_argument("--force", action="store_true")
     parser.add_argument("--mapdir", metavar="DIR", type=Path, default=DEFA_MAPS_DIR)
     parser.add_argument("--nodom", action="store_true", help="If specified, do not calculate dominant color")
     parser.add_argument("--workers", type=int, default=max(1, MP.cpu_count() - 2))
@@ -365,6 +367,7 @@ def main(
     auto_reset: bool,
     nodom: bool,
     workers: int,
+    force: bool,
 ):
     global Progress, SaverQueue, SaveSuccessQueue, TriggerCondition, EndingEvent
 
@@ -478,17 +481,17 @@ if __name__ == "__main__":
     opts.mapdir.mkdir(parents=True, exist_ok=True)
 
     lockf: Path = opts.mapdir / LOCK_NAME
-
-    try:
-        lockf.touch(exist_ok=False)
-    except FileExistsError:
-        print(f"Lock file {lockf} exists!", file=sys.stderr)
-        print("You must not run multiple audits at the same time.", file=sys.stderr)
-        print(
-            "If no other audit is running, delete the lock file to continue.",
-            file=sys.stderr,
-        )
-        sys.exit(1)
+    if not opts.force:
+        try:
+            lockf.touch(exist_ok=False)
+        except FileExistsError:
+            print(f"Lock file {lockf} exists!", file=sys.stderr)
+            print("You must not run multiple audits at the same time.", file=sys.stderr)
+            print(
+                "If no other audit is running, delete the lock file to continue.",
+                file=sys.stderr,
+            )
+            sys.exit(1)
 
     main(**vars(opts))
     if AbortRequested.is_set():
