@@ -32,6 +32,8 @@ from sl_maptools.fetchers.map import BoundedMapFetcher
 # from sl_maptools.bb_fetcher import BoundedNameFetcher, CookedTile
 
 
+RE_MAPFILENAME: re.Pattern = re.compile(r"^(?P<x>\d+)-(?P<y>\d+)_(?P<ts>[0-9_]+)\.jpg$")
+
 SSIM_THRESHOLD: Final[float] = 0.98
 
 MIN_X: Final[int] = 0
@@ -199,6 +201,7 @@ def save_domc(
 
 def saver(
     mapdir: Path,
+    mapfilesets: dict[tuple[int, int], list[Path]],
     save_queue: MP.Queue,
     success_queue: MP.Queue,
     dominant_colors: None | dict[tuple[int, int], dict[int, list[RGBTuple]]],
@@ -223,33 +226,34 @@ def saver(
         try:
             tsf = regmap["tsf"]
             targf = mapdir / f"{coord.x}-{coord.y}_{tsf}.jpg"
-            regmap["image"].save(targf)
+            img.save(targf)
             print("💾", end="", flush=True)
             success_queue.put(coord)
         except Exception:
             raise
 
         # Prune older file of same coordinate if really similar
-        coordfiles = sorted(mapdir.glob(f"{coord.x}-{coord.y}_*.jpg"), reverse=True)
-        if len(coordfiles) < 2:
+        if not (coordfiles := mapfilesets.get(coord, [])):
             continue
-        f1 = coordfiles[0]
-        f2 = coordfiles[1]
-        with f1.open("rb") as fin:
-            f1_img = Image.open(fin)
-            f1_img.load()
+        f2 = coordfiles[-1]
         # noinspection PyTypeChecker
-        f1_arr = np.asarray(f1_img.convert("L"))
-        with f2.open("rb") as fin:
-            f2_img = Image.open(fin)
-            f2_img.load()
-        # noinspection PyTypeChecker
-        f2_arr = np.asarray(f2_img.convert("L"))
-        # Image similarity test using Structural Similarity Index,
-        # see https://pyimagesearch.com/2014/09/15/python-compare-two-images/
-        if ssim(f1_arr, f2_arr) > SSIM_THRESHOLD:
-            f2.unlink()
-            print("❌", end="", flush=True)
+        f1_arr = np.asarray(img.convert("L"))
+        try:
+            with f2.open("rb") as fin:
+                f2_img = Image.open(fin)
+                f2_img.load()
+            # noinspection PyTypeChecker
+            f2_arr = np.asarray(f2_img.convert("L"))
+            # Image similarity test using Structural Similarity Index,
+            # see https://pyimagesearch.com/2014/09/15/python-compare-two-images/
+            if ssim(f1_arr, f2_arr) > SSIM_THRESHOLD:
+                f2.unlink()
+                coordfiles.pop()
+                print("❌", end="", flush=True)
+        except FileNotFoundError:
+            coordfiles.pop()
+        coordfiles.append(targf)
+        mapfilesets[coord] = coordfiles
 
 
 async def async_main(duration: int):
@@ -389,13 +393,24 @@ def main(
             else:
                 with domc_pkl_path.open("rb") as fin:
                     dominant_colors = manager.dict(pickle.load(fin))
-        pool_args = (mapdir, SaverQueue, SaveSuccessQueue, dominant_colors)
+
+        _mapfilesets: dict[tuple[int, int], list[Path]] = {}
+        m: re.Match
+        flist: list[Path]
+        for mapfile in sorted(mapdir.glob("*.jpg")):
+            if m := RE_MAPFILENAME.match(mapfile.name) is None:
+                continue
+            coord = (int(m.group("x")), int(m.group("y")))
+            _mapfilesets.setdefault(coord, []).append(mapfile)
+        mapfilesets = manager.dict(_mapfilesets)
+
+        saver_args = (mapdir, mapfilesets, SaverQueue, SaveSuccessQueue, dominant_colors)
         TriggerCondition = manager.Condition()
         EndingEvent = manager.Event()
         EndingEvent.clear()
         save_domc_args = (mapdir, TriggerCondition, EndingEvent, dominant_colors)
         pool: MPPool.Pool
-        with MP.Pool(workers, saver, pool_args) as pool, MP.Pool(1, save_domc, save_domc_args):
+        with MP.Pool(workers, saver, saver_args) as pool, MP.Pool(1, save_domc, save_domc_args):
             print("started.\nDispatching async fetchers!", flush=True)
             asyncio.run(async_main(dur))
             for _ in range(workers):
