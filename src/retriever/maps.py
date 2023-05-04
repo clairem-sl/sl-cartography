@@ -37,6 +37,7 @@ from sl_maptools.fetchers.map import BoundedMapFetcher
 RE_MAPFILENAME: re.Pattern = re.compile(r"^(?P<x>\d+)-(?P<y>\d+)_(?P<ts>[0-9_]+)\.jpg$")
 
 SSIM_THRESHOLD: Final[float] = 0.98
+MIN_COORDS: Final[MapCoord] = MapCoord(0, 0)
 MAX_COORDS: Final[MapCoord] = MapCoord(2100, 2100)
 
 CONN_LIMIT: Final[int] = 40
@@ -111,7 +112,7 @@ def options() -> OptionsProtocol:
 
     parser.add_argument("--mapdir", metavar="DIR", type=Path, default=DEFA_MAPS_DIR)
     parser.add_argument("--nodom", action="store_true", help="If specified, do not calculate dominant color")
-    parser.add_argument("--workers", type=int, default=(MP.cpu_count() - 2))
+    parser.add_argument("--workers", type=int, default=max(1, MP.cpu_count() - 2))
     parser.add_argument(
         "--auto-reset",
         action="store_true",
@@ -228,7 +229,6 @@ def saver(
                 targf = mapdir / f"{coord.x}-{coord.y}_{tsf}.jpg"
                 with targf.open("wb") as fout:
                     fout.write(blob)
-                # img.save(targf)
                 print("💾", end="", flush=True)
             except Exception:
                 raise
@@ -388,7 +388,7 @@ def main(
         dur = math.inf
 
     progress_file = mapdir / PROG_NAME
-    Progress = RetrieverProgress(progress_file, auto_reset=auto_reset, max_x=MAX_COORDS.x, max_y=MAX_COORDS.y)
+    Progress = RetrieverProgress(progress_file, auto_reset=auto_reset, min_coord=MIN_COORDS, max_coord=MAX_COORDS)
     if Progress.to_dispatch:
         print(f"{len(Progress.to_dispatch)} jobs still outstanding from last session")
     else:
