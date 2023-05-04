@@ -5,9 +5,12 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import io
 import math
 import multiprocessing as MP
+import multiprocessing.managers as MPMgr
 import multiprocessing.pool as MPPool
+import multiprocessing.shared_memory as MPSharedMem
 import multiprocessing.synchronize as MPSync
 import pickle
 import queue
@@ -20,18 +23,22 @@ from pathlib import Path
 from typing import Final, TypedDict, cast, Protocol
 
 import httpx
+import numpy as np
 from PIL import Image
+from skimage.metrics import structural_similarity as ssim
 
 from retriever import RetrieverProgress
-from sl_maptools import MapCoord, MapRegion
+from sl_maptools import MapCoord
+from sl_maptools.fetchers import RawResult
 from sl_maptools.image_processing import calculate_dominant_colors, FASCIA_COORDS, RGBTuple
 from sl_maptools.fetchers.map import BoundedMapFetcher
 
-# from sl_maptools.bb_fetcher import BoundedNameFetcher, CookedTile
 
+RE_MAPFILENAME: re.Pattern = re.compile(r"^(?P<x>\d+)-(?P<y>\d+)_(?P<ts>[0-9_]+)\.jpg$")
 
-MIN_X: Final[int] = 0
-MAX_X: Final[int] = 2100
+SSIM_THRESHOLD: Final[float] = 0.98
+MIN_COORDS: Final[MapCoord] = MapCoord(0, 0)
+MAX_COORDS: Final[MapCoord] = MapCoord(2100, 2100)
 
 CONN_LIMIT: Final[int] = 40
 SEMA_SIZE: Final[int] = 120
@@ -56,15 +63,17 @@ LOCK_NAME: Final[str] = "Maps.lock"
 PROG_NAME: Final[str] = "MapsProgress.yaml"
 DOMC_NAME: Final[str] = "DominantColors.pkl"
 
+OrigSigINT: signal.Handlers = signal.getsignal(signal.SIGINT)
 SaverQueue: MP.Queue
 SaveSuccessQueue: MP.Queue
 Progress: RetrieverProgress
 TriggerCondition: MPSync.Condition
 EndingEvent: MPSync.Event
 AbortRequested = asyncio.Event()
+SharedMemoryAllocations: dict[tuple[int, int], MPSharedMem.SharedMemory] = {}
 
 
-def sigint(_, __):
+def sigint_handler(_, __):
     global AbortRequested
     if not AbortRequested.is_set():
         print("\n### USER INTERRUPT ###")
@@ -84,7 +93,7 @@ class OptionsProtocol(Protocol):
     duration: int
     until: tuple[int, int]
     until_utc: tuple[int, int]
-    no_auto_reset: bool
+    auto_reset: bool
 
 
 RE_HHMM = re.compile(r"^(\d{1,2}):(\d{1,2})$")
@@ -103,7 +112,12 @@ def options() -> OptionsProtocol:
 
     parser.add_argument("--mapdir", metavar="DIR", type=Path, default=DEFA_MAPS_DIR)
     parser.add_argument("--nodom", action="store_true", help="If specified, do not calculate dominant color")
-    parser.add_argument("--workers", type=int, default=(MP.cpu_count() - 2))
+    parser.add_argument("--workers", type=int, default=max(1, MP.cpu_count() - 2))
+    parser.add_argument(
+        "--auto-reset",
+        action="store_true",
+        help=f"If specified, retriever will wrap up back to maxrow ({MAX_COORDS.y}) upon finishing row 0",
+    )
 
     grp = parser.add_mutually_exclusive_group()
     grp.add_argument(
@@ -129,11 +143,6 @@ def options() -> OptionsProtocol:
         action=HourMinute,
         help="Same as --until but using UTC time (no DST problem)",
     )
-    parser.add_argument(
-        "--no-auto-reset",
-        action="store_true",
-        help="If specified, retriever will not wrap up back to maxrow (2100) upon finishing row 0",
-    )
 
     _opts = parser.parse_args()
 
@@ -143,7 +152,7 @@ def options() -> OptionsProtocol:
 class QJob(TypedDict):
     coord: MapCoord
     tsf: str
-    image: Image.Image
+    shm: MPSharedMem.SharedMemory
 
 
 def save_domc(
@@ -155,20 +164,47 @@ def save_domc(
     signal.signal(signal.SIGINT, signal.SIG_IGN)
     if dominant_colors is None:
         return
+
+    def deeply_equal(d1: dict, d2: dict):
+        if len(d1) != len(d2):
+            return False
+        if sorted(d1.keys()) != sorted(d2.keys()):
+            return False
+        for k, v1 in d1.items():
+            v2 = d2[k]
+            if type(v1) != type(v2):
+                return False
+            if isinstance(v1, dict):
+                if not deeply_equal(v1, v2):
+                    return False
+            else:
+                if v1 != v2:
+                    return False
+        return True
+
+    domc_pkl_path = mapdir / DOMC_NAME
+    # Make a copy first, so we can detect changes later.
+    domc = dominant_colors.copy()
     while True:
         trigger_condition.acquire()
         trigger_condition.wait()
         if ending_event.is_set():
             break
-        domc = {k: dominant_colors[k] for k in list(dominant_colors.keys())}
-        with (mapdir / DOMC_NAME).open("wb") as fout:
-            pickle.dump(domc, fout)
-        print("📝", end="", flush=True)
-        domc.clear()
+
+        # Copy dominant_colors, which is a manager.dict(), so that when we process it there won't be any changes
+        curr_domc = dominant_colors.copy()
+        if deeply_equal(domc, curr_domc):
+            continue
+
+        domc = curr_domc
+        with domc_pkl_path.open("wb") as fout:
+            pickle.dump(domc, fout, protocol=pickle.HIGHEST_PROTOCOL)
+        print(f"⏬[{len(domc)}]", end="", flush=True)
 
 
 def saver(
     mapdir: Path,
+    mapfilesets: dict[tuple[int, int], list[Path]],
     save_queue: MP.Queue,
     success_queue: MP.Queue,
     dominant_colors: None | dict[tuple[int, int], dict[int, list[RGBTuple]]],
@@ -182,30 +218,63 @@ def saver(
         item = save_queue.get()
         if item is None:
             break
+
         regmap: QJob = cast(QJob, item)
         coord: MapCoord = regmap["coord"]
-        img: Image.Image = regmap["image"]
-        if dominant_colors is not None:
-            domc: dict[int, list[RGBTuple]] = {}
-            for fasz in FASCIA_COORDS:
-                domc[fasz] = calculate_dominant_colors(img, fasz)
-            dominant_colors[tuple(coord)] = domc
+        shm: MPSharedMem.SharedMemory = regmap["shm"]
+        blob = cast(bytes, shm.buf)
         try:
-            tsf = regmap["tsf"]
-            targf = mapdir / f"{coord.x}-{coord.y}_{tsf}.jpg"
-            regmap["image"].save(targf)
-            print("💾", end="", flush=True)
+            try:
+                tsf = regmap["tsf"]
+                targf = mapdir / f"{coord.x}-{coord.y}_{tsf}.jpg"
+                with targf.open("wb") as fout:
+                    fout.write(blob)
+                print("💾", end="", flush=True)
+            except Exception:
+                raise
+
+            with io.BytesIO(blob) as bio:
+                img: Image.Image = Image.open(bio)
+                img.load()
+            if dominant_colors is not None:
+                domc: dict[int, list[RGBTuple]] = {}
+                for fasz in FASCIA_COORDS:
+                    domc[fasz] = calculate_dominant_colors(img, fasz)
+                dominant_colors[tuple(coord)] = domc
+
+            # Prune older file of same coordinate if really similar
+            if not (coordfiles := mapfilesets.get(coord, [])):
+                continue
+            f2 = coordfiles[-1]
+            # noinspection PyTypeChecker
+            f1_arr = np.asarray(img.convert("L"))
+            try:
+                with f2.open("rb") as fin:
+                    f2_img = Image.open(fin)
+                    f2_img.load()
+                # noinspection PyTypeChecker
+                f2_arr = np.asarray(f2_img.convert("L"))
+                # Image similarity test using Structural Similarity Index,
+                # see https://pyimagesearch.com/2014/09/15/python-compare-two-images/
+                if ssim(f1_arr, f2_arr) > SSIM_THRESHOLD:
+                    f2.unlink()
+                    coordfiles.pop()
+                    print("❌", end="", flush=True)
+            except FileNotFoundError:
+                coordfiles.pop()
+            coordfiles.append(targf)
+            mapfilesets[coord] = coordfiles
+
             success_queue.put(coord)
-        except Exception:
-            raise
-    success_queue.put(None)
+        finally:
+            shm.close()
 
 
-async def async_main(duration: int):
+async def async_main(duration: int, shm_mgr: MPMgr.SharedMemoryManager):
     global AbortRequested
     limits = httpx.Limits(max_connections=CONN_LIMIT, max_keepalive_connections=CONN_LIMIT)
     async with httpx.AsyncClient(limits=limits, timeout=10.0, http2=HTTP2) as client:
-        fetcher = BoundedMapFetcher(SEMA_SIZE, client, cooked=True, cancel_flag=AbortRequested)
+        fetcher = BoundedMapFetcher(SEMA_SIZE, client, cooked=False, cancel_flag=AbortRequested)
         # coords = [MapCoord(x, y) for x in range(950, 1050) for y in range(950, 1050)]
 
         def make_task(coord: tuple[int, int]):
@@ -232,26 +301,32 @@ async def async_main(duration: int):
                     e += 1
                     print(f"\n{fut.get_name()} raised Exception: <{type(exc)}> {exc}")
                     continue
-                rslt: MapRegion = fut.result()
+                rslt: None | RawResult = fut.result()
                 if rslt is None:
                     continue
-                if rslt.image:
+                if rslt.result:
                     shown = True
                     hasmap_count += 1
                     print(f"({rslt.coord.x},{rslt.coord.y})✔", end=" ")
+                    shm = shm_mgr.SharedMemory(len(rslt.result))
+                    shm.buf[:] = rslt.result
                     SaverQueue.put(
                         {
                             "coord": rslt.coord,
                             "tsf": datetime.strftime(datetime.now(), "%y%m%d-%H%M"),
-                            "image": rslt.image,
+                            "shm": shm,
                         }
                     )
+                    SharedMemoryAllocations[rslt.coord] = shm
                 else:
                     await Progress.aretire(rslt.coord)
             try:
                 while True:
                     success_coord: MapCoord = SaveSuccessQueue.get_nowait()
                     await Progress.aretire(success_coord)
+                    shm = SharedMemoryAllocations[success_coord]
+                    shm.close()
+                    shm.unlink()
             except queue.Empty:
                 pass
             TriggerCondition.acquire()
@@ -287,7 +362,7 @@ def main(
     duration: int,
     until: tuple[int, int],
     until_utc: tuple[int, int],
-    no_auto_reset: bool,
+    auto_reset: bool,
     nodom: bool,
     workers: int,
 ):
@@ -313,49 +388,83 @@ def main(
         dur = math.inf
 
     progress_file = mapdir / PROG_NAME
-    Progress = RetrieverProgress(progress_file, auto_reset=(not no_auto_reset))
+    Progress = RetrieverProgress(progress_file, auto_reset=auto_reset, min_coord=MIN_COORDS, max_coord=MAX_COORDS)
     if Progress.to_dispatch:
         print(f"{len(Progress.to_dispatch)} jobs still outstanding from last session")
+    else:
+        print("No outstanding jobs from last session.")
+        if Progress.max_unprocessed_y < 0:
+            print("No rows left to process.")
+            print(f"Delete the file {progress_file} to reset. (Or specify --auto-reset)")
 
-    with MP.Manager() as manager:
+    with MP.Manager() as manager, MPMgr.SharedMemoryManager() as shm_manager:
         print("Starting saver worker...", end="", flush=True)
         SaverQueue = MP.Queue()
         SaveSuccessQueue = MP.Queue()
+
         dominant_colors: None | dict[tuple[int, int], dict[int, list[RGBTuple]]]
         if nodom:
             dominant_colors = None
         else:
-            dominant_colors = manager.dict()
-        pool_args = (mapdir, SaverQueue, SaveSuccessQueue, dominant_colors)
+            domc_pkl_path = mapdir / DOMC_NAME
+            if not domc_pkl_path.exists():
+                with domc_pkl_path.open("wb") as fout:
+                    pickle.dump({}, fout, protocol=pickle.HIGHEST_PROTOCOL)
+                dominant_colors = manager.dict()
+            else:
+                with domc_pkl_path.open("rb") as fin:
+                    dominant_colors = manager.dict(pickle.load(fin))
+
+        _mapfilesets: dict[tuple[int, int], list[Path]] = {}
+        m: re.Match
+        flist: list[Path]
+        for mapfile in sorted(mapdir.glob("*.jpg")):
+            if m := RE_MAPFILENAME.match(mapfile.name) is None:
+                continue
+            coord = (int(m.group("x")), int(m.group("y")))
+            _mapfilesets.setdefault(coord, []).append(mapfile)
+        mapfilesets = manager.dict(_mapfilesets)
+
+        saver_args = (mapdir, mapfilesets, SaverQueue, SaveSuccessQueue, dominant_colors)
+        #
         TriggerCondition = manager.Condition()
         EndingEvent = manager.Event()
         EndingEvent.clear()
         save_domc_args = (mapdir, TriggerCondition, EndingEvent, dominant_colors)
+        #
         pool: MPPool.Pool
-        with MP.Pool(workers, saver, pool_args) as pool, MP.Pool(1, save_domc, save_domc_args):
+        with MP.Pool(workers, saver, saver_args) as pool, MP.Pool(1, save_domc, save_domc_args):
+
             print("started.\nDispatching async fetchers!", flush=True)
-            asyncio.run(async_main(dur))
+            try:
+                signal.signal(signal.SIGINT, sigint_handler)
+                asyncio.run(async_main(dur, shm_manager))
+            finally:
+                signal.signal(signal.SIGINT, OrigSigINT)
+
             for _ in range(workers):
                 SaverQueue.put(None)
-            SaverQueue.close()
-            SaverQueue.join_thread()
             print("\nClosing worker pool ... ", end="", flush=True)
             pool.close()
             pool.join()
+            SaverQueue.close()
+            SaverQueue.join_thread()
             print("closed")
             try:
                 print("Flushing SaveSuccess queue ... ", end="", flush=True)
                 while True:
-                    fini = SaveSuccessQueue.get(timeout=5)
-                    if fini is None:
-                        break
-                    Progress.retire(fini)
+                    fini_coord = SaveSuccessQueue.get(timeout=5)
+                    SharedMemoryAllocations[fini_coord].close()
+                    Progress.retire(fini_coord)
             except queue.Empty:
                 pass
             finally:
                 print("flushed")
                 Progress.save()
             print("Send signal to save_domc to finish", flush=True)
+            TriggerCondition.acquire()
+            TriggerCondition.notify_all()
+            TriggerCondition.release()
             EndingEvent.set()
             TriggerCondition.acquire()
             TriggerCondition.notify_all()
@@ -381,13 +490,8 @@ if __name__ == "__main__":
         )
         sys.exit(1)
 
-    orig_sigint = signal.getsignal(signal.SIGINT)
-    try:
-        signal.signal(signal.SIGINT, sigint)
-        main(**vars(opts))
-        if AbortRequested.is_set():
-            print("\nAborted by user.")
-    finally:
-        signal.signal(signal.SIGINT, orig_sigint)
+    main(**vars(opts))
+    if AbortRequested.is_set():
+        print("\nAborted by user.")
 
     lockf.unlink(missing_ok=True)
