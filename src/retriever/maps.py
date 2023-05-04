@@ -66,6 +66,7 @@ LOCK_NAME: Final[str] = "Maps.lock"
 PROG_NAME: Final[str] = "MapsProgress.yaml"
 DOMC_NAME: Final[str] = "DominantColors.pkl"
 
+OrigSigINT: signal.Handlers = signal.getsignal(signal.SIGINT)
 SaverQueue: MP.Queue
 SaveSuccessQueue: MP.Queue
 Progress: RetrieverProgress
@@ -75,7 +76,7 @@ AbortRequested = asyncio.Event()
 SharedMemoryAllocations: dict[tuple[int, int], MPSharedMem.SharedMemory] = {}
 
 
-def sigint(_, __):
+def sigint_handler(_, __):
     global AbortRequested
     if not AbortRequested.is_set():
         print("\n### USER INTERRUPT ###")
@@ -439,7 +440,11 @@ def main(
         with MP.Pool(workers, saver, saver_args) as pool, MP.Pool(1, save_domc, save_domc_args):
 
             print("started.\nDispatching async fetchers!", flush=True)
-            asyncio.run(async_main(dur, shm_manager))
+            try:
+                signal.signal(signal.SIGINT, sigint_handler)
+                asyncio.run(async_main(dur, shm_manager))
+            finally:
+                signal.signal(signal.SIGINT, OrigSigINT)
 
             for _ in range(workers):
                 SaverQueue.put(None)
@@ -489,13 +494,8 @@ if __name__ == "__main__":
         )
         sys.exit(1)
 
-    orig_sigint = signal.getsignal(signal.SIGINT)
-    try:
-        signal.signal(signal.SIGINT, sigint)
-        main(**vars(opts))
-        if AbortRequested.is_set():
-            print("\nAborted by user.")
-    finally:
-        signal.signal(signal.SIGINT, orig_sigint)
+    main(**vars(opts))
+    if AbortRequested.is_set():
+        print("\nAborted by user.")
 
     lockf.unlink(missing_ok=True)
