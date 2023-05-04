@@ -46,7 +46,7 @@ class RetrieverProgress:
     def retire(self, item: tuple[int, int]):
         if item is None:
             return
-        self.to_retire.remove(item)
+        self.to_retire.discard(item)
 
     async def aretire(self, item: tuple[int, int]):
         if item is None:
