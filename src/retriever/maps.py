@@ -246,25 +246,26 @@ def saver(
             #     dominant_colors[tuple(coord)] = domc
 
             # Prune older file of same coordinate if really similar
-            if not (coordfiles := mapfilesets.get(coord, [])):
+            if (coordfiles := mapfilesets.get(coord)) is None:
                 continue
-            f2 = coordfiles[-1]
             # noinspection PyTypeChecker
             f1_arr = np.asarray(img.convert("L"))
-            try:
-                with f2.open("rb") as fin:
-                    f2_img = Image.open(fin)
-                    f2_img.load()
-                # noinspection PyTypeChecker
-                f2_arr = np.asarray(f2_img.convert("L"))
-                # Image similarity test using Structural Similarity Index,
-                # see https://pyimagesearch.com/2014/09/15/python-compare-two-images/
-                if ssim(f1_arr, f2_arr) > SSIM_THRESHOLD:
-                    f2.unlink()
+            while coordfiles:
+                f2 = coordfiles[-1]
+                try:
+                    with f2.open("rb") as fin:
+                        f2_img = Image.open(fin)
+                        f2_img.load()
+                    # noinspection PyTypeChecker
+                    f2_arr = np.asarray(f2_img.convert("L"))
+                    # Image similarity test using Structural Similarity Index,
+                    # see https://pyimagesearch.com/2014/09/15/python-compare-two-images/
+                    if ssim(f1_arr, f2_arr) > SSIM_THRESHOLD:
+                        f2.unlink()
+                        coordfiles.pop()
+                        print("❌", end="", flush=True)
+                except FileNotFoundError:
                     coordfiles.pop()
-                    print("❌", end="", flush=True)
-            except FileNotFoundError:
-                coordfiles.pop()
             coordfiles.append(targf)
             mapfilesets[coord] = coordfiles
 
