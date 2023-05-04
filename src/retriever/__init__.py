@@ -62,8 +62,7 @@ class RetrieverProgress:
             ryaml.dump(exported, fout, default_flow_style=False)
 
     async def abatch(self, batch_size: int) -> Generator[tuple[int, int], None, None]:
-        c = 0
-        while c < batch_size:
+        for _ in range(batch_size):
             if not self.to_dispatch:
                 if self.max_unprocessed_y < 0:
                     if not self.auto_reset:
@@ -75,4 +74,3 @@ class RetrieverProgress:
             job = self.to_dispatch.popleft()
             self.to_retire.add(job)
             yield job
-            c += 1

@@ -20,7 +20,9 @@ from pathlib import Path
 from typing import Final, TypedDict, cast, Protocol
 
 import httpx
+import numpy as np
 from PIL import Image
+from skimage.metrics import structural_similarity as ssim
 
 from retriever import RetrieverProgress
 from sl_maptools import MapCoord, MapRegion
@@ -29,6 +31,8 @@ from sl_maptools.fetchers.map import BoundedMapFetcher
 
 # from sl_maptools.bb_fetcher import BoundedNameFetcher, CookedTile
 
+
+SSIM_THRESHOLD: Final[float] = 0.98
 
 MIN_X: Final[int] = 0
 MAX_X: Final[int] = 2100
@@ -84,7 +88,7 @@ class OptionsProtocol(Protocol):
     duration: int
     until: tuple[int, int]
     until_utc: tuple[int, int]
-    no_auto_reset: bool
+    auto_reset: bool
 
 
 RE_HHMM = re.compile(r"^(\d{1,2}):(\d{1,2})$")
@@ -104,6 +108,11 @@ def options() -> OptionsProtocol:
     parser.add_argument("--mapdir", metavar="DIR", type=Path, default=DEFA_MAPS_DIR)
     parser.add_argument("--nodom", action="store_true", help="If specified, do not calculate dominant color")
     parser.add_argument("--workers", type=int, default=(MP.cpu_count() - 2))
+    parser.add_argument(
+        "--auto-reset",
+        action="store_true",
+        help="If specified, retriever will wrap up back to maxrow (2100) upon finishing row 0",
+    )
 
     grp = parser.add_mutually_exclusive_group()
     grp.add_argument(
@@ -129,11 +138,6 @@ def options() -> OptionsProtocol:
         action=HourMinute,
         help="Same as --until but using UTC time (no DST problem)",
     )
-    parser.add_argument(
-        "--no-auto-reset",
-        action="store_true",
-        help="If specified, retriever will not wrap up back to maxrow (2100) upon finishing row 0",
-    )
 
     _opts = parser.parse_args()
 
@@ -155,16 +159,42 @@ def save_domc(
     signal.signal(signal.SIGINT, signal.SIG_IGN)
     if dominant_colors is None:
         return
+
+    def deeply_equal(d1: dict, d2: dict):
+        if len(d1) != len(d2):
+            return False
+        if sorted(d1.keys()) != sorted(d2.keys()):
+            return False
+        for k, v1 in d1.items():
+            v2 = d2[k]
+            if type(v1) != type(v2):
+                return False
+            if isinstance(v1, dict):
+                if not deeply_equal(v1, v2):
+                    return False
+            else:
+                if v1 != v2:
+                    return False
+        return True
+
+    domc_pkl_path = mapdir / DOMC_NAME
+    # Make a copy first so we can detect changes later.
+    domc = dominant_colors.copy()
     while True:
         trigger_condition.acquire()
         trigger_condition.wait()
         if ending_event.is_set():
             break
-        domc = {k: dominant_colors[k] for k in list(dominant_colors.keys())}
-        with (mapdir / DOMC_NAME).open("wb") as fout:
-            pickle.dump(domc, fout)
-        print("📝", end="", flush=True)
-        domc.clear()
+
+        # Copy dominant_colors, which is a manager.dict(), so that when we process it there won't be any changes
+        curr_domc = dominant_colors.copy()
+        if deeply_equal(domc, curr_domc):
+            continue
+
+        domc = curr_domc
+        with domc_pkl_path.open("wb") as fout:
+            pickle.dump(domc, fout, protocol=pickle.HIGHEST_PROTOCOL)
+        print(f"⏬[{len(domc)}]", end="", flush=True)
 
 
 def saver(
@@ -198,7 +228,26 @@ def saver(
             success_queue.put(coord)
         except Exception:
             raise
-    success_queue.put(None)
+
+        # Prune older file of same coordinate if really similar
+        coordfiles = sorted(mapdir.glob(f"{coord.x}-{coord.y}_*.jpg"), reverse=True)
+        if len(coordfiles) < 2:
+            continue
+        f1 = coordfiles[0]
+        f2 = coordfiles[1]
+        with f1.open("rb") as fin:
+            f1_img = Image.open(fin)
+            f1_img.load()
+        f1_arr = np.asarray(f1_img.convert("L"))
+        with f2.open("rb") as fin:
+            f2_img = Image.open(fin)
+            f2_img.load()
+        f2_arr = np.asarray(f2_img.convert("L"))
+        # Image similarity test using Structural Similarity Index,
+        # see https://pyimagesearch.com/2014/09/15/python-compare-two-images/
+        if ssim(f1_arr, f2_arr) > SSIM_THRESHOLD:
+            f2.unlink()
+            print("❌", end="", flush=True)
 
 
 async def async_main(duration: int):
@@ -287,7 +336,7 @@ def main(
     duration: int,
     until: tuple[int, int],
     until_utc: tuple[int, int],
-    no_auto_reset: bool,
+    auto_reset: bool,
     nodom: bool,
     workers: int,
 ):
@@ -313,9 +362,14 @@ def main(
         dur = math.inf
 
     progress_file = mapdir / PROG_NAME
-    Progress = RetrieverProgress(progress_file, auto_reset=(not no_auto_reset))
+    Progress = RetrieverProgress(progress_file, auto_reset=auto_reset)
     if Progress.to_dispatch:
         print(f"{len(Progress.to_dispatch)} jobs still outstanding from last session")
+    else:
+        print("No outstanding jobs from last session.")
+        if Progress.max_unprocessed_y < 0:
+            print("No rows left to process.")
+            print(f"Delete the file {progress_file} to reset. (Or specify --auto-reset)")
 
     with MP.Manager() as manager:
         print("Starting saver worker...", end="", flush=True)
@@ -325,7 +379,14 @@ def main(
         if nodom:
             dominant_colors = None
         else:
-            dominant_colors = manager.dict()
+            domc_pkl_path = mapdir / DOMC_NAME
+            if not domc_pkl_path.exists():
+                with domc_pkl_path.open("wb") as fout:
+                    pickle.dump({}, fout, protocol=pickle.HIGHEST_PROTOCOL)
+                dominant_colors = manager.dict()
+            else:
+                with domc_pkl_path.open("rb") as fin:
+                    dominant_colors = manager.dict(pickle.load(fin))
         pool_args = (mapdir, SaverQueue, SaveSuccessQueue, dominant_colors)
         TriggerCondition = manager.Condition()
         EndingEvent = manager.Event()
@@ -337,18 +398,16 @@ def main(
             asyncio.run(async_main(dur))
             for _ in range(workers):
                 SaverQueue.put(None)
-            SaverQueue.close()
-            SaverQueue.join_thread()
             print("\nClosing worker pool ... ", end="", flush=True)
             pool.close()
             pool.join()
+            SaverQueue.close()
+            SaverQueue.join_thread()
             print("closed")
             try:
                 print("Flushing SaveSuccess queue ... ", end="", flush=True)
                 while True:
                     fini = SaveSuccessQueue.get(timeout=5)
-                    if fini is None:
-                        break
                     Progress.retire(fini)
             except queue.Empty:
                 pass
@@ -356,6 +415,9 @@ def main(
                 print("flushed")
                 Progress.save()
             print("Send signal to save_domc to finish", flush=True)
+            TriggerCondition.acquire()
+            TriggerCondition.notify_all()
+            TriggerCondition.release()
             EndingEvent.set()
             TriggerCondition.acquire()
             TriggerCondition.notify_all()
