@@ -238,10 +238,12 @@ def saver(
         with f1.open("rb") as fin:
             f1_img = Image.open(fin)
             f1_img.load()
+        # noinspection PyTypeChecker
         f1_arr = np.asarray(f1_img.convert("L"))
         with f2.open("rb") as fin:
             f2_img = Image.open(fin)
             f2_img.load()
+        # noinspection PyTypeChecker
         f2_arr = np.asarray(f2_img.convert("L"))
         # Image similarity test using Structural Similarity Index,
         # see https://pyimagesearch.com/2014/09/15/python-compare-two-images/
