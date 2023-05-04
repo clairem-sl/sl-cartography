@@ -398,11 +398,11 @@ def main(
             asyncio.run(async_main(dur))
             for _ in range(workers):
                 SaverQueue.put(None)
-            SaverQueue.close()
-            SaverQueue.join_thread()
             print("\nClosing worker pool ... ", end="", flush=True)
             pool.close()
             pool.join()
+            SaverQueue.close()
+            SaverQueue.join_thread()
             print("closed")
             try:
                 print("Flushing SaveSuccess queue ... ", end="", flush=True)
