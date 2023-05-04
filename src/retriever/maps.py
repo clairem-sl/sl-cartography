@@ -180,7 +180,7 @@ def save_domc(
         return True
 
     domc_pkl_path = mapdir / DOMC_NAME
-    # Make a copy first so we can detect changes later.
+    # Make a copy first, so we can detect changes later.
     domc = dominant_colors.copy()
     while True:
         trigger_condition.acquire()
@@ -381,6 +381,7 @@ def main(
         print("Starting saver worker...", end="", flush=True)
         SaverQueue = MP.Queue()
         SaveSuccessQueue = MP.Queue()
+
         dominant_colors: None | dict[tuple[int, int], dict[int, list[RGBTuple]]]
         if nodom:
             dominant_colors = None
