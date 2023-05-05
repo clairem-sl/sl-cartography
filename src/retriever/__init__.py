@@ -35,9 +35,9 @@ class RetrieverProgress:
 
     @property
     def outstanding_jobs(self) -> list[tuple[int, int]]:
-        outstanding = sorted(self.to_retire, key=lambda t: (t[1], t[0]))
-        outstanding.extend(self.to_dispatch)
-        return outstanding
+        outstanding = set(self.to_retire)
+        outstanding.update(self.to_dispatch)
+        return sorted(outstanding, key=lambda t: (t[1], t[0]))
 
     @property
     def outstanding_count(self) -> int:
@@ -59,9 +59,11 @@ class RetrieverProgress:
         self.max_unprocessed_y = _last_sess["max_unprocessed_y"]
         if self.auto_reset and self.max_unprocessed_y < 0:
             self.max_unprocessed_y = 0
-        for c in _last_sess["outstanding_coords"]:
+        _coords: set[tuple[int, int]] = set()
+        for c in _last_sess.get("outstanding_coords", []):
             x, y = c.split(",")
-            self.to_dispatch.append((int(x), int(y)))
+            _coords.add((int(x), int(y)))
+        self.to_dispatch.extend(sorted(_coords, key=lambda t: (t[1], t[0])))
 
     def save(self):
         exported: ProgressDict = {
