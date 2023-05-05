@@ -410,11 +410,11 @@ def main(
 
     progress_file = mapdir / PROG_NAME
     Progress = RetrieverProgress(progress_file, auto_reset=auto_reset, min_coord=MIN_COORDS, max_coord=MAX_COORDS)
-    if Progress.to_dispatch:
-        print(f"{len(Progress.to_dispatch)} jobs still outstanding from last session")
+    if Progress.outstanding_count:
+        print(f"{Progress.outstanding_count} jobs still outstanding from last session")
     else:
         print("No outstanding jobs from last session.")
-        if Progress.max_unprocessed_y < 0:
+        if Progress.next_y < 0:
             print("No rows left to process.")
             print(f"Delete the file {progress_file} to reset. (Or specify --auto-reset)")
 
