@@ -499,6 +499,7 @@ def main(
             # pool2.join()
             # print("joined", flush=True)
     print(f"{Progress.outstanding_count:_} outstanding jobs left.")
+    print(f"Last dispatched coordinate: {Progress.last_dispatch}")
 
     lockf.unlink(missing_ok=True)
 
