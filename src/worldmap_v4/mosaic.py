@@ -15,6 +15,10 @@ from sl_maptools.image_processing import (
 )
 from worldmap_v4 import get_bonnie_coords
 
+
+CoordType = tuple[int, int]
+
+
 RE_REGMAP_FN: re.Pattern = re.compile(r"^(?P<x>\d+)-(?P<y>\d+)_\d+-\d+.jpg$")
 
 
@@ -35,15 +39,12 @@ def get_opts():
     return _opts
 
 
-Coord = tuple[int, int]
-DominantColorsDB: dict[Coord, dict[int, list[RGBTuple]]] = {}
-RegionsDB: dict[Coord, Any] = {}
-MapFiles: dict[Coord, Path] = {}
+DominantColorsDB: dict[CoordType, dict[int, list[RGBTuple]]] = {}
+RegionsDB: dict[CoordType, Any] = {}
+MapFiles: dict[CoordType, Path] = {}
 
 
-
-
-def calc_domc(job: tuple[Coord, Path]):
+def calc_domc(job: tuple[CoordType, Path]):
     coord, mapfile = job
     with mapfile.open("rb") as fin:
         img = Image.open(fin)
@@ -54,7 +55,7 @@ def calc_domc(job: tuple[Coord, Path]):
     return coord, domc
 
 
-def make_mosaic(data: dict[Coord, list[RGBTuple]], tilesize: int, max_coords: Coord):
+def make_mosaic(data: dict[CoordType, list[RGBTuple]], tilesize: int, max_coords: CoordType):
     """
     :param data: world data to mosaicize
     :param tilesize: size of 'tile' (representation of a region in mosaic map)
@@ -119,7 +120,7 @@ def main(
     print(f"{len(MapFiles)} regions to mosaicize.")
 
     print(f"Calculating dominant colors ", end="", flush=True)
-    world_domc: dict[int, dict[Coord, list[RGBTuple]]] = {n: {} for n in FASCIA_SIZES}
+    world_domc: dict[int, dict[CoordType, list[RGBTuple]]] = {n: {} for n in FASCIA_SIZES}
     pool: MPPool.Pool
     with MP.Pool(workers) as pool:
         for i, result in enumerate(
