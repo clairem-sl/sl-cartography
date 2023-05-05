@@ -36,10 +36,6 @@ class RetrieverProgress:
             self.load()
 
     @property
-    def outstanding_jobs(self) -> list[tuple[int, int]]:
-        return sorted(self.outstanding, key=lambda t: (t[1], t[0]))
-
-    @property
     def outstanding_count(self) -> int:
         return len(self.outstanding)
 
@@ -61,13 +57,13 @@ class RetrieverProgress:
         for c in _last_sess.get("outstanding", []):
             x, y = c.split(",")
             self.outstanding.add((int(x), int(y)))
-        self._backlog.extend(self.outstanding_jobs)
+        self._backlog.extend(sorted(self.outstanding, key=lambda t: (t[1], t[0])))
 
     def save(self):
         exported: ProgressDict = {
             "next_x": self.next_x,
             "next_y": self.next_y,
-            "outstanding": [f"{x},{y}" for x, y in self.outstanding_jobs],
+            "outstanding": [f"{x},{y}" for x, y in sorted(self.outstanding, key=lambda t: (t[1], t[0]))],
         }
         with self.backing_file.open("wt") as fout:
             ryaml.dump(exported, fout, default_flow_style=False)
