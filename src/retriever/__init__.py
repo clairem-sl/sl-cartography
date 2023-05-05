@@ -80,18 +80,17 @@ class RetrieverProgress:
             if c >= batch_size:
                 return
         while c < batch_size:
-            while True:
-                job = self.next_x, self.next_y
-                if job not in self.outstanding:
-                    c += 1
-                    self.outstanding.add(job)
-                    yield job
-                self.next_x += 1
-                if self.next_x > self.maxc[0]:
-                    self.next_x = self.minc[0]
-                    self.next_y -= 1
-                    if self.next_y < self.minc[1]:
-                        if not self.auto_reset:
-                            return
-                        self.next_y = self.maxc[1]
-                    print(f"ROW:{job[1]}", flush=True)
+            job = self.next_x, self.next_y
+            if job not in self.outstanding:
+                c += 1
+                self.outstanding.add(job)
+                yield job
+            self.next_x += 1
+            if self.next_x > self.maxc[0]:
+                self.next_x = self.minc[0]
+                self.next_y -= 1
+                if self.next_y < self.minc[1]:
+                    if not self.auto_reset:
+                        return
+                    self.next_y = self.maxc[1]
+                print(f"ROW:{job[1]}", flush=True)
