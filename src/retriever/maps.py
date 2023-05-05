@@ -351,7 +351,7 @@ async def async_main(duration: int, shm_mgr: MPMgr.SharedMemoryManager):
             avg_rate = total / elapsed
             print(
                 f"\n  {elapsed:_.2f}s since start, {total:_} coords scanned "
-                f"(avg. {avg_rate:.2f} r/s), {hasmap_count} maps retrieved"
+                f"(avg. {avg_rate:.2f} r/s), {hasmap_count:_} maps retrieved"
             )
             # print(f"  using {fetcher.seen_http_vers}")
             tasks = pending_tasks
