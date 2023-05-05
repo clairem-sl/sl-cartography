@@ -32,6 +32,7 @@ class RetrieverProgress:
         self.next_y = max_coord[1]
         self.outstanding: set[tuple[int, int]] = set()
         self._backlog: deque[tuple[int, int]] = deque()
+        self.last_dispatch: tuple[int, int] = (-1, -1)
         if backing_file.exists():
             self.load()
 
@@ -81,6 +82,7 @@ class RetrieverProgress:
                 c += 1
                 self.outstanding.add(job)
                 yield job
+                self.last_dispatch = job
             self.next_x += 1
             if self.next_x > self.maxc[0]:
                 self.next_x = self.minc[0]
