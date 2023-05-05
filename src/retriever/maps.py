@@ -374,6 +374,20 @@ def main(
     force: bool,
 ):
     global Progress, SaverQueue, SaveSuccessQueue, TriggerCondition, EndingEvent
+    mapdir.mkdir(parents=True, exist_ok=True)
+
+    lockf: Path = mapdir / LOCK_NAME
+    if not force:
+        try:
+            lockf.touch(exist_ok=False)
+        except FileExistsError:
+            print(f"Lock file {lockf} exists!", file=sys.stderr)
+            print("You must not run multiple audits at the same time.", file=sys.stderr)
+            print(
+                "If no other audit is running, delete the lock file to continue.",
+                file=sys.stderr,
+            )
+            sys.exit(1)
 
     nao = datetime.now()
     if duration > 0:
@@ -486,27 +500,11 @@ def main(
             # print("joined", flush=True)
     print(f"{Progress.outstanding_count:_} outstanding jobs left.")
 
+    lockf.unlink(missing_ok=True)
+
 
 if __name__ == "__main__":
     opts = options()
-
-    opts.mapdir.mkdir(parents=True, exist_ok=True)
-
-    lockf: Path = opts.mapdir / LOCK_NAME
-    if not opts.force:
-        try:
-            lockf.touch(exist_ok=False)
-        except FileExistsError:
-            print(f"Lock file {lockf} exists!", file=sys.stderr)
-            print("You must not run multiple audits at the same time.", file=sys.stderr)
-            print(
-                "If no other audit is running, delete the lock file to continue.",
-                file=sys.stderr,
-            )
-            sys.exit(1)
-
     main(**vars(opts))
     if AbortRequested.is_set():
         print("\nAborted by user.")
-
-    lockf.unlink(missing_ok=True)
