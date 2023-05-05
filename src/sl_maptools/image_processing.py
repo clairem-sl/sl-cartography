@@ -65,6 +65,7 @@ FASCIA_COORDS: dict[int, list[BoxTuple]] = {
         (200, 200, 256, 256),
     ],
 }
+FASCIA_SIZES = sorted(FASCIA_COORDS.keys())
 
 
 def calculate_dominant_colors(region: Image.Image, fascia_per_side: int, kmeans: int = 3) -> list[RGBTuple]:
