@@ -1,18 +1,19 @@
 import argparse
-import pickle
-import re
-
 import multiprocessing as MP
 import multiprocessing.pool as MPPool
-
+import pickle
+import re
 from pathlib import Path
 from typing import Any, TypedDict
 
 from PIL import Image
 
-from sl_maptools.image_processing import RGBTuple, calculate_dominant_colors, FASCIA_SIZES
+from sl_maptools.image_processing import (
+    FASCIA_SIZES,
+    RGBTuple,
+    calculate_dominant_colors,
+)
 from worldmap_v4 import get_bonnie_coords
-
 
 RE_REGMAP_FN: re.Pattern = re.compile(r"^(?P<x>\d+)-(?P<y>\d+)_\d+-\d+.jpg$")
 
@@ -90,7 +91,9 @@ def make_mosaic(data: dict[Coord, list[RGBTuple]], tilesize: int, max_coords: Co
     print(targ)
 
 
-def main(regionsdb: Path, mapdir: Path, bonniedb: Path, fetchbonnie: bool, tilesize: int):
+def main(
+    regionsdb: Path, mapdir: Path, bonniedb: Path, fetchbonnie: bool, tilesize: int
+):
     global DominantColorsDB, RegionsDB, MapFiles
 
     if not regionsdb.exists():
@@ -121,7 +124,9 @@ def main(regionsdb: Path, mapdir: Path, bonniedb: Path, fetchbonnie: bool, tiles
     world_domc: dict[int, dict[Coord, list[RGBTuple]]] = {n: {} for n in FASCIA_SIZES}
     pool: MPPool.Pool
     with MP.Pool() as pool:
-        for i, result in enumerate(pool.imap_unordered(calc_domc, MapFiles.items()), start=1):
+        for i, result in enumerate(
+            pool.imap_unordered(calc_domc, MapFiles.items()), start=1
+        ):
             coord, domc = result
             for fsz, cols in domc.items():
                 world_domc[fsz][coord] = cols
@@ -134,6 +139,6 @@ def main(regionsdb: Path, mapdir: Path, bonniedb: Path, fetchbonnie: bool, tiles
         make_mosaic(world_domc[fsz], tilesize, (2100, 2100))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     opts = get_opts()
     main(**vars(opts))
