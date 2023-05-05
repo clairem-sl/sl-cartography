@@ -23,7 +23,8 @@ def get_opts():
 
     parser.add_argument("--regionsdb", type=Path)
     parser.add_argument("--mapdir", type=Path)
-    parser.add_argument("--tilesize", type=int, default=9)
+    parser.add_argument("--tilesize", metavar="N", type=int, default=9)
+    parser.add_argument("--workers", metavar="N", type=int, default=max(1, MP.cpu_count() - 2))
 
     grp_bonnie = parser.add_mutually_exclusive_group()
     grp_bonnie.add_argument("--bonniedb", type=Path)
@@ -92,7 +93,7 @@ def make_mosaic(data: dict[Coord, list[RGBTuple]], tilesize: int, max_coords: Co
 
 
 def main(
-    regionsdb: Path, mapdir: Path, bonniedb: Path, fetchbonnie: bool, tilesize: int
+    regionsdb: Path, mapdir: Path, bonniedb: Path, fetchbonnie: bool, tilesize: int, workers: int
 ):
     global DominantColorsDB, RegionsDB, MapFiles
 
@@ -123,7 +124,7 @@ def main(
     print(f"Calculating dominant colors ", end="", flush=True)
     world_domc: dict[int, dict[Coord, list[RGBTuple]]] = {n: {} for n in FASCIA_SIZES}
     pool: MPPool.Pool
-    with MP.Pool() as pool:
+    with MP.Pool(workers) as pool:
         for i, result in enumerate(
             pool.imap_unordered(calc_domc, MapFiles.items()), start=1
         ):
