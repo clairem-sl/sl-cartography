@@ -374,6 +374,20 @@ def main(
     force: bool,
 ):
     global Progress, SaverQueue, SaveSuccessQueue, TriggerCondition, EndingEvent
+    mapdir.mkdir(parents=True, exist_ok=True)
+
+    lockf: Path = mapdir / LOCK_NAME
+    if not force:
+        try:
+            lockf.touch(exist_ok=False)
+        except FileExistsError:
+            print(f"Lock file {lockf} exists!", file=sys.stderr)
+            print("You must not run multiple audits at the same time.", file=sys.stderr)
+            print(
+                "If no other audit is running, delete the lock file to continue.",
+                file=sys.stderr,
+            )
+            sys.exit(1)
 
     nao = datetime.now()
     if duration > 0:
@@ -396,11 +410,11 @@ def main(
 
     progress_file = mapdir / PROG_NAME
     Progress = RetrieverProgress(progress_file, auto_reset=auto_reset, min_coord=MIN_COORDS, max_coord=MAX_COORDS)
-    if Progress.to_dispatch:
-        print(f"{len(Progress.to_dispatch)} jobs still outstanding from last session")
+    if Progress.outstanding_count:
+        print(f"{Progress.outstanding_count} jobs still outstanding from last session")
     else:
         print("No outstanding jobs from last session.")
-        if Progress.max_unprocessed_y < 0:
+        if Progress.next_y < 0:
             print("No rows left to process.")
             print(f"Delete the file {progress_file} to reset. (Or specify --auto-reset)")
 
@@ -485,28 +499,13 @@ def main(
             # pool2.join()
             # print("joined", flush=True)
     print(f"{Progress.outstanding_count:_} outstanding jobs left.")
+    print(f"Last dispatched coordinate: {Progress.last_dispatch}")
+
+    lockf.unlink(missing_ok=True)
 
 
 if __name__ == "__main__":
     opts = options()
-
-    opts.mapdir.mkdir(parents=True, exist_ok=True)
-
-    lockf: Path = opts.mapdir / LOCK_NAME
-    if not opts.force:
-        try:
-            lockf.touch(exist_ok=False)
-        except FileExistsError:
-            print(f"Lock file {lockf} exists!", file=sys.stderr)
-            print("You must not run multiple audits at the same time.", file=sys.stderr)
-            print(
-                "If no other audit is running, delete the lock file to continue.",
-                file=sys.stderr,
-            )
-            sys.exit(1)
-
     main(**vars(opts))
     if AbortRequested.is_set():
         print("\nAborted by user.")
-
-    lockf.unlink(missing_ok=True)
