@@ -4,7 +4,7 @@ import multiprocessing.pool as MPPool
 import pickle
 import re
 from pathlib import Path
-from typing import Any, TypedDict
+from typing import Any
 
 from PIL import Image
 
@@ -41,9 +41,6 @@ RegionsDB: dict[Coord, Any] = {}
 MapFiles: dict[Coord, Path] = {}
 
 
-class JobDict(TypedDict):
-    coord: Coord
-    mapfile: Path
 
 
 def calc_domc(job: tuple[Coord, Path]):
