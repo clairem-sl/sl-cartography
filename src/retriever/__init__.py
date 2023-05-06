@@ -37,6 +37,10 @@ class RetrieverProgress:
             self.load()
 
     @property
+    def next_coordinate(self) -> tuple[int, int]:
+        return self.next_x, self.next_y
+
+    @property
     def outstanding_count(self) -> int:
         return len(self.outstanding)
 
