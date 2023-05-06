@@ -480,6 +480,7 @@ def main(
     Progress = RetrieverProgress(progress_file, auto_reset=auto_reset, min_coord=MIN_COORDS, max_coord=MAX_COORDS)
     if Progress.outstanding_count:
         print(f"{Progress.outstanding_count} jobs still outstanding from last session")
+        print(f"Next coordinate: {Progress.next_coordinate}")
     else:
         print("No outstanding jobs from last session.")
         if Progress.next_y < 0:
