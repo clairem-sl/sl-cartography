@@ -37,6 +37,7 @@ RE_MAPFILENAME: re.Pattern = re.compile(r"^(?P<x>\d+)-(?P<y>\d+)_(?P<ts>[0-9-]+)
 
 SSIM_THRESHOLD: Final[float] = 0.98
 MSE_THRESHOLD: Final[float] = 0.01
+MAVG_SAMPLES: Final[int] = 5
 MIN_COORDS: Final[MapCoord] = MapCoord(0, 0)
 MAX_COORDS: Final[MapCoord] = MapCoord(2100, 2100)
 
@@ -169,8 +170,8 @@ async def async_main(duration: int, shm_mgr: MPMgr.SharedMemoryManager):
             return
 
         total = hasmap_count = batch_size = 0
-        done_last10: deque[int] = deque(maxlen=10)
-        elapsed_last10: deque[float] = deque(maxlen=10)
+        done_last10: deque[int] = deque(maxlen=MAVG_SAMPLES)
+        elapsed_last10: deque[float] = deque(maxlen=MAVG_SAMPLES)
         done: set[asyncio.Task]
         pending_tasks: set[asyncio.Task]
         while tasks:
