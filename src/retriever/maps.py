@@ -11,6 +11,7 @@ import multiprocessing as MP
 import multiprocessing.managers as MPMgr
 import multiprocessing.pool as MPPool
 import multiprocessing.shared_memory as MPSharedMem
+
 # import multiprocessing.synchronize as MPSync
 # import pickle
 import queue
@@ -21,22 +22,20 @@ import time
 from datetime import datetime, timedelta, timezone
 from enum import IntEnum
 from pathlib import Path
-from typing import Final, TypedDict, cast, Protocol, Any
+from typing import Any, Final, Protocol, TypedDict, cast
 
 import httpx
 import numpy as np
 from PIL import Image
-from skimage.metrics import (
-    mean_squared_error as mse,
-    structural_similarity as ssim
-)
+from skimage.metrics import mean_squared_error as mse
+from skimage.metrics import structural_similarity as ssim
 
 from retriever import RetrieverProgress
 from sl_maptools import MapCoord
 from sl_maptools.fetchers import RawResult
+
 # from sl_maptools.image_processing import calculate_dominant_colors, FASCIA_COORDS, RGBTuple
 from sl_maptools.fetchers.map import BoundedMapFetcher
-
 
 RE_MAPFILENAME: re.Pattern = re.compile(r"^(?P<x>\d+)-(?P<y>\d+)_(?P<ts>[0-9-]+)\.jpg$")
 
