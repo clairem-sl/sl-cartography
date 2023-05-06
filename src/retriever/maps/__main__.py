@@ -300,7 +300,7 @@ def main(
         SaverQueue = MP.Queue()
         SaveSuccessQueue = MP.Queue()
         saved = manager.dict()
-        worker_state: dict[str, str] = manager.dict()
+        worker_state: dict[str, tuple[str, Path | None]] = manager.dict()
 
         _mapfilesets: dict[tuple[int, int], list[Path]] = {}
         m: re.Match
