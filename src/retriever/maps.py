@@ -471,6 +471,7 @@ def main(
                 signal.signal(signal.SIGINT, sigint_handler)
                 asyncio.run(async_main(dur, shm_manager))
             finally:
+                time.sleep(1)
                 signal.signal(signal.SIGINT, OrigSigINT)
 
             print("Closing the pool, preventing new workers from spawning ... ", end="", flush=True)
