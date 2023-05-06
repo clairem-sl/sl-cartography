@@ -463,7 +463,7 @@ def main(
 
         saver_args = (mapdir, mapfilesets, SaverQueue, SaveSuccessQueue, saved, worker_state, debug_level)
         pool: MPPool.Pool
-        with MP.Pool(workers, saver, saver_args) as pool:
+        with MP.Pool(workers, initializer=saver, initargs=saver_args) as pool:
 
             print("started.\nDispatching async fetchers!", flush=True)
             try:
