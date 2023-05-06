@@ -53,6 +53,9 @@ class RetrieverProgress:
     def load(self):
         with self.backing_file.open("rt") as fin:
             _last_sess: ProgressDict = ryaml.safe_load(fin)
+        if _last_sess is None:
+            # noinspection PyTypeChecker
+            _last_sess = {}
         self.next_x = _last_sess.get("next_x", self.minc[0])
         self.next_y = _last_sess.get("next_y", self.maxc[1])
         for c in _last_sess.get("outstanding", []):
