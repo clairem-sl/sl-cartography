@@ -19,6 +19,7 @@ import signal
 import sys
 import time
 from datetime import datetime, timedelta, timezone
+from enum import IntEnum
 from pathlib import Path
 from typing import Final, TypedDict, cast, Protocol, Any
 
@@ -110,6 +111,12 @@ class HourMinute(argparse.Action):
         setattr(namespace, self.dest, (int(m.group(1)), int(m.group(2))))
 
 
+class DebugLevel(IntEnum):
+    DISABLED = 0
+    NORMAL = 1
+    DETAILED = 2
+
+
 def options() -> OptionsProtocol:
     parser = argparse.ArgumentParser("region_auditor")
 
@@ -124,6 +131,7 @@ def options() -> OptionsProtocol:
         action="store_true",
         help=f"If specified, retriever will wrap up back to maxrow ({MAX_COORDS.y}) upon finishing row 0",
     )
+    parser.add_argument("--debug_level", type=DebugLevel, default=DebugLevel.NORMAL)
 
     grp = parser.add_mutually_exclusive_group()
     grp.add_argument(
@@ -215,7 +223,7 @@ def saver(
     saved: dict[MapCoord, Any],
     worker_state: dict[str, tuple[str, str | None]],
     # comparer_lock: dict[str, MP.RLock],
-    debug: bool,
+    debug_level: DebugLevel,
 ):
     signal.signal(signal.SIGINT, signal.SIG_IGN)
     mapdir.mkdir(parents=True, exist_ok=True)
@@ -258,8 +266,10 @@ def saver(
 
             saved[coord] = None
             counter = len(saved)
-            if debug:
-                print(f"💾[{counter}]", end="", flush=True)
+            if debug_level > DebugLevel.DISABLED:
+                print(f"💾", end="", flush=True)
+                if debug_level >= DebugLevel.DETAILED:
+                    print(f"[{counter}]", end="", flush=True)
 
             _setstate("decoding")
             with io.BytesIO(blob) as bio:
@@ -314,8 +324,10 @@ def saver(
                     if do_delete:
                         f2.unlink()
                         coordfiles.pop()
-                        if debug:
-                            print(f"❌[{counter}]", end="", flush=True)
+                        if debug_level > DebugLevel.DISABLED:
+                            print(f"❌", end="", flush=True)
+                            if debug_level >= DebugLevel.DETAILED:
+                                print(f"[{counter}]", end="", flush=True)
                         do_delete = False
                     else:
                         break
@@ -436,6 +448,7 @@ def main(
     # nodom: bool,
     workers: int,
     force: bool,
+    debug_level: DebugLevel,
 ):
     global Progress, SaverQueue, SaveSuccessQueue
     mapdir.mkdir(parents=True, exist_ok=True)
@@ -519,7 +532,7 @@ def main(
 
         # saver_args = (mapdir, mapfilesets, SaverQueue, SaveSuccessQueue, dominant_colors)
         # saver_args = (mapdir, mapfilesets, SaverQueue, SaveSuccessQueue, saved, worker_state, comparer_lock)
-        saver_args = (mapdir, mapfilesets, SaverQueue, SaveSuccessQueue, saved, worker_state, True)
+        saver_args = (mapdir, mapfilesets, SaverQueue, SaveSuccessQueue, saved, worker_state, debug_level)
         #
         # save_domc_args = (mapdir, TriggerCondition, EndingEvent, dominant_colors)
         #
