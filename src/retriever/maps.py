@@ -25,7 +25,10 @@ from typing import Final, TypedDict, cast, Protocol, Any
 import httpx
 import numpy as np
 from PIL import Image
-from skimage.metrics import structural_similarity as ssim
+from skimage.metrics import (
+    mean_squared_error as mse,
+    structural_similarity as ssim
+)
 
 from retriever import RetrieverProgress
 from sl_maptools import MapCoord
@@ -37,6 +40,7 @@ from sl_maptools.fetchers.map import BoundedMapFetcher
 RE_MAPFILENAME: re.Pattern = re.compile(r"^(?P<x>\d+)-(?P<y>\d+)_(?P<ts>[0-9-]+)\.jpg$")
 
 SSIM_THRESHOLD: Final[float] = 0.98
+MSE_THRESHOLD: Final[float] = 0.01
 MIN_COORDS: Final[MapCoord] = MapCoord(0, 0)
 MAX_COORDS: Final[MapCoord] = MapCoord(2100, 2100)
 
@@ -274,6 +278,8 @@ def saver(
             _setstate("converting1")
             # noinspection PyTypeChecker
             f1_arr = np.asarray(img.convert("L"))
+            f2_img: Image.Image | None = None
+            do_delete: bool = False
             while coordfiles:
                 f2 = coordfiles[-1]
                 try:
@@ -286,19 +292,58 @@ def saver(
                     f2_arr = np.asarray(f2_img.convert("L"))
                     # Image similarity test using Structural Similarity Index,
                     # see https://pyimagesearch.com/2014/09/15/python-compare-two-images/
-                    if ssim(f1_arr, f2_arr) > SSIM_THRESHOLD:
+                    # _setstate("wait_comparer_mse")
+                    # with comparer_lock["mse"]:
+                    #     _setstate("comparing_mse")
+                    #     mse_result = mse(f1_arr, f2_arr)
+                    _setstate("comparing_mse")
+                    mse_result = mse(f1_arr, f2_arr)
+                    if mse_result < MSE_THRESHOLD:
+                        do_delete = True
+                        _setstate("deleting_mse")
                         f2.unlink()
                         coordfiles.pop()
-                        print("❌", end="", flush=True)
+                        if debug:
+                            print(f"❌[{counter}]", end="", flush=True)
+                    else:
+                        # _setstate("wait_comparer_ssim")
+                        # with comparer_lock["ssim"]:
+                        #     _setstate("comparing_ssim")
+                        #     ssim_result = ssim(f1_arr, f2_arr)
+                        _setstate("comparing_ssim")
+                        ssim_result = ssim(f1_arr, f2_arr)
+                        if ssim_result > SSIM_THRESHOLD:
+                            do_delete = True
+                            _setstate("deleting_ssim")
+                    if do_delete:
+                        f2.unlink()
+                        coordfiles.pop()
+                        if debug:
+                            print(f"❌[{counter}]", end="", flush=True)
+                        do_delete = False
+                    else:
+                        break
                 except FileNotFoundError:
-                    coordfiles.pop()
+                    if coordfiles:
+                        coordfiles.pop()
+                except Exception as e:
+                    print(f"\nERR: {myname}:{type(e)}:{e}")
+                    raise
+                finally:
+                    if f2_img is not None:
+                        f2_img.close()
+            _setstate("resolving")
             coordfiles.append(targf)
             mapfilesets[coord] = coordfiles
-
             success_queue.put(coord)
+        except Exception as e:
+            print(f"\nERR: {myname}:{type(e)}:{e}")
+            raise
         finally:
             _setstate("cleaning")
             shm.close()
+            if img is not None:
+                img.close()
 
 
 async def async_main(duration: int, shm_mgr: MPMgr.SharedMemoryManager):
@@ -492,11 +537,16 @@ def main(
             finally:
                 signal.signal(signal.SIGINT, OrigSigINT)
 
+            print("\nCurrent worker states:", flush=True)
+            for n, s in worker_state.items():
+                print(f"  {n}: {s}")
+            print("Closing the pool ... ", end="", flush=True)
+            pool.close()
+            print("closed.\nWaiting for workers to join ... ", end="", flush=True)
             for _ in range(workers):
                 SaverQueue.put(None)
-            print("\nClosing worker pool ... ", end="", flush=True)
-            pool.close()
             pool.join()
+            print("joined. \nClosing SaverQueue ... ", end="", flush=True)
             SaverQueue.close()
             SaverQueue.join_thread()
             print("closed")
