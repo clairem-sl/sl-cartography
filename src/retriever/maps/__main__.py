@@ -316,6 +316,8 @@ def main(
         saver_args = (mapdir, mapfilesets, SaverQueue, SaveSuccessQueue, saved, worker_state, debug_level, thresholds)
         pool: MPPool.Pool
         with MP.Pool(workers, initializer=saver, initargs=saver_args) as pool:
+            while sum (1 for v, _ in worker_state.values() if v == "idle") < workers:
+                time.sleep(1)
 
             print("started.\nDispatching async fetchers!", flush=True)
             try:
