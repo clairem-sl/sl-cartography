@@ -1,3 +1,7 @@
+from __future__ import annotations
+
+from enum import IntEnum
+
 import ruamel.yaml as ryaml
 
 from collections import deque
@@ -99,3 +103,9 @@ class RetrieverProgress:
                         return
                     self.next_y = self.maxc[1]
                 print(f"ROW:{job[1]}", flush=True)
+
+
+class DebugLevel(IntEnum):
+    DISABLED = 0
+    NORMAL = 1
+    DETAILED = 2
