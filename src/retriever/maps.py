@@ -300,6 +300,7 @@ def saver(
             shm.close()
             if img is not None:
                 img.close()
+    _setstate("ended")
 
 
 async def async_main(duration: int, shm_mgr: MPMgr.SharedMemoryManager):
@@ -472,14 +473,14 @@ def main(
             finally:
                 signal.signal(signal.SIGINT, OrigSigINT)
 
-            print("\nCurrent worker states:", flush=True)
+            print("Closing the pool, preventing new workers from spawning ... ", end="", flush=True)
+            pool.close()
+            print("closed.\nCurrent worker states:")
             for n, s in worker_state.items():
                 print(f"  {n}: {s}")
-            print("Closing the pool ... ", end="", flush=True)
-            pool.close()
-            print("closed.\nWaiting for workers to join ... ", end="", flush=True)
-            for _ in range(workers):
-                SaverQueue.put(None)
+                if s != "ended":
+                    SaverQueue.put(None)
+            print("Waiting for workers to join ... ", end="", flush=True)
             pool.join()
             print("joined. \nClosing SaverQueue ... ", end="", flush=True)
             SaverQueue.close()
