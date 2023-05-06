@@ -53,11 +53,6 @@ class RetrieverProgress:
             return
         self.outstanding.discard(item)
 
-    async def aretire(self, item: tuple[int, int]):
-        if item is None:
-            return
-        self.retire(item)
-
     def load(self):
         with self.backing_file.open("rt") as fin:
             _last_sess: ProgressDict = ryaml.safe_load(fin)

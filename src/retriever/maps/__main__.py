@@ -210,11 +210,11 @@ async def async_main(duration: int, shm_mgr: MPMgr.SharedMemoryManager):
                     )
                     SharedMemoryAllocations[rslt.coord] = shm
                 else:
-                    await Progress.aretire(rslt.coord)
+                    Progress.retire(rslt.coord)
             try:
                 while True:
                     success_coord: MapCoord = SaveSuccessQueue.get_nowait()
-                    await Progress.aretire(success_coord)
+                    Progress.retire(success_coord)
                     shm = SharedMemoryAllocations[success_coord]
                     shm.close()
                     shm.unlink()
