@@ -309,6 +309,7 @@ def main(
         SaveSuccessQueue = MP.Queue()
         saved = manager.dict()
         worker_state: dict[str, tuple[str, Path | None]] = manager.dict()
+        possibly_changed: dict[tuple[int, int], None] = manager.dict()
 
         _mapfilesets: dict[tuple[int, int], list[Path]] = {}
         m: re.Match
@@ -321,7 +322,7 @@ def main(
         mapfilesets = manager.dict(_mapfilesets)
 
         thresholds = Thresholds(MSE=MSE_THRESHOLD, SSIM=SSIM_THRESHOLD)
-        saver_args = (mapdir, mapfilesets, SaverQueue, SaveSuccessQueue, saved, worker_state, debug_level, thresholds)
+        saver_args = (mapdir, mapfilesets, SaverQueue, SaveSuccessQueue, saved, worker_state, debug_level, thresholds, possibly_changed)
         pool: MPPool.Pool
         with MP.Pool(workers, initializer=saver, initargs=saver_args) as pool:
             while sum(1 for v, _ in worker_state.values() if v == "idle") < workers:
@@ -364,6 +365,9 @@ def main(
                 SaveSuccessQueue.join_thread()
                 print("flushed")
                 Progress.save()
+            with (mapdir / "PossiblyChanged.txt").open("wt") as fout:
+                for coord in sorted(possibly_changed.keys()):
+                    print(coord, file=fout)
     print(f"{Progress.outstanding_count:_} outstanding jobs left. Last dispatched coordinate: {Progress.last_dispatch}")
 
     lockf.unlink(missing_ok=True)

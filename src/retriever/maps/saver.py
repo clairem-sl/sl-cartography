@@ -32,6 +32,7 @@ def saver(
     worker_state: dict[str, tuple[str, str | None]],
     debug_level: DebugLevel,
     thresholds: Thresholds,
+    possibly_changed: dict[tuple[int, int], None],
 ):
     signal.signal(signal.SIGINT, signal.SIG_IGN)
     mapdir.mkdir(parents=True, exist_ok=True)
@@ -135,6 +136,7 @@ def saver(
                                 print(f"[{counter}]", end="", flush=True)
                         do_delete = False
                     else:
+                        possibly_changed[coord] = None
                         break
                 except FileNotFoundError:
                     if coordfiles:
