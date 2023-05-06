@@ -25,8 +25,8 @@ from typing import Final, Protocol, cast
 
 import httpx
 
-from retriever import RetrieverProgress, DebugLevel
-from retriever.maps.saver import saver, Thresholds
+from retriever import DebugLevel, RetrieverProgress
+from retriever.maps.saver import Thresholds, saver
 from sl_maptools import MapCoord
 from sl_maptools.fetchers import RawResult
 
