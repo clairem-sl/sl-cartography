@@ -300,7 +300,7 @@ def main(
         SaverQueue = MP.Queue()
         SaveSuccessQueue = MP.Queue()
         saved = manager.dict()
-        worker_state = manager.dict()
+        worker_state: dict[str, str] = manager.dict()
 
         _mapfilesets: dict[tuple[int, int], list[Path]] = {}
         m: re.Match
@@ -328,10 +328,13 @@ def main(
             print("Closing the pool, preventing new workers from spawning ... ", end="", flush=True)
             pool.close()
             print("closed.\nCurrent worker states:")
+            alive_workers = workers
             for n, s in worker_state.items():
                 print(f"  {n}: {s}")
-                if s != "ended":
-                    SaverQueue.put(None)
+                if s == "ended":
+                    alive_workers -=1
+            for _ in range(alive_workers):
+                SaverQueue.put(None)
             print("Waiting for workers to join ... ", end="", flush=True)
             pool.join()
             print("joined. \nClosing SaverQueue ... ", end="", flush=True)
