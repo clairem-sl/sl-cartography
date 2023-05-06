@@ -503,8 +503,7 @@ def main(
                 SaveSuccessQueue.join_thread()
                 print("flushed")
                 Progress.save()
-    print(f"{Progress.outstanding_count:_} outstanding jobs left.")
-    print(f"Last dispatched coordinate: {Progress.last_dispatch}")
+    print(f"{Progress.outstanding_count:_} outstanding jobs left. Last dispatched coordinate: {Progress.last_dispatch}")
 
     lockf.unlink(missing_ok=True)
 
