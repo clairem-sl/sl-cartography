@@ -180,7 +180,10 @@ def saver(
 ):
     signal.signal(signal.SIGINT, signal.SIG_IGN)
     mapdir.mkdir(parents=True, exist_ok=True)
-    myname = MP.current_process().name
+    curname = MP.current_process().name
+    _, num = curname.split("-")
+    myname = f"SaverWorker-{num}"
+    MP.current_process().name = myname
     targf: Path | None = None
 
     def _setstate(state: str, with_targ: bool = True):
