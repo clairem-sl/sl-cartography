@@ -337,7 +337,9 @@ async def async_main(duration: int, shm_mgr: MPMgr.SharedMemoryManager):
                 if rslt is None:
                     continue
                 if rslt.result:
-                    shown = True
+                    if not shown:
+                        shown = True
+                        print("🌐", end="")
                     hasmap_count += 1
                     print(f"({rslt.coord.x},{rslt.coord.y})✔", end=" ")
                     shm = shm_mgr.SharedMemory(len(rslt.result))
