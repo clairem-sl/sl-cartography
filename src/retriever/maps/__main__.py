@@ -18,6 +18,7 @@ import re
 import signal
 import sys
 import time
+from collections import deque
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Final, Protocol, cast
@@ -161,18 +162,23 @@ async def async_main(duration: int, shm_mgr: MPMgr.SharedMemoryManager):
         def make_task(coord: tuple[int, int]):
             return asyncio.create_task(fetcher.async_fetch(MapCoord(*coord)), name=str(coord))
 
+        start = time.monotonic()
         tasks: set[asyncio.Task] = {make_task(coord) async for coord in Progress.abatch(START_BATCH_SIZE)}
         if not tasks:
             print("No unseen jobs, exiting immediately!")
             return
 
-        start = time.monotonic()
         total = hasmap_count = batch_size = 0
+        done_last10: deque[int] = deque(maxlen=10)
+        elapsed_last10: deque[float] = deque(maxlen=10)
         done: set[asyncio.Task]
         pending_tasks: set[asyncio.Task]
         while tasks:
             print(f"{len(tasks)} async jobs =>", end=" ")
+            start_batch = time.monotonic()
             done, pending_tasks = await asyncio.wait(tasks, timeout=BATCH_WAIT)
+            elapsed_last10.append(time.monotonic() - start_batch)
+            done_last10.append(len(done))
             total += len(done)
             batch_size = max(batch_size, len(done) * 3)
             c = e = 0
@@ -223,10 +229,10 @@ async def async_main(duration: int, shm_mgr: MPMgr.SharedMemoryManager):
             if not shown:
                 print("No maps retrieved", end="")
             elapsed = time.monotonic() - start
-            avg_rate = total / elapsed
+            avg_rate = sum(done_last10) / sum(elapsed_last10)
             print(
                 f"\n  {elapsed:_.2f}s since start, {total:_} coords scanned "
-                f"(avg. {avg_rate:.2f} r/s), {hasmap_count} maps retrieved"
+                f"(mavg. {avg_rate:.2f} r/s), {hasmap_count} maps retrieved"
             )
             # print(f"  using {fetcher.seen_http_vers}")
             tasks = pending_tasks
