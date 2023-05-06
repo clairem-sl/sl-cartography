@@ -20,7 +20,7 @@ import sys
 import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Final, TypedDict, cast, Protocol
+from typing import Final, TypedDict, cast, Protocol, Any
 
 import httpx
 import numpy as np
@@ -208,10 +208,25 @@ def saver(
     save_queue: MP.Queue,
     success_queue: MP.Queue,
     # dominant_colors: None | dict[tuple[int, int], dict[int, list[RGBTuple]]],
+    saved: dict[MapCoord, Any],
+    worker_state: dict[str, tuple[str, str | None]],
+    # comparer_lock: dict[str, MP.RLock],
+    debug: bool,
 ):
     signal.signal(signal.SIGINT, signal.SIG_IGN)
     mapdir.mkdir(parents=True, exist_ok=True)
+    myname = MP.current_process().name
+    targf: Path | None = None
+
+    def _setstate(state: str, with_targ: bool = True):
+        if with_targ and targf:
+            worker_state[myname] = state, targf.name
+        else:
+            worker_state[myname] = state, None
+
+    img: Image.Image | None = None
     while True:
+        _setstate("idle", False)
         if save_queue.empty():
             time.sleep(1)
             continue
@@ -219,21 +234,30 @@ def saver(
         if item is None:
             break
 
+        _setstate("got_job", False)
         regmap: QJob = cast(QJob, item)
         coord: MapCoord = regmap["coord"]
         shm: MPSharedMem.SharedMemory = regmap["shm"]
+        if coord in saved:
+            shm.close()
+            continue
         blob = cast(bytes, shm.buf)
         try:
             try:
                 tsf = regmap["tsf"]
                 targf = mapdir / f"{coord.x}-{coord.y}_{tsf}.jpg"
+                _setstate("saving")
                 with targf.open("wb") as fout:
                     fout.write(blob)
             except Exception:
                 raise
 
-            print("💾", end="", flush=True)
+            saved[coord] = None
+            counter = len(saved)
+            if debug:
+                print(f"💾[{counter}]", end="", flush=True)
 
+            _setstate("decoding")
             with io.BytesIO(blob) as bio:
                 img: Image.Image = Image.open(bio)
                 img.load()
@@ -247,14 +271,17 @@ def saver(
             # Prune older file of same coordinate if really similar
             if (coordfiles := mapfilesets.get(coord)) is None:
                 continue
+            _setstate("converting1")
             # noinspection PyTypeChecker
             f1_arr = np.asarray(img.convert("L"))
             while coordfiles:
                 f2 = coordfiles[-1]
                 try:
+                    _setstate("fetching")
                     with f2.open("rb") as fin:
                         f2_img = Image.open(fin)
                         f2_img.load()
+                    _setstate("converting2")
                     # noinspection PyTypeChecker
                     f2_arr = np.asarray(f2_img.convert("L"))
                     # Image similarity test using Structural Similarity Index,
@@ -270,6 +297,7 @@ def saver(
 
             success_queue.put(coord)
         finally:
+            _setstate("cleaning")
             shm.close()
 
 
@@ -417,6 +445,12 @@ def main(
         print("Starting saver worker...", end="", flush=True)
         SaverQueue = MP.Queue()
         SaveSuccessQueue = MP.Queue()
+        # comparer_lock: dict[str, MP.RLock] = {
+        #     "mse": MP.RLock(),
+        #     "ssim": MP.RLock()
+        # }
+        saved = manager.dict()
+        worker_state = manager.dict()
 
         # dominant_colors: None | dict[tuple[int, int], dict[int, list[RGBTuple]]]
         # if nodom:
@@ -442,7 +476,8 @@ def main(
         mapfilesets = manager.dict(_mapfilesets)
 
         # saver_args = (mapdir, mapfilesets, SaverQueue, SaveSuccessQueue, dominant_colors)
-        saver_args = (mapdir, mapfilesets, SaverQueue, SaveSuccessQueue)
+        # saver_args = (mapdir, mapfilesets, SaverQueue, SaveSuccessQueue, saved, worker_state, comparer_lock)
+        saver_args = (mapdir, mapfilesets, SaverQueue, SaveSuccessQueue, saved, worker_state, True)
         #
         # save_domc_args = (mapdir, TriggerCondition, EndingEvent, dominant_colors)
         #
