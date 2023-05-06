@@ -56,6 +56,8 @@ def saver(
         item = save_queue.get()
         if item is None:
             break
+        if item is Ellipsis:
+            continue
 
         _setstate("got_job", False)
         regmap: QJob = cast(QJob, item)
