@@ -301,10 +301,6 @@ def saver(
                     if mse_result < MSE_THRESHOLD:
                         do_delete = True
                         _setstate("deleting_mse")
-                        f2.unlink()
-                        coordfiles.pop()
-                        if debug:
-                            print(f"❌[{counter}]", end="", flush=True)
                     else:
                         # _setstate("wait_comparer_ssim")
                         # with comparer_lock["ssim"]:
