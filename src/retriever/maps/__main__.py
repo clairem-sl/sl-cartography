@@ -333,10 +333,8 @@ def main(
             alive_workers = workers
             for n, s in worker_state.items():
                 print(f"  {n}: {s}")
-                if s == "ended":
-                    alive_workers -=1
-            for _ in range(alive_workers):
-                SaverQueue.put(None)
+                if s != "ended":
+                    SaverQueue.put(None)
             print("Waiting for workers to join ... ", end="", flush=True)
             pool.join()
             print("joined. \nClosing SaverQueue ... ", end="", flush=True)
