@@ -288,12 +288,12 @@ def main(
     Progress = RetrieverProgress(progress_file, auto_reset=auto_reset, min_coord=MIN_COORDS, max_coord=MAX_COORDS)
     if Progress.outstanding_count:
         print(f"{Progress.outstanding_count} jobs still outstanding from last session")
-        print(f"Next coordinate: {Progress.next_coordinate}")
     else:
         print("No outstanding jobs from last session.")
         if Progress.next_y < 0:
             print("No rows left to process.")
             print(f"Delete the file {progress_file} to reset. (Or specify --auto-reset)")
+    print(f"Next coordinate: {Progress.next_coordinate}")
 
     with MP.Manager() as manager, MPMgr.SharedMemoryManager() as shm_manager:
         print("Starting saver worker...", end="", flush=True)
