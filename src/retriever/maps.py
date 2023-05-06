@@ -11,7 +11,7 @@ import multiprocessing as MP
 import multiprocessing.managers as MPMgr
 import multiprocessing.pool as MPPool
 import multiprocessing.shared_memory as MPSharedMem
-import multiprocessing.synchronize as MPSync
+# import multiprocessing.synchronize as MPSync
 # import pickle
 import queue
 import re
@@ -67,8 +67,6 @@ OrigSigINT: signal.Handlers = signal.getsignal(signal.SIGINT)
 SaverQueue: MP.Queue
 SaveSuccessQueue: MP.Queue
 Progress: RetrieverProgress
-TriggerCondition: MPSync.Condition
-EndingEvent: MPSync.Event
 AbortRequested = asyncio.Event()
 SharedMemoryAllocations: dict[tuple[int, int], MPSharedMem.SharedMemory] = {}
 
@@ -335,9 +333,6 @@ async def async_main(duration: int, shm_mgr: MPMgr.SharedMemoryManager):
                     del SharedMemoryAllocations[success_coord]
             except queue.Empty:
                 pass
-            TriggerCondition.acquire()
-            TriggerCondition.notify_all()
-            TriggerCondition.release()
             if c:
                 Progress.save()
                 if e == c:
@@ -373,7 +368,7 @@ def main(
     workers: int,
     force: bool,
 ):
-    global Progress, SaverQueue, SaveSuccessQueue, TriggerCondition, EndingEvent
+    global Progress, SaverQueue, SaveSuccessQueue
     mapdir.mkdir(parents=True, exist_ok=True)
 
     lockf: Path = mapdir / LOCK_NAME
@@ -449,9 +444,6 @@ def main(
         # saver_args = (mapdir, mapfilesets, SaverQueue, SaveSuccessQueue, dominant_colors)
         saver_args = (mapdir, mapfilesets, SaverQueue, SaveSuccessQueue)
         #
-        TriggerCondition = manager.Condition()
-        EndingEvent = manager.Event()
-        EndingEvent.clear()
         # save_domc_args = (mapdir, TriggerCondition, EndingEvent, dominant_colors)
         #
         pool: MPPool.Pool
