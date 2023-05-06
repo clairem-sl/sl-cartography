@@ -169,60 +169,13 @@ class QJob(TypedDict):
     shm: MPSharedMem.SharedMemory
 
 
-# def save_domc(
-#     mapdir: Path,
-#     trigger_condition: MPSync.Condition,
-#     ending_event: MPSync.Event,
-#     dominant_colors: None | dict[tuple[int, int], dict[int, list[RGBTuple]]],
-# ):
-#     signal.signal(signal.SIGINT, signal.SIG_IGN)
-#     if dominant_colors is None:
-#         return
-#
-#     def deeply_equal(d1: dict, d2: dict):
-#         if len(d1) != len(d2):
-#             return False
-#         if sorted(d1.keys()) != sorted(d2.keys()):
-#             return False
-#         for k, v1 in d1.items():
-#             v2 = d2[k]
-#             if type(v1) != type(v2):
-#                 return False
-#             if isinstance(v1, dict):
-#                 if not deeply_equal(v1, v2):
-#                     return False
-#             else:
-#                 if v1 != v2:
-#                     return False
-#         return True
-#
-#     domc_pkl_path = mapdir / DOMC_NAME
-#     # Make a copy first, so we can detect changes later.
-#     domc = dominant_colors.copy()
-#     while not ending_event.is_set():
-#         trigger_condition.acquire()
-#         trigger_condition.wait()
-#
-#         # Copy dominant_colors, which is a manager.dict(), so that when we process it there won't be any changes
-#         curr_domc = dominant_colors.copy()
-#         if deeply_equal(domc, curr_domc):
-#             continue
-#
-#         domc = curr_domc
-#         with domc_pkl_path.open("wb") as fout:
-#             pickle.dump(domc, fout, protocol=pickle.HIGHEST_PROTOCOL)
-#         print(f"⏬[{len(domc)}]", end="", flush=True)
-
-
 def saver(
     mapdir: Path,
     mapfilesets: dict[tuple[int, int], list[Path]],
     save_queue: MP.Queue,
     success_queue: MP.Queue,
-    # dominant_colors: None | dict[tuple[int, int], dict[int, list[RGBTuple]]],
     saved: dict[MapCoord, Any],
     worker_state: dict[str, tuple[str, str | None]],
-    # comparer_lock: dict[str, MP.RLock],
     debug_level: DebugLevel,
 ):
     signal.signal(signal.SIGINT, signal.SIG_IGN)
@@ -302,20 +255,12 @@ def saver(
                     f2_arr = np.asarray(f2_img.convert("L"))
                     # Image similarity test using Structural Similarity Index,
                     # see https://pyimagesearch.com/2014/09/15/python-compare-two-images/
-                    # _setstate("wait_comparer_mse")
-                    # with comparer_lock["mse"]:
-                    #     _setstate("comparing_mse")
-                    #     mse_result = mse(f1_arr, f2_arr)
                     _setstate("comparing_mse")
                     mse_result = mse(f1_arr, f2_arr)
                     if mse_result < MSE_THRESHOLD:
                         do_delete = True
                         _setstate("deleting_mse")
                     else:
-                        # _setstate("wait_comparer_ssim")
-                        # with comparer_lock["ssim"]:
-                        #     _setstate("comparing_ssim")
-                        #     ssim_result = ssim(f1_arr, f2_arr)
                         _setstate("comparing_ssim")
                         ssim_result = ssim(f1_arr, f2_arr)
                         if ssim_result > SSIM_THRESHOLD:
@@ -500,25 +445,8 @@ def main(
         print("Starting saver worker...", end="", flush=True)
         SaverQueue = MP.Queue()
         SaveSuccessQueue = MP.Queue()
-        # comparer_lock: dict[str, MP.RLock] = {
-        #     "mse": MP.RLock(),
-        #     "ssim": MP.RLock()
-        # }
         saved = manager.dict()
         worker_state = manager.dict()
-
-        # dominant_colors: None | dict[tuple[int, int], dict[int, list[RGBTuple]]]
-        # if nodom:
-        #     dominant_colors = None
-        # else:
-        #     domc_pkl_path = mapdir / DOMC_NAME
-        #     if not domc_pkl_path.exists():
-        #         with domc_pkl_path.open("wb") as fout:
-        #             pickle.dump({}, fout, protocol=pickle.HIGHEST_PROTOCOL)
-        #         dominant_colors = manager.dict()
-        #     else:
-        #         with domc_pkl_path.open("rb") as fin:
-        #             dominant_colors = manager.dict(pickle.load(fin))
 
         _mapfilesets: dict[tuple[int, int], list[Path]] = {}
         m: re.Match
@@ -530,14 +458,8 @@ def main(
             _mapfilesets.setdefault(coord, []).append(mapfile)
         mapfilesets = manager.dict(_mapfilesets)
 
-        # saver_args = (mapdir, mapfilesets, SaverQueue, SaveSuccessQueue, dominant_colors)
-        # saver_args = (mapdir, mapfilesets, SaverQueue, SaveSuccessQueue, saved, worker_state, comparer_lock)
         saver_args = (mapdir, mapfilesets, SaverQueue, SaveSuccessQueue, saved, worker_state, debug_level)
-        #
-        # save_domc_args = (mapdir, TriggerCondition, EndingEvent, dominant_colors)
-        #
         pool: MPPool.Pool
-        # with MP.Pool(workers, saver, saver_args) as pool, MP.Pool(1, save_domc, save_domc_args) as pool2:
         with MP.Pool(workers, saver, saver_args) as pool:
 
             print("started.\nDispatching async fetchers!", flush=True)
@@ -576,15 +498,6 @@ def main(
                 SaveSuccessQueue.join_thread()
                 print("flushed")
                 Progress.save()
-            # print("Send signal to save_domc to finish ... ", end="", flush=True)
-            # pool2.close()
-            # EndingEvent.set()
-            # TriggerCondition.acquire()
-            # TriggerCondition.notify_all()
-            # TriggerCondition.release()
-            # print("sent", end=" ", flush=True)
-            # pool2.join()
-            # print("joined", flush=True)
     print(f"{Progress.outstanding_count:_} outstanding jobs left.")
     print(f"Last dispatched coordinate: {Progress.last_dispatch}")
 
