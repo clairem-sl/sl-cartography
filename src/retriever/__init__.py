@@ -88,6 +88,10 @@ class RetrieverProgress:
             if c >= batch_size:
                 return
         while c < batch_size:
+            if self.next_y < self.minc[1]:
+                if not self.auto_reset:
+                    return
+                self.next_y = self.maxc[1]
             job = self.next_x, self.next_y
             if job not in self.outstanding:
                 c += 1
