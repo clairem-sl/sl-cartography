@@ -35,7 +35,8 @@ from sl_maptools.fetchers.map import BoundedMapFetcher
 
 RE_MAPFILENAME: re.Pattern = re.compile(r"^(?P<x>\d+)-(?P<y>\d+)_(?P<ts>[0-9-]+)\.jpg$")
 
-SSIM_THRESHOLD: Final[float] = 0.98
+# SSIM_THRESHOLD: Final[float] = 0.98
+SSIM_THRESHOLD: Final[float] = 0.895
 MSE_THRESHOLD: Final[float] = 0.01
 MAVG_SAMPLES: Final[int] = 5
 MIN_COORDS: Final[MapCoord] = MapCoord(0, 0)
