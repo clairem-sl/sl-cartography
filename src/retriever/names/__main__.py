@@ -128,6 +128,7 @@ def process(tile: CookedResult):
             history[seen_name] = [ts]
             return
         if seen_name != prev_name:
+            print("🉑", end="", flush=True)
             history[seen_name].append(ts)
         else:
             history[seen_name][-1] = ts
