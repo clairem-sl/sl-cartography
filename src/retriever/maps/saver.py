@@ -41,12 +41,19 @@ def saver(
     myname = f"SaverWorker-{num}"
     MP.current_process().name = myname
     targf: Path | None = None
+    counter: int = 0
 
     def _setstate(state: str, with_targ: bool = True):
         if with_targ and targf:
             worker_state[myname] = state, targf.name
         else:
             worker_state[myname] = state, None
+
+    def _pip(char: str):
+        if debug_level > DebugLevel.DISABLED:
+            print(char, end="", flush=True)
+            if debug_level >= DebugLevel.DETAILED:
+                print(f"[{counter}]", end="", flush=True)
 
     img: Image.Image | None = None
     while True:
@@ -80,10 +87,7 @@ def saver(
 
             saved_coords[coord] = None
             counter = len(saved_coords)
-            if debug_level > DebugLevel.DISABLED:
-                print(f"💾", end="", flush=True)
-                if debug_level >= DebugLevel.DETAILED:
-                    print(f"[{counter}]", end="", flush=True)
+            _pip("💾")
 
             _setstate("decoding")
             with io.BytesIO(blob) as bio:
@@ -130,10 +134,7 @@ def saver(
                     if do_delete:
                         f2.unlink()
                         coordfiles.pop()
-                        if debug_level > DebugLevel.DISABLED:
-                            print(f"❌", end="", flush=True)
-                            if debug_level >= DebugLevel.DETAILED:
-                                print(f"[{counter}]", end="", flush=True)
+                        _pip("❌")
                         do_delete = False
                     else:
                         possibly_changed[coord] = None
