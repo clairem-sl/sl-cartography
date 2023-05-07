@@ -15,6 +15,9 @@ from PIL import Image
 _REGION_SIZE: Final[int] = 256
 
 
+CoordType = tuple[int, int]
+
+
 class AreaBounds(NamedTuple):
     """
     Boundaries of an area, usually in terms of Map Coordinates
