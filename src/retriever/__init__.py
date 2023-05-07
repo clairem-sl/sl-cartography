@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import asyncio
+import signal
 import sys
+import time
 from contextlib import contextmanager
 
 from enum import IntEnum
@@ -128,3 +131,20 @@ def lock_file(lockf: Path, force: bool):
             sys.exit(1)
     yield
     lockf.unlink(missing_ok=True)
+
+
+@contextmanager
+def handle_sigint(interrupt_flag: asyncio.Event):
+
+    def _handler(_, __):
+        if interrupt_flag.is_set():
+            return
+        interrupt_flag.set()
+        print("\n### USER INTERRUPT ###")
+        print("Cleaning up in-flight job (if any)...", flush=True)
+
+    orig_sigint = signal.getsignal(signal.SIGINT)
+    signal.signal(signal.SIGINT, _handler)
+    yield
+    time.sleep(1)
+    signal.signal(signal.SIGINT, orig_sigint)

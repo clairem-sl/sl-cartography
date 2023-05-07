@@ -22,7 +22,7 @@ from typing import Final, Protocol, cast
 
 import httpx
 
-from retriever import DebugLevel, RetrieverProgress, lock_file
+from retriever import DebugLevel, RetrieverProgress, lock_file, handle_sigint
 from retriever.maps.saver import Thresholds, saver
 from sl_maptools import CoordType, MapCoord
 from sl_maptools.fetchers import RawResult
@@ -60,20 +60,8 @@ OrigSigINT: signal.Handlers = signal.getsignal(signal.SIGINT)
 SaverQueue: MP.Queue
 SaveSuccessQueue: MP.Queue
 Progress: RetrieverProgress
+
 AbortRequested = asyncio.Event()
-
-
-def sigint_handler(_, __):
-    global AbortRequested
-    if not AbortRequested.is_set():
-        print("\n### USER INTERRUPT ###")
-        print("Cleaning up in-flight job (if any)...", flush=True)
-        AbortRequested.set()
-    else:
-        print(
-            "\nUser already interrupted, please wait while retiring in-flight retrievals...",
-            flush=True,
-        )
 
 
 class OptionsProtocol(Protocol):
@@ -322,12 +310,8 @@ def main2(
                 time.sleep(1)
 
             print("started.\nDispatching async fetchers!", flush=True)
-            try:
-                signal.signal(signal.SIGINT, sigint_handler)
+            with handle_sigint(AbortRequested):
                 asyncio.run(async_main(dur, shm_allocator))
-            finally:
-                time.sleep(1)
-                signal.signal(signal.SIGINT, OrigSigINT)
 
             print("Closing the pool, preventing new workers from spawning ... ", end="", flush=True)
             pool.close()
