@@ -282,6 +282,7 @@ def main2(
         if Progress.next_y < 0:
             print("No rows left to process.")
             print(f"Delete the file {progress_file} to reset. (Or specify --auto-reset)")
+            return
     print(f"Next coordinate: {Progress.next_coordinate}")
 
     with MP.Manager() as manager, MPMgr.SharedMemoryManager() as shm_manager:
