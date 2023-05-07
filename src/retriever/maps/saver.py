@@ -25,14 +25,14 @@ class Thresholds:
 
 def saver(
     mapdir: Path,
-    mapfilesets: dict[tuple[int, int], list[Path]],
+    mapfilesets: dict[CoordType, list[Path]],
     save_queue: MP.Queue,
     success_queue: MP.Queue,
     saved_coords: dict[CoordType, None],
     worker_state: dict[str, tuple[str, str | None]],
     debug_level: DebugLevel,
     thresholds: Thresholds,
-    possibly_changed: dict[tuple[int, int], None],
+    possibly_changed: dict[CoordType, None],
 ):
     signal.signal(signal.SIGINT, signal.SIG_IGN)
     mapdir.mkdir(parents=True, exist_ok=True)

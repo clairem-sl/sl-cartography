@@ -71,7 +71,7 @@ SaverQueue: MP.Queue
 SaveSuccessQueue: MP.Queue
 Progress: RetrieverProgress
 AbortRequested = asyncio.Event()
-# SharedMemoryAllocations: dict[tuple[int, int], MPSharedMem.SharedMemory] = {}
+# SharedMemoryAllocations: dict[CoordType, MPSharedMem.SharedMemory] = {}
 
 
 def sigint_handler(_, __):
@@ -158,15 +158,15 @@ def options() -> OptionsProtocol:
 class SharedMemoryAllocator:
     def __init__(self, manager: MPMgr.SharedMemoryManager):
         self.mgr = manager
-        self.allocations: dict[tuple[int, int], MPSharedMem.SharedMemory] = {}
+        self.allocations: dict[CoordType, MPSharedMem.SharedMemory] = {}
 
-    def new(self, coord: tuple[int, int], data: bytes) -> MPSharedMem.SharedMemory:
+    def new(self, coord: CoordType, data: bytes) -> MPSharedMem.SharedMemory:
         shm = self.mgr.SharedMemory(len(data))
         shm.buf[:] = data
         self.allocations[coord] = shm
         return shm
 
-    def retire(self, coord: tuple[int, int]) -> None:
+    def retire(self, coord: CoordType) -> None:
         shm = self.allocations[coord]
         shm.close()
         shm.unlink()
@@ -180,7 +180,7 @@ async def async_main(duration: int, shm_allocator: SharedMemoryAllocator):
         fetcher = BoundedMapFetcher(SEMA_SIZE, client, cooked=False, cancel_flag=AbortRequested)
         # coords = [MapCoord(x, y) for x in range(950, 1050) for y in range(950, 1050)]
 
-        def make_task(coord: tuple[int, int]):
+        def make_task(coord: CoordType):
             return asyncio.create_task(fetcher.async_fetch(MapCoord(*coord)), name=str(coord))
 
         start = time.monotonic()
@@ -323,10 +323,10 @@ def main(
         SaveSuccessQueue = MP.Queue()
         saved_coords: dict[CoordType, None] = manager.dict()
         worker_state: dict[str, tuple[str, Path | None]] = manager.dict()
-        possibly_changed: dict[tuple[int, int], None] = manager.dict()
+        possibly_changed: dict[CoordType, None] = manager.dict()
         shm_allocator = SharedMemoryAllocator(shm_manager)
 
-        _mapfilesets: dict[tuple[int, int], list[Path]] = {}
+        _mapfilesets: dict[CoordType, list[Path]] = {}
         m: re.Match
         flist: list[Path]
         for mapfile in sorted(mapdir.glob("*.jpg")):
