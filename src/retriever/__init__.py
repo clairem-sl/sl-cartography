@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import asyncio
 import signal
+import statistics
 import sys
 import time
+from asyncio import Task
 from contextlib import contextmanager
 
 from enum import IntEnum
@@ -12,7 +14,7 @@ import ruamel.yaml as ryaml
 
 from collections import deque
 from pathlib import Path
-from typing import TypedDict, Generator, Final
+from typing import TypedDict, Generator, Final, Callable, Any
 
 from sl_maptools import CoordType
 
@@ -148,3 +150,81 @@ def handle_sigint(interrupt_flag: asyncio.Event):
     yield
     time.sleep(1)
     signal.signal(signal.SIGINT, orig_sigint)
+
+
+async def dispatch_fetcher(
+    progress: RetrieverProgress,
+    duration: int,
+    taskmaker: Callable[[CoordType], Task],
+    result_handler: Callable[[Any], bool],
+    pre_batch: Callable,
+    post_batch: Callable,
+    abort_event: asyncio.Event,
+    mavg_samples: int = 5,
+    start_batch_size: int = 2000,
+    batch_wait: float = 5.0,
+):
+    start = time.monotonic()
+    tasks: set[asyncio.Task] = {taskmaker(coord) async for coord in progress.abatch(start_batch_size)}
+    if not tasks:
+        print("No undispatched jobs, exiting immediately!")
+        return
+
+    total = has_response = 0
+    done_last10: deque[int] = deque(maxlen=mavg_samples)
+    elapsed_last10: deque[float] = deque(maxlen=mavg_samples)
+    done: set[asyncio.Task]
+    pending_tasks: set[asyncio.Task]
+    while tasks:
+        pre_batch()
+
+        # Dispatch
+        print(f"{len(tasks)} async jobs =>", end=" ")
+        start_batch = time.monotonic()
+        done, pending_tasks = await asyncio.wait(tasks, timeout=batch_wait)
+        if not abort_event.is_set():
+            elapsed_last10.append(time.monotonic() - start_batch)
+            done_last10.append(len(done))
+        total += len(done)
+        batch_size = int(statistics.mean(done_last10)) * 3
+
+        # Handle results
+        completed_count = exc_count = 0
+        for completed_count, fut in enumerate(done, start=1):
+            if exc := fut.exception():
+                exc_count += 1
+                print(f"\n{fut.get_name()} raised Exception: <{type(exc)}> {exc}")
+                continue
+            # Actual result handling
+            if (fut_result := fut.result()) is not None:
+                if result_handler(fut_result):
+                    has_response += 1
+        if completed_count:
+            progress.save()
+            if exc_count == completed_count:
+                print("\nLast batch all raised Exceptions!")
+                print("Cancelling the rest of the tasks...")
+                for t in pending_tasks:
+                    t.cancel()
+
+        post_batch()
+
+        # Statistics
+        elapsed = time.monotonic() - start
+        avg_rate = sum(done_last10) / sum(elapsed_last10)
+        print(
+            f"\n  {elapsed:_.2f}s since start, {total:_} coords scanned "
+            f"(mavg. {avg_rate:.2f} r/s), {has_response} regions retrieved"
+        )
+
+        # Next iteration
+        tasks = pending_tasks
+        if elapsed >= duration:
+            abort_event.set()
+        if abort_event.is_set():
+            print("(!A)", end=" ")
+            continue
+        if (2 * len(tasks)) < batch_size:
+            new_tasks = {taskmaker(coord) async for coord in progress.abatch(batch_size)}
+            print(f"(+{len(new_tasks)})", end=" ")
+            tasks.update(new_tasks)

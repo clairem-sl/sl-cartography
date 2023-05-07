@@ -3,16 +3,13 @@ import asyncio
 import math
 import pickle
 import re
-import statistics
-import time
-from collections import deque
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Final, TypedDict, cast, Protocol
 
 import httpx
 
-from retriever import RetrieverProgress, lock_file, handle_sigint
+from retriever import RetrieverProgress, lock_file, handle_sigint, dispatch_fetcher
 from sl_maptools import CoordType, MapCoord
 from sl_maptools.fetchers import CookedResult
 from sl_maptools.fetchers.cap import BoundedNameFetcher
@@ -168,75 +165,41 @@ async def amain(duration: int):
     limits = httpx.Limits(max_connections=CONN_LIMIT, max_keepalive_connections=CONN_LIMIT)
     async with httpx.AsyncClient(limits=limits, timeout=10.0, http2=HTTP2) as client:
         fetcher = BoundedNameFetcher(SEMA_SIZE, client, cooked=True, cancel_flag=AbortRequested)
+        shown = False
 
         def make_task(coord: CoordType):
             return asyncio.create_task(fetcher.async_fetch(MapCoord(*coord)), name=str(coord))
 
-        start = time.monotonic()
-        tasks: set[asyncio.Task] = {make_task(coord) async for coord in Progress.abatch(START_BATCH_SIZE)}
-        if not tasks:
-            print("No unseen jobs, exiting immediately!")
-            return
-
-        total = hasname_count = batch_size = 0
-        done_last10: deque[int] = deque(maxlen=MAVG_SAMPLES)
-        elapsed_last10: deque[float] = deque(maxlen=MAVG_SAMPLES)
-        done: set[asyncio.Task]
-        pending_tasks: set[asyncio.Task]
-        while tasks:
-            # Dispatch
-            print(f"(+{batch_size}) {len(tasks)} async jobs =>", end=" ")
-            start_batch = time.monotonic()
-            done, pending_tasks = await asyncio.wait(tasks, timeout=BATCH_WAIT)
-            elapsed_last10.append(time.monotonic() - start_batch)
-            done_last10.append(len(done))
-            total += len(done)
-            batch_size = int(statistics.mean(done_last10)) * 3
-
-            # Handle results
-            c = e = 0
+        def pre_batch():
+            nonlocal shown
             shown = False
-            for c, fut in enumerate(done, start=1):
-                if exc := fut.exception():
-                    e += 1
-                    print(f"\n{fut.get_name()} raised Exception: <{type(exc)}> {exc}")
-                    continue
-                rslt: None | CookedResult = fut.result()
-                if rslt is None or rslt.status_code not in ACCEPTABLE_STATUSCODES:
-                    continue
-                Progress.retire(rslt.coord)
-                process(rslt)
-                if rslt.result:
-                    if not shown:
-                        shown = True
-                        print("🌐", end="")
-                    hasname_count += 1
-                    print(f"({rslt.coord.x},{rslt.coord.y}){rslt.result}", end=" ", flush=True)
-            if c:
-                Progress.save()
-                if e == c:
-                    print("\nLast batch all raised Exceptions!")
-                    print("Cancelling the rest of the tasks...")
-                    for t in pending_tasks:
-                        t.cancel()
+
+        def process_result(fut_result: None | CookedResult) -> bool:
+            nonlocal shown
+            if fut_result.status_code not in ACCEPTABLE_STATUSCODES:
+                return False
+            process(fut_result)
+            if fut_result.result:
+                if not shown:
+                    shown = True
+                    print("🌐", end="")
+                print(f"({fut_result.coord.x},{fut_result.coord.y}){fut_result.result}", end=" ", flush=True)
+            Progress.retire(fut_result.coord)
+            return True
+
+        def post_batch():
             if not shown:
-                print("No names retrieved", end="")
+                print("Nothing retrieved", end="")
 
-            # Statistics
-            elapsed = time.monotonic() - start
-            avg_rate = sum(done_last10) / sum(elapsed_last10)
-            print(
-                f"\n  {elapsed:_.2f}s since start, {total:_} coords scanned "
-                f"(mavg. {avg_rate:.2f} r/s), {hasname_count} regions retrieved"
-            )
-
-            # Next iteration
-            tasks = pending_tasks
-            if elapsed >= duration:
-                AbortRequested.set()
-            if not AbortRequested.is_set() and (2 * len(tasks)) < batch_size:
-                async for coord in Progress.abatch(batch_size):
-                    tasks.add(make_task(coord))
+        await dispatch_fetcher(
+            progress=Progress,
+            duration=duration,
+            taskmaker=make_task,
+            result_handler=process_result,
+            pre_batch=pre_batch,
+            post_batch=post_batch,
+            abort_event=AbortRequested,
+        )
 
 
 def main2(auto_reset: bool, db_dir: Path, duration: int, until: tuple[int, int], until_utc: tuple[int, int]):

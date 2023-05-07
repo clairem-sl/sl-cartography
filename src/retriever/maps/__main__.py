@@ -13,16 +13,15 @@ import multiprocessing.shared_memory as MPSharedMem
 import queue
 import re
 import signal
-import statistics
 import time
-from collections import deque
+
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Final, Protocol, cast
 
 import httpx
 
-from retriever import DebugLevel, RetrieverProgress, lock_file, handle_sigint
+from retriever import DebugLevel, RetrieverProgress, lock_file, handle_sigint, dispatch_fetcher
 from retriever.maps.saver import Thresholds, saver
 from sl_maptools import CoordType, MapCoord
 from sl_maptools.fetchers import RawResult
@@ -151,90 +150,53 @@ async def async_main(duration: int, shm_allocator: SharedMemoryAllocator):
     limits = httpx.Limits(max_connections=CONN_LIMIT, max_keepalive_connections=CONN_LIMIT)
     async with httpx.AsyncClient(limits=limits, timeout=10.0, http2=HTTP2) as client:
         fetcher = BoundedMapFetcher(SEMA_SIZE, client, cooked=False, cancel_flag=AbortRequested)
+        shown = False
 
         def make_task(coord: CoordType):
             return asyncio.create_task(fetcher.async_fetch(MapCoord(*coord)), name=str(coord))
 
-        start = time.monotonic()
-        tasks: set[asyncio.Task] = {make_task(coord) async for coord in Progress.abatch(START_BATCH_SIZE)}
-        if not tasks:
-            print("No unseen jobs, exiting immediately!")
-            return
-
-        total = hasmap_count = batch_size = 0
-        done_last10: deque[int] = deque(maxlen=MAVG_SAMPLES)
-        elapsed_last10: deque[float] = deque(maxlen=MAVG_SAMPLES)
-        done: set[asyncio.Task]
-        pending_tasks: set[asyncio.Task]
-        while tasks:
-            # Dispatch
-            print(f"(+{batch_size}) {len(tasks)} async jobs =>", end=" ")
-            start_batch = time.monotonic()
-            done, pending_tasks = await asyncio.wait(tasks, timeout=BATCH_WAIT)
-            elapsed_last10.append(time.monotonic() - start_batch)
-            done_last10.append(len(done))
-            total += len(done)
-            batch_size = int(statistics.median_high(done_last10)) * 3
-
-            # Handle results
-            c = e = 0
+        def pre_batch():
+            nonlocal shown
             shown = False
-            for c, fut in enumerate(done, start=1):
-                if exc := fut.exception():
-                    e += 1
-                    print(f"\n{fut.get_name()} raised Exception: <{type(exc)}> {exc}")
-                    continue
-                rslt: None | RawResult = fut.result()
-                if rslt is None:
-                    continue
-                if not rslt.result:
-                    Progress.retire(rslt.coord)
-                    continue
-                if not shown:
-                    shown = True
-                    print("🌐", end="")
-                hasmap_count += 1
-                print(f"({rslt.coord.x},{rslt.coord.y})✔", end=" ", flush=True)
-                shm = shm_allocator.new(rslt.coord, rslt.result)
-                SaverQueue.put(
-                    {
-                        "coord": rslt.coord,
-                        "tsf": datetime.strftime(datetime.now(), "%y%m%d-%H%M"),
-                        "shm": shm,
-                    }
-                )
-            try:
-                while True:
-                    success_coord: MapCoord = SaveSuccessQueue.get_nowait()
-                    Progress.retire(success_coord)
-                    shm_allocator.retire(success_coord)
-            except queue.Empty:
-                pass
-            if c:
-                Progress.save()
-                if e == c:
-                    print("\nLast batch all raised Exceptions!")
-                    print("Cancelling the rest of the tasks...")
-                    for t in pending_tasks:
-                        t.cancel()
+
+        def process_result(fut_result: None | RawResult) -> bool:
+            nonlocal shown
+            if not fut_result.result:
+                Progress.retire(fut_result.coord)
+                return False
+            if not shown:
+                shown = True
+                print("🌐", end="")
+            print(f"({fut_result.coord.x},{fut_result.coord.y})✔", end=" ", flush=True)
+            SaverQueue.put(
+                {
+                    "coord": fut_result.coord,
+                    "tsf": datetime.strftime(datetime.now(), "%y%m%d-%H%M"),
+                    "shm": shm_allocator.new(fut_result.coord, fut_result.result),
+                }
+            )
+            return True
+
+        def post_batch():
             if not shown:
                 print("No maps retrieved", end="")
+            try:
+                while True:
+                    coord: MapCoord = SaveSuccessQueue.get_nowait()
+                    Progress.retire(coord)
+                    shm_allocator.retire(coord)
+            except queue.Empty:
+                pass
 
-            # Statistics
-            elapsed = time.monotonic() - start
-            avg_rate = sum(done_last10) / sum(elapsed_last10)
-            print(
-                f"\n  {elapsed:_.2f}s since start, {total:_} coords scanned "
-                f"(mavg. {avg_rate:.2f} r/s), {hasmap_count} maps retrieved"
-            )
-
-            # Next iteration
-            tasks = pending_tasks
-            if elapsed >= duration:
-                AbortRequested.set()
-            if not AbortRequested.is_set() and (2 * len(tasks)) < batch_size:
-                async for coord in Progress.abatch(batch_size):
-                    tasks.add(make_task(coord))
+        await dispatch_fetcher(
+            progress=Progress,
+            duration=duration,
+            taskmaker=make_task,
+            result_handler=process_result,
+            pre_batch=pre_batch,
+            post_batch=post_batch,
+            abort_event=AbortRequested,
+        )
 
 
 def main2(
