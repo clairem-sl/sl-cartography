@@ -16,6 +16,7 @@ import multiprocessing.shared_memory as MPSharedMem
 import queue
 import re
 import signal
+import statistics
 import sys
 import time
 from collections import deque
@@ -176,13 +177,13 @@ async def async_main(duration: int, shm_mgr: MPMgr.SharedMemoryManager):
         done: set[asyncio.Task]
         pending_tasks: set[asyncio.Task]
         while tasks:
-            print(f"{len(tasks)} async jobs =>", end=" ")
+            print(f"(+{batch_size}) {len(tasks)} async jobs =>", end=" ")
             start_batch = time.monotonic()
             done, pending_tasks = await asyncio.wait(tasks, timeout=BATCH_WAIT)
             elapsed_last10.append(time.monotonic() - start_batch)
             done_last10.append(len(done))
             total += len(done)
-            batch_size = max(batch_size, len(done) * 3)
+            batch_size = int(statistics.median_high(done_last10)) * 3
             c = e = 0
             shown = False
             for c, fut in enumerate(done, start=1):
