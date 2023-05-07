@@ -228,3 +228,5 @@ async def dispatch_fetcher(
             new_tasks = {taskmaker(coord) async for coord in progress.abatch(batch_size)}
             print(f"(+{len(new_tasks)})", end=" ")
             tasks.update(new_tasks)
+    if abort_event.is_set():
+        print()
