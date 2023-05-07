@@ -41,7 +41,7 @@ class RegionsDBRecord(TypedDict):
     sources: set[str]
 
 
-DataBase: dict[str, RegionsDBRecord] = {}
+DataBase: dict[CoordType, RegionsDBRecord] = {}
 
 
 RE_HHMM = re.compile(r"^(\d{1,2}):(\d{1,2})$")
@@ -109,7 +109,7 @@ def process(tile: CookedResult):
     global DataBase
 
     ts = datetime.now().astimezone().isoformat(timespec="minutes")
-    xy = f"{tile.coord.x},{tile.coord.y}"
+    xy = tile.coord.x, tile.coord.y
     dbxy: RegionsDBRecord = DataBase.get(xy)
 
     def record_history():
