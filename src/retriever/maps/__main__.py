@@ -10,7 +10,6 @@ import multiprocessing as MP
 import multiprocessing.managers as MPMgr
 import multiprocessing.pool as MPPool
 import multiprocessing.shared_memory as MPSharedMem
-
 import queue
 import re
 import signal
@@ -26,7 +25,7 @@ import httpx
 
 from retriever import DebugLevel, RetrieverProgress
 from retriever.maps.saver import Thresholds, saver
-from sl_maptools import MapCoord, CoordType
+from sl_maptools import CoordType, MapCoord
 from sl_maptools.fetchers import RawResult
 from sl_maptools.fetchers.map import BoundedMapFetcher
 
@@ -322,7 +321,17 @@ def main(
         mapfilesets = manager.dict(_mapfilesets)
 
         thresholds = Thresholds(MSE=MSE_THRESHOLD, SSIM=SSIM_THRESHOLD)
-        saver_args = (mapdir, mapfilesets, SaverQueue, SaveSuccessQueue, saved_coords, worker_state, debug_level, thresholds, possibly_changed)
+        saver_args = (
+            mapdir,
+            mapfilesets,
+            SaverQueue,
+            SaveSuccessQueue,
+            saved_coords,
+            worker_state,
+            debug_level,
+            thresholds,
+            possibly_changed,
+        )
         pool: MPPool.Pool
         with MP.Pool(workers, initializer=saver, initargs=saver_args) as pool:
             while sum(1 for v, _ in worker_state.values() if v == "idle") < workers:

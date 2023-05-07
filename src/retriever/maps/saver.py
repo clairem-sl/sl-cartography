@@ -7,14 +7,15 @@ import time
 from dataclasses import dataclass
 from multiprocessing import shared_memory as MPSharedMem
 from pathlib import Path
-from typing import cast, TypedDict
+from typing import TypedDict, cast
 
 import numpy as np
 from PIL import Image
-from skimage.metrics import mean_squared_error as mse, structural_similarity as ssim
+from skimage.metrics import mean_squared_error as mse
+from skimage.metrics import structural_similarity as ssim
 
 from retriever import DebugLevel
-from sl_maptools import MapCoord, CoordType
+from sl_maptools import CoordType, MapCoord
 
 
 @dataclass
