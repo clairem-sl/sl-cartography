@@ -71,7 +71,7 @@ SaverQueue: MP.Queue
 SaveSuccessQueue: MP.Queue
 Progress: RetrieverProgress
 AbortRequested = asyncio.Event()
-SharedMemoryAllocations: dict[tuple[int, int], MPSharedMem.SharedMemory] = {}
+# SharedMemoryAllocations: dict[tuple[int, int], MPSharedMem.SharedMemory] = {}
 
 
 def sigint_handler(_, __):
@@ -155,7 +155,25 @@ def options() -> OptionsProtocol:
     return cast(OptionsProtocol, _opts)
 
 
-async def async_main(duration: int, shm_mgr: MPMgr.SharedMemoryManager):
+class SharedMemoryAllocator:
+    def __init__(self, manager: MPMgr.SharedMemoryManager):
+        self.mgr = manager
+        self.allocations: dict[tuple[int, int], MPSharedMem.SharedMemory] = {}
+
+    def new(self, coord: tuple[int, int], data: bytes) -> MPSharedMem.SharedMemory:
+        shm = self.mgr.SharedMemory(len(data))
+        shm.buf[:] = data
+        self.allocations[coord] = shm
+        return shm
+
+    def retire(self, coord: tuple[int, int]) -> None:
+        shm = self.allocations[coord]
+        shm.close()
+        shm.unlink()
+        del self.allocations[coord]
+
+
+async def async_main(duration: int, shm_allocator: SharedMemoryAllocator):
     global AbortRequested
     limits = httpx.Limits(max_connections=CONN_LIMIT, max_keepalive_connections=CONN_LIMIT)
     async with httpx.AsyncClient(limits=limits, timeout=10.0, http2=HTTP2) as client:
@@ -200,8 +218,7 @@ async def async_main(duration: int, shm_mgr: MPMgr.SharedMemoryManager):
                         print("🌐", end="")
                     hasmap_count += 1
                     print(f"({rslt.coord.x},{rslt.coord.y})✔", end=" ")
-                    shm = shm_mgr.SharedMemory(len(rslt.result))
-                    shm.buf[:] = rslt.result
+                    shm = shm_allocator.new(rslt.coord, rslt.result)
                     SaverQueue.put(
                         {
                             "coord": rslt.coord,
@@ -209,17 +226,13 @@ async def async_main(duration: int, shm_mgr: MPMgr.SharedMemoryManager):
                             "shm": shm,
                         }
                     )
-                    SharedMemoryAllocations[rslt.coord] = shm
                 else:
                     Progress.retire(rslt.coord)
             try:
                 while True:
                     success_coord: MapCoord = SaveSuccessQueue.get_nowait()
                     Progress.retire(success_coord)
-                    shm = SharedMemoryAllocations[success_coord]
-                    shm.close()
-                    shm.unlink()
-                    del SharedMemoryAllocations[success_coord]
+                    shm_allocator.retire(success_coord)
             except queue.Empty:
                 pass
             if c:
@@ -311,6 +324,7 @@ def main(
         saved = manager.dict()
         worker_state: dict[str, tuple[str, Path | None]] = manager.dict()
         possibly_changed: dict[tuple[int, int], None] = manager.dict()
+        shm_allocator = SharedMemoryAllocator(shm_manager)
 
         _mapfilesets: dict[tuple[int, int], list[Path]] = {}
         m: re.Match
@@ -332,7 +346,7 @@ def main(
             print("started.\nDispatching async fetchers!", flush=True)
             try:
                 signal.signal(signal.SIGINT, sigint_handler)
-                asyncio.run(async_main(dur, shm_manager))
+                asyncio.run(async_main(dur, shm_allocator))
             finally:
                 time.sleep(1)
                 signal.signal(signal.SIGINT, OrigSigINT)
@@ -354,11 +368,8 @@ def main(
                 print("Flushing SaveSuccess queue ... ", end="", flush=True)
                 while True:
                     coord = SaveSuccessQueue.get(timeout=5)
-                    shm = SharedMemoryAllocations[coord]
-                    shm.close()
-                    shm.unlink()
-                    del SharedMemoryAllocations[coord]
                     Progress.retire(coord)
+                    shm_allocator.retire(coord)
             except queue.Empty:
                 pass
             finally:
