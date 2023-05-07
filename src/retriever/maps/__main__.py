@@ -33,8 +33,6 @@ RE_MAPFILENAME: re.Pattern = re.compile(r"^(?P<x>\d+)-(?P<y>\d+)_(?P<ts>[0-9-]+)
 SSIM_THRESHOLD: Final[float] = 0.895
 MSE_THRESHOLD: Final[float] = 0.01
 MAVG_SAMPLES: Final[int] = 5
-MIN_COORDS: Final[MapCoord] = MapCoord(0, 0)
-MAX_COORDS: Final[MapCoord] = MapCoord(2100, 2100)
 
 CONN_LIMIT: Final[int] = 40
 SEMA_SIZE: Final[int] = 120
@@ -96,7 +94,7 @@ def options() -> OptionsProtocol:
     parser.add_argument(
         "--auto-reset",
         action="store_true",
-        help=f"If specified, retriever will wrap up back to maxrow ({MAX_COORDS.y}) upon finishing row 0",
+        help=f"If specified, retriever will wrap up back to maxrow ({RetrieverProgress.DEFA_MAX}) upon finishing row 0",
     )
     parser.add_argument("--debug_level", type=DebugLevel, default=DebugLevel.NORMAL)
 
@@ -262,7 +260,7 @@ def main2(
         dur = math.inf
 
     progress_file = mapdir / PROG_NAME
-    Progress = RetrieverProgress(progress_file, auto_reset=auto_reset, min_coord=MIN_COORDS, max_coord=MAX_COORDS)
+    Progress = RetrieverProgress(progress_file, auto_reset=auto_reset)
     if Progress.outstanding_count:
         print(f"{Progress.outstanding_count} jobs still outstanding from last session")
     else:
