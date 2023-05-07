@@ -23,6 +23,12 @@ class Thresholds:
     SSIM: float
 
 
+class QJob(TypedDict):
+    coord: MapCoord
+    tsf: str
+    shm: MPSharedMem.SharedMemory
+
+
 def saver(
     mapdir: Path,
     mapfilesets: dict[CoordType, list[Path]],
@@ -161,9 +167,3 @@ def saver(
             if img is not None:
                 img.close()
     _setstate("ended")
-
-
-class QJob(TypedDict):
-    coord: MapCoord
-    tsf: str
-    shm: MPSharedMem.SharedMemory
