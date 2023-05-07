@@ -212,22 +212,22 @@ async def async_main(duration: int, shm_allocator: SharedMemoryAllocator):
                 rslt: None | RawResult = fut.result()
                 if rslt is None:
                     continue
-                if rslt.result:
-                    if not shown:
-                        shown = True
-                        print("🌐", end="")
-                    hasmap_count += 1
-                    print(f"({rslt.coord.x},{rslt.coord.y})✔", end=" ")
-                    shm = shm_allocator.new(rslt.coord, rslt.result)
-                    SaverQueue.put(
-                        {
-                            "coord": rslt.coord,
-                            "tsf": datetime.strftime(datetime.now(), "%y%m%d-%H%M"),
-                            "shm": shm,
-                        }
-                    )
-                else:
+                if not rslt.result:
                     Progress.retire(rslt.coord)
+                    continue
+                if not shown:
+                    shown = True
+                    print("🌐", end="")
+                hasmap_count += 1
+                print(f"({rslt.coord.x},{rslt.coord.y})✔", end=" ", flush=True)
+                shm = shm_allocator.new(rslt.coord, rslt.result)
+                SaverQueue.put(
+                    {
+                        "coord": rslt.coord,
+                        "tsf": datetime.strftime(datetime.now(), "%y%m%d-%H%M"),
+                        "shm": shm,
+                    }
+                )
             try:
                 while True:
                     success_coord: MapCoord = SaveSuccessQueue.get_nowait()
@@ -254,10 +254,9 @@ async def async_main(duration: int, shm_allocator: SharedMemoryAllocator):
             tasks = pending_tasks
             if elapsed >= duration:
                 AbortRequested.set()
-            if not AbortRequested.is_set():
-                if (2 * len(tasks)) < batch_size:
-                    async for coord in Progress.abatch(batch_size):
-                        tasks.add(make_task(coord))
+            if not AbortRequested.is_set() and (2 * len(tasks)) < batch_size:
+                async for coord in Progress.abatch(batch_size):
+                    tasks.add(make_task(coord))
 
 
 def main(
