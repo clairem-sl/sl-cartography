@@ -167,6 +167,7 @@ async def async_main(duration: int, shm_allocator: SharedMemoryAllocator):
         done: set[asyncio.Task]
         pending_tasks: set[asyncio.Task]
         while tasks:
+            # Dispatch
             print(f"(+{batch_size}) {len(tasks)} async jobs =>", end=" ")
             start_batch = time.monotonic()
             done, pending_tasks = await asyncio.wait(tasks, timeout=BATCH_WAIT)
@@ -174,6 +175,8 @@ async def async_main(duration: int, shm_allocator: SharedMemoryAllocator):
             done_last10.append(len(done))
             total += len(done)
             batch_size = int(statistics.median_high(done_last10)) * 3
+
+            # Handle results
             c = e = 0
             shown = False
             for c, fut in enumerate(done, start=1):
@@ -216,12 +219,16 @@ async def async_main(duration: int, shm_allocator: SharedMemoryAllocator):
                         t.cancel()
             if not shown:
                 print("No maps retrieved", end="")
+
+            # Statistics
             elapsed = time.monotonic() - start
             avg_rate = sum(done_last10) / sum(elapsed_last10)
             print(
                 f"\n  {elapsed:_.2f}s since start, {total:_} coords scanned "
                 f"(mavg. {avg_rate:.2f} r/s), {hasmap_count} maps retrieved"
             )
+
+            # Next iteration
             tasks = pending_tasks
             if elapsed >= duration:
                 AbortRequested.set()
@@ -240,6 +247,7 @@ def main2(
     debug_level: DebugLevel,
 ):
     global Progress, SaverQueue, SaveSuccessQueue
+
     nao = datetime.now()
     if duration > 0:
         dur = duration
