@@ -14,9 +14,9 @@ from sl_maptools import CoordType, MapCoord
 from sl_maptools.fetchers import CookedResult
 from sl_maptools.fetchers.cap import BoundedNameFetcher
 
-CONN_LIMIT: Final[int] = 40
-SEMA_SIZE: Final[int] = 120
-HTTP2: Final[bool] = True
+CONN_LIMIT: Final[int] = 80
+# SEMA_SIZE: Final[int] = 180
+HTTP2: Final[bool] = False
 START_BATCH_SIZE: Final[int] = 600
 BATCH_WAIT: Final[float] = 5.0
 MAVG_SAMPLES: Final[int] = 5
@@ -164,7 +164,7 @@ def process(tile: CookedResult):
 async def amain(db_path: Path, duration: int):
     limits = httpx.Limits(max_connections=CONN_LIMIT, max_keepalive_connections=CONN_LIMIT)
     async with httpx.AsyncClient(limits=limits, timeout=10.0, http2=HTTP2) as client:
-        fetcher = BoundedNameFetcher(SEMA_SIZE, client, cooked=True, cancel_flag=AbortRequested)
+        fetcher = BoundedNameFetcher(CONN_LIMIT * 3, client, cooked=True, cancel_flag=AbortRequested)
         shown = False
 
         def make_task(coord: CoordType):

@@ -33,8 +33,8 @@ SSIM_THRESHOLD: Final[float] = 0.895
 MSE_THRESHOLD: Final[float] = 0.01
 MAVG_SAMPLES: Final[int] = 5
 
-CONN_LIMIT: Final[int] = 60
-SEMA_SIZE: Final[int] = 180
+CONN_LIMIT: Final[int] = 80
+# SEMA_SIZE: Final[int] = 180
 HTTP2: Final[bool] = True
 
 # BATCH_SIZE should be set to AT LEAST 3x (# of results per BATCH_WAIT period = rslt_per_batch)
@@ -149,7 +149,7 @@ async def async_main(duration: int, shm_allocator: SharedMemoryAllocator):
     global AbortRequested
     limits = httpx.Limits(max_connections=CONN_LIMIT, max_keepalive_connections=CONN_LIMIT)
     async with httpx.AsyncClient(limits=limits, timeout=10.0, http2=HTTP2) as client:
-        fetcher = BoundedMapFetcher(SEMA_SIZE, client, cooked=False, cancel_flag=AbortRequested)
+        fetcher = BoundedMapFetcher(CONN_LIMIT * 3, client, cooked=False, cancel_flag=AbortRequested)
         shown = False
 
         def make_task(coord: CoordType):
