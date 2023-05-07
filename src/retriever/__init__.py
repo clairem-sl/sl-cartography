@@ -107,7 +107,7 @@ class RetrieverProgress:
                     if not self.auto_reset:
                         return
                     self.next_y = self.maxc[1]
-                print(f"ROW:{job[1]}", flush=True)
+                print(f"ROW:{self.next_y}", flush=True)
 
 
 class DebugLevel(IntEnum):
