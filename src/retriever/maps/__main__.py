@@ -280,9 +280,9 @@ def main(
             lockf.touch(exist_ok=False)
         except FileExistsError:
             print(f"Lock file {lockf} exists!", file=sys.stderr)
-            print("You must not run multiple audits at the same time.", file=sys.stderr)
+            print("You must not run multiple retrievers at the same time.", file=sys.stderr)
             print(
-                "If no other audit is running, delete the lock file to continue.",
+                "If no other retriever is running, delete the lock file to continue.",
                 file=sys.stderr,
             )
             sys.exit(1)
