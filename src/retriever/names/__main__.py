@@ -182,7 +182,7 @@ async def amain(db_path: Path, duration: int):
                 if not shown:
                     shown = True
                     print("🌐", end="")
-                print(f"({fut_result.coord.x},{fut_result.coord.y}){fut_result.result}", end=" ", flush=True)
+                print(f'({fut_result.coord.x},{fut_result.coord.y})"{fut_result.result}"', end=" ", flush=True)
             process(fut_result)
             Progress.retire(fut_result.coord)
             return True
