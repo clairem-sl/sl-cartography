@@ -14,7 +14,6 @@ import queue
 import re
 import signal
 import statistics
-import sys
 import time
 from collections import deque
 from datetime import datetime, timedelta, timezone
@@ -23,7 +22,7 @@ from typing import Final, Protocol, cast
 
 import httpx
 
-from retriever import DebugLevel, RetrieverProgress
+from retriever import DebugLevel, RetrieverProgress, lock_file
 from retriever.maps.saver import Thresholds, saver
 from sl_maptools import CoordType, MapCoord
 from sl_maptools.fetchers import RawResult
@@ -245,32 +244,16 @@ async def async_main(duration: int, shm_allocator: SharedMemoryAllocator):
                     tasks.add(make_task(coord))
 
 
-def main(
+def main2(
     mapdir: Path,
     duration: int,
     until: tuple[int, int],
     until_utc: tuple[int, int],
     auto_reset: bool,
     workers: int,
-    force: bool,
     debug_level: DebugLevel,
 ):
     global Progress, SaverQueue, SaveSuccessQueue
-    mapdir.mkdir(parents=True, exist_ok=True)
-
-    lockf: Path = mapdir / LOCK_NAME
-    if not force:
-        try:
-            lockf.touch(exist_ok=False)
-        except FileExistsError:
-            print(f"Lock file {lockf} exists!", file=sys.stderr)
-            print("You must not run multiple retrievers at the same time.", file=sys.stderr)
-            print(
-                "If no other retriever is running, delete the lock file to continue.",
-                file=sys.stderr,
-            )
-            sys.exit(1)
-
     nao = datetime.now()
     if duration > 0:
         dur = duration
@@ -376,11 +359,24 @@ def main(
                     print(coord, file=fout)
     print(f"{Progress.outstanding_count:_} outstanding jobs left. Last dispatched coordinate: {Progress.last_dispatch}")
 
-    lockf.unlink(missing_ok=True)
+
+def main(
+    mapdir: Path,
+    duration: int,
+    until: tuple[int, int],
+    until_utc: tuple[int, int],
+    auto_reset: bool,
+    workers: int,
+    force: bool,
+    debug_level: DebugLevel,
+):
+    mapdir.mkdir(parents=True, exist_ok=True)
+    with lock_file(mapdir / LOCK_NAME, force):
+        main2(mapdir, duration, until, until_utc, auto_reset, workers, debug_level)
+    if AbortRequested.is_set():
+        print("\nAborted by user.")
 
 
 if __name__ == "__main__":
     opts = options()
     main(**vars(opts))
-    if AbortRequested.is_set():
-        print("\nAborted by user.")

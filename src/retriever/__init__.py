@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import sys
+from contextlib import contextmanager
+
 from enum import IntEnum
 
 import ruamel.yaml as ryaml
@@ -8,7 +11,7 @@ from collections import deque
 from pathlib import Path
 from typing import TypedDict, Generator, Final
 
-from sl_maptools import MapCoord
+from sl_maptools import CoordType
 
 
 class ProgressDict(TypedDict):
@@ -25,8 +28,8 @@ class RetrieverProgress:
         self,
         backing_file: Path,
         auto_reset: bool = True,
-        min_coord: MapCoord = MapCoord(DEFA_MIN, DEFA_MIN),
-        max_coord: MapCoord = MapCoord(DEFA_MAX, DEFA_MAX),
+        min_coord: CoordType = (DEFA_MIN, DEFA_MIN),
+        max_coord: CoordType = (DEFA_MAX, DEFA_MAX),
     ):
         self.backing_file = backing_file
         self.auto_reset = auto_reset
@@ -108,3 +111,20 @@ class DebugLevel(IntEnum):
     DISABLED = 0
     NORMAL = 1
     DETAILED = 2
+
+
+@contextmanager
+def lock_file(lockf: Path, force: bool):
+    if not force:
+        try:
+            lockf.touch(exist_ok=False)
+        except FileExistsError:
+            print(f"Lock file {lockf} exists!", file=sys.stderr)
+            print("You must not run multiple retrievers at the same time.", file=sys.stderr)
+            print(
+                "If no other retriever is running, delete the lock file to continue.",
+                file=sys.stderr,
+            )
+            sys.exit(1)
+    yield
+    lockf.unlink(missing_ok=True)
