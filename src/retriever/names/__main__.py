@@ -178,12 +178,12 @@ async def amain(duration: int):
             nonlocal shown
             if fut_result.status_code not in ACCEPTABLE_STATUSCODES:
                 return False
-            process(fut_result)
             if fut_result.result:
                 if not shown:
                     shown = True
                     print("🌐", end="")
                 print(f"({fut_result.coord.x},{fut_result.coord.y}){fut_result.result}", end=" ", flush=True)
+            process(fut_result)
             Progress.retire(fut_result.coord)
             return True
 
