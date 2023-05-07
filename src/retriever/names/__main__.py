@@ -125,6 +125,7 @@ def process(tile: CookedResult):
             dbxy["last_seen"] = ts
         history: dict[str, list[str]] = dbxy["name_history"]
         if seen_name not in history:
+            print("🉑", end="", flush=True)
             history[seen_name] = [ts]
             return
         if seen_name != prev_name:
