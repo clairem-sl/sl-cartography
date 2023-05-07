@@ -28,7 +28,7 @@ import httpx
 
 from retriever import DebugLevel, RetrieverProgress
 from retriever.maps.saver import Thresholds, saver
-from sl_maptools import MapCoord
+from sl_maptools import MapCoord, CoordType
 from sl_maptools.fetchers import RawResult
 
 # from sl_maptools.image_processing import calculate_dominant_colors, FASCIA_COORDS, RGBTuple
@@ -321,7 +321,7 @@ def main(
         print("Starting saver worker...", end="", flush=True)
         SaverQueue = MP.Queue()
         SaveSuccessQueue = MP.Queue()
-        saved = manager.dict()
+        saved_coords: dict[CoordType, None] = manager.dict()
         worker_state: dict[str, tuple[str, Path | None]] = manager.dict()
         possibly_changed: dict[tuple[int, int], None] = manager.dict()
         shm_allocator = SharedMemoryAllocator(shm_manager)
@@ -337,7 +337,7 @@ def main(
         mapfilesets = manager.dict(_mapfilesets)
 
         thresholds = Thresholds(MSE=MSE_THRESHOLD, SSIM=SSIM_THRESHOLD)
-        saver_args = (mapdir, mapfilesets, SaverQueue, SaveSuccessQueue, saved, worker_state, debug_level, thresholds, possibly_changed)
+        saver_args = (mapdir, mapfilesets, SaverQueue, SaveSuccessQueue, saved_coords, worker_state, debug_level, thresholds, possibly_changed)
         pool: MPPool.Pool
         with MP.Pool(workers, initializer=saver, initargs=saver_args) as pool:
             while sum(1 for v, _ in worker_state.values() if v == "idle") < workers:

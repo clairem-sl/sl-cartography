@@ -7,14 +7,14 @@ import time
 from dataclasses import dataclass
 from multiprocessing import shared_memory as MPSharedMem
 from pathlib import Path
-from typing import Any, cast, TypedDict
+from typing import cast, TypedDict
 
 import numpy as np
 from PIL import Image
 from skimage.metrics import mean_squared_error as mse, structural_similarity as ssim
 
 from retriever import DebugLevel
-from sl_maptools import MapCoord
+from sl_maptools import MapCoord, CoordType
 
 
 @dataclass
@@ -28,7 +28,7 @@ def saver(
     mapfilesets: dict[tuple[int, int], list[Path]],
     save_queue: MP.Queue,
     success_queue: MP.Queue,
-    saved: dict[MapCoord, Any],
+    saved_coords: dict[CoordType, None],
     worker_state: dict[str, tuple[str, str | None]],
     debug_level: DebugLevel,
     thresholds: Thresholds,
@@ -64,7 +64,7 @@ def saver(
         regmap: QJob = cast(QJob, item)
         coord: MapCoord = regmap["coord"]
         shm: MPSharedMem.SharedMemory = regmap["shm"]
-        if coord in saved:
+        if coord in saved_coords:
             shm.close()
             continue
         blob = cast(bytes, shm.buf)
@@ -78,8 +78,8 @@ def saver(
             except Exception:
                 raise
 
-            saved[coord] = None
-            counter = len(saved)
+            saved_coords[coord] = None
+            counter = len(saved_coords)
             if debug_level > DebugLevel.DISABLED:
                 print(f"💾", end="", flush=True)
                 if debug_level >= DebugLevel.DETAILED:
