@@ -161,7 +161,7 @@ def process(tile: CookedResult):
         DataBase[xy] = dbxy
 
 
-async def amain(duration: int):
+async def amain(db_path: Path, duration: int):
     limits = httpx.Limits(max_connections=CONN_LIMIT, max_keepalive_connections=CONN_LIMIT)
     async with httpx.AsyncClient(limits=limits, timeout=10.0, http2=HTTP2) as client:
         fetcher = BoundedNameFetcher(SEMA_SIZE, client, cooked=True, cancel_flag=AbortRequested)
@@ -190,6 +190,9 @@ async def amain(duration: int):
         def post_batch():
             if not shown:
                 print("Nothing retrieved", end="")
+                return
+            with db_path.open("wb") as fout:
+                pickle.dump(DataBase, fout)
 
         await dispatch_fetcher(
             progress=Progress,
@@ -242,7 +245,7 @@ def main2(auto_reset: bool, db_dir: Path, duration: int, until: tuple[int, int],
     print(f"DataBase already contains {len(DataBase)} regions.")
 
     with handle_sigint(AbortRequested):
-        asyncio.run(amain(dur))
+        asyncio.run(amain(db_path, dur))
 
     print(f"{Progress.outstanding_count:_} outstanding jobs left. Last dispatched coordinate: {Progress.last_dispatch}")
 
