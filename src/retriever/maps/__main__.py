@@ -11,8 +11,6 @@ import multiprocessing.managers as MPMgr
 import multiprocessing.pool as MPPool
 import multiprocessing.shared_memory as MPSharedMem
 
-# import multiprocessing.synchronize as MPSync
-# import pickle
 import queue
 import re
 import signal
@@ -30,13 +28,10 @@ from retriever import DebugLevel, RetrieverProgress
 from retriever.maps.saver import Thresholds, saver
 from sl_maptools import MapCoord, CoordType
 from sl_maptools.fetchers import RawResult
-
-# from sl_maptools.image_processing import calculate_dominant_colors, FASCIA_COORDS, RGBTuple
 from sl_maptools.fetchers.map import BoundedMapFetcher
 
 RE_MAPFILENAME: re.Pattern = re.compile(r"^(?P<x>\d+)-(?P<y>\d+)_(?P<ts>[0-9-]+)\.jpg$")
 
-# SSIM_THRESHOLD: Final[float] = 0.98
 SSIM_THRESHOLD: Final[float] = 0.895
 MSE_THRESHOLD: Final[float] = 0.01
 MAVG_SAMPLES: Final[int] = 5
@@ -46,9 +41,6 @@ MAX_COORDS: Final[MapCoord] = MapCoord(2100, 2100)
 CONN_LIMIT: Final[int] = 40
 SEMA_SIZE: Final[int] = 120
 HTTP2: Final[bool] = True
-# CONN_LIMIT = 20
-# SEMA_SIZE = 100
-# HTTP2 = True
 
 # BATCH_SIZE should be set to AT LEAST 3x (# of results per BATCH_WAIT period = rslt_per_batch)
 # so the number needs to be determined empirically.
@@ -71,7 +63,6 @@ SaverQueue: MP.Queue
 SaveSuccessQueue: MP.Queue
 Progress: RetrieverProgress
 AbortRequested = asyncio.Event()
-# SharedMemoryAllocations: dict[CoordType, MPSharedMem.SharedMemory] = {}
 
 
 def sigint_handler(_, __):
@@ -90,7 +81,6 @@ def sigint_handler(_, __):
 class OptionsProtocol(Protocol):
     mapdir: Path
     workers: int
-    # nodom: bool
     duration: int
     until: tuple[int, int]
     until_utc: tuple[int, int]
@@ -114,7 +104,6 @@ def options() -> OptionsProtocol:
 
     parser.add_argument("--force", action="store_true")
     parser.add_argument("--mapdir", metavar="DIR", type=Path, default=DEFA_MAPS_DIR)
-    # parser.add_argument("--nodom", action="store_true", help="If specified, do not calculate dominant color")
     parser.add_argument(
         "--workers", metavar="N", type=int, default=max(1, MP.cpu_count() - 2), help="Launch N saver workers"
     )
@@ -178,7 +167,6 @@ async def async_main(duration: int, shm_allocator: SharedMemoryAllocator):
     limits = httpx.Limits(max_connections=CONN_LIMIT, max_keepalive_connections=CONN_LIMIT)
     async with httpx.AsyncClient(limits=limits, timeout=10.0, http2=HTTP2) as client:
         fetcher = BoundedMapFetcher(SEMA_SIZE, client, cooked=False, cancel_flag=AbortRequested)
-        # coords = [MapCoord(x, y) for x in range(950, 1050) for y in range(950, 1050)]
 
         def make_task(coord: CoordType):
             return asyncio.create_task(fetcher.async_fetch(MapCoord(*coord)), name=str(coord))
@@ -250,7 +238,6 @@ async def async_main(duration: int, shm_allocator: SharedMemoryAllocator):
                 f"\n  {elapsed:_.2f}s since start, {total:_} coords scanned "
                 f"(mavg. {avg_rate:.2f} r/s), {hasmap_count} maps retrieved"
             )
-            # print(f"  using {fetcher.seen_http_vers}")
             tasks = pending_tasks
             if elapsed >= duration:
                 AbortRequested.set()
@@ -265,7 +252,6 @@ def main(
     until: tuple[int, int],
     until_utc: tuple[int, int],
     auto_reset: bool,
-    # nodom: bool,
     workers: int,
     force: bool,
     debug_level: DebugLevel,

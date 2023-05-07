@@ -100,12 +100,6 @@ def saver(
                 img: Image.Image = Image.open(bio)
                 img.load()
 
-            # if dominant_colors is not None:
-            #     domc: dict[int, list[RGBTuple]] = {}
-            #     for fasz in FASCIA_COORDS:
-            #         domc[fasz] = calculate_dominant_colors(img, fasz)
-            #     dominant_colors[tuple(coord)] = domc
-
             # Prune older file of same coordinate if really similar
             if (coordfiles := mapfilesets.get(coord)) is None:
                 continue
