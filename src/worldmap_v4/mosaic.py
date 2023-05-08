@@ -8,7 +8,7 @@ import signal
 import sys
 import time
 from pathlib import Path
-from typing import Final, Protocol, TypedDict, cast
+from typing import Final, Protocol, TypedDict, cast, Any
 
 from PIL import Image
 
@@ -18,6 +18,7 @@ from sl_maptools.image_processing import (
     RGBTuple,
     calculate_dominant_colors,
 )
+from worldmap_v4 import get_bonnie_coords
 
 # region ##### Types
 
@@ -34,6 +35,8 @@ CACHE_FILE: Final[str] = "CachedDominantColors.pkl"
 
 DEFA_CALC_WORKERS: Final[int] = max(1, MP.cpu_count() - 2)
 DEFA_MAKE_WORKERS: Final[int] = 1
+
+DEFA_REGIONSDB = Path(r"C:\Cache\SL-Carto\RegionsDB2.pkl")
 
 FASCIA_PIXELS: Final[dict[int, int]] = {
     1: 3,
@@ -56,6 +59,10 @@ class OptionsType(Protocol):
     pip_every: int
     save_every: int
     mapdir: Path
+    no_validate: bool
+    regionsdb: Path
+    fetchbonnie: bool
+    bonniedb: Path
 
 
 def get_opts() -> OptionsType:
@@ -74,6 +81,13 @@ def get_opts() -> OptionsType:
     parser.add_argument("--pip-every", metavar="N", type=int, default=100)
     parser.add_argument("--save-every", metavar="N", type=int, default=2000)
     parser.add_argument("--mapdir", metavar="DIR", type=Path, default=DEFA_MAPDIR)
+
+    parser.add_argument("--no-validate", action="store_true")
+    parser.add_argument("--regionsdb", metavar="DB", type=Path, default=DEFA_REGIONSDB)
+
+    bonnie_grp = parser.add_mutually_exclusive_group()
+    bonnie_grp.add_argument("--fetchbonnie", action="store_true")
+    bonnie_grp.add_argument("--bonniedb", metavar="JSON", type=Path)
 
     _opts = parser.parse_args()
     return cast(OptionsType, _opts)
@@ -237,12 +251,29 @@ def main(opts: OptionsType):
         print("     (But new ones will still be saved)")
 
     mapfiles_d: dict[CoordType, Path] = inventorize_maps_latest(opts.mapdir)
-    if len(mapfiles_d) == 0:
-        print("ERROR: No mapfiles!", file=sys.stderr)
-        sys.exit(1)
+    if not opts.no_validate:
+        #
+        regions_db: dict[CoordType, Any] = {}
+        if opts.regionsdb.exists():
+            with opts.regionsdb.open("rb") as fin:
+                regions_db = pickle.load(fin)
+        if regions_db:
+            for k in list(mapfiles_d.keys()):
+                if k not in regions_db:
+                    del mapfiles_d[k]
+        #
+        bonnie_coords = get_bonnie_coords(opts.bonniedb, opts.fetchbonnie)
+        if bonnie_coords:
+            for k in list(mapfiles_d.keys()):
+                if k not in bonnie_coords:
+                    del mapfiles_d[k]
+
     mapfiles: list[tuple[CoordType, Path]] = sorted(
         mapfiles_d.items(), key=lambda c: (-c[0][1], c[0][0])
     )
+    if len(mapfiles) == 0:
+        print("ERROR: No valid mapfiles!", file=sys.stderr)
+        sys.exit(1)
 
     start = time.monotonic()
     manager: MPMgrs.SyncManager
