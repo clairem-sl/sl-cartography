@@ -253,7 +253,7 @@ def main(opts: OptionsType):
         make_queue = manager.Queue()
         make_args = (maker_state, make_queue, patches_coll, coll_lock, opts.mapdir)
 
-        coll_queue = manager.Queue()
+        coll_queue = manager.Queue(maxsize=(opts.save_every * 2))
         coll_args = (coll_queue, patches_coll, coll_lock)
 
         calc_workers = opts.calc_workers
