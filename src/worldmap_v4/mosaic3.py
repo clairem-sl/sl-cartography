@@ -150,13 +150,19 @@ def collector(coll_queue: MP.Queue, patches_coll: dict[tuple[CoordType, int], li
 
 
 def make_mosaic(
+    worker_state: dict[str, str],
     queue: MP.Queue,
     patches_coll: dict[tuple[CoordType, int], list[RGBTuple]],
     coll_lock: MP.RLock,
     mapdir: Path,
 ):
     signal.signal(signal.SIGINT, signal.SIG_IGN)
+
+    def _state(state: str):
+        worker_state["maker"] = state
+
     while True:
+        _state("idle")
         item = queue.get()
         if item is None:
             break
@@ -166,11 +172,13 @@ def make_mosaic(
         if not isinstance(item, tuple):
             continue
 
+        _state("got_job")
         assert isinstance(item, tuple)
         patches_bysz: dict[int, dict[CoordType, list[RGBTuple]]] = {
             sz: {} for sz in item
         }
         with coll_lock:
+            _state("transform")
             for k, v in dict(patches_coll).items():
                 coord, sz = k
                 if sz not in patches_bysz:
@@ -178,11 +186,13 @@ def make_mosaic(
                 patches_bysz[sz][coord] = v
 
         for sz, patches in patches_bysz.items():
-            print(f"💾{sz}", end="", flush=True)
+            _state(f"make_{sz}_canvas")
+            print(f"🔽{sz}", end="", flush=True)
             fpx = FASCIA_PIXELS[sz]
             tsz = fpx * sz
             sidelen = 2101 * tsz
             canvas = Image.new("RGBA", (sidelen, sidelen))
+            _state(f"make_{sz}_patches")
             for coord, colors in patches.items():
                 x, y = coord
                 cx = tsz * x
@@ -195,9 +205,10 @@ def make_mosaic(
                     if sy >= tsz:
                         sy = 0
                         sx += fpx
+            _state(f"save_{sz}")
             canvas.save(mapdir / f"worldmap4_mosaic_{sz}x{sz}.png")
-            print(f"🟢{sz}", end="", flush=True)
-
+            print(f"💾{sz}", end="", flush=True)
+    _state("ended")
 
 # endregion
 
@@ -238,8 +249,9 @@ def main(opts: OptionsType):
         coll_lock = manager.RLock()
 
         make_workers = opts.make_workers
+        maker_state = manager.dict()
         make_queue = manager.Queue()
-        make_args = (make_queue, patches_coll, coll_lock, opts.mapdir)
+        make_args = (maker_state, make_queue, patches_coll, coll_lock, opts.mapdir)
 
         coll_queue = manager.Queue()
         coll_args = (coll_queue, patches_coll, coll_lock)
@@ -267,8 +279,12 @@ def main(opts: OptionsType):
                     if (i % opts.pip_every) == 0:
                         print(".", end="", flush=True)
                     if (i % opts.save_every) == 0:
-                        make_queue.put(tuple(FASCIA_SIZES))
-                        make_recently_triggered = True
+                        if any(state == "idle" for state in maker_state.values()):
+                            make_queue.put(tuple(FASCIA_SIZES))
+                            print("🏀", end="", flush=True)
+                            make_recently_triggered = True
+                    if (i % opts.save_every) == 2:
+                        print(f"q={coll_queue.qsize()}", end="", flush=True)
                 if not make_recently_triggered:
                     make_queue.put(tuple(FASCIA_SIZES))
             except KeyboardInterrupt:
