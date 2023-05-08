@@ -76,7 +76,6 @@ def calc_domc(job: tuple[CoordType, Path]) -> tuple[CoordType, DomColors]:
 
 def make_mosaic(
     queue: MP.Queue,
-    fascia_pixels: dict[int, int],
     patches_dict: dict[tuple[CoordType, int], list[RGBTuple]],
     mapdir: Path,
 ):
@@ -103,7 +102,7 @@ def make_mosaic(
 
         for sz, patches in patches_bysz.items():
             print(f"💾{sz}", end="", flush=True)
-            fpx = fascia_pixels[sz]
+            fpx = FASCIA_PIXELS[sz]
             tsz = fpx * sz
             sidelen = 2101 * tsz
             canvas = Image.new("RGBA", (sidelen, sidelen))
@@ -161,7 +160,7 @@ def main(
 
         make_workers = 1
         make_queue = manager.Queue()
-        make_args = (make_queue, FASCIA_PIXELS, patches_dict, MAPDIR)
+        make_args = (make_queue, patches_dict, MAPDIR)
 
         calc_workers = workers
         calc_domc_args = (patches_dict, cached_domc)
