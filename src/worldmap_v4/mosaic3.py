@@ -19,7 +19,15 @@ from sl_maptools.image_processing import (
     calculate_dominant_colors,
 )
 
-RE_MAP = re.compile(r"^(\d+)-(\d+)_\d+-\d+.jpg$")
+# region ##### Types
+
+DomColors = dict[int, list[RGBTuple]]
+
+# endregion
+
+# region ##### CONSTs
+
+RE_MAP: Final[re.Pattern] = re.compile(r"^(\d+)-(\d+)_\d+-\d+.jpg$")
 
 DEFA_MAPDIR: Final[Path] = Path(r"C:\Cache\SL-Carto\Maps2")
 CACHE_FILE: Final[str] = "CachedDominantColors.pkl"
@@ -34,6 +42,10 @@ FASCIA_PIXELS: Final[dict[int, int]] = {
     4: 2,
     5: 2,
 }
+
+# endregion
+
+# region ##### CLI options
 
 
 class OptionsType(Protocol):
@@ -67,12 +79,14 @@ def get_opts() -> OptionsType:
     return cast(OptionsType, _opts)
 
 
+# endregion
+
+# region ##### Worker: Dominant Color Calculator
+
+
 class CalcJob(TypedDict):
     coord: CoordType
     fpath: Path
-
-
-DomColors = dict[int, list[RGBTuple]]
 
 
 CalcCache: None | dict[CoordType, DomColors]
@@ -108,6 +122,11 @@ def calc_domc(job: tuple[CoordType, Path]) -> tuple[CoordType, DomColors]:
         PatchesDict[coord, sz] = colors
 
     return coord, domc
+
+
+# endregion
+
+# region ##### Worker: Mosaic Maker
 
 
 def make_mosaic(
@@ -156,6 +175,9 @@ def make_mosaic(
                         sx += fpx
             canvas.save(mapdir / f"worldmap4_mosaic_{sz}x{sz}.png")
             print(f"🟢{sz}", end="", flush=True)
+
+
+# endregion
 
 
 def main(opts: OptionsType):
