@@ -1,3 +1,4 @@
+import argparse
 import multiprocessing as MP
 import multiprocessing.managers as MPMgrs
 import multiprocessing.pool as MPPool
@@ -7,7 +8,7 @@ import signal
 import sys
 import time
 from pathlib import Path
-from typing import Final, TypedDict
+from typing import Final, Protocol, TypedDict, cast
 
 from PIL import Image
 
@@ -20,8 +21,11 @@ from sl_maptools.image_processing import (
 
 RE_MAP = re.compile(r"^(\d+)-(\d+)_\d+-\d+.jpg$")
 
-MAPDIR: Final[Path] = Path(r"C:\Cache\SL-Carto\Maps2")
+DEFA_MAPDIR: Final[Path] = Path(r"C:\Cache\SL-Carto\Maps2")
 CACHE_FILE: Final[str] = "CachedDominantColors.pkl"
+
+DEFA_CALC_WORKERS: Final[int] = max(1, MP.cpu_count() - 2)
+DEFA_MAKE_WORKERS: Final[int] = 1
 
 FASCIA_PIXELS: Final[dict[int, int]] = {
     1: 3,
@@ -30,6 +34,33 @@ FASCIA_PIXELS: Final[dict[int, int]] = {
     4: 2,
     5: 2,
 }
+
+
+class OptionsType(Protocol):
+    no_cache: bool
+    calc_workers: int
+    make_workers: int
+    pip_every: int
+    save_every: int
+    mapdir: Path
+
+
+def get_opts() -> OptionsType:
+    parser = argparse.ArgumentParser("worldmap_v4.mosaic")
+
+    parser.add_argument("--no-cache", action="store_true")
+    parser.add_argument(
+        "--calc-workers", metavar="N", type=int, default=DEFA_CALC_WORKERS
+    )
+    parser.add_argument(
+        "--make-workers", metavar="N", type=int, default=DEFA_MAKE_WORKERS
+    )
+    parser.add_argument("--pip-every", metavar="N", type=int, default=100)
+    parser.add_argument("--save-every", metavar="N", type=int, default=1000)
+    parser.add_argument("--mapdir", metavar="DIR", type=Path, default=DEFA_MAPDIR)
+
+    _opts = parser.parse_args()
+    return cast(OptionsType, _opts)
 
 
 class CalcJob(TypedDict):
@@ -122,15 +153,10 @@ def make_mosaic(
             print(f"🟢{sz}", end="", flush=True)
 
 
-def main(
-    workers: int = 6,
-    no_cache: bool = False,
-    pip_every: int = 100,
-    save_every: int = 1000,
-):
+def main(opts: OptionsType):
     cached_domc: dict[CoordType, DomColors] = {}
-    cache_path = MAPDIR / CACHE_FILE
-    if not no_cache and cache_path.exists():
+    cache_path = opts.mapdir / CACHE_FILE
+    if not opts.no_cache and cache_path.exists():
         try:
             with cache_path.open("rb") as fin:
                 cached_domc.update(pickle.load(fin))
@@ -139,7 +165,7 @@ def main(
     print(f"Cached Dominant Colors = {len(cached_domc)}")
 
     mapfiles_d: dict[CoordType, Path] = {}
-    for mf in sorted(MAPDIR.glob("*.jpg"), reverse=True):
+    for mf in sorted(opts.mapdir.glob("*.jpg"), reverse=True):
         if (m := RE_MAP.match(mf.name)) is None:
             continue
         coord = int(m.group(1)), int(m.group(2))
@@ -158,11 +184,11 @@ def main(
     with MP.Manager() as manager:
         patches_dict = manager.dict()
 
-        make_workers = 1
+        make_workers = opts.make_workers
         make_queue = manager.Queue()
-        make_args = (make_queue, patches_dict, MAPDIR)
+        make_args = (make_queue, patches_dict, opts.mapdir)
 
-        calc_workers = workers
+        calc_workers = opts.calc_workers
         calc_domc_args = (patches_dict, cached_domc)
 
         poolc: MPPool.Pool
@@ -180,9 +206,9 @@ def main(
                     make_recently_triggered = False
                     coord, domc = rslt
                     cached_domc[coord] = domc
-                    if (i % pip_every) == 0:
+                    if (i % opts.pip_every) == 0:
                         print(".", end="", flush=True)
-                    if (i % save_every) == 0:
+                    if (i % opts.save_every) == 0:
                         make_queue.put(tuple(FASCIA_SIZES))
                         make_recently_triggered = True
                 if not make_recently_triggered:
@@ -214,4 +240,5 @@ def main(
 
 
 if __name__ == "__main__":
-    main()
+    options = get_opts()
+    main(options)
