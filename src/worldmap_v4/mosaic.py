@@ -274,6 +274,7 @@ def main(opts: OptionsType):
     if len(mapfiles) == 0:
         print("ERROR: No valid mapfiles!", file=sys.stderr)
         sys.exit(1)
+    print(f"\n{len(mapfiles)} regions to mosaicize:")
 
     start = time.monotonic()
     manager: MPMgrs.SyncManager
