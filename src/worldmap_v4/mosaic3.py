@@ -91,16 +91,19 @@ class CalcJob(TypedDict):
 
 CalcCache: None | dict[CoordType, DomColors]
 PatchesDict: dict[tuple[CoordType, int], list[RGBTuple]]
+CollectorQueue: MP.Queue
 
 
 def calc_domc_init(
     patches_dict: dict[tuple[CoordType, int], list[RGBTuple]],
     calc_cache: None | dict[CoordType, DomColors],
+    coll_queue: MP.Queue,
 ):
-    global PatchesDict, CalcCache
+    global PatchesDict, CalcCache, CollectorQueue
     signal.signal(signal.SIGINT, signal.SIG_IGN)
     PatchesDict = patches_dict
     CalcCache = calc_cache
+    CollectorQueue = coll_queue
 
 
 def calc_domc(job: tuple[CoordType, Path]) -> tuple[CoordType, DomColors]:
@@ -118,11 +121,28 @@ def calc_domc(job: tuple[CoordType, Path]) -> tuple[CoordType, DomColors]:
             fsz: calculate_dominant_colors(img, fsz) for fsz in FASCIA_SIZES
         }
 
-    for sz, colors in domc.items():
-        PatchesDict[coord, sz] = colors
+    rslt = coord, domc
+    CollectorQueue.put(rslt)
+    return rslt
 
-    return coord, domc
 
+# endregion
+
+# region ##### Worker: Collector
+
+def collector(coll_queue: MP.Queue, patches_coll: dict[tuple[CoordType, int], list[RGBTuple]], coll_lock: MP.RLock):
+    signal.signal(signal.SIGINT, signal.SIG_IGN)
+    while True:
+        item = coll_queue.get()
+        if item is None:
+            break
+        if item is Ellipsis:
+            continue
+
+        coord, domc = cast(tuple[CoordType, DomColors], item)
+        with coll_lock:
+            for sz, colors in domc.items():
+                patches_coll[coord, sz] = colors
 
 # endregion
 
@@ -131,7 +151,8 @@ def calc_domc(job: tuple[CoordType, Path]) -> tuple[CoordType, DomColors]:
 
 def make_mosaic(
     queue: MP.Queue,
-    patches_dict: dict[tuple[CoordType, int], list[RGBTuple]],
+    patches_coll: dict[tuple[CoordType, int], list[RGBTuple]],
+    coll_lock: MP.RLock,
     mapdir: Path,
 ):
     signal.signal(signal.SIGINT, signal.SIG_IGN)
@@ -149,11 +170,12 @@ def make_mosaic(
         patches_bysz: dict[int, dict[CoordType, list[RGBTuple]]] = {
             sz: {} for sz in item
         }
-        for k, v in dict(patches_dict).items():
-            coord, sz = k
-            if sz not in patches_bysz:
-                continue
-            patches_bysz[sz][coord] = v
+        with coll_lock:
+            for k, v in dict(patches_coll).items():
+                coord, sz = k
+                if sz not in patches_bysz:
+                    continue
+                patches_bysz[sz][coord] = v
 
         for sz, patches in patches_bysz.items():
             print(f"💾{sz}", end="", flush=True)
@@ -212,21 +234,27 @@ def main(opts: OptionsType):
     start = time.monotonic()
     manager: MPMgrs.SyncManager
     with MP.Manager() as manager:
-        patches_dict = manager.dict()
+        patches_coll = manager.dict()
+        coll_lock = manager.RLock()
 
         make_workers = opts.make_workers
         make_queue = manager.Queue()
-        make_args = (make_queue, patches_dict, opts.mapdir)
+        make_args = (make_queue, patches_coll, coll_lock, opts.mapdir)
+
+        coll_queue = manager.Queue()
+        coll_args = (coll_queue, patches_coll, coll_lock)
 
         calc_workers = opts.calc_workers
-        calc_domc_args = (patches_dict, None if opts.no_cache else cached_domc)
+        calc_domc_args = (patches_coll, None if opts.no_cache else cached_domc, coll_queue)
 
         poolc: MPPool.Pool
+        pool_coll: MPPool.Pool
         poolm: MPPool.Pool
         with (
             MP.Pool(
                 calc_workers, initializer=calc_domc_init, initargs=calc_domc_args
             ) as poolc,
+            MP.Pool(1, initializer=collector, initargs=coll_args) as pool_coll,
             MP.Pool(make_workers, initializer=make_mosaic, initargs=make_args) as poolm,
         ):
             try:
@@ -256,7 +284,15 @@ def main(opts: OptionsType):
             poolc.terminate()
             poolc.join()
             print(
-                f"closed.\nEnjoining poolm (qsize={make_queue.qsize()})... ",
+                f"joined.\nEnjoining pool_coll (qsize={make_queue.qsize()})... ",
+                end="",
+                flush=True,
+            )
+            pool_coll.close()
+            coll_queue.put(None)
+            pool_coll.join()
+            print(
+                f"joined.\nEnjoining poolm (qsize={make_queue.qsize()})... ",
                 end="",
                 flush=True,
             )
