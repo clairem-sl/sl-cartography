@@ -88,11 +88,17 @@ def make_mosaic(
         if item is Ellipsis:
             continue
 
+        if not isinstance(item, tuple):
+            continue
+
+        assert isinstance(item, tuple)
         patches_bysz: dict[int, dict[CoordType, list[RGBTuple]]] = {
-            sz: {} for sz in FASCIA_SIZES
+            sz: {} for sz in item
         }
         for k, v in dict(patches_dict).items():
             coord, sz = k
+            if sz not in patches_bysz:
+                continue
             patches_bysz[sz][coord] = v
 
         for sz, patches in patches_bysz.items():
@@ -178,10 +184,10 @@ def main(
                     if (i % pip_every) == 0:
                         print(".", end="", flush=True)
                     if (i % save_every) == 0:
-                        make_queue.put(1)
+                        make_queue.put(tuple(FASCIA_SIZES))
                         make_recently_triggered = True
                 if not make_recently_triggered:
-                    make_queue.put(1)
+                    make_queue.put(tuple(FASCIA_SIZES))
             except KeyboardInterrupt:
                 print("\nUser request abort...", flush=True)
             finally:
