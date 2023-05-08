@@ -37,6 +37,7 @@ FASCIA_PIXELS: Final[dict[int, int]] = {
 
 
 class OptionsType(Protocol):
+    reset_cache: bool
     no_cache: bool
     calc_workers: int
     make_workers: int
@@ -48,7 +49,10 @@ class OptionsType(Protocol):
 def get_opts() -> OptionsType:
     parser = argparse.ArgumentParser("worldmap_v4.mosaic")
 
-    parser.add_argument("--no-cache", action="store_true")
+    cache_grp = parser.add_mutually_exclusive_group()
+    cache_grp.add_argument("--reset-cache", action="store_true")
+    cache_grp.add_argument("--no-cache", action="store_true")
+
     parser.add_argument(
         "--calc-workers", metavar="N", type=int, default=DEFA_CALC_WORKERS
     )
@@ -71,13 +75,13 @@ class CalcJob(TypedDict):
 DomColors = dict[int, list[RGBTuple]]
 
 
-CalcCache: dict[CoordType, DomColors]
+CalcCache: None | dict[CoordType, DomColors]
 PatchesDict: dict[tuple[CoordType, int], list[RGBTuple]]
 
 
 def calc_domc_init(
     patches_dict: dict[tuple[CoordType, int], list[RGBTuple]],
-    calc_cache: dict[CoordType, DomColors],
+    calc_cache: None | dict[CoordType, DomColors],
 ):
     global PatchesDict, CalcCache
     signal.signal(signal.SIGINT, signal.SIG_IGN)
@@ -89,7 +93,8 @@ def calc_domc(job: tuple[CoordType, Path]) -> tuple[CoordType, DomColors]:
     global PatchesDict, CalcCache
     coord, fpath = job
 
-    if coord in CalcCache:
+    # If cache is None that means we want to ignore cache
+    if CalcCache is not None and coord in CalcCache:
         domc: DomColors = CalcCache[coord]
     else:
         with fpath.open("rb") as fin:
@@ -156,13 +161,16 @@ def make_mosaic(
 def main(opts: OptionsType):
     cached_domc: dict[CoordType, DomColors] = {}
     cache_path = opts.mapdir / CACHE_FILE
-    if not opts.no_cache and cache_path.exists():
-        try:
-            with cache_path.open("rb") as fin:
-                cached_domc.update(pickle.load(fin))
-        except EOFError:
-            pass
+    if not opts.reset_cache:
+        if cache_path.exists():
+            try:
+                with cache_path.open("rb") as fin:
+                    cached_domc.update(pickle.load(fin))
+            except EOFError:
+                pass
     print(f"Cached Dominant Colors = {len(cached_domc)}")
+    if opts.no_cache:
+        print("  ^^ Will be ignored! (But new ones will still be saved)")
 
     mapfiles_d: dict[CoordType, Path] = {}
     for mf in sorted(opts.mapdir.glob("*.jpg"), reverse=True):
@@ -189,7 +197,7 @@ def main(opts: OptionsType):
         make_args = (make_queue, patches_dict, opts.mapdir)
 
         calc_workers = opts.calc_workers
-        calc_domc_args = (patches_dict, cached_domc)
+        calc_domc_args = (patches_dict, None if opts.no_cache else cached_domc)
 
         poolc: MPPool.Pool
         poolm: MPPool.Pool
