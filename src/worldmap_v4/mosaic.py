@@ -234,7 +234,8 @@ def main(opts: OptionsType):
                 pass
     print(f"Cached Dominant Colors = {len(cached_domc)}")
     if opts.no_cache:
-        print("  ^^ Will be ignored! (But new ones will still be saved)")
+        print("  ^^ Will be ignored because of --no-cache!")
+        print("     (But new ones will still be saved)")
 
     mapfiles_d: dict[CoordType, Path] = {}
     for mf in sorted(opts.mapdir.glob("*.jpg"), reverse=True):
@@ -295,11 +296,12 @@ def main(opts: OptionsType):
                     if (i % opts.save_every) == 2:
                         print(f"q={coll_queue.qsize()}", end="", flush=True)
                 if not make_recently_triggered:
+                    print("\nFINAL mosaic making started!", end="", flush=True)
                     maker_queue.put(tuple(FASCIA_SIZES))
             except KeyboardInterrupt:
                 print("\nUser request abort...", flush=True)
             finally:
-                print(f"Cached Dominant Colors is now {len(cached_domc)}, ", end="")
+                print(f"\nCached Dominant Colors is now {len(cached_domc)}, ", end="")
                 with cache_path.open("wb") as fout:
                     pickle.dump(cached_domc, fout)
                 print(f"saved to {cache_path}")
