@@ -174,7 +174,7 @@ def make_mosaic(
 
         _state("got_job")
         assert isinstance(item, tuple)
-        patches_bysz: dict[int, dict[CoordType, list[RGBTuple]]] = {
+        patches_bysz: None | dict[int, dict[CoordType, list[RGBTuple]]] = {
             sz: {} for sz in item
         }
         with coll_lock:
@@ -189,6 +189,7 @@ def make_mosaic(
             _state(f"make_{sz}_canvas")
             print(f"🔽{sz}", end="", flush=True)
             fpx = FASCIA_PIXELS[sz]
+            fbox = fpx, fpx
             tsz = fpx * sz
             sidelen = 2101 * tsz
             canvas = Image.new("RGBA", (sidelen, sidelen))
@@ -199,15 +200,23 @@ def make_mosaic(
                 cy = tsz * (2100 - y)
                 sx = sy = 0
                 for col in colors:
-                    f_img = Image.new("RGB", (fpx, fpx), color=col)
-                    canvas.paste(f_img, (cx + sx, cy + sy))
+                    canvas.paste(
+                        Image.new("RGB", fbox, color=col),
+                        (cx + sx, cy + sy)
+                    )
                     sy += fpx
                     if sy >= tsz:
                         sy = 0
                         sx += fpx
             _state(f"save_{sz}")
             canvas.save(mapdir / f"worldmap4_mosaic_{sz}x{sz}.png")
+            canvas.close()
             print(f"💾{sz}", end="", flush=True)
+        # noinspection PyUnusedLocal
+        canvas = None
+        # noinspection PyUnusedLocal
+        patches_bysz = None
+
     _state("ended")
 
 # endregion
