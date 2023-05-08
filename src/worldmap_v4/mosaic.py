@@ -257,10 +257,10 @@ def main(opts: OptionsType):
         patches_coll = manager.dict()
         coll_lock = manager.RLock()
 
-        make_workers = opts.make_workers
-        maker_state = manager.dict()
-        make_queue = manager.Queue()
-        make_args = (maker_state, make_queue, patches_coll, coll_lock, opts.mapdir)
+        maker_workers = opts.make_workers
+        maker_states = manager.dict()
+        maker_queue = manager.Queue()
+        make_args = (maker_states, maker_queue, patches_coll, coll_lock, opts.mapdir)
 
         coll_queue = manager.Queue(maxsize=(opts.save_every * 2))
         coll_args = (coll_queue, patches_coll, coll_lock)
@@ -268,19 +268,19 @@ def main(opts: OptionsType):
         calc_workers = opts.calc_workers
         calc_domc_args = (patches_coll, None if opts.no_cache else cached_domc, coll_queue)
 
-        poolc: MPPool.Pool
+        pool_calc: MPPool.Pool
         pool_coll: MPPool.Pool
-        poolm: MPPool.Pool
+        pool_maker: MPPool.Pool
         with (
             MP.Pool(
                 calc_workers, initializer=calc_domc_init, initargs=calc_domc_args
-            ) as poolc,
+            ) as pool_calc,
             MP.Pool(1, initializer=collector, initargs=coll_args) as pool_coll,
-            MP.Pool(make_workers, initializer=make_mosaic, initargs=make_args) as poolm,
+            MP.Pool(maker_workers, initializer=make_mosaic, initargs=make_args) as pool_maker,
         ):
             try:
                 for i, rslt in enumerate(
-                    poolc.imap_unordered(calc_domc, mapfiles, chunksize=10), start=1
+                    pool_calc.imap_unordered(calc_domc, mapfiles, chunksize=10), start=1
                 ):
                     make_recently_triggered = False
                     coord, domc = rslt
@@ -288,14 +288,14 @@ def main(opts: OptionsType):
                     if (i % opts.pip_every) == 0:
                         print(".", end="", flush=True)
                     if (i % opts.save_every) == 0:
-                        if any(state == "idle" for state in maker_state.values()):
-                            make_queue.put(tuple(FASCIA_SIZES))
+                        if any(state == "idle" for state in maker_states.values()):
+                            maker_queue.put(tuple(FASCIA_SIZES))
                             print("🏀", end="", flush=True)
                             make_recently_triggered = True
                     if (i % opts.save_every) == 2:
                         print(f"q={coll_queue.qsize()}", end="", flush=True)
                 if not make_recently_triggered:
-                    make_queue.put(tuple(FASCIA_SIZES))
+                    maker_queue.put(tuple(FASCIA_SIZES))
             except KeyboardInterrupt:
                 print("\nUser request abort...", flush=True)
             finally:
@@ -304,12 +304,12 @@ def main(opts: OptionsType):
                     pickle.dump(cached_domc, fout)
                 print(f"saved to {cache_path}")
 
-            print("Enjoining poolc ... ", end="", flush=True)
-            poolc.close()
-            poolc.terminate()
-            poolc.join()
+            print("Enjoining pool_calc ... ", end="", flush=True)
+            pool_calc.close()
+            pool_calc.terminate()
+            pool_calc.join()
             print(
-                f"joined.\nEnjoining pool_coll (qsize={make_queue.qsize()})... ",
+                f"joined.\nEnjoining pool_coll ... ",
                 end="",
                 flush=True,
             )
@@ -317,13 +317,13 @@ def main(opts: OptionsType):
             coll_queue.put(None)
             pool_coll.join()
             print(
-                f"joined.\nEnjoining poolm (qsize={make_queue.qsize()})... ",
+                f"joined.\nEnjoining pool_maker ... ",
                 end="",
                 flush=True,
             )
-            poolm.close()
-            make_queue.put(None)
-            poolm.join()
+            pool_maker.close()
+            maker_queue.put(None)
+            pool_maker.join()
             print("joined.", flush=True)
 
     elapsed = time.monotonic() - start
