@@ -318,11 +318,17 @@ def main(opts: OptionsType):
                             make_recently_triggered = True
                     if (i % opts.save_every) == 2:
                         print(f"q={coll_queue.qsize()}", end="", flush=True)
+                while not all(s == "idle" for s in maker_states.values()):
+                    time.sleep(1)
                 while not coll_queue.empty():
                     time.sleep(1)
                 if not make_recently_triggered:
-                    print("\nFINAL mosaic making started!", end="", flush=True)
+                    print("\nFINAL mosaic making started!", end=" ", flush=True)
                     maker_queue.put(tuple(FASCIA_SIZES))
+                while all(s == "idle" for s in maker_states.values()):
+                    time.sleep(0.1)
+                while not all(s == "idle" for s in maker_states.values()):
+                    time.sleep(1)
             except KeyboardInterrupt:
                 print("\nUser request abort...", flush=True)
             finally:
