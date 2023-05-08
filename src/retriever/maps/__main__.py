@@ -14,19 +14,23 @@ import queue
 import re
 import signal
 import time
-
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Final, Protocol, cast
 
 import httpx
 
-from retriever import DebugLevel, RetrieverProgress, lock_file, handle_sigint, dispatch_fetcher
+from retriever import (
+    DebugLevel,
+    RetrieverProgress,
+    dispatch_fetcher,
+    handle_sigint,
+    lock_file,
+)
 from retriever.maps.saver import Thresholds, saver
 from sl_maptools import CoordType, MapCoord, inventorize_maps_all
 from sl_maptools.fetchers import RawResult
 from sl_maptools.fetchers.map import BoundedMapFetcher
-
 
 SSIM_THRESHOLD: Final[float] = 0.895
 MSE_THRESHOLD: Final[float] = 0.01
@@ -87,7 +91,11 @@ def options() -> OptionsProtocol:
     parser.add_argument("--force", action="store_true")
     parser.add_argument("--mapdir", metavar="DIR", type=Path, default=DEFA_MAPS_DIR)
     parser.add_argument(
-        "--workers", metavar="N", type=int, default=max(1, MP.cpu_count() - 2), help="Launch N saver workers"
+        "--workers",
+        metavar="N",
+        type=int,
+        default=max(1, MP.cpu_count() - 2),
+        help="Launch N saver workers",
     )
     parser.add_argument(
         "--auto-reset",
@@ -146,13 +154,19 @@ class SharedMemoryAllocator:
 
 async def async_main(duration: int, shm_allocator: SharedMemoryAllocator):
     global AbortRequested
-    limits = httpx.Limits(max_connections=CONN_LIMIT, max_keepalive_connections=CONN_LIMIT)
+    limits = httpx.Limits(
+        max_connections=CONN_LIMIT, max_keepalive_connections=CONN_LIMIT
+    )
     async with httpx.AsyncClient(limits=limits, timeout=10.0, http2=HTTP2) as client:
-        fetcher = BoundedMapFetcher(CONN_LIMIT * 3, client, cooked=False, cancel_flag=AbortRequested)
+        fetcher = BoundedMapFetcher(
+            CONN_LIMIT * 3, client, cooked=False, cancel_flag=AbortRequested
+        )
         shown = False
 
         def make_task(coord: CoordType):
-            return asyncio.create_task(fetcher.async_fetch(MapCoord(*coord)), name=str(coord))
+            return asyncio.create_task(
+                fetcher.async_fetch(MapCoord(*coord)), name=str(coord)
+            )
 
         def pre_batch():
             nonlocal shown
@@ -236,7 +250,9 @@ def main2(
         print("No outstanding jobs from last session.")
         if Progress.next_y < 0:
             print("No rows left to process.")
-            print(f"Delete the file {progress_file} to reset. (Or specify --auto-reset)")
+            print(
+                f"Delete the file {progress_file} to reset. (Or specify --auto-reset)"
+            )
             return
     print(f"Next coordinate: {Progress.next_coordinate}")
 
@@ -272,7 +288,11 @@ def main2(
             with handle_sigint(AbortRequested):
                 asyncio.run(async_main(dur, shm_allocator))
 
-            print("Closing the pool, preventing new workers from spawning ... ", end="", flush=True)
+            print(
+                "Closing the pool, preventing new workers from spawning ... ",
+                end="",
+                flush=True,
+            )
             pool.close()
             print("closed.\nCurrent worker states:")
             for n, s in worker_state.items():
@@ -301,7 +321,9 @@ def main2(
             with (mapdir / "PossiblyChanged.txt").open("wt") as fout:
                 for coord in sorted(possibly_changed.keys()):
                     print(coord, file=fout)
-    print(f"{Progress.outstanding_count:_} outstanding jobs left. Last dispatched coordinate: {Progress.last_dispatch}")
+    print(
+        f"{Progress.outstanding_count:_} outstanding jobs left. Last dispatched coordinate: {Progress.last_dispatch}"
+    )
 
 
 def main(
