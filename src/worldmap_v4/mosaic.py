@@ -12,7 +12,7 @@ from typing import Final, Protocol, TypedDict, cast
 
 from PIL import Image
 
-from sl_maptools import CoordType
+from sl_maptools import CoordType, inventorize_maps_latest
 from sl_maptools.image_processing import (
     FASCIA_SIZES,
     RGBTuple,
@@ -237,14 +237,7 @@ def main(opts: OptionsType):
         print("  ^^ Will be ignored because of --no-cache!")
         print("     (But new ones will still be saved)")
 
-    mapfiles_d: dict[CoordType, Path] = {}
-    for mf in sorted(opts.mapdir.glob("*.jpg"), reverse=True):
-        if (m := RE_MAP.match(mf.name)) is None:
-            continue
-        coord = int(m.group(1)), int(m.group(2))
-        if coord in mapfiles_d:
-            continue
-        mapfiles_d[coord] = mf
+    mapfiles_d: dict[CoordType, Path] = inventorize_maps_latest(opts.mapdir)
     if len(mapfiles_d) == 0:
         print("ERROR: No mapfiles!", file=sys.stderr)
         sys.exit(1)
