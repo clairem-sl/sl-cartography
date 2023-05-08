@@ -114,12 +114,11 @@ def calc_domc(job: tuple[CoordType, Path]) -> tuple[CoordType, DomColors]:
     if CalcCache is not None and coord in CalcCache:
         domc: DomColors = CalcCache[coord]
     else:
-        with fpath.open("rb") as fin:
-            img = Image.open(fin)
+        with Image.open(fpath) as img:
             img.load()
-        domc: DomColors = {
-            fsz: calculate_dominant_colors(img, fsz) for fsz in FASCIA_SIZES
-        }
+            domc: DomColors = {
+                fsz: calculate_dominant_colors(img, fsz) for fsz in FASCIA_SIZES
+            }
 
     rslt = coord, domc
     CollectorQueue.put(rslt)
