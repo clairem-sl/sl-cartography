@@ -288,6 +288,8 @@ def main(opts: OptionsType):
                             make_recently_triggered = True
                     if (i % opts.save_every) == 2:
                         print(f"q={coll_queue.qsize()}", end="", flush=True)
+                while not coll_queue.empty():
+                    time.sleep(1)
                 if not make_recently_triggered:
                     print("\nFINAL mosaic making started!", end="", flush=True)
                     maker_queue.put(tuple(FASCIA_SIZES))
