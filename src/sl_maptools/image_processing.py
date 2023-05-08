@@ -65,11 +65,12 @@ FASCIA_COORDS: dict[int, list[BoxTuple]] = {
         (200, 200, 256, 256),
     ],
 }
+FASCIA_SIZES = sorted(FASCIA_COORDS.keys())
 
 
 def calculate_dominant_colors(region: Image.Image, fascia_per_side: int, kmeans: int = 3) -> list[RGBTuple]:
     if fascia_per_side not in FASCIA_COORDS:
-        raise KeyError(f"Valid fascia_per_side values: {', '.join(map(str, FASCIA_COORDS))}")
+        raise KeyError(f"Valid fascia_per_side values: {', '.join(map(str, FASCIA_SIZES))}")
     dom_colors: list[RGBTuple] = []
     for fcoord in FASCIA_COORDS[fascia_per_side]:
         fascia = region.crop(fcoord)
