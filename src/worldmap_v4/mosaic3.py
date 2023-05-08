@@ -7,12 +7,16 @@ import signal
 import sys
 import time
 from pathlib import Path
-from typing import TypedDict, Final, cast
+from typing import Final, TypedDict
 
 from PIL import Image
 
 from sl_maptools import CoordType
-from sl_maptools.image_processing import FASCIA_SIZES, RGBTuple, calculate_dominant_colors
+from sl_maptools.image_processing import (
+    FASCIA_SIZES,
+    RGBTuple,
+    calculate_dominant_colors,
+)
 
 RE_MAP = re.compile(r"^(\d+)-(\d+)_\d+-\d+.jpg$")
 
@@ -36,58 +40,47 @@ class CalcJob(TypedDict):
 DomColors = dict[int, list[RGBTuple]]
 
 
-class DrawJob(TypedDict):
-    coord: CoordType
-    dom_colors: DomColors
-
-
-DrawQueue: MP.Queue
 CalcCache: dict[CoordType, DomColors]
+PatchesDict: dict[tuple[CoordType, int], list[RGBTuple]]
 
 
-def calc_domc_init(draw_queue: MP.Queue, calc_cache: dict[CoordType, DomColors]):
-    global DrawQueue, CalcCache
+def calc_domc_init(
+    patches_dict: dict[tuple[CoordType, int], list[RGBTuple]],
+    calc_cache: dict[CoordType, DomColors],
+):
+    global PatchesDict, CalcCache
     signal.signal(signal.SIGINT, signal.SIG_IGN)
-    DrawQueue = draw_queue
+    PatchesDict = patches_dict
     CalcCache = calc_cache
 
 
-def calc_domc(job: tuple[CoordType, Path]) -> None | tuple[CoordType, DomColors]:
-    global DrawQueue, CalcCache
-
+def calc_domc(job: tuple[CoordType, Path]) -> tuple[CoordType, DomColors]:
+    global PatchesDict, CalcCache
     coord, fpath = job
-    # noinspection PyTypeChecker
-    draw_job: DrawJob = {}
-
-    def _put():
-        if DrawQueue.qsize() > 500:
-            time.sleep(1)
-        DrawQueue.put(draw_job)
 
     if coord in CalcCache:
-        draw_job = {
-            "coord": coord,
-            "dom_colors": CalcCache[coord],
+        domc: DomColors = CalcCache[coord]
+    else:
+        with fpath.open("rb") as fin:
+            img = Image.open(fin)
+            img.load()
+        domc: DomColors = {
+            fsz: calculate_dominant_colors(img, fsz) for fsz in FASCIA_SIZES
         }
-        _put()
-        return None
 
-    with fpath.open("rb") as fin:
-        img = Image.open(fin)
-        img.load()
-    domc: DomColors = {fsz: calculate_dominant_colors(img, fsz) for fsz in FASCIA_SIZES}
-    draw_job = {
-        "coord": coord,
-        "dom_colors": domc
-    }
-    _put()
+    for sz, colors in domc.items():
+        PatchesDict[coord, sz] = colors
+
     return coord, domc
 
 
-def make_mosaic(queue: MP.Queue, fascia_pixels: dict[int, int], patches: dict[int, dict[CoordType, Image.Image]]):
+def make_mosaic(
+    queue: MP.Queue,
+    fascia_pixels: dict[int, int],
+    patches_dict: dict[tuple[CoordType, int], list[RGBTuple]],
+    mapdir: Path,
+):
     signal.signal(signal.SIGINT, signal.SIG_IGN)
-
-    c = 0
     while True:
         item = queue.get()
         if item is None:
@@ -95,53 +88,41 @@ def make_mosaic(queue: MP.Queue, fascia_pixels: dict[int, int], patches: dict[in
         if item is Ellipsis:
             continue
 
-        c += 1
-        job = cast(DrawJob, item)
-        x, y = job["coord"]
-        domc = job["dom_colors"]
-        patch: dict[int, list[RGBTuple]] = {}
-        for sz, colors in domc.items():
-            # print(x, y, colors)
+        patches_bysz: dict[int, dict[CoordType, list[RGBTuple]]] = {
+            sz: {} for sz in FASCIA_SIZES
+        }
+        for k, v in dict(patches_dict).items():
+            coord, sz = k
+            patches_bysz[sz][coord] = v
+
+        for sz, patches in patches_bysz.items():
+            print(f"💾{sz}", end="", flush=True)
             fpx = fascia_pixels[sz]
             tsz = fpx * sz
-            cx = tsz * x
-            cy = tsz * (2100 - y)
-            sx = sy = 0
-            for col in colors:
-                f_img = Image.new("RGB", (fpx, fpx), color=col)
-                patches[cx + sx, cy + sy] =
-                sy += fpx
-                if sy >= tsz:
-                    sy = 0
-                    sx += fpx
-            patches[sz] = patch_by_coord
-        if (c % 100) == 0:
-            print(f"qsize={queue.qsize()}")
-
-
-def draw_mosaic(draw_queue: MP.Queue, patches_dict: dict[CoordType, dict[int, Image.Image]], fascia_pixels: dict[int, int], mapdir: Path):
-    signal.signal(signal.SIGINT, signal.SIG_IGN)
-    while True:
-        item = draw_queue.get()
-        if item is None:
-            break
-        if item is Ellipsis:
-            continue
-
-        patches = dict(patches_dict)
-        for sz, fpx in fascia_pixels.items():
-            print(f"💾{sz}", end="", flush=True)
-            sidelen = 2101 * fpx * sz
+            sidelen = 2101 * tsz
             canvas = Image.new("RGBA", (sidelen, sidelen))
-            for coord, patch in patches.items():
-                # print(sz, coord, end=" ", flush=True)
-                canvas.paste(patch[sz], coord)
+            for coord, colors in patches.items():
+                x, y = coord
+                cx = tsz * x
+                cy = tsz * (2100 - y)
+                sx = sy = 0
+                for col in colors:
+                    f_img = Image.new("RGB", (fpx, fpx), color=col)
+                    canvas.paste(f_img, (cx + sx, cy + sy))
+                    sy += fpx
+                    if sy >= tsz:
+                        sy = 0
+                        sx += fpx
             canvas.save(mapdir / f"worldmap4_mosaic_{sz}x{sz}.png")
             print(f"🟢{sz}", end="", flush=True)
 
 
-def main(workers: int = 6, no_cache: bool = False, pip_every: int = 100, save_every: int = 1000):
-
+def main(
+    workers: int = 6,
+    no_cache: bool = False,
+    pip_every: int = 100,
+    save_every: int = 1000,
+):
     cached_domc: dict[CoordType, DomColors] = {}
     cache_path = MAPDIR / CACHE_FILE
     if not no_cache and cache_path.exists():
@@ -163,40 +144,44 @@ def main(workers: int = 6, no_cache: bool = False, pip_every: int = 100, save_ev
     if len(mapfiles_d) == 0:
         print("ERROR: No mapfiles!", file=sys.stderr)
         sys.exit(1)
-    mapfiles: list[tuple[CoordType, Path]] = sorted(mapfiles_d.items(), key=lambda c: (-c[0][1], c[0][0]))
+    mapfiles: list[tuple[CoordType, Path]] = sorted(
+        mapfiles_d.items(), key=lambda c: (-c[0][1], c[0][0])
+    )
 
+    start = time.monotonic()
     manager: MPMgrs.SyncManager
     with MP.Manager() as manager:
-
-        draw_workers = 1
-        draw_queue = manager.Queue()
-        patches_dict = manager.dict({sz: {} for sz in FASCIA_PIXELS})
-        draw_args = (draw_queue, patches_dict, FASCIA_PIXELS, MAPDIR)
+        patches_dict = manager.dict()
 
         make_workers = 1
         make_queue = manager.Queue()
-        make_args = (make_queue, FASCIA_PIXELS, patches_dict)
+        make_args = (make_queue, FASCIA_PIXELS, patches_dict, MAPDIR)
 
         calc_workers = workers
-        calc_domc_args = (make_queue, cached_domc)
+        calc_domc_args = (patches_dict, cached_domc)
 
         poolc: MPPool.Pool
         poolm: MPPool.Pool
-        poold: MPPool.Pool
         with (
-            MP.Pool(calc_workers, initializer=calc_domc_init, initargs=calc_domc_args) as poolc,
+            MP.Pool(
+                calc_workers, initializer=calc_domc_init, initargs=calc_domc_args
+            ) as poolc,
             MP.Pool(make_workers, initializer=make_mosaic, initargs=make_args) as poolm,
-            MP.Pool(draw_workers, initializer=draw_mosaic, initargs=draw_args) as poold
         ):
             try:
-                for i, rslt in enumerate(poolc.imap_unordered(calc_domc, mapfiles, chunksize=10), start=1):
-                    if rslt is not None:
-                        coord, domc = rslt
-                        cached_domc[coord] = domc
+                for i, rslt in enumerate(
+                    poolc.imap_unordered(calc_domc, mapfiles, chunksize=10), start=1
+                ):
+                    make_recently_triggered = False
+                    coord, domc = rslt
+                    cached_domc[coord] = domc
                     if (i % pip_every) == 0:
                         print(".", end="", flush=True)
                     if (i % save_every) == 0:
-                        draw_queue.put(1)
+                        make_queue.put(1)
+                        make_recently_triggered = True
+                if not make_recently_triggered:
+                    make_queue.put(1)
             except KeyboardInterrupt:
                 print("\nUser request abort...", flush=True)
             finally:
@@ -209,16 +194,18 @@ def main(workers: int = 6, no_cache: bool = False, pip_every: int = 100, save_ev
             poolc.close()
             poolc.terminate()
             poolc.join()
-            print(f"closed.\nEnjoining poolm (qsize={make_queue.qsize()})... ", end="", flush=True)
+            print(
+                f"closed.\nEnjoining poolm (qsize={make_queue.qsize()})... ",
+                end="",
+                flush=True,
+            )
             poolm.close()
             make_queue.put(None)
             poolm.join()
-            print("joined.\nEnjoining poold ... ", end="", flush=True)
-            poold.close()
-            draw_queue.put(None)
-            poold.join()
             print("joined.", flush=True)
 
+    elapsed = time.monotonic() - start
+    print(f"Done in {elapsed:_.2f} seconds.")
 
 
 if __name__ == "__main__":
