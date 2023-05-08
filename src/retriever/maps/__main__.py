@@ -23,11 +23,10 @@ import httpx
 
 from retriever import DebugLevel, RetrieverProgress, lock_file, handle_sigint, dispatch_fetcher
 from retriever.maps.saver import Thresholds, saver
-from sl_maptools import CoordType, MapCoord
+from sl_maptools import CoordType, MapCoord, inventorize_maps_all
 from sl_maptools.fetchers import RawResult
 from sl_maptools.fetchers.map import BoundedMapFetcher
 
-RE_MAPFILENAME: re.Pattern = re.compile(r"^(?P<x>\d+)-(?P<y>\d+)_(?P<ts>[0-9-]+)\.jpg$")
 
 SSIM_THRESHOLD: Final[float] = 0.895
 MSE_THRESHOLD: Final[float] = 0.01
@@ -250,15 +249,7 @@ def main2(
         possibly_changed: dict[CoordType, None] = manager.dict()
         shm_allocator = SharedMemoryAllocator(shm_manager)
 
-        _mapfilesets: dict[CoordType, list[Path]] = {}
-        m: re.Match
-        flist: list[Path]
-        for mapfile in sorted(mapdir.glob("*.jpg")):
-            if (m := RE_MAPFILENAME.match(mapfile.name)) is None:
-                continue
-            coord = (int(m.group("x")), int(m.group("y")))
-            _mapfilesets.setdefault(coord, []).append(mapfile)
-        mapfilesets = manager.dict(_mapfilesets)
+        mapfilesets = manager.dict(inventorize_maps_all(mapdir))
 
         thresholds = Thresholds(MSE=MSE_THRESHOLD, SSIM=SSIM_THRESHOLD)
         saver_args = (
