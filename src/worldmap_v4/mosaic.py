@@ -322,7 +322,9 @@ def main(opts: OptionsType):
                 flush=True,
             )
             pool_maker.close()
-            maker_queue.put(None)
+            for s in maker_states.values():
+                if s != "ended":
+                    maker_queue.put(None)
             pool_maker.join()
             print("joined.", flush=True)
 
