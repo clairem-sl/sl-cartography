@@ -72,7 +72,7 @@ def get_opts() -> OptionsType:
         "--make-workers", metavar="N", type=int, default=DEFA_MAKE_WORKERS
     )
     parser.add_argument("--pip-every", metavar="N", type=int, default=100)
-    parser.add_argument("--save-every", metavar="N", type=int, default=1000)
+    parser.add_argument("--save-every", metavar="N", type=int, default=2000)
     parser.add_argument("--mapdir", metavar="DIR", type=Path, default=DEFA_MAPDIR)
 
     _opts = parser.parse_args()
