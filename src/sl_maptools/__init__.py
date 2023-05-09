@@ -8,7 +8,7 @@ import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Final, NamedTuple, Optional, Union
+from typing import Final, NamedTuple, Optional, Union, TypedDict
 
 from PIL import Image
 
@@ -198,3 +198,12 @@ def inventorize_maps_all(mapdir: Path) -> dict[CoordType, list[Path]]:
         coord = int(m.group("x")), int(m.group("y"))
         rslt.setdefault(coord, []).append(fp)
     return rslt
+
+
+class RegionsDBRecord(TypedDict):
+    first_seen: str
+    last_seen: str
+    last_check: str
+    current_name: str
+    name_history: dict[str, list[str]]
+    sources: set[str]

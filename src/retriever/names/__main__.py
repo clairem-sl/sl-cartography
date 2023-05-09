@@ -5,12 +5,12 @@ import pickle
 import re
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Final, TypedDict, cast, Protocol
+from typing import Final, cast, Protocol
 
 import httpx
 
 from retriever import RetrieverProgress, lock_file, handle_sigint, dispatch_fetcher
-from sl_maptools import CoordType, MapCoord
+from sl_maptools import CoordType, MapCoord, RegionsDBRecord
 from sl_maptools.fetchers import CookedResult
 from sl_maptools.fetchers.cap import BoundedNameFetcher
 
@@ -30,16 +30,6 @@ LOCK_NAME: Final[str] = "RegionsDB2.lock"
 Progress: RetrieverProgress
 
 AbortRequested = asyncio.Event()
-
-
-class RegionsDBRecord(TypedDict):
-    first_seen: str
-    last_seen: str
-    last_check: str
-    current_name: str
-    name_history: dict[str, list[str]]
-    sources: set[str]
-
 
 DataBase: dict[CoordType, RegionsDBRecord] = {}
 
