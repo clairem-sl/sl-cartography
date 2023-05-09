@@ -12,10 +12,11 @@ from typing import Any, Final, Protocol, TypedDict, cast
 
 from PIL import Image, ImageDraw
 
-from sl_maptools import MapCoord
+from sl_maptools import MapCoord, inventorize_maps_all
 from worldmap_v4 import BONNIE_REGDB_URL, get_bonnie_coords
 
-DEFA_DB_PATH: Final[Path] = Path(r"C:\Cache\SL-Carto\RegionsDB.pkl")
+DEFA_DB_PATH: Final[Path] = Path(r"C:\Cache\SL-Carto\RegionsDB2.pkl")
+DEFA_MAPDIR: Final[Path] = Path(r"C:\Cache\SL-Carto\Maps2")
 
 MIN_X: Final[int] = 0
 MAX_X: Final[int] = 2100
@@ -33,6 +34,8 @@ WHITE: Final = 255
 
 class Options(Protocol):
     dbpath: Path
+    mapdir: Path
+    no_validate: bool
     bonniedb: Path
     fetchbonnie: bool
     force: bool
@@ -49,6 +52,8 @@ def get_opts():
     parser = argparse.ArgumentParser("worldmap_v4.nightlights")
 
     parser.add_argument("--dbpath", type=Path, default=DEFA_DB_PATH)
+    parser.add_argument("--mapdir", type=Path, default=DEFA_MAPDIR)
+    parser.add_argument("--no-validate", action="store_true")
 
     grp = parser.add_mutually_exclusive_group()
     grp.add_argument("--bonniedb", type=Path, default=None)
@@ -191,10 +196,13 @@ def make_map(opts: Options):
     print(flush=True)
 
     regions: set[tuple[int, int]] = set(data_raw)
-    bonnie_coords = get_bonnie_coords(bonniedb, opts.fetchbonnie)
-    if bonnie_coords:
-        regions = regions.intersection(bonnie_coords)
-        print(flush=True)
+    if not opts.no_validate:
+        bonnie_coords = get_bonnie_coords(bonniedb, opts.fetchbonnie)
+        if bonnie_coords:
+            regions.intersection_update(bonnie_coords)
+            print(flush=True)
+        mapfiles = inventorize_maps_all(opts.mapdir)
+        regions.intersection_update(mapfiles.keys())
 
     print("Creating Nightlights Map ... ", end="", flush=True)
     canvas = make_nightlights({MapCoord(x, y) for x, y in regions})
