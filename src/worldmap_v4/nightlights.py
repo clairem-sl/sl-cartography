@@ -12,7 +12,7 @@ from typing import Any, Final, Protocol, TypedDict, cast
 
 from PIL import Image, ImageDraw
 
-from sl_maptools import MapCoord, inventorize_maps_all
+from sl_maptools import MapCoord, inventorize_maps_all, RegionsDBRecord
 from worldmap_v4 import BONNIE_REGDB_URL, get_bonnie_coords
 
 DEFA_DB_PATH: Final[Path] = Path(r"C:\Cache\SL-Carto\RegionsDB2.pkl")
@@ -192,10 +192,10 @@ def make_map(opts: Options):
 
     print(f"Reading Auditor's DB from {dbpath} ... ", end="", flush=True)
     with dbpath.open("rb") as fin:
-        data_raw: dict[tuple[int, int], Any] = pickle.load(fin)
+        data_raw: dict[tuple[int, int], RegionsDBRecord] = pickle.load(fin)
     print(flush=True)
 
-    regions: set[tuple[int, int]] = set(data_raw)
+    regions: set[tuple[int, int]] = set(k for k, v in data_raw.items() if v["current_name"])
     if not opts.no_validate:
         bonnie_coords = get_bonnie_coords(bonniedb, opts.fetchbonnie)
         if bonnie_coords:
