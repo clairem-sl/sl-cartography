@@ -207,8 +207,12 @@ def make_map(opts: Options):
     print("Creating Nightlights Map ... ", end="", flush=True)
     canvas = make_nightlights({MapCoord(x, y) for x, y in regions})
     print("\nSaving nightlights mosaic ... ", end="", flush=True)
-    opts.mosaicfile.parent.mkdir(parents=True, exist_ok=True)
-    canvas.save(opts.mosaicfile, optimize=True)
+    if opts.mosaicfile.parent.name:
+        targ = opts.mosaicfile.with_suffix(".png")
+    else:
+        targ = (opts.mapdir / opts.mosaicfile).with_suffix(".png")
+    targ.parent.mkdir(parents=True, exist_ok=True)
+    canvas.save(targ, optimize=True)
     print(f"\nNightlights mosaic saved to {opts.mosaicfile}")
 
 
