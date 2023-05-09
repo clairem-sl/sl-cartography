@@ -1,6 +1,13 @@
-from typing import cast
+from dataclasses import dataclass, field
+from typing import cast, Final, TypedDict
 
-from PIL import Image
+import numpy as np
+
+from PIL import Image, ImageFilter
+from skimage.metrics import mean_squared_error as mse
+from skimage.metrics import structural_similarity as ssim
+from skimage.metrics import normalized_root_mse as nrmse
+
 
 BoxTuple = tuple[int, int, int, int]
 RGBTuple = tuple[int, int, int]
@@ -80,3 +87,72 @@ def calculate_dominant_colors(region: Image.Image, fascia_per_side: int, kmeans:
         freq, dom = max(colors, key=lambda x: x[0])
         dom_colors.append(dom)
     return dom_colors
+
+
+class SimilarityThresholds(TypedDict):
+    mse: float
+    ssim: float
+    ssim_enh: float
+    nrmse: float
+
+
+DEFA_SIMILAR_THRESHOLDS: Final[SimilarityThresholds] = {
+    "mse": 0.01,
+    "ssim": 0.905,
+    # "ssim_enh": 0.920,
+    # "ssim_enh": 0.949,
+    "ssim_enh": 0.955,
+    "nrmse": 0.1
+}
+
+
+@dataclass
+class SimilarityResult:
+    similar: bool = False
+    reason: str = ""
+    values: list[float] = field(default_factory=list)
+
+    def __bool__(self):
+        return self.similar
+
+    def append(self, val: float):
+        self.values.append(val)
+
+    def success(self, reason: str):
+        self.similar = True
+        self.reason = reason
+        return self
+
+    def fail(self):
+        self.similar = False
+        return self
+
+
+def are_similar(image1: Image.Image, image2: Image.Image, thresholds: SimilarityThresholds = None) -> SimilarityResult:
+    if thresholds is None:
+        thresholds = DEFA_SIMILAR_THRESHOLDS
+    result = SimilarityResult()
+    with (image1.convert("L") as im1, image2.convert("L") as im2):
+        # noinspection PyTypeChecker
+        im1_arr, im2_arr = np.asarray(im1), np.asarray(im2)
+        result.append(_mse := mse(im1_arr, im2_arr))
+        if _mse < thresholds["mse"]:
+            return result.success("mse")
+        result.append(_ssim := ssim(im1_arr, im2_arr))
+        if _ssim > thresholds["ssim"]:
+            return result.success("ssim")
+        #
+        result.append(_nrmse := nrmse(im1_arr, im2_arr))
+        if _nrmse < thresholds["nrmse"]:
+            return result.success("nrmse")
+        im1_enh = im1.filter(ImageFilter.GaussianBlur).filter(ImageFilter.GaussianBlur).filter(ImageFilter.FIND_EDGES)
+        im2_enh = im2.filter(ImageFilter.GaussianBlur).filter(ImageFilter.GaussianBlur).filter(ImageFilter.FIND_EDGES)
+        # noinspection PyTypeChecker
+        im1_arr, im2_arr = np.asarray(im1_enh), np.asarray(im2_enh)
+        wangk = dict(gaussian_weights=True, sigma=1.5, use_sample_covariance=False, K1=0.02, K2=0.03)
+        # print(wangk)
+        result.append(_ssim_e := ssim(im1_arr, im2_arr, **wangk))
+        if _ssim_e > thresholds["ssim_enh"]:
+            return result.success("ssim_enh")
+
+    return result.fail()
