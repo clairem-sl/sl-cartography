@@ -11,7 +11,7 @@ from pprint import pprint
 from typing import Any
 
 
-DB_PATH = Path(r"C:\Cache\SL-Carto\RegionsDB.pkl")
+DB_PATH = Path(r"C:\Cache\SL-Carto\RegionsDB2.pkl")
 
 
 def export(db_path: Path, quiet: bool = False) -> Path:
