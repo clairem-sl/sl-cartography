@@ -341,6 +341,7 @@ def main(
         main2(mapdir, duration, until, until_utc, auto_reset, workers, debug_level)
     if AbortRequested.is_set():
         print("\nAborted by user.")
+    print(f"Retriever finished at {datetime.now()}")
 
 
 if __name__ == "__main__":
