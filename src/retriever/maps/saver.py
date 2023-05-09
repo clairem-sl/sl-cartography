@@ -32,7 +32,7 @@ class QJob(TypedDict):
 
 def saver(
     mapdir: Path,
-    mapfilesets: dict[CoordType, list[Path]],
+    map_inventory: dict[CoordType, list[Path]],
     save_queue: MP.Queue,
     success_queue: MP.Queue,
     saved_coords: dict[CoordType, None],
@@ -102,7 +102,7 @@ def saver(
                 img.load()
 
             # Prune older file of same coordinate if really similar
-            if (coordfiles := mapfilesets.get(coord)) is None:
+            if (coordfiles := map_inventory.get(coord)) is None:
                 continue
             _setstate("converting1")
             # noinspection PyTypeChecker
@@ -151,7 +151,7 @@ def saver(
                         f2_img.close()
             _setstate("resolving")
             coordfiles.append(targf)
-            mapfilesets[coord] = coordfiles
+            map_inventory[coord] = coordfiles
             success_queue.put(coord)
         except Exception as e:
             print(f"\nERR: {myname}:{type(e)}:{e}")

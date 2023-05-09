@@ -265,12 +265,12 @@ def main2(
         possibly_changed: dict[CoordType, None] = manager.dict()
         shm_allocator = SharedMemoryAllocator(shm_manager)
 
-        mapfilesets = manager.dict(inventorize_maps_all(mapdir))
+        map_inventory = manager.dict(inventorize_maps_all(mapdir))
 
         thresholds = Thresholds(MSE=MSE_THRESHOLD, SSIM=SSIM_THRESHOLD)
         saver_args = (
             mapdir,
-            mapfilesets,
+            map_inventory,
             SaverQueue,
             SaveSuccessQueue,
             saved_coords,
