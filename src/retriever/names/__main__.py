@@ -1,15 +1,15 @@
 import argparse
 import asyncio
-import math
 import pickle
 import re
-from datetime import datetime, timedelta, timezone
+from datetime import datetime
 from pathlib import Path
 from typing import Final, cast, Protocol
 
 import httpx
 
-from retriever import RetrieverProgress, lock_file, handle_sigint, dispatch_fetcher
+from retriever import RetrieverProgress, lock_file, handle_sigint, dispatch_fetcher, TimeOptions, add_timeoptions, \
+    calc_duration
 from sl_maptools import CoordType, MapCoord, RegionsDBRecord
 from sl_maptools.fetchers import CookedResult
 from sl_maptools.fetchers.cap import BoundedNameFetcher
@@ -37,23 +37,17 @@ DataBase: dict[CoordType, RegionsDBRecord] = {}
 RE_HHMM = re.compile(r"^(\d{1,2}):(\d{1,2})$")
 
 
-class OptionsProtocol(Protocol):
+class RetrieverNamesOptions(Protocol):
     dbdir: Path
     force: bool
-    duration: int
-    until: tuple[int, int]
-    until_utc: tuple[int, int]
+    auto_reset: bool
 
 
-class HourMinute(argparse.Action):
-    def __call__(self, parser, namespace, values, option_string=None):
-        m = RE_HHMM.match(values)
-        if m is None:
-            parser.error("Please enter time in 24h HH:MM format!")
-        setattr(namespace, self.dest, (int(m.group(1)), int(m.group(2))))
+class OptionsProtocol(RetrieverNamesOptions, TimeOptions, Protocol):
+    pass
 
 
-def get_opts() -> OptionsProtocol:
+def get_options() -> OptionsProtocol:
     parser = argparse.ArgumentParser("retriever.names")
 
     parser.add_argument("--dbdir", type=Path, default=DEFA_DB_DIR)
@@ -62,33 +56,13 @@ def get_opts() -> OptionsProtocol:
     parser.add_argument(
         "--auto-reset",
         action="store_true",
-        help=f"If specified, retriever will wrap up back to maxrow ({RetrieverProgress.DEFA_MAX_COORD[1]}) upon finishing row 0",
-    )
-
-    grp = parser.add_mutually_exclusive_group()
-    grp.add_argument(
-        "--duration",
-        metavar="SECS",
-        type=int,
-        default=0,
         help=(
-            "Dispatch jobs for SECS seconds. When the duration is reached, stop dispatching new jobs "
-            "and try to retire still-in-flight jobs, then exit. If less than 1, that means run forever "
-            "until interrupted (Ctrl-C)"
+            f"If specified, retriever will wrap up back to maxrow "
+            f"({RetrieverProgress.DEFA_MAX_COORD[1]}) upon finishing row 0"
         ),
     )
-    grp.add_argument(
-        "--until",
-        metavar="HH:MM",
-        action=HourMinute,
-        help="Stop dispatching new jobs when wallclock hits this time. WARNING: Does not take DST into account!",
-    )
-    grp.add_argument(
-        "--until-utc",
-        metavar="HH:MM",
-        action=HourMinute,
-        help="Same as --until but using UTC time (no DST problem)",
-    )
+
+    add_timeoptions(parser)
 
     _opts = parser.parse_args()
 
@@ -195,40 +169,23 @@ async def amain(db_path: Path, duration: int):
         )
 
 
-def main2(auto_reset: bool, db_dir: Path, duration: int, until: tuple[int, int], until_utc: tuple[int, int]):
+def main2(opts: OptionsProtocol):
     global DataBase, Progress
 
-    nao = datetime.now()
-    if duration > 0:
-        dur = duration
-    elif until:
-        hh, mm = until
-        unt = nao.replace(hour=hh, minute=mm, second=0, microsecond=0)
-        if unt < nao:
-            unt = unt + timedelta(days=1)
-        dur = (unt - nao).seconds
-    elif until_utc:
-        hh, mm = until_utc
-        nao = nao.astimezone(timezone.utc)
-        unt = nao.replace(hour=hh, minute=mm, second=0, microsecond=0)
-        if unt < nao:
-            unt = unt + timedelta(days=1)
-        dur = (unt - nao).seconds
-    else:
-        dur = math.inf
+    dur = calc_duration(opts)
 
-    Progress = RetrieverProgress((db_dir / PRGRS_NAME), auto_reset=auto_reset)
+    Progress = RetrieverProgress((opts.dbdir / PRGRS_NAME), auto_reset=opts.auto_reset)
     if Progress.outstanding_count:
         print(f"{Progress.outstanding_count} jobs still outstanding from last session")
     else:
         print("No outstanding jobs from last session.")
         if Progress.next_y < 0:
             print("No rows left to process.")
-            print(f"Delete the file {db_dir / PRGRS_NAME} to reset. (Or specify --auto-reset)")
+            print(f"Delete the file {opts.dbdir / PRGRS_NAME} to reset. (Or specify --auto-reset)")
             return
     print(f"Next coordinate: {Progress.next_coordinate}")
 
-    db_path = db_dir / DB_NAME
+    db_path = opts.dbdir / DB_NAME
     if db_path.exists():
         with db_path.open("rb") as fin:
             DataBase = pickle.load(fin)
@@ -240,12 +197,12 @@ def main2(auto_reset: bool, db_dir: Path, duration: int, until: tuple[int, int],
     print(f"{Progress.outstanding_count:_} outstanding jobs left. Last dispatched coordinate: {Progress.last_dispatch}")
 
 
-def main(auto_reset: bool, force: bool, dbdir: Path, duration: int, until: tuple[int, int], until_utc: tuple[int, int]):
-    dbdir.mkdir(parents=True, exist_ok=True)
-    with lock_file(dbdir / LOCK_NAME, force):
-        main2(auto_reset, dbdir, duration, until, until_utc)
+def main(opts: OptionsProtocol):
+    opts.dbdir.mkdir(parents=True, exist_ok=True)
+    with lock_file(opts.dbdir / LOCK_NAME, opts.force):
+        main2(opts)
 
 
 if __name__ == '__main__':
-    opts = get_opts()
-    main(**vars(opts))
+    options = get_options()
+    main(**vars(options))

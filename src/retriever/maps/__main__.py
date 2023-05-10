@@ -5,16 +5,14 @@ from __future__ import annotations
 
 import argparse
 import asyncio
-import math
 import multiprocessing as MP
 import multiprocessing.managers as MPMgr
 import multiprocessing.pool as MPPool
 import multiprocessing.shared_memory as MPSharedMem
 import queue
-import re
 import signal
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import datetime
 from pathlib import Path
 from typing import Final, Protocol, cast
 
@@ -25,7 +23,7 @@ from retriever import (
     RetrieverProgress,
     dispatch_fetcher,
     handle_sigint,
-    lock_file,
+    lock_file, add_timeoptions, TimeOptions, calc_duration,
 )
 from retriever.maps.saver import Thresholds, saver
 from sl_maptools import CoordType, MapCoord, inventorize_maps_all
@@ -64,28 +62,19 @@ Progress: RetrieverProgress
 AbortRequested = asyncio.Event()
 
 
-class OptionsProtocol(Protocol):
+class RetrieverMapsOptions(Protocol):
     mapdir: Path
     workers: int
-    duration: int
-    until: tuple[int, int]
-    until_utc: tuple[int, int]
     auto_reset: bool
     force: bool
+    debug_level: DebugLevel
 
 
-RE_HHMM = re.compile(r"^(\d{1,2}):(\d{1,2})$")
+class OptionsProtocol(RetrieverMapsOptions, TimeOptions, Protocol):
+    pass
 
 
-class HourMinute(argparse.Action):
-    def __call__(self, parser, namespace, values, option_string=None):
-        m = RE_HHMM.match(values)
-        if m is None:
-            parser.error("Please enter time in 24h HH:MM format!")
-        setattr(namespace, self.dest, (int(m.group(1)), int(m.group(2))))
-
-
-def options() -> OptionsProtocol:
+def get_options() -> OptionsProtocol:
     parser = argparse.ArgumentParser("region_auditor")
 
     parser.add_argument("--force", action="store_true")
@@ -100,34 +89,14 @@ def options() -> OptionsProtocol:
     parser.add_argument(
         "--auto-reset",
         action="store_true",
-        help=f"If specified, retriever will wrap up back to maxrow ({RetrieverProgress.DEFA_MAX_COORD[1]}) upon finishing row 0",
+        help=(
+            f"If specified, retriever will wrap up back to maxrow "
+            f"({RetrieverProgress.DEFA_MAX_COORD[1]}) upon finishing row 0"
+        ),
     )
     parser.add_argument("--debug_level", type=DebugLevel, default=DebugLevel.NORMAL)
 
-    grp = parser.add_mutually_exclusive_group()
-    grp.add_argument(
-        "--duration",
-        metavar="SECS",
-        type=int,
-        default=0,
-        help=(
-            "Dispatch jobs for SECS seconds. When the duration is reached, stop dispatching new jobs "
-            "and try to retire still-in-flight jobs, then exit. If less than 1, that means run forever "
-            "until interrupted (Ctrl-C)"
-        ),
-    )
-    grp.add_argument(
-        "--until",
-        metavar="HH:MM",
-        action=HourMinute,
-        help="Stop dispatching new jobs when wallclock hits this time. WARNING: Does not take DST into account!",
-    )
-    grp.add_argument(
-        "--until-utc",
-        metavar="HH:MM",
-        action=HourMinute,
-        help="Same as --until but using UTC time (no DST problem)",
-    )
+    add_timeoptions(parser)
 
     _opts = parser.parse_args()
 
@@ -213,37 +182,13 @@ async def async_main(duration: int, shm_allocator: SharedMemoryAllocator):
 
 
 def main2(
-    mapdir: Path,
-    duration: int,
-    until: tuple[int, int],
-    until_utc: tuple[int, int],
-    auto_reset: bool,
-    workers: int,
-    debug_level: DebugLevel,
+    opts: OptionsProtocol,
 ):
     global Progress, SaverQueue, SaveSuccessQueue
 
-    nao = datetime.now()
-    if duration > 0:
-        dur = duration
-    elif until:
-        hh, mm = until
-        unt = nao.replace(hour=hh, minute=mm, second=0, microsecond=0)
-        if unt < nao:
-            unt = unt + timedelta(days=1)
-        dur = (unt - nao).seconds
-    elif until_utc:
-        hh, mm = until_utc
-        nao = nao.astimezone(timezone.utc)
-        unt = nao.replace(hour=hh, minute=mm, second=0, microsecond=0)
-        if unt < nao:
-            unt = unt + timedelta(days=1)
-        dur = (unt - nao).seconds
-    else:
-        dur = math.inf
-
-    progress_file = mapdir / PROG_NAME
-    Progress = RetrieverProgress(progress_file, auto_reset=auto_reset)
+    dur = calc_duration(opts)
+    progress_file = opts.mapdir / PROG_NAME
+    Progress = RetrieverProgress(progress_file, auto_reset=opts.auto_reset)
     if Progress.outstanding_count:
         print(f"{Progress.outstanding_count} jobs still outstanding from last session")
     else:
@@ -265,23 +210,23 @@ def main2(
         possibly_changed: dict[CoordType, None] = manager.dict()
         shm_allocator = SharedMemoryAllocator(shm_manager)
 
-        map_inventory = manager.dict(inventorize_maps_all(mapdir))
+        map_inventory = manager.dict(inventorize_maps_all(opts.mapdir))
 
         thresholds = Thresholds(MSE=MSE_THRESHOLD, SSIM=SSIM_THRESHOLD)
         saver_args = (
-            mapdir,
+            opts.mapdir,
             map_inventory,
             SaverQueue,
             SaveSuccessQueue,
             saved_coords,
             worker_state,
-            debug_level,
+            opts.debug_level,
             thresholds,
             possibly_changed,
         )
         pool: MPPool.Pool
-        with MP.Pool(workers, initializer=saver, initargs=saver_args) as pool:
-            while sum(1 for v, _ in worker_state.values() if v == "idle") < workers:
+        with MP.Pool(opts.workers, initializer=saver, initargs=saver_args) as pool:
+            while sum(1 for v, _ in worker_state.values() if v == "idle") < opts.workers:
                 time.sleep(1)
 
             print("started.\nDispatching async fetchers!", flush=True)
@@ -318,7 +263,7 @@ def main2(
                 SaveSuccessQueue.join_thread()
                 print("flushed")
                 Progress.save()
-            with (mapdir / "PossiblyChanged.txt").open("wt") as fout:
+            with (opts.mapdir / "PossiblyChanged.txt").open("wt") as fout:
                 for coord in sorted(possibly_changed.keys()):
                     print(coord, file=fout)
     print(
@@ -326,24 +271,15 @@ def main2(
     )
 
 
-def main(
-    mapdir: Path,
-    duration: int,
-    until: tuple[int, int],
-    until_utc: tuple[int, int],
-    auto_reset: bool,
-    workers: int,
-    force: bool,
-    debug_level: DebugLevel,
-):
-    mapdir.mkdir(parents=True, exist_ok=True)
-    with lock_file(mapdir / LOCK_NAME, force):
-        main2(mapdir, duration, until, until_utc, auto_reset, workers, debug_level)
+def main(opts: OptionsProtocol):
+    opts.mapdir.mkdir(parents=True, exist_ok=True)
+    with lock_file(opts.mapdir / LOCK_NAME, opts.force):
+        main2(opts)
     if AbortRequested.is_set():
         print("\nAborted by user.")
     print(f"Retriever finished at {datetime.now()}")
 
 
 if __name__ == "__main__":
-    opts = options()
-    main(**vars(opts))
+    options = get_options()
+    main(**vars(options))

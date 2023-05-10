@@ -1,12 +1,16 @@
 from __future__ import annotations
 
+import argparse
 import asyncio
+import math
+import re
 import signal
 import statistics
 import sys
 import time
 from asyncio import Task
 from contextlib import contextmanager
+from datetime import datetime, timedelta, timezone
 
 from enum import IntEnum
 
@@ -14,7 +18,7 @@ import ruamel.yaml as ryaml
 
 from collections import deque
 from pathlib import Path
-from typing import TypedDict, Generator, Final, Callable, Any
+from typing import TypedDict, Generator, Final, Callable, Any, Protocol
 
 from sl_maptools import CoordType
 
@@ -242,3 +246,69 @@ async def dispatch_fetcher(
             tasks.update(new_tasks)
     if abort_event.is_set():
         print()
+
+
+class TimeOptions(Protocol):
+    duration: int
+    until: tuple[int, int]
+    until_utc: tuple[int, int]
+
+
+RE_HHMM = re.compile(r"^(\d{1,2}):(\d{1,2})$")
+
+
+class HourMinute(argparse.Action):
+    def __call__(self, parser, namespace, values, option_string=None):
+        m = RE_HHMM.match(values)
+        if m is None:
+            parser.error("Please enter time in 24h HH:MM format!")
+        setattr(namespace, self.dest, (int(m.group(1)), int(m.group(2))))
+
+
+def add_timeoptions(parser: argparse.ArgumentParser):
+    grp = parser.add_mutually_exclusive_group()
+    grp.add_argument(
+        "--duration",
+        metavar="SECS",
+        type=int,
+        default=0,
+        help=(
+            "Dispatch jobs for SECS seconds. When the duration is reached, stop dispatching new jobs "
+            "and try to retire still-in-flight jobs, then exit. If less than 1, that means run forever "
+            "until interrupted (Ctrl-C)"
+        ),
+    )
+    grp.add_argument(
+        "--until",
+        metavar="HH:MM",
+        action=HourMinute,
+        help="Stop dispatching new jobs when wallclock hits this time. WARNING: Does not take DST into account!",
+    )
+    grp.add_argument(
+        "--until-utc",
+        metavar="HH:MM",
+        action=HourMinute,
+        help="Same as --until but using UTC time (no DST problem)",
+    )
+
+
+def calc_duration(opts: TimeOptions) -> int:
+    nao = datetime.now()
+    if opts.duration > 0:
+        dur = opts.duration
+    elif opts.until:
+        hh, mm = opts.until
+        unt = nao.replace(hour=hh, minute=mm, second=0, microsecond=0)
+        if unt < nao:
+            unt = unt + timedelta(days=1)
+        dur = (unt - nao).seconds
+    elif opts.until_utc:
+        hh, mm = opts.until_utc
+        nao = nao.astimezone(timezone.utc)
+        unt = nao.replace(hour=hh, minute=mm, second=0, microsecond=0)
+        if unt < nao:
+            unt = unt + timedelta(days=1)
+        dur = (unt - nao).seconds
+    else:
+        dur = math.inf
+    return dur
