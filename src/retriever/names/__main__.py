@@ -226,4 +226,4 @@ def main(opts: OptionsProtocol):
 
 if __name__ == "__main__":
     options = get_options()
-    main(**vars(options))
+    main(options)
