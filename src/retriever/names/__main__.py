@@ -2,6 +2,7 @@ import argparse
 import asyncio
 import pickle
 import re
+import time
 from datetime import datetime
 from pathlib import Path
 from typing import Final, Protocol, cast
@@ -219,9 +220,12 @@ def main2(opts: OptionsProtocol):
 
 
 def main(opts: OptionsProtocol):
+    start = time.monotonic()
     opts.dbdir.mkdir(parents=True, exist_ok=True)
     with lock_file(opts.dbdir / LOCK_NAME, opts.force):
         main2(opts)
+    elapsed = time.monotonic() - start
+    print(f"Finished in {elapsed:_.2f} seconds")
 
 
 if __name__ == "__main__":
