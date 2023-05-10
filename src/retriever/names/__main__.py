@@ -5,6 +5,7 @@ import re
 import time
 from datetime import datetime
 from pathlib import Path
+from pprint import pprint
 from typing import Final, Protocol, cast
 
 import httpx
@@ -40,6 +41,7 @@ Progress: RetrieverProgress
 AbortRequested = asyncio.Event()
 
 DataBase: dict[CoordType, RegionsDBRecord] = {}
+ChangeStats: dict[str, int] = {}
 
 
 RE_HHMM = re.compile(r"^(\d{1,2}):(\d{1,2})$")
@@ -93,6 +95,11 @@ def process(tile: CookedResult):
         if seen_name:
             dbxy["last_seen"] = ts
         history: dict[str, list[str]] = dbxy["name_history"]
+        if seen_name != prev_name:
+            if seen_name:
+                ChangeStats["changed"] = ChangeStats.get("changed", 0) + 1
+            else:
+                ChangeStats["gone"] = ChangeStats.get("gone", 0) + 1
         if seen_name not in history:
             print("🉑", end="", flush=True)
             history[seen_name] = [ts]
@@ -116,6 +123,7 @@ def process(tile: CookedResult):
             print(f"{tile=}")
             raise
         if dbxy is None:
+            ChangeStats["new"] = ChangeStats.get("new", 0) + 1
             dbxy: RegionsDBRecord = {
                 "first_seen": ts,
                 "last_seen": "",
@@ -224,8 +232,10 @@ def main(opts: OptionsProtocol):
     opts.dbdir.mkdir(parents=True, exist_ok=True)
     with lock_file(opts.dbdir / LOCK_NAME, opts.force):
         main2(opts)
+    print("Stats of this run:")
+    pprint(ChangeStats)
     elapsed = time.monotonic() - start
-    print(f"Finished in {elapsed:_.2f} seconds")
+    print(f"\nFinished in {elapsed:_.2f} seconds")
 
 
 if __name__ == "__main__":
