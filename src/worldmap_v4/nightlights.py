@@ -183,6 +183,109 @@ def make_nightlights(regions: set[MapCoord], *, region_size: int = DEFA_REGION_S
     return canvas
 
 
+def make_nightlights2(regions: set[MapCoord], *, region_size: int = DEFA_REGION_SZ) -> Image.Image:
+    _, _rem = divmod(region_size, 8)
+    if _rem:
+        raise ValueError("region_size must be an integer multiple of 8!")
+    reg_half = region_size // 2
+    reg_quart = region_size // 4
+    reg_8th = region_size // 8
+    reg_3quar = 3 * reg_quart
+    reg_3_8th = 3 * reg_8th
+
+    width = MAX_X - MIN_X + 1
+    height = MAX_Y - MIN_Y + 1
+
+    def box(value: int) -> tuple[int, int]:
+        return value, value
+
+    canvas_box = MapCoord(width, height) * region_size
+    canvas = Image.new("L", canvas_box, color=BLACK)
+
+    slab_center_w = Image.new("L", box(reg_half), color=WHITE)
+    slab_sides = Image.new("L", box(reg_quart), color=WHITE)
+
+    def world_has_all_of(*coords: MapCoord) -> bool:
+        return not any(co not in regions for co in coords)
+
+    def world_has_none_of(*coords: MapCoord) -> bool:
+        return not any(co in regions for co in coords)
+
+    region_img: Image.Image
+
+    def paste_side(x, y):
+        region_img.paste(slab_sides, (x, y))
+
+    for coord in regions:
+        # region Compass points coordinates
+        c_n = coord + (0, 1)
+        c_e = coord + (1, 0)
+        c_w = coord - (1, 0)
+        c_s = coord - (0, 1)
+        c_ne = coord + (1, 1)
+        c_nw = coord + (-1, 1)
+        c_se = coord + (1, -1)
+        c_sw = coord + (-1, -1)
+        # endregion
+
+        region_img = Image.new("L", box(region_size), color=BLACK)
+        region_img.paste(slab_center_w, box(reg_quart))
+        draw = ImageDraw.Draw(region_img)
+
+        # region Vertical & Horizontal connections
+        if world_has_all_of(c_n):
+            paste_side(reg_3_8th, 0)
+        if world_has_all_of(c_e):
+            paste_side(reg_3quar, reg_3_8th)
+        if world_has_all_of(c_w):
+            paste_side(0, reg_3_8th)
+        if world_has_all_of(c_s):
+            paste_side(reg_3_8th, reg_3quar)
+        # endregion
+
+        # region Diagonals
+
+        # Far all these:
+        # if has_vert_neighbor and has_horiz_neighbor:
+        #   if also has_diag_neighbor_between_vert_and_horiz:
+        #     plop a slab
+        #   else:
+        #     chamfer_inner_corner
+        #   -plus-
+        #   if no_neighbor_on_other_sides:
+        #     chamfer_outer_corner
+
+        if world_has_all_of(c_n, c_e):
+            if world_has_all_of(c_ne):
+                paste_side(reg_3quar, 0)
+            if world_has_none_of(c_s, c_sw, c_w):
+                draw.point((reg_quart, reg_3quar - 1), fill=BLACK)
+
+        if world_has_all_of(c_n, c_w):
+            if world_has_all_of(c_nw):
+                paste_side(0, 0)
+            if world_has_none_of(c_s, c_se, c_e):
+                draw.point(box(reg_3quar - 1), fill=BLACK)
+
+        if world_has_all_of(c_s, c_e):
+            if world_has_all_of(c_se):
+                region_img.paste(slab_sides, box(reg_3quar))
+            if world_has_none_of(c_n, c_nw, c_w):
+                draw.point(box(reg_3quar), fill=BLACK)
+
+        if world_has_all_of(c_s, c_w):
+            if world_has_all_of(c_sw):
+                paste_side(0, reg_3quar)
+            if world_has_none_of(c_n, c_ne, c_e):
+                draw.point((reg_3quar - 1, reg_quart), fill=BLACK)
+
+        # endregion
+
+        canvas.paste(region_img, canvas_coord(*coord, region_size))
+
+    return canvas
+
+
 def make_map(opts: Options):
     dbpath = opts.dbpath
     bonniedb = opts.bonniedb
