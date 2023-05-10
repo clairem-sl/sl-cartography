@@ -9,16 +9,14 @@ import statistics
 import sys
 import time
 from asyncio import Task
+from collections import deque
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
-
 from enum import IntEnum
+from pathlib import Path
+from typing import Any, Callable, Final, Generator, Protocol, TypedDict
 
 import ruamel.yaml as ryaml
-
-from collections import deque
-from pathlib import Path
-from typing import TypedDict, Generator, Final, Callable, Any, Protocol
 
 from sl_maptools import CoordType
 
@@ -33,6 +31,7 @@ class RetrieverProgress:
     """
     Tracks progress by generating job batches and recording the last issued job.
     """
+
     DEFA_MIN_COORD: Final[CoordType] = 0, 0
     DEFA_MAX_COORD: Final[CoordType] = 2100, 2100
 
@@ -91,7 +90,10 @@ class RetrieverProgress:
         exported: ProgressDict = {
             "next_x": self.next_x,
             "next_y": self.next_y,
-            "outstanding": [f"{x},{y}" for x, y in sorted(self.outstanding, key=lambda t: (t[1], t[0]))],
+            "outstanding": [
+                f"{x},{y}"
+                for x, y in sorted(self.outstanding, key=lambda t: (t[1], t[0]))
+            ],
         }
         with self.backing_file.open("wt") as fout:
             ryaml.dump(exported, fout, default_flow_style=False)
@@ -138,7 +140,10 @@ def lock_file(lockf: Path, force: bool):
             lockf.touch(exist_ok=False)
         except FileExistsError:
             print(f"Lock file {lockf} exists!", file=sys.stderr)
-            print("You must not run multiple retrievers at the same time.", file=sys.stderr)
+            print(
+                "You must not run multiple retrievers at the same time.",
+                file=sys.stderr,
+            )
             print(
                 "If no other retriever is running, delete the lock file to continue.",
                 file=sys.stderr,
@@ -181,7 +186,9 @@ async def dispatch_fetcher(
     batch_wait: float = 5.0,
 ):
     start = time.monotonic()
-    tasks: set[asyncio.Task] = {taskmaker(coord) async for coord in progress.abatch(start_batch_size)}
+    tasks: set[asyncio.Task] = {
+        taskmaker(coord) async for coord in progress.abatch(start_batch_size)
+    }
     if not tasks:
         print("No undispatched jobs, exiting immediately!")
         return
@@ -241,7 +248,9 @@ async def dispatch_fetcher(
             print("(!A)", end=" ")
             continue
         if (2 * len(tasks)) < batch_size:
-            new_tasks = {taskmaker(coord) async for coord in progress.abatch(batch_size)}
+            new_tasks = {
+                taskmaker(coord) async for coord in progress.abatch(batch_size)
+            }
             print(f"(+{len(new_tasks)})", end=" ")
             tasks.update(new_tasks)
     if abort_event.is_set():

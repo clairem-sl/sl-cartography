@@ -4,12 +4,19 @@ import pickle
 import re
 from datetime import datetime
 from pathlib import Path
-from typing import Final, cast, Protocol
+from typing import Final, Protocol, cast
 
 import httpx
 
-from retriever import RetrieverProgress, lock_file, handle_sigint, dispatch_fetcher, TimeOptions, add_timeoptions, \
-    calc_duration
+from retriever import (
+    RetrieverProgress,
+    TimeOptions,
+    add_timeoptions,
+    calc_duration,
+    dispatch_fetcher,
+    handle_sigint,
+    lock_file,
+)
 from sl_maptools import CoordType, MapCoord, RegionsDBRecord
 from sl_maptools.fetchers import CookedResult
 from sl_maptools.fetchers.cap import BoundedNameFetcher
@@ -126,13 +133,19 @@ def process(tile: CookedResult):
 
 
 async def amain(db_path: Path, duration: int):
-    limits = httpx.Limits(max_connections=CONN_LIMIT, max_keepalive_connections=CONN_LIMIT)
+    limits = httpx.Limits(
+        max_connections=CONN_LIMIT, max_keepalive_connections=CONN_LIMIT
+    )
     async with httpx.AsyncClient(limits=limits, timeout=10.0, http2=HTTP2) as client:
-        fetcher = BoundedNameFetcher(CONN_LIMIT * 3, client, cooked=True, cancel_flag=AbortRequested)
+        fetcher = BoundedNameFetcher(
+            CONN_LIMIT * 3, client, cooked=True, cancel_flag=AbortRequested
+        )
         shown = False
 
         def make_task(coord: CoordType):
-            return asyncio.create_task(fetcher.async_fetch(MapCoord(*coord)), name=str(coord))
+            return asyncio.create_task(
+                fetcher.async_fetch(MapCoord(*coord)), name=str(coord)
+            )
 
         def pre_batch():
             nonlocal shown
@@ -146,7 +159,11 @@ async def amain(db_path: Path, duration: int):
                 if not shown:
                     shown = True
                     print("🌐", end="")
-                print(f' ({fut_result.coord.x},{fut_result.coord.y})"{fut_result.result}"', end="", flush=True)
+                print(
+                    f' ({fut_result.coord.x},{fut_result.coord.y})"{fut_result.result}"',
+                    end="",
+                    flush=True,
+                )
             process(fut_result)
             Progress.retire(fut_result.coord)
             return True
@@ -181,7 +198,9 @@ def main2(opts: OptionsProtocol):
         print("No outstanding jobs from last session.")
         if Progress.next_y < 0:
             print("No rows left to process.")
-            print(f"Delete the file {opts.dbdir / PRGRS_NAME} to reset. (Or specify --auto-reset)")
+            print(
+                f"Delete the file {opts.dbdir / PRGRS_NAME} to reset. (Or specify --auto-reset)"
+            )
             return
     print(f"Next coordinate: {Progress.next_coordinate}")
 
@@ -194,7 +213,9 @@ def main2(opts: OptionsProtocol):
     with handle_sigint(AbortRequested):
         asyncio.run(amain(db_path, dur))
 
-    print(f"{Progress.outstanding_count:_} outstanding jobs left. Last dispatched coordinate: {Progress.last_dispatch}")
+    print(
+        f"{Progress.outstanding_count:_} outstanding jobs left. Last dispatched coordinate: {Progress.last_dispatch}"
+    )
 
 
 def main(opts: OptionsProtocol):
@@ -203,6 +224,6 @@ def main(opts: OptionsProtocol):
         main2(opts)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     options = get_options()
     main(**vars(options))

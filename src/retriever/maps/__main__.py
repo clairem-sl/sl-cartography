@@ -21,9 +21,12 @@ import httpx
 from retriever import (
     DebugLevel,
     RetrieverProgress,
+    TimeOptions,
+    add_timeoptions,
+    calc_duration,
     dispatch_fetcher,
     handle_sigint,
-    lock_file, add_timeoptions, TimeOptions, calc_duration,
+    lock_file,
 )
 from retriever.maps.saver import Thresholds, saver
 from sl_maptools import CoordType, MapCoord, inventorize_maps_all
@@ -226,7 +229,9 @@ def main2(
         )
         pool: MPPool.Pool
         with MP.Pool(opts.workers, initializer=saver, initargs=saver_args) as pool:
-            while sum(1 for v, _ in worker_state.values() if v == "idle") < opts.workers:
+            while (
+                sum(1 for v, _ in worker_state.values() if v == "idle") < opts.workers
+            ):
                 time.sleep(1)
 
             print("started.\nDispatching async fetchers!", flush=True)
