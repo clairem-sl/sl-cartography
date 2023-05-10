@@ -100,7 +100,7 @@ def options() -> OptionsProtocol:
     parser.add_argument(
         "--auto-reset",
         action="store_true",
-        help=f"If specified, retriever will wrap up back to maxrow ({RetrieverProgress.DEFA_MAX}) upon finishing row 0",
+        help=f"If specified, retriever will wrap up back to maxrow ({RetrieverProgress.DEFA_MAX_COORD[1]}) upon finishing row 0",
     )
     parser.add_argument("--debug_level", type=DebugLevel, default=DebugLevel.NORMAL)
 

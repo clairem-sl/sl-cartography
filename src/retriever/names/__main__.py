@@ -62,7 +62,7 @@ def get_opts() -> OptionsProtocol:
     parser.add_argument(
         "--auto-reset",
         action="store_true",
-        help=f"If specified, retriever will wrap up back to maxrow ({RetrieverProgress.DEFA_MAX}) upon finishing row 0",
+        help=f"If specified, retriever will wrap up back to maxrow ({RetrieverProgress.DEFA_MAX_COORD[1]}) upon finishing row 0",
     )
 
     grp = parser.add_mutually_exclusive_group()

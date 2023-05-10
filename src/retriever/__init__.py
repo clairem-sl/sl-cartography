@@ -26,15 +26,15 @@ class ProgressDict(TypedDict):
 
 
 class RetrieverProgress:
-    DEFA_MIN: Final[int] = 0
-    DEFA_MAX: Final[int] = 2100
+    DEFA_MIN_COORD: Final[CoordType] = 0, 0
+    DEFA_MAX_COORD: Final[CoordType] = 2100, 2100
 
     def __init__(
         self,
         backing_file: Path,
         auto_reset: bool = True,
-        min_coord: CoordType = (DEFA_MIN, DEFA_MIN),
-        max_coord: CoordType = (DEFA_MAX, DEFA_MAX),
+        min_coord: CoordType = DEFA_MIN_COORD,
+        max_coord: CoordType = DEFA_MAX_COORD,
     ):
         self.backing_file = backing_file
         self.auto_reset = auto_reset
