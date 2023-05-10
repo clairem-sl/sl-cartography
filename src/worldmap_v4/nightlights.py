@@ -100,10 +100,10 @@ def make_nightlights(regions: set[MapCoord], *, region_size: int = DEFA_REGION_S
     slab_w = Image.new("L", box(slab_sz), color=WHITE)
 
     def world_has_all_of(*coords: MapCoord) -> bool:
-        return all(map(regions.__contains__, coords))
+        return not any(co not in regions for co in coords)
 
     def world_has_none_of(*coords: MapCoord) -> bool:
-        return not any(map(regions.__contains__, coords))
+        return not any(co in regions for co in coords)
 
     for coord in regions:
         # region Compass points coordinates
