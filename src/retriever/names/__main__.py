@@ -6,7 +6,7 @@ import time
 from datetime import datetime
 from pathlib import Path
 from pprint import pprint
-from typing import Final, Protocol, cast
+from typing import Final, Protocol, cast, TypedDict
 
 import httpx
 
@@ -41,7 +41,21 @@ Progress: RetrieverProgress
 AbortRequested = asyncio.Event()
 
 DataBase: dict[CoordType, RegionsDBRecord] = {}
-ChangeStats: dict[str, int] = {}
+
+
+class ChangeStatsDict(TypedDict):
+    new: int
+    changed: int
+    gone: int
+    revived: int
+
+
+ChangeStats: ChangeStatsDict = {
+    "new": 0,
+    "changed": 0,
+    "gone": 0,
+    "revived": 0,
+}
 
 
 RE_HHMM = re.compile(r"^(\d{1,2}):(\d{1,2})$")
@@ -97,9 +111,12 @@ def process(tile: CookedResult):
         history: dict[str, list[str]] = dbxy["name_history"]
         if seen_name != prev_name:
             if seen_name:
-                ChangeStats["changed"] = ChangeStats.get("changed", 0) + 1
+                if prev_name:
+                    ChangeStats["changed"] += 1
+                else:
+                    ChangeStats["revived"] += 1
             else:
-                ChangeStats["gone"] = ChangeStats.get("gone", 0) + 1
+                ChangeStats["gone"] += 1
         if seen_name not in history:
             print("🉑", end="", flush=True)
             history[seen_name] = [ts]
@@ -123,7 +140,7 @@ def process(tile: CookedResult):
             print(f"{tile=}")
             raise
         if dbxy is None:
-            ChangeStats["new"] = ChangeStats.get("new", 0) + 1
+            ChangeStats["new"] += 1
             dbxy: RegionsDBRecord = {
                 "first_seen": ts,
                 "last_seen": "",
