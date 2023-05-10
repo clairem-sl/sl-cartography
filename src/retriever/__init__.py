@@ -26,6 +26,9 @@ class ProgressDict(TypedDict):
 
 
 class RetrieverProgress:
+    """
+    Tracks progress by generating job batches and recording the last issued job.
+    """
     DEFA_MIN_COORD: Final[CoordType] = 0, 0
     DEFA_MAX_COORD: Final[CoordType] = 2100, 2100
 
@@ -36,6 +39,12 @@ class RetrieverProgress:
         min_coord: CoordType = DEFA_MIN_COORD,
         max_coord: CoordType = DEFA_MAX_COORD,
     ):
+        """
+        :param backing_file: The YAML file where last state of the object wlll be read-from / written-to
+        :param auto_reset: If True (default), will wrap Y coordinate to max upon reaching min
+        :param min_coord: Minimum values of X (used in row-wrapping) and Y (used to reset/halt)
+        :param max_coord: Maximum values of X (used to wrap to next row) and Y (used to reset)
+        """
         self.backing_file = backing_file
         self.auto_reset = auto_reset
         self.minc = min_coord
@@ -137,6 +146,9 @@ def lock_file(lockf: Path, force: bool):
 
 @contextmanager
 def handle_sigint(interrupt_flag: asyncio.Event):
+    """
+    A context manager that provides SIGINT handling, and restore original handler upon exit
+    """
 
     def _handler(_, __):
         if interrupt_flag.is_set():
