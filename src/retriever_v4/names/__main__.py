@@ -262,8 +262,8 @@ def main(app_context: RetrieverApplication, opts: OptionsProtocol):
 
 
 if __name__ == "__main__":
-    with CONFIG_FILE.open("rb") as fin:
-        Config = DotDict(tomllib.load(fin))
+    with CONFIG_FILE.open("rb") as cfin:
+        Config = DotDict(tomllib.load(cfin))
     options = get_options()
     lock_file = options.dbdir / Config.names.lock
     log_file = options.dbdir / Config.names.log
