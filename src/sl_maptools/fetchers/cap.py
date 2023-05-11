@@ -6,7 +6,7 @@ from __future__ import annotations
 import asyncio
 import random
 import re
-from typing import Any, Dict, Final, NamedTuple, Optional, Protocol, Set
+from typing import Any, Dict, Final, Optional, Protocol, Set
 
 import httpx
 
