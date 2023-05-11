@@ -18,7 +18,7 @@ from typing import Final, Protocol, cast
 
 import httpx
 
-from retriever import (
+from retriever_v4 import (
     DebugLevel,
     RetrieverApplication,
     RetrieverProgress,
@@ -28,7 +28,7 @@ from retriever import (
     dispatch_fetcher,
     handle_sigint,
 )
-from retriever.maps.saver import Thresholds, saver
+from retriever_v4.maps.saver import Thresholds, saver
 from sl_maptools import CoordType, MapCoord, inventorize_maps_all
 from sl_maptools.fetchers import RawResult
 from sl_maptools.fetchers.map import BoundedMapFetcher

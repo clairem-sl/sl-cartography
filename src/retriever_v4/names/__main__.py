@@ -9,7 +9,7 @@ from typing import Final, Protocol, TypedDict, cast
 
 import httpx
 
-from retriever import (
+from retriever_v4 import (
     RetrieverApplication,
     RetrieverProgress,
     TimeOptions,
@@ -74,7 +74,7 @@ class OptionsProtocol(RetrieverNamesOptions, TimeOptions, Protocol):
 
 
 def get_options() -> OptionsProtocol:
-    parser = argparse.ArgumentParser("retriever.names")
+    parser = argparse.ArgumentParser("retriever_v4.names")
 
     parser.add_argument("--dbdir", type=Path, default=DEFA_DB_DIR)
     parser.add_argument("--force", action="store_true")

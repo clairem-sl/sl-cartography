@@ -14,7 +14,7 @@ from PIL import Image
 from skimage.metrics import mean_squared_error as mse
 from skimage.metrics import structural_similarity as ssim
 
-from retriever import DebugLevel
+from retriever_v4 import DebugLevel
 from sl_maptools import CoordType, MapCoord
 
 
