@@ -199,10 +199,11 @@ async def dispatch_fetcher(
                 exc_count += 1
                 print(f"\n{fut.get_name()} raised Exception: <{type(exc)}> {exc}")
                 continue
+
             # Actual result handling
-            if (fut_result := fut.result()) is not None:
-                if result_handler(fut_result):
-                    has_response += 1
+            if result_handler(fut.result()):
+                has_response += 1
+
         if completed_count:
             progress.save()
             if exc_count == completed_count:

@@ -48,6 +48,7 @@ class ChangeStatsDict(TypedDict):
     changed: int
     gone: int
     revived: int
+    failure: int
 
 
 ChangeStats: ChangeStatsDict = {
@@ -55,6 +56,7 @@ ChangeStats: ChangeStatsDict = {
     "changed": 0,
     "gone": 0,
     "revived": 0,
+    "failure": 0,
 }
 
 
@@ -179,6 +181,9 @@ async def amain(db_path: Path, duration: int):
 
         def process_result(fut_result: None | CookedResult) -> bool:
             nonlocal shown
+            if fut_result is None:
+                ChangeStats["failure"] += 1
+                return False
             if fut_result.status_code not in ACCEPTABLE_STATUSCODES:
                 return False
             if fut_result.result:

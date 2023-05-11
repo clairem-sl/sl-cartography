@@ -147,6 +147,8 @@ async def async_main(duration: int, shm_allocator: SharedMemoryAllocator):
 
         def process_result(fut_result: None | RawResult) -> bool:
             nonlocal shown
+            if fut_result is None:
+                return False
             if not fut_result.result:
                 Progress.retire(fut_result.coord)
                 return False
