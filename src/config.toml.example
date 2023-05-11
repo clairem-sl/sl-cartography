@@ -1,0 +1,11 @@
+[names]
+dir = 'C:\Cache\SL-Carto'
+lock = 'RegionsDB2.lock'
+log = 'RegionsDB2.log.yaml'
+progress = 'RegionsDB2Progress.yaml'
+
+[maps]
+dir = 'C:\Cache\SL-Carto\Maps2'
+lock = 'Maps.lock'
+log = 'Maps.log.yaml'
+progress = 'MapsProgress.yaml'

@@ -74,7 +74,7 @@ class OptionsProtocol(RetrieverNamesOptions, TimeOptions, Protocol):
 def get_options() -> OptionsProtocol:
     parser = argparse.ArgumentParser("retriever_v4.names")
 
-    parser.add_argument("--dbdir", type=Path, default=Config.db.dir)
+    parser.add_argument("--dbdir", type=Path, default=Config.names.dir)
     parser.add_argument("--force", action="store_true")
 
     parser.add_argument(
@@ -220,7 +220,7 @@ def main(app_context: RetrieverApplication, opts: OptionsProtocol):
 
     dur = calc_duration(opts)
 
-    Progress = RetrieverProgress((opts.dbdir / Config.db.progress), auto_reset=opts.auto_reset)
+    Progress = RetrieverProgress((opts.dbdir / Config.names.progress), auto_reset=opts.auto_reset)
     if Progress.outstanding_count:
         print(f"{Progress.outstanding_count} jobs still outstanding from last session")
     else:
@@ -228,12 +228,12 @@ def main(app_context: RetrieverApplication, opts: OptionsProtocol):
         if Progress.next_y < 0:
             print("No rows left to process.")
             print(
-                f"Delete the file {opts.dbdir / Config.db.progrss} to reset. (Or specify --auto-reset)"
+                f"Delete the file {opts.dbdir / Config.names.progrss} to reset. (Or specify --auto-reset)"
             )
             return
     print(f"Next coordinate: {Progress.next_coordinate}")
 
-    db_path = opts.dbdir / Config.db.name
+    db_path = opts.dbdir / Config.names.name
     if db_path.exists():
         with db_path.open("rb") as fin:
             DataBase = pickle.load(fin)
@@ -265,7 +265,7 @@ if __name__ == "__main__":
     with CONFIG_FILE.open("rb") as fin:
         Config = DotDict(tomllib.load(fin))
     options = get_options()
-    lock_file = options.dbdir / Config.db.lock
-    log_file = options.dbdir / Config.db.log
+    lock_file = options.dbdir / Config.names.lock
+    log_file = options.dbdir / Config.names.log
     with RetrieverApplication(lock_file=lock_file, log_file=lock_file) as app:
         main(app, options)
