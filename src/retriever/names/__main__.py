@@ -9,6 +9,7 @@ from pprint import pprint
 from typing import Final, Protocol, cast, TypedDict
 
 import httpx
+import ruamel.yaml as ryaml
 
 from retriever import (
     RetrieverProgress,
@@ -35,6 +36,7 @@ DEFA_DB_DIR: Final[Path] = Path("C:\\Cache\\SL-Carto\\")
 DB_NAME: Final[str] = "RegionsDB2.pkl"
 PRGRS_NAME: Final[str] = "RegionsDB2Progress.yaml"
 LOCK_NAME: Final[str] = "RegionsDB2.lock"
+LOGFILE_NAME: Final[str] = "RegionsDB2.log.yaml"
 
 Progress: RetrieverProgress
 
@@ -236,12 +238,31 @@ def main2(opts: OptionsProtocol):
             DataBase = pickle.load(fin)
     print(f"DataBase already contains {len(DataBase)} regions.")
 
+    start_coord = Progress.next_coordinate
     with handle_sigint(AbortRequested):
         asyncio.run(amain(db_path, dur))
+    end_x, end_y = Progress.next_coordinate
+    if end_x == 0:
+        end_x = Progress.DEFA_MAX_COORD[0]
+        end_y -= 1
+    end_coord = end_x, end_y
 
     print(
         f"{Progress.outstanding_count:_} outstanding jobs left. Last dispatched coordinate: {Progress.last_dispatch}"
     )
+
+    logfile = opts.dbdir / LOGFILE_NAME
+    logfile.touch(exist_ok=True)
+    with logfile.open("rt") as fin:
+        log_info: dict[str, dict] = ryaml.safe_load(fin)
+    if log_info is None:
+        log_info = {}
+    log_info[datetime.now().astimezone().isoformat(timespec="minutes")] = {
+        "stats": ChangeStats,
+        "range": f"{start_coord}~{end_coord}",
+    }
+    with logfile.open("wt") as fout:
+        ryaml.dump(log_info, fout)
 
 
 def main(opts: OptionsProtocol):
