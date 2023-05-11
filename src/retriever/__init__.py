@@ -10,11 +10,12 @@ import sys
 import time
 from asyncio import Task
 from collections import deque
-from contextlib import contextmanager
+from contextlib import AbstractContextManager, contextmanager
 from datetime import datetime, timedelta, timezone
 from enum import IntEnum
 from pathlib import Path
-from typing import Any, Callable, Final, Generator, Protocol, TypedDict
+from types import TracebackType
+from typing import Any, Callable, Final, Generator, Protocol, Type, TypedDict
 
 import ruamel.yaml as ryaml
 
@@ -134,26 +135,6 @@ class DebugLevel(IntEnum):
 
 
 @contextmanager
-def lock_file(lockf: Path, force: bool):
-    if not force:
-        try:
-            lockf.touch(exist_ok=False)
-        except FileExistsError:
-            print(f"Lock file {lockf} exists!", file=sys.stderr)
-            print(
-                "You must not run multiple retrievers at the same time.",
-                file=sys.stderr,
-            )
-            print(
-                "If no other retriever is running, delete the lock file to continue.",
-                file=sys.stderr,
-            )
-            sys.exit(1)
-    yield
-    lockf.unlink(missing_ok=True)
-
-
-@contextmanager
 def handle_sigint(interrupt_flag: asyncio.Event):
     """
     A context manager that provides SIGINT handling, and restore original handler upon exit
@@ -257,6 +238,9 @@ async def dispatch_fetcher(
         print()
 
 
+# region ##### Time Options
+
+
 class TimeOptions(Protocol):
     duration: int
     until: tuple[int, int]
@@ -321,3 +305,61 @@ def calc_duration(opts: TimeOptions) -> int:
     else:
         dur = math.inf
     return dur
+
+
+# endregion
+
+
+class RetrieverApplication(AbstractContextManager):
+    def __init__(self, *, lock_file: None | Path, log_file: None | Path):
+        self.lock_file = lock_file
+        self.log_file = log_file
+        self.started: float
+        self.ended: float
+
+    def __enter__(self):
+        if self.lock_file is not None:
+            lockf = self.lock_file
+            try:
+                lockf.touch(exist_ok=False)
+            except FileExistsError:
+                print(f"Lock file {lockf} exists!", file=sys.stderr)
+                print(
+                    "You must not run multiple retrievers at the same time.",
+                    file=sys.stderr,
+                )
+                print(
+                    "If no other retriever is running, delete the lock file to continue.",
+                    file=sys.stderr,
+                )
+                raise RuntimeError("Lock file exists")
+        self.started = time.monotonic()
+        return self
+
+    def __exit__(
+        self,
+        __exc_type: Type[BaseException] | None,
+        __exc_value: BaseException | None,
+        __traceback: TracebackType | None,
+    ) -> bool | None:
+        self.lock_file.unlink(missing_ok=True)
+        self.ended = time.monotonic()
+        print(
+            f"\nFinished in {(self.ended - self.started):_.2f} seconds at {datetime.now()}"
+        )
+        return False
+
+    def log(self, log_item: str | dict):
+        if self.log_file is None:
+            return
+        (logf := self.log_file).parent.mkdir(exist_ok=True)
+        logf.touch(exist_ok=True)
+        with logf.open("rt+") as finout:
+            log_data: dict[str, str | dict] = ryaml.safe_load(finout)
+            if not isinstance(log_item, dict):
+                log_item = {"msg": str(log_item)}
+            log_data[
+                datetime.now().astimezone().isoformat(timespec="minutes")
+            ] = log_item
+            finout.seek(0)
+            ryaml.dump(log_data, finout)

@@ -20,13 +20,13 @@ import httpx
 
 from retriever import (
     DebugLevel,
+    RetrieverApplication,
     RetrieverProgress,
     TimeOptions,
     add_timeoptions,
     calc_duration,
     dispatch_fetcher,
     handle_sigint,
-    lock_file,
 )
 from retriever.maps.saver import Thresholds, saver
 from sl_maptools import CoordType, MapCoord, inventorize_maps_all
@@ -56,6 +56,7 @@ DEFA_MAPS_DIR: Final[Path] = Path("C:\\Cache\\SL-Carto\\Maps2\\")
 LOCK_NAME: Final[str] = "Maps.lock"
 PROG_NAME: Final[str] = "MapsProgress.yaml"
 DOMC_NAME: Final[str] = "DominantColors.pkl"
+LOGFILE_NAME: Final[str] = "Maps.log"
 
 OrigSigINT: signal.Handlers = signal.getsignal(signal.SIGINT)
 SaverQueue: MP.Queue
@@ -184,7 +185,7 @@ async def async_main(duration: int, shm_allocator: SharedMemoryAllocator):
         )
 
 
-def main2(
+def main(
     opts: OptionsProtocol,
 ):
     global Progress, SaverQueue, SaveSuccessQueue
@@ -274,17 +275,13 @@ def main2(
     print(
         f"{Progress.outstanding_count:_} outstanding jobs left. Last dispatched coordinate: {Progress.last_dispatch}"
     )
-
-
-def main(opts: OptionsProtocol):
-    opts.mapdir.mkdir(parents=True, exist_ok=True)
-    with lock_file(opts.mapdir / LOCK_NAME, opts.force):
-        main2(opts)
     if AbortRequested.is_set():
         print("\nAborted by user.")
-    print(f"Retriever finished at {datetime.now()}")
 
 
 if __name__ == "__main__":
     options = get_options()
-    main(**vars(options))
+    lock_file = options.mapdir / LOCK_NAME
+    log_file = options.mapdir / LOGFILE_NAME
+    with RetrieverApplication(lock_file=lock_file, log_file=lock_file) as app:
+        main(options)

@@ -2,23 +2,21 @@ import argparse
 import asyncio
 import pickle
 import re
-import time
 from datetime import datetime
 from pathlib import Path
 from pprint import pprint
-from typing import Final, Protocol, cast, TypedDict
+from typing import Final, Protocol, TypedDict, cast
 
 import httpx
-import ruamel.yaml as ryaml
 
 from retriever import (
+    RetrieverApplication,
     RetrieverProgress,
     TimeOptions,
     add_timeoptions,
     calc_duration,
     dispatch_fetcher,
     handle_sigint,
-    lock_file,
 )
 from sl_maptools import CoordType, MapCoord, RegionsDBRecord
 from sl_maptools.fetchers import CookedResult
@@ -214,7 +212,7 @@ async def amain(db_path: Path, duration: int):
         )
 
 
-def main2(opts: OptionsProtocol):
+def main(app_context: RetrieverApplication, opts: OptionsProtocol):
     global DataBase, Progress
 
     dur = calc_duration(opts)
@@ -250,32 +248,19 @@ def main2(opts: OptionsProtocol):
     print(
         f"{Progress.outstanding_count:_} outstanding jobs left. Last dispatched coordinate: {Progress.last_dispatch}"
     )
-
-    logfile = opts.dbdir / LOGFILE_NAME
-    logfile.touch(exist_ok=True)
-    with logfile.open("rt") as fin:
-        log_info: dict[str, dict] = ryaml.safe_load(fin)
-    if log_info is None:
-        log_info = {}
-    log_info[datetime.now().astimezone().isoformat(timespec="minutes")] = {
-        "stats": ChangeStats,
-        "range": f"{start_coord}~{end_coord}",
-    }
-    with logfile.open("wt") as fout:
-        ryaml.dump(log_info, fout)
-
-
-def main(opts: OptionsProtocol):
-    start = time.monotonic()
-    opts.dbdir.mkdir(parents=True, exist_ok=True)
-    with lock_file(opts.dbdir / LOCK_NAME, opts.force):
-        main2(opts)
     print("Stats of this run:")
     pprint(ChangeStats)
-    elapsed = time.monotonic() - start
-    print(f"\nFinished in {elapsed:_.2f} seconds")
+    app_context.log(
+        {
+            "stats": ChangeStats,
+            "range": f"{start_coord}~{end_coord}",
+        }
+    )
 
 
 if __name__ == "__main__":
     options = get_options()
-    main(options)
+    lock_file = options.dbdir / LOCK_NAME
+    log_file = options.dbdir / LOGFILE_NAME
+    with RetrieverApplication(lock_file=lock_file, log_file=lock_file) as app:
+        main(app, options)
