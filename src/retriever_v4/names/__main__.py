@@ -2,6 +2,7 @@ import argparse
 import asyncio
 import pickle
 import re
+import tomllib
 from datetime import datetime
 from pathlib import Path
 from pprint import pprint
@@ -18,7 +19,7 @@ from retriever_v4 import (
     dispatch_fetcher,
     handle_sigint,
 )
-from sl_maptools import CoordType, MapCoord, RegionsDBRecord
+from sl_maptools import CoordType, MapCoord, RegionsDBRecord, DotDict
 from sl_maptools.fetchers import CookedResult
 from sl_maptools.fetchers.cap import BoundedNameFetcher
 
@@ -30,11 +31,8 @@ BATCH_WAIT: Final[float] = 5.0
 MAVG_SAMPLES: Final[int] = 5
 ACCEPTABLE_STATUSCODES: Final[set[int]] = {0, 200, 403}
 
-DEFA_DB_DIR: Final[Path] = Path("C:\\Cache\\SL-Carto\\")
-DB_NAME: Final[str] = "RegionsDB2.pkl"
-PRGRS_NAME: Final[str] = "RegionsDB2Progress.yaml"
-LOCK_NAME: Final[str] = "RegionsDB2.lock"
-LOGFILE_NAME: Final[str] = "RegionsDB2.log.yaml"
+CONFIG_FILE = Path("config.toml")
+Config: DotDict
 
 Progress: RetrieverProgress
 
@@ -76,7 +74,7 @@ class OptionsProtocol(RetrieverNamesOptions, TimeOptions, Protocol):
 def get_options() -> OptionsProtocol:
     parser = argparse.ArgumentParser("retriever_v4.names")
 
-    parser.add_argument("--dbdir", type=Path, default=DEFA_DB_DIR)
+    parser.add_argument("--dbdir", type=Path, default=Config.db.dir)
     parser.add_argument("--force", action="store_true")
 
     parser.add_argument(
@@ -222,7 +220,7 @@ def main(app_context: RetrieverApplication, opts: OptionsProtocol):
 
     dur = calc_duration(opts)
 
-    Progress = RetrieverProgress((opts.dbdir / PRGRS_NAME), auto_reset=opts.auto_reset)
+    Progress = RetrieverProgress((opts.dbdir / Config.db.progress), auto_reset=opts.auto_reset)
     if Progress.outstanding_count:
         print(f"{Progress.outstanding_count} jobs still outstanding from last session")
     else:
@@ -230,12 +228,12 @@ def main(app_context: RetrieverApplication, opts: OptionsProtocol):
         if Progress.next_y < 0:
             print("No rows left to process.")
             print(
-                f"Delete the file {opts.dbdir / PRGRS_NAME} to reset. (Or specify --auto-reset)"
+                f"Delete the file {opts.dbdir / Config.db.progrss} to reset. (Or specify --auto-reset)"
             )
             return
     print(f"Next coordinate: {Progress.next_coordinate}")
 
-    db_path = opts.dbdir / DB_NAME
+    db_path = opts.dbdir / Config.db.name
     if db_path.exists():
         with db_path.open("rb") as fin:
             DataBase = pickle.load(fin)
@@ -264,8 +262,10 @@ def main(app_context: RetrieverApplication, opts: OptionsProtocol):
 
 
 if __name__ == "__main__":
+    with CONFIG_FILE.open("rb") as fin:
+        Config = DotDict(tomllib.load(fin))
     options = get_options()
-    lock_file = options.dbdir / LOCK_NAME
-    log_file = options.dbdir / LOGFILE_NAME
+    lock_file = options.dbdir / Config.db.lock
+    log_file = options.dbdir / Config.db.log
     with RetrieverApplication(lock_file=lock_file, log_file=lock_file) as app:
         main(app, options)

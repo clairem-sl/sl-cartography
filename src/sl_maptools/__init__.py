@@ -207,3 +207,14 @@ class RegionsDBRecord(TypedDict):
     current_name: str
     name_history: dict[str, list[str]]
     sources: set[str]
+
+
+class DotDict(dict):
+    def __init__(self, from_dict: dict):
+        super().__init__(from_dict)
+
+    def __getattr__(self, item):
+        val = self[item]
+        if isinstance(val, dict):
+            return DotDict(val)
+        return val
