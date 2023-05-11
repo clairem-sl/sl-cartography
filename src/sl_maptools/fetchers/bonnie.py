@@ -34,9 +34,7 @@ _RETRYABLE_EX = (httpx.ConnectTimeout, httpx.ReadTimeout, httpx.ReadError)
 
 
 class NameFetcher(object):
-    URL_TEMPLATE = (
-        "https://www.bonniebots.com/static-api/regions/{x}/{y}/index.json"
-    )
+    URL_TEMPLATE = "https://www.bonniebots.com/static-api/regions/{x}/{y}/index.json"
 
     def __init__(self, a_session: httpx.AsyncClient):
         """
@@ -53,8 +51,7 @@ class NameFetcher(object):
         retries: int = 2,
         raise_err: bool = True,
     ) -> RawTile:
-        """
-        """
+        """ """
         qprint = QuietablePrint(quiet)
         qprint(".", end="", flush=True)
         url = self.URL_TEMPLATE.format(x=coord.x, y=coord.y)
@@ -126,7 +123,13 @@ class BoundedNameFetcher(NameFetcher):
     that if there are too many in-flight requests, we get throttled.
     """
 
-    def __init__(self, sema_size: int, async_session: httpx.AsyncClient, retries: int = 3, cooked: bool = False):
+    def __init__(
+        self,
+        sema_size: int,
+        async_session: httpx.AsyncClient,
+        retries: int = 3,
+        cooked: bool = False,
+    ):
         """
 
         :param sema_size: Size of semaphore, which limits the number of in-flight requests
@@ -138,14 +141,21 @@ class BoundedNameFetcher(NameFetcher):
         self.retries = retries
         self.cooked = cooked
 
-    async def async_fetch(self, coord: MapCoord) -> Optional[RawTile|CookedTile]:
+    async def async_fetch(self, coord: MapCoord) -> Optional[RawTile | CookedTile]:
         """Perform async fetch, but won't actually start fetching if semaphore is depleted."""
         async with self.sema:
             try:
                 if self.cooked:
-                    return await asyncio.wait_for(self.async_get_name(coord, quiet=True, retries=self.retries), 10)
+                    return await asyncio.wait_for(
+                        self.async_get_name(coord, quiet=True, retries=self.retries), 10
+                    )
                 else:
-                    return await asyncio.wait_for(self.async_get_name_raw(coord, quiet=True, retries=self.retries), 10)
+                    return await asyncio.wait_for(
+                        self.async_get_name_raw(
+                            coord, quiet=True, retries=self.retries
+                        ),
+                        10,
+                    )
             except asyncio.CancelledError:
                 print(f"{coord} cancelled")
                 return None
