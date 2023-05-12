@@ -97,7 +97,7 @@ def get_options() -> OptionsProtocol:
     return cast(OptionsProtocol, _opts)
 
 
-def process(tile: CookedResult):
+def process(tile: CookedResult) -> bool:
     global DataBase
 
     ts = datetime.now().astimezone().isoformat(timespec="minutes")
@@ -133,7 +133,7 @@ def process(tile: CookedResult):
 
     if tile.result is None:
         if dbxy is None:
-            return
+            return False
         assert isinstance(dbxy, dict)
         record_history()
     else:
@@ -160,6 +160,7 @@ def process(tile: CookedResult):
         DataBase[xy].update(cast(dict, dbxy))
     else:
         DataBase[xy] = dbxy
+    return True
 
 
 async def amain(db_path: Path, duration: int, min_batch_size: int, abort_low_rps: int):
@@ -197,9 +198,8 @@ async def amain(db_path: Path, duration: int, min_batch_size: int, abort_low_rps
                     end="",
                     flush=True,
                 )
-            process(fut_result)
             Progress.retire(fut_result.coord)
-            return True
+            return process(fut_result)
 
         def post_batch():
             if not shown:
