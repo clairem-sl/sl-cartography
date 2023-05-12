@@ -291,7 +291,6 @@ def main(
 
 
 if __name__ == "__main__":
-    Config = ConfigReader(CONFIG_FILE)
     options = get_options()
     lock_file = options.mapdir / Config.maps.lock
     log_file = options.mapdir / Config.maps.log
