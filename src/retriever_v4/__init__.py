@@ -362,6 +362,8 @@ class RetrieverApplication(AbstractContextManager):
         logf.touch(exist_ok=True)
         with logf.open("rt+") as finout:
             log_data: dict[str, str | dict] = ryaml.safe_load(finout)
+            if log_data is None:
+                log_data = {}
             if not isinstance(log_item, dict):
                 log_item = {"msg": str(log_item)}
             log_data[
