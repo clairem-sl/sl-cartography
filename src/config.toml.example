@@ -1,3 +1,6 @@
+# Use single-quotes so string will be literal (backslashes treated as is)
+# (Especially important in Windows)
+
 [names]
 dir = 'C:\Cache\SL-Carto'
 lock = 'RegionsDB2.lock'
@@ -9,3 +12,6 @@ dir = 'C:\Cache\SL-Carto\Maps2'
 lock = 'Maps.lock'
 log = 'Maps.log.yaml'
 progress = 'MapsProgress.yaml'
+
+[mosaic]
+domc_cache = 'CachedDominantColors.pkl'
