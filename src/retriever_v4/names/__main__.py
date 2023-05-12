@@ -228,7 +228,7 @@ def main(app_context: RetrieverApplication, opts: OptionsProtocol):
         if Progress.next_y < 0:
             print("No rows left to process.")
             print(
-                f"Delete the file {opts.dbdir / Config.names.progrss} to reset. (Or specify --auto-reset)"
+                f"Delete the file {opts.dbdir / Config.names.progress} to reset. (Or specify --auto-reset)"
             )
             return
     print(f"Next coordinate: {Progress.next_coordinate}")
