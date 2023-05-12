@@ -239,7 +239,7 @@ def main(app_context: RetrieverApplication, opts: OptionsProtocol):
             return
     print(f"Next coordinate: {Progress.next_coordinate}")
 
-    db_path = opts.dbdir / Config.names.name
+    db_path = opts.dbdir / Config.names.db
     if db_path.exists():
         with db_path.open("rb") as fin:
             DataBase = pickle.load(fin)

@@ -3,6 +3,7 @@
 
 [names]
 dir = 'C:\Cache\SL-Carto'
+db = 'RegionsDB2.pkl'
 lock = 'RegionsDB2.lock'
 log = 'RegionsDB2.log.yaml'
 progress = 'RegionsDB2Progress.yaml'
