@@ -2,7 +2,6 @@ import argparse
 import asyncio
 import pickle
 import re
-import tomllib
 from datetime import datetime
 from pathlib import Path
 from pprint import pprint
@@ -19,9 +18,10 @@ from retriever_v4 import (
     dispatch_fetcher,
     handle_sigint,
 )
-from sl_maptools import CoordType, MapCoord, RegionsDBRecord, DotDict
+from sl_maptools import CoordType, MapCoord, RegionsDBRecord
 from sl_maptools.fetchers import CookedResult
 from sl_maptools.fetchers.cap import BoundedNameFetcher
+from sl_maptools.utils import ConfigReader
 
 CONN_LIMIT: Final[int] = 80
 # SEMA_SIZE: Final[int] = 180
@@ -32,7 +32,7 @@ MAVG_SAMPLES: Final[int] = 5
 ACCEPTABLE_STATUSCODES: Final[set[int]] = {0, 200, 403}
 
 CONFIG_FILE = Path("config.toml")
-Config: DotDict
+Config = ConfigReader(CONFIG_FILE)
 
 Progress: RetrieverProgress
 
@@ -262,8 +262,6 @@ def main(app_context: RetrieverApplication, opts: OptionsProtocol):
 
 
 if __name__ == "__main__":
-    with CONFIG_FILE.open("rb") as cfin:
-        Config = DotDict(tomllib.load(cfin))
     options = get_options()
     lock_file = options.dbdir / Config.names.lock
     log_file = options.dbdir / Config.names.log

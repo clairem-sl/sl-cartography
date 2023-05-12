@@ -4,6 +4,8 @@
 from __future__ import annotations
 
 import shutil
+import tomllib
+from collections.abc import Sequence
 from pathlib import Path
 
 
@@ -27,3 +29,56 @@ class QuietablePrint:
     def __call__(self, *args, **kwargs):
         if not self.quiet:
             print(*args, **kwargs)
+
+
+class ValueTree:
+    def __init__(self, data: dict):
+        self.__data = data
+
+    def __getattr__(self, item):
+        if item not in self.__data:
+            raise KeyError(f"Not Found: {item}")
+        value = self.__data[item]
+        if isinstance(value, str):
+            return value
+        if isinstance(value, dict):
+            return ValueTree(value)
+        if isinstance(value, Sequence):
+            return ValueTree.__process_seq(value)
+        else:
+            return value
+
+    def __getitem__(self, item):
+        return self.__getattr__(item)
+
+    @staticmethod
+    def __process_seq(seq: Sequence):
+        rslt = []
+        for thing in seq:
+            if not isinstance(thing,str) and isinstance(thing, Sequence):
+                rslt.append(ValueTree.__process_seq(thing))
+            elif isinstance(thing, dict):
+                rslt.append(ValueTree(thing))
+            else:
+                rslt.append(thing)
+        return rslt
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}({repr(self.__data)}"
+
+
+class ConfigReader:
+    def __init__(self, config_file: str | Path):
+        self._cfg_file = Path(config_file)
+        with self._cfg_file.open("rb") as fin:
+            self._cfg_dict = tomllib.load(fin)
+        self._cfg_tree = ValueTree(self._cfg_dict)
+
+    def __getattr__(self, item):
+        return getattr(self._cfg_tree, item)
+
+    def __getitem__(self, item):
+        return self._cfg_tree[item]
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}({repr(self._cfg_file)})"

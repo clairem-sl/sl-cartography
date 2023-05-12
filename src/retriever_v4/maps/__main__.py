@@ -12,7 +12,6 @@ import multiprocessing.shared_memory as MPSharedMem
 import queue
 import signal
 import time
-import tomllib
 from datetime import datetime
 from pathlib import Path
 from typing import Final, Protocol, cast
@@ -30,9 +29,10 @@ from retriever_v4 import (
     handle_sigint,
 )
 from retriever_v4.maps.saver import Thresholds, saver
-from sl_maptools import CoordType, MapCoord, inventorize_maps_all, DotDict
+from sl_maptools import CoordType, MapCoord, inventorize_maps_all
 from sl_maptools.fetchers import RawResult
 from sl_maptools.fetchers.map import BoundedMapFetcher
+from sl_maptools.utils import ConfigReader
 
 SSIM_THRESHOLD: Final[float] = 0.895
 MSE_THRESHOLD: Final[float] = 0.01
@@ -59,7 +59,7 @@ BATCH_WAIT: Final[float] = 5.0
 # DOMC_NAME: Final[str] = "DominantColors.pkl"
 # LOGFILE_NAME: Final[str] = "Maps.log"
 CONFIG_FILE = Path("config.toml")
-Config: DotDict
+Config = ConfigReader(CONFIG_FILE)
 
 OrigSigINT: signal.Handlers = signal.getsignal(signal.SIGINT)
 SaverQueue: MP.Queue
@@ -85,7 +85,7 @@ def get_options() -> OptionsProtocol:
     parser = argparse.ArgumentParser("region_auditor")
 
     parser.add_argument("--force", action="store_true")
-    parser.add_argument("--mapdir", metavar="DIR", type=Path, default=Path(Config.maps.dir))
+    parser.add_argument("--mapdir", metavar="DIR", type=Path, default=Path(ConfigReader.maps.dir))
     parser.add_argument(
         "--workers",
         metavar="N",
@@ -196,7 +196,7 @@ def main(
     global Progress, SaverQueue, SaveSuccessQueue
 
     dur = calc_duration(opts)
-    progress_file = opts.mapdir / Config.maps.progress
+    progress_file = opts.mapdir / ConfigReader.maps.progress
     Progress = RetrieverProgress(progress_file, auto_reset=opts.auto_reset)
     if Progress.outstanding_count:
         print(f"{Progress.outstanding_count} jobs still outstanding from last session")
@@ -285,8 +285,7 @@ def main(
 
 
 if __name__ == "__main__":
-    with CONFIG_FILE.open("rb") as fin:
-        Config = DotDict(tomllib.load(fin))
+    Config = ConfigReader(CONFIG_FILE)
     options = get_options()
     lock_file = options.mapdir / Config.maps.lock
     log_file = options.mapdir / Config.maps.log
