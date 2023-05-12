@@ -184,9 +184,9 @@ async def amain(db_path: Path, duration: int, min_batch_size: int, abort_low_rps
         def process_result(fut_result: None | CookedResult) -> bool:
             nonlocal shown
             if fut_result is None:
-                ChangeStats["failure"] += 1
                 return False
             if fut_result.status_code not in ACCEPTABLE_STATUSCODES:
+                ChangeStats["failure"] += 1
                 return False
             if fut_result.result:
                 if not shown:
