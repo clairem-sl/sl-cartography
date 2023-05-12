@@ -345,8 +345,9 @@ class RetrieverApplication(AbstractContextManager):
     ) -> bool | None:
         self.lock_file.unlink(missing_ok=True)
         self.ended = time.monotonic()
+        nao = datetime.now().astimezone().isoformat(timespec="seconds")
         print(
-            f"\nFinished in {(self.ended - self.started):_.2f} seconds at {datetime.now()}"
+            f"\nFinished in {(self.ended - self.started):_.2f} seconds at {nao}"
         )
         return False
 
