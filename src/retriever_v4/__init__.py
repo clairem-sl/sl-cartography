@@ -165,6 +165,7 @@ async def dispatch_fetcher(
     mavg_samples: int = 5,
     start_batch_size: int = 2000,
     batch_wait: float = 5.0,
+    min_batch_size: int = 0,
 ):
     start = time.monotonic()
     tasks: set[asyncio.Task] = {
@@ -190,7 +191,7 @@ async def dispatch_fetcher(
             elapsed_last10.append(time.monotonic() - start_batch)
             done_last10.append(len(done))
         total += len(done)
-        batch_size = int(statistics.mean(done_last10)) * 3
+        batch_size = max(min_batch_size, int(statistics.mean(done_last10)) * 3)
 
         # Handle results
         completed_count = exc_count = 0

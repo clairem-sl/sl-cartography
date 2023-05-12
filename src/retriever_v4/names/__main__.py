@@ -65,6 +65,7 @@ class RetrieverNamesOptions(Protocol):
     dbdir: Path
     force: bool
     auto_reset: bool
+    min_batch_size: int
 
 
 class OptionsProtocol(RetrieverNamesOptions, TimeOptions, Protocol):
@@ -85,6 +86,7 @@ def get_options() -> OptionsProtocol:
             f"({RetrieverProgress.DEFA_MAX_COORD[1]}) upon finishing row 0"
         ),
     )
+    parser.add_argument("--min-batch-size", metavar="N", type=int, default=0, help="Batch size will not go lower than this")
 
     add_timeoptions(parser)
 
@@ -158,7 +160,7 @@ def process(tile: CookedResult):
         DataBase[xy] = dbxy
 
 
-async def amain(db_path: Path, duration: int):
+async def amain(db_path: Path, duration: int, min_batch_size: int):
     limits = httpx.Limits(
         max_connections=CONN_LIMIT, max_keepalive_connections=CONN_LIMIT
     )
@@ -212,6 +214,7 @@ async def amain(db_path: Path, duration: int):
             pre_batch=pre_batch,
             post_batch=post_batch,
             abort_event=AbortRequested,
+            min_batch_size=min_batch_size,
         )
 
 
@@ -240,8 +243,11 @@ def main(app_context: RetrieverApplication, opts: OptionsProtocol):
     print(f"DataBase already contains {len(DataBase)} regions.")
 
     start_coord = Progress.next_coordinate
+    #
+    print("Dispatching async fetchers!", flush=True)
     with handle_sigint(AbortRequested):
-        asyncio.run(amain(db_path, dur))
+        asyncio.run(amain(db_path, dur, opts.min_batch_size))
+    #
     end_x, end_y = Progress.next_coordinate
     if end_x == 0:
         end_x = Progress.DEFA_MAX_COORD[0]
