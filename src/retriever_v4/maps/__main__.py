@@ -87,7 +87,7 @@ def get_options() -> OptionsProtocol:
     parser = argparse.ArgumentParser("region_auditor")
 
     parser.add_argument("--force", action="store_true")
-    parser.add_argument("--mapdir", metavar="DIR", type=Path, default=Path(ConfigReader.maps.dir))
+    parser.add_argument("--mapdir", metavar="DIR", type=Path, default=Path(Config.maps.dir))
     parser.add_argument(
         "--workers",
         metavar="N",
@@ -202,7 +202,7 @@ def main(
     global Progress, SaverQueue, SaveSuccessQueue
 
     dur = calc_duration(opts)
-    progress_file = opts.mapdir / ConfigReader.maps.progress
+    progress_file = opts.mapdir / Config.maps.progress
     Progress = RetrieverProgress(progress_file, auto_reset=opts.auto_reset)
     if Progress.outstanding_count:
         print(f"{Progress.outstanding_count} jobs still outstanding from last session")
