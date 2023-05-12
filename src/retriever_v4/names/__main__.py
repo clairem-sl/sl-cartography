@@ -66,6 +66,7 @@ class RetrieverNamesOptions(Protocol):
     force: bool
     auto_reset: bool
     min_batch_size: int
+    abort_low_rps: int
 
 
 class OptionsProtocol(RetrieverNamesOptions, TimeOptions, Protocol):
@@ -87,6 +88,7 @@ def get_options() -> OptionsProtocol:
         ),
     )
     parser.add_argument("--min-batch-size", metavar="N", type=int, default=0, help="Batch size will not go lower than this")
+    parser.add_argument("--abort-low-rps", metavar="N", type=int, default=-1, help="If rps drops below this for some time, abort")
 
     add_timeoptions(parser)
 
@@ -160,7 +162,7 @@ def process(tile: CookedResult):
         DataBase[xy] = dbxy
 
 
-async def amain(db_path: Path, duration: int, min_batch_size: int):
+async def amain(db_path: Path, duration: int, min_batch_size: int, abort_low_rps: int):
     limits = httpx.Limits(
         max_connections=CONN_LIMIT, max_keepalive_connections=CONN_LIMIT
     )
@@ -215,6 +217,7 @@ async def amain(db_path: Path, duration: int, min_batch_size: int):
             post_batch=post_batch,
             abort_event=AbortRequested,
             min_batch_size=min_batch_size,
+            abort_low_rps=abort_low_rps,
         )
 
 
@@ -246,7 +249,7 @@ def main(app_context: RetrieverApplication, opts: OptionsProtocol):
     #
     print("Dispatching async fetchers!", flush=True)
     with handle_sigint(AbortRequested):
-        asyncio.run(amain(db_path, dur, opts.min_batch_size))
+        asyncio.run(amain(db_path, dur, opts.min_batch_size, opts.abort_low_rps))
     #
     end_x, end_y = Progress.next_coordinate
     if end_x == 0:

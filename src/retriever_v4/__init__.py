@@ -166,6 +166,7 @@ async def dispatch_fetcher(
     start_batch_size: int = 2000,
     batch_wait: float = 5.0,
     min_batch_size: int = 0,
+    abort_low_rps: int = -1,
 ):
     start = time.monotonic()
     tasks: set[asyncio.Task] = {
@@ -225,6 +226,8 @@ async def dispatch_fetcher(
 
         # Next iteration
         tasks = pending_tasks
+        if statistics.median(done_last10) < abort_low_rps:
+            abort_event.set()
         if elapsed >= duration:
             abort_event.set()
         if abort_event.is_set():

@@ -76,6 +76,7 @@ class RetrieverMapsOptions(Protocol):
     force: bool
     debug_level: DebugLevel
     min_batch_size: int
+    abort_low_rps: int
 
 
 class OptionsProtocol(RetrieverMapsOptions, TimeOptions, Protocol):
@@ -104,6 +105,7 @@ def get_options() -> OptionsProtocol:
     )
     parser.add_argument("--debug_level", type=DebugLevel, default=DebugLevel.NORMAL)
     parser.add_argument("--min-batch-size", metavar="N", type=int, default=0, help="Batch size will not go lower than this")
+    parser.add_argument("--abort-low-rps", metavar="N", type=int, default=-1, help="If rps drops below this for some time, abort")
 
     add_timeoptions(parser)
 
@@ -130,7 +132,7 @@ class SharedMemoryAllocator:
         del self.allocations[coord]
 
 
-async def async_main(duration: int, min_batch_size: int, shm_allocator: SharedMemoryAllocator):
+async def async_main(duration: int, min_batch_size: int, abort_low_rps: int, shm_allocator: SharedMemoryAllocator):
     global AbortRequested
     limits = httpx.Limits(
         max_connections=CONN_LIMIT, max_keepalive_connections=CONN_LIMIT
@@ -190,6 +192,7 @@ async def async_main(duration: int, min_batch_size: int, shm_allocator: SharedMe
             post_batch=post_batch,
             abort_event=AbortRequested,
             min_batch_size=min_batch_size,
+            abort_low_rps=abort_low_rps,
         )
 
 
@@ -245,7 +248,7 @@ def main(
 
             print("started.\nDispatching async fetchers!", flush=True)
             with handle_sigint(AbortRequested):
-                asyncio.run(async_main(dur, opts.min_batch_size, shm_allocator))
+                asyncio.run(async_main(dur, opts.min_batch_size, opts.abort_low_rps, shm_allocator))
 
             print(
                 "Closing the pool, preventing new workers from spawning ... ",
