@@ -139,20 +139,18 @@ def make_map(targ: Path, bounds: AreaBounds, map_tiles: dict[CoordType, Path]):
 
     print(f"{bounds}", end="", flush=True)
     c = 0
-    for y in bounds.y_iterator():
-        for x in bounds.x_iterator():
-            coord = (x, y)
-            # print(coord)
-            if coord not in map_tiles:
-                continue
-            c += 1
-            if (c % 10) == 0:
-                print(".", end="", flush=True)
-            canv_x = (x - bounds.x_westmost) * 256
-            canv_y = (bounds.y_northmost - y) * 256
-            with Image.open(map_tiles[coord]) as img:
-                img.load()
-                canvas.paste(img, (canv_x, canv_y))
+    for x, y in bounds.xy_iterator():
+        # print(coord)
+        if (x, y) not in map_tiles:
+            continue
+        c += 1
+        if (c % 10) == 0:
+            print(".", end="", flush=True)
+        canv_x = (x - bounds.x_westmost) * 256
+        canv_y = (bounds.y_northmost - y) * 256
+        with Image.open(map_tiles[x, y]) as img:
+            img.load()
+            canvas.paste(img, (canv_x, canv_y))
 
     # print(targ)
     canvas.save(targ)
