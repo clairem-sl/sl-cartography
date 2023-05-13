@@ -14,12 +14,13 @@ import uuid
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Union, Tuple
+from typing import Dict, Union, Tuple, Final
 
 import httpx
 import msgpack
+from ruamel import yaml as ryaml
 
-from sl_maptools import MapRegion, MapCoord
+from sl_maptools import MapRegion, MapCoord, CoordType
 
 """
 status online x 1000 y 1000 access moderate estate Mainland firstseen 2008-03-09 lastseen 2022-11-06 \
@@ -166,3 +167,23 @@ class MapValidator(object):
         is_void: bool = tile.is_void
         # Both are bool so we can use bitwise-xor
         return tile, is_reg ^ is_void
+
+
+BONNIE_REGDB_URL: Final[str] = "https://www.bonniebots.com/static-api/regions/index.json"
+
+
+def get_bonnie_coords(bonniedb: None | Path, fetchbonnie: bool) -> set[CoordType]:
+    bdb_data_raw = {}
+    if bonniedb:
+        print(f"Reading BonnieBots Regions DB from {bonniedb} ... ", end="", flush=True)
+        with bonniedb.open("rb") as fin:
+            bdb_data_raw = ryaml.safe_load(fin)
+    elif fetchbonnie:
+        print(f"Fetching BonnieBots Regions DB ... ", end="", flush=True)
+        with httpx.Client(timeout=10) as client:
+            resp = client.get(BONNIE_REGDB_URL)
+            bdb_data_raw = resp.json()
+    return {
+        (int(record["region_x"]), int(record["region_y"]))
+        for record in bdb_data_raw["regions"]
+    }

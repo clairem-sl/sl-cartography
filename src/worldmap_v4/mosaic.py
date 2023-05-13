@@ -18,7 +18,7 @@ from sl_maptools.image_processing import (
     RGBTuple,
     calculate_dominant_colors,
 )
-from worldmap_v4 import get_bonnie_coords
+from sl_maptools.validator import get_bonnie_coords
 
 # region ##### Types
 

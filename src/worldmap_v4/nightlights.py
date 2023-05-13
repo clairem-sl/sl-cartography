@@ -10,7 +10,7 @@ from typing import Final, Protocol, TypedDict, cast
 from PIL import Image, ImageDraw
 
 from sl_maptools import MapCoord, inventorize_maps_all, RegionsDBRecord
-from worldmap_v4 import get_bonnie_coords
+from sl_maptools.validator import get_bonnie_coords
 
 DEFA_DB_PATH: Final[Path] = Path(r"C:\Cache\SL-Carto\RegionsDB2.pkl")
 DEFA_MAPDIR: Final[Path] = Path(r"C:\Cache\SL-Carto\Maps2")
