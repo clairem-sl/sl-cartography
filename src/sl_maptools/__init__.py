@@ -8,7 +8,7 @@ import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Final, NamedTuple, Optional, Union, TypedDict
+from typing import Final, NamedTuple, Optional, Union, TypedDict, Generator
 
 from PIL import Image
 
@@ -30,6 +30,9 @@ class AreaBounds(NamedTuple):
     y_southmost: int
     x_eastmost: int
     y_northmost: int
+
+    def __str__(self):
+        return f"({self.x_westmost},{self.y_southmost})-({self.x_eastmost},{self.y_northmost})"
 
     def __contains__(self, item: tuple[int, int]) -> bool:
         x, y = item
@@ -54,6 +57,16 @@ class AreaBounds(NamedTuple):
         x_min, x_max = (x1, x2) if x1 <= x2 else (x2, x1)
         y_min, y_max = (y1, y2) if y1 <= y2 else (y2, y1)
         return cls(x_min, y_min, x_max, y_max)
+
+    def y_iterator(self) -> Generator[int, None, None]:
+        min_y = min(self.y_southmost, self.y_northmost)
+        max_y = max(self.y_northmost, self.y_southmost)
+        yield from range(min_y, max_y + 1)
+
+    def x_iterator(self) -> Generator[int, None, None]:
+        min_x = min(self.x_westmost, self.x_eastmost)
+        max_x = max(self.x_eastmost, self.x_westmost)
+        yield from range(min_x, max_x + 1)
 
 
 class MapCoord(NamedTuple):
