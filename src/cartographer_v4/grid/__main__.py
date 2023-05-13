@@ -44,8 +44,8 @@ def main():
         lr -= 1
 
     font = ImageFont.truetype(str(FONT_PATH), FONT_SIZE)
-    w, h = font.getsize("M", stroke_width=STROKE_WIDTH)
-    h_offs = 256 - 3 - h
+    # w, h = font.getsize("M", stroke_width=STROKE_WIDTH)
+    # h_offs = 256 - 3 - h
 
     validation_set: set[CoordType] = set()
     with DB_PATH.open("rb") as fin:
