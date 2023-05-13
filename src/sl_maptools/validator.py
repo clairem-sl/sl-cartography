@@ -2,25 +2,23 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 import asyncio
-
-# This source file uses data & API provided by Tyche Shepherd & gridsurvey.com
-
 import datetime
 import random
 import re
 import urllib.parse
-from itertools import islice
 import uuid
-
 from dataclasses import dataclass
+from itertools import islice
 from pathlib import Path
-from typing import Dict, Union, Tuple, Final
+from typing import Dict, Final, Tuple, Union
 
 import httpx
 import msgpack
 from ruamel import yaml as ryaml
 
-from sl_maptools import MapRegion, MapCoord, CoordType
+from sl_maptools import CoordType, MapCoord, MapRegion
+
+# This source file uses data & API provided by Tyche Shepherd & gridsurvey.com
 
 """
 status online x 1000 y 1000 access moderate estate Mainland firstseen 2008-03-09 lastseen 2022-11-06 \
@@ -48,9 +46,7 @@ class GridSurveyDatum(object):
     @classmethod
     def from_str(cls, string):
         elems = string.split()
-        kvp = {
-            k: v for k, v in zip(islice(elems, 0, None, 2), islice(elems, 1, None, 2))
-        }
+        kvp = {k: v for k, v in zip(islice(elems, 0, None, 2), islice(elems, 1, None, 2))}
         kvp["x"] = int(kvp["x"])
         kvp["y"] = int(kvp["y"])
         for dk in ("firstseen", "lastseen", "updated"):
@@ -89,10 +85,7 @@ class MapValidatorGridSurvey(object):
             return
         with cache_file.open("rb") as fin:
             cac = msgpack.unpack(fin)
-        self.cache = {
-            MapCoord(*coord): GridSurveyDatum.from_str(datum_str)
-            for coord, datum_str in cac
-        }
+        self.cache = {MapCoord(*coord): GridSurveyDatum.from_str(datum_str) for coord, datum_str in cac}
 
     async def fetch_gs_data(
         self, coord: MapCoord, use_cache: bool = True
@@ -183,7 +176,4 @@ def get_bonnie_coords(bonniedb: None | Path, fetchbonnie: bool) -> set[CoordType
         with httpx.Client(timeout=10) as client:
             resp = client.get(BONNIE_REGDB_URL)
             bdb_data_raw = resp.json()
-    return {
-        (int(record["region_x"]), int(record["region_y"]))
-        for record in bdb_data_raw["regions"]
-    }
+    return {(int(record["region_x"]), int(record["region_y"])) for record in bdb_data_raw["regions"]}

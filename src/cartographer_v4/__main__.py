@@ -10,12 +10,11 @@ import time
 from datetime import datetime
 from itertools import chain
 from pathlib import Path
-
 from typing import Protocol, cast
 
 from PIL import Image
 
-from sl_maptools import CoordType, AreaBounds, RegionsDBRecord, inventorize_maps_latest
+from sl_maptools import AreaBounds, CoordType, RegionsDBRecord, inventorize_maps_latest
 from sl_maptools.knowns import KNOWN_AREAS
 from sl_maptools.utils import ConfigReader
 from sl_maptools.validator import get_bonnie_coords
@@ -123,13 +122,9 @@ def get_options() -> Options:
         "--regionsdb",
         type=Path,
         default=Path(Config.names.dir) / Config.names.db,
-        help="RegionsDB for validation. If not specified, use names.db in config.toml"
+        help="RegionsDB for validation. If not specified, use names.db in config.toml",
     )
-    parser.add_argument(
-        "--overwrite",
-        action="store_true",
-        help="If specified, overwrite existing hi-res map file."
-    )
+    parser.add_argument("--overwrite", action="store_true", help="If specified, overwrite existing hi-res map file.")
 
     _opts = parser.parse_args()
     if _opts.outdir is None:
