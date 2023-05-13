@@ -9,8 +9,18 @@ from sl_maptools.knowns import KNOWN_AREAS
 from sl_maptools.validator import get_bonnie_coords
 
 
+RGBATuple = tuple[int, int, int, int]
+
+
+DB_PATH: Final[Path] = Path(r"C:\Cache\SL-Carto\RegionsDB2.pkl")
+AREAMAPS_DIR: Final[Path] = Path(r"C:\Cache\SL-Carto\AreaMaps")
+
+FONT_PATH: Final[Path] = Path(r"C:\Windows\Fonts\comic.ttf")
 FONT_SIZE: Final[int] = 16
+TEXT_RGBA: Final[RGBATuple] = (255, 255, 255, 255)
 STROKE_WIDTH: Final[int] = 2
+STROKE_RGBA: Final[RGBATuple] = (0, 0, 0, 255)
+
 
 ALPHA_PATTERN: Final[tuple[int, ...]] = (96, 32)
 
@@ -19,7 +29,7 @@ def main():
     # Disable DecompressionBombWarning
     Image.MAX_IMAGE_PIXELS = None
 
-    areamaps_dir = Path(r"C:\Cache\SL-Carto\AreaMaps")
+    areamaps_dir = AREAMAPS_DIR
     areagrid_dir = areamaps_dir / "Grids"
     areagrid_dir.mkdir(exist_ok=True)
 
@@ -33,12 +43,12 @@ def main():
         ul += 1
         lr -= 1
 
-    font = ImageFont.truetype(r"C:\Windows\Fonts\comic.ttf", FONT_SIZE)
+    font = ImageFont.truetype(str(FONT_PATH), FONT_SIZE)
     w, h = font.getsize("M", stroke_width=STROKE_WIDTH)
     h_offs = 256 - 3 - h
 
     validation_set: set[CoordType] = set()
-    with Path(r"C:\Cache\SL-Carto\RegionsDB2.pkl").open("rb") as fin:
+    with DB_PATH.open("rb") as fin:
         regsdb: dict[CoordType, RegionsDBRecord] = pickle.load(fin)
     validation_set.update(k for k, v in regsdb.items() if v["current_name"])
     bonnie_coords = get_bonnie_coords(None, True)
@@ -63,7 +73,9 @@ def main():
             gridc.paste(sq, (cx, cy))
             regname = regsdb[xy]["current_name"]
             # print(regname)
-            draw.text((cx + 5, cy + 4), regname, font=font, fill=(255, 255, 255, 255), stroke_width=STROKE_WIDTH, stroke_fill=(0, 0, 0, 255))
+            draw.text(
+                (cx + 5, cy + 4), regname, font=font, fill=TEXT_RGBA, stroke_width=STROKE_WIDTH, stroke_fill=STROKE_RGBA
+            )
 
         targ = areagrid_dir / (areaname + ".gridonly.png")
         gridc.save(targ)
