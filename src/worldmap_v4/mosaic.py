@@ -12,7 +12,7 @@ from typing import Final, Protocol, TypedDict, cast, Any
 
 from PIL import Image
 
-from sl_maptools import CoordType, inventorize_maps_latest
+from sl_maptools import CoordType, inventorize_maps_latest, RegionsDBRecord
 from sl_maptools.image_processing import (
     FASCIA_SIZES,
     RGBTuple,
@@ -253,13 +253,15 @@ def main(opts: OptionsType):
     mapfiles_d: dict[CoordType, Path] = inventorize_maps_latest(opts.mapdir)
     if not opts.no_validate:
         #
-        regions_db: dict[CoordType, Any] = {}
+        regions_db: dict[CoordType, RegionsDBRecord] = {}
         if opts.regionsdb.exists():
             with opts.regionsdb.open("rb") as fin:
                 regions_db = pickle.load(fin)
         if regions_db:
             for k in list(mapfiles_d.keys()):
                 if k not in regions_db:
+                    del mapfiles_d[k]
+                elif regions_db[k]["current_name"] == "":
                     del mapfiles_d[k]
         #
         bonnie_coords = get_bonnie_coords(opts.bonniedb, opts.fetchbonnie)
