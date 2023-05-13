@@ -68,6 +68,11 @@ class AreaBounds(NamedTuple):
         max_x = max(self.x_eastmost, self.x_westmost)
         yield from range(min_x, max_x + 1)
 
+    def xy_iterator(self) -> Generator[CoordType, None, None]:
+        for y in self.y_iterator():
+            for x in self.x_iterator():
+                yield x, y
+
 
 class MapCoord(NamedTuple):
     x: int
