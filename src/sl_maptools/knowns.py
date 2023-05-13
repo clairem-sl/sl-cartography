@@ -39,8 +39,15 @@ KNOWN_AREAS: Final[dict[str, AreaBounds]] = {
     "PlayaIsles": AreaBounds(824, 1207, 831, 1217),
     "Freedom": AreaBounds(750, 1013, 758, 1020),
     "TuaruaFiji": AreaBounds(1131, 1064, 1149, 1082),
+    "DragonLands": AreaBounds(859, 984, 865, 989),
+    "FantasyLands": AreaBounds(841, 1001, 844, 1010),
+    "SouthWestEstates": AreaBounds(686, 920, 692, 928),
+    "FarWestEstates": AreaBounds(479, 1271, 485, 1280),
     # endregion
+    "LindenEstateServices": AreaBounds(1025, 1014, 1031, 1016),
+    "MoleIslands": AreaBounds(1006, 971, 1011, 976),
 }
+
 VERIFIED_VOIDS: Final[dict["MapCoord", datetime.date]] = {
     # Contains voids that we manually verify using GridSurvey APIs
     # Reason for this CONST is that map sometimes return an image even though there's no actual region/sim at the
