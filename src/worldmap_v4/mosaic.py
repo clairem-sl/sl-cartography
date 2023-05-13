@@ -63,6 +63,7 @@ class OptionsType(Protocol):
     regionsdb: Path
     fetchbonnie: bool
     bonniedb: Path
+    final_only: bool
 
 
 def get_opts() -> OptionsType:
@@ -80,6 +81,7 @@ def get_opts() -> OptionsType:
     )
     parser.add_argument("--pip-every", metavar="N", type=int, default=100)
     parser.add_argument("--save-every", metavar="N", type=int, default=2000)
+    parser.add_argument("--final-only", action="store_true")
     parser.add_argument("--mapdir", metavar="DIR", type=Path, default=DEFA_MAPDIR)
 
     parser.add_argument("--no-validate", action="store_true")
@@ -314,11 +316,12 @@ def main(opts: OptionsType):
                     cached_domc[coord] = domc
                     if (i % opts.pip_every) == 0:
                         print(".", end="", flush=True)
-                    if (i % opts.save_every) == 0:
-                        if any(state == "idle" for state in maker_states.values()):
-                            maker_queue.put(tuple(FASCIA_SIZES))
-                            print("🏀", end="", flush=True)
-                            make_recently_triggered = True
+                    if not opts.final_only:
+                        if (i % opts.save_every) == 0:
+                            if any(state == "idle" for state in maker_states.values()):
+                                maker_queue.put(tuple(FASCIA_SIZES))
+                                print("🏀", end="", flush=True)
+                                make_recently_triggered = True
                     if (i % opts.save_every) == 2:
                         print(f"q={coll_queue.qsize()}", end="", flush=True)
                 while not all(s == "idle" for s in maker_states.values()):
