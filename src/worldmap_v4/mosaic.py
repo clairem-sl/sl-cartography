@@ -278,7 +278,7 @@ def main(opts: OptionsType):
     if len(mapfiles) == 0:
         print("ERROR: No valid mapfiles!", file=sys.stderr)
         sys.exit(1)
-    print(f"\n{len(mapfiles)} regions to mosaicize:")
+    print(f"\n{len(mapfiles)} regions to mosaicize.\nStarting up Mosaic-Making Engine")
 
     start = time.monotonic()
     manager: MPMgrs.SyncManager
@@ -325,8 +325,10 @@ def main(opts: OptionsType):
                     if (i % opts.save_every) == 2:
                         print(f"q={coll_queue.qsize()}", end="", flush=True)
                 while not all(s == "idle" for s in maker_states.values()):
-                    time.sleep(1)
+                    print("-", end="", flush=True)
+                    time.sleep(5)
                 while not coll_queue.empty():
+                    print("=", end="", flush=True)
                     time.sleep(1)
                 if not make_recently_triggered:
                     print("\nFINAL mosaic making started!", end=" ", flush=True)
