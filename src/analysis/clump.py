@@ -109,7 +109,7 @@ def main():
         for coord in clump:
             xs.append(coord[0])
             ys.append(coord[1])
-        interesting[f"Interesting-{i}"] = AreaBounds(min(xs), min(ys), max(xs), max(ys))
+        interesting[f"Interesting-{i:03}"] = AreaBounds(min(xs), min(ys), max(xs), max(ys))
     pprint(interesting)
 
 
