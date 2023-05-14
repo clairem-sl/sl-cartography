@@ -2,11 +2,16 @@ import pickle
 from collections import deque
 from pathlib import Path
 from pprint import pprint
+from typing import Final
 
 from sl_maptools import inventorize_maps_latest, CoordType, RegionsDBRecord, AreaBounds
 from sl_maptools.knowns import KNOWN_AREAS
 from sl_maptools.utils import ConfigReader
 from sl_maptools.validator import get_bonnie_coords
+
+
+INTERESTING_CLUMPSIZE_THRESHOLD: Final[int] = 10
+
 
 Config = ConfigReader("config.toml")
 
@@ -76,7 +81,7 @@ def main():
     new_clup: list[set[CoordType]] = []
     for clump in clumps:
         l = len(clump)
-        if l < 15:
+        if l < INTERESTING_CLUMPSIZE_THRESHOLD:
             continue
         print(l, sorted(clump, key=lambda i: (i[1], i[0]))[0:5], "...")
         found = False
