@@ -61,7 +61,8 @@ KNOWN_AREAS: Final[dict[str, AreaBounds]] = {
     "IsleOfWyrms": AreaBounds(x_westmost=545, y_southmost=1059, x_eastmost=548, y_northmost=1063),
     "AmazonRiver": AreaBounds(x_westmost=832, y_southmost=969, x_eastmost=835, y_northmost=972),
     "Baunatal": AreaBounds(x_westmost=715, y_southmost=922, x_eastmost=718, y_northmost=924),
-    # region ## Tentative Naming
+    # endregion
+    # region ### User Continents - Tentative
     "GoreanLands": AreaBounds(x_westmost=1014, y_southmost=1175, x_eastmost=1020, y_northmost=1179),
     "AngelManor": AreaBounds(x_westmost=1054, y_southmost=1397, x_eastmost=1056, y_northmost=1400),
     "NakedEstates": AreaBounds(x_westmost=1038, y_southmost=1161, x_eastmost=1042, y_northmost=1163),
@@ -74,14 +75,13 @@ KNOWN_AREAS: Final[dict[str, AreaBounds]] = {
     "Mythera": AreaBounds(x_westmost=720, y_southmost=1324, x_eastmost=722, y_northmost=1328),
     "SecondFrance": AreaBounds(x_westmost=556, y_southmost=1117, x_eastmost=559, y_northmost=1120),
     # endregion
-    # endregion
     # region ### Premium Continents
     "EastPremium": AreaBounds(x_westmost=1192, y_southmost=907, x_eastmost=1215, y_northmost=926),
     "SouthPremium-North": AreaBounds(x_westmost=1013, y_southmost=811, x_eastmost=1028, y_northmost=828),
     "SouthPremium-Middle": AreaBounds(x_westmost=1000, y_southmost=750, x_eastmost=1022, y_northmost=768),
     "SouthPremium-South": AreaBounds(x_westmost=1000, y_southmost=500, x_eastmost=1022, y_northmost=518),
     # endregion
-    # region ### Special Regions
+    # region ### Special Areas
     "LindenLabDE": AreaBounds(x_westmost=1105, y_southmost=1382, x_eastmost=1108, y_northmost=1388),
     "LindenEstateServices": AreaBounds(1025, 1014, 1031, 1016),
     "MoleIslands": AreaBounds(1006, 971, 1011, 976),
