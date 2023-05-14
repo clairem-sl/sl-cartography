@@ -33,7 +33,7 @@ def main():
     areagrid_dir = areamaps_dir / "Grids"
     areagrid_dir.mkdir(exist_ok=True)
 
-    sq = Image.new("RGBA", (256, 256), color=(255, 255, 255, 0))
+    sq = Image.new("RGBA", (256, 256), color=(0, 0, 0, 0))
     sq_draw = ImageDraw.Draw(sq)
 
     ul = 0
@@ -64,7 +64,7 @@ def main():
             x1, y1, x2, y2 = bounds
             size_x = (x2 - x1 + 1) * 256
             size_y = (y2 - y1 + 1) * 256
-            gridc = Image.new("RGBA", (size_x, size_y), color=(255, 255, 255, 0))
+            gridc = Image.new("RGBA", (size_x, size_y), color=(0, 0, 0, 0))
             draw = ImageDraw.Draw(gridc)
             for i, xy in enumerate(bounds.xy_iterator(), start=1):
                 if xy not in validation_set:
