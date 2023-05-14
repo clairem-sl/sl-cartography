@@ -56,7 +56,7 @@ def main():
     validation_set.intersection_update(bonnie_coords)
 
     for areamap in areamaps_dir.glob("*.png"):
-        print(f"{areamap} => ", end="", flush=True)
+        print(f"{areamap}", end="", flush=True)
         areaname = areamap.stem
         targ = areagrid_dir / (areaname + ".gridonly.png")
         if not targ.exists():
@@ -66,7 +66,7 @@ def main():
             size_y = (y2 - y1 + 1) * 256
             gridc = Image.new("RGBA", (size_x, size_y), color=(255, 255, 255, 0))
             draw = ImageDraw.Draw(gridc)
-            for xy in bounds.xy_iterator():
+            for i, xy in enumerate(bounds.xy_iterator(), start=1):
                 if xy not in validation_set:
                     continue
                 x, y = xy
@@ -78,6 +78,8 @@ def main():
                 draw.text(
                     (cx + 5, cy + 4), regname, font=font, fill=TEXT_RGBA, stroke_width=STROKE_WIDTH, stroke_fill=STROKE_RGBA
                 )
+                if (c % 10) == 0:
+                    print(".", end="", flush=True)
 
             targ = areagrid_dir / (areaname + ".gridonly.png")
             gridc.save(targ)
@@ -86,7 +88,7 @@ def main():
             with Image.open(areamap) as img:
                 out = Image.alpha_composite(img, gridc)
                 out.save(targ)
-        print(f"{targ}", flush=True)
+        print(f"\n  => {targ}", flush=True)
 
 
 if __name__ == "__main__":
