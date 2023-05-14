@@ -197,7 +197,8 @@ class MapCanvas(object):
         return self.canvas.size
 
 
-def inventorize_maps_latest(mapdir: Path) -> dict[CoordType, Path]:
+def inventorize_maps_latest(mapdir: Path | str) -> dict[CoordType, Path]:
+    mapdir = Path(mapdir)
     rslt: dict[CoordType, Path] = {}
     for fp in sorted(mapdir.glob("*.jp*"), reverse=True):
         if (m := RE_MAPFILE.match(fp.name)) is None:
