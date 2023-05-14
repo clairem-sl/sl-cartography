@@ -50,38 +50,9 @@ def main():
                 q.append((x, y - 1))
                 q.append((x, y + 1))
         return clump
-        # if start not in all_coords:
-        #     return clump
-        # x, y = start
-        # s: deque[tuple[int, int, int, int]] = deque()
-        # s.append((x, x, y, 1))
-        # s.append((x, x, y-1, -1))
-        # while s:
-        #     x1, x2, y, dy = s.popleft()
-        #     x = x1
-        #     if (x, y) in all_coords:
-        #         while (x - 1, y) in all_coords:
-        #             clump.add((x - 1, y))
-        #             x -= 1
-        #     if x < x1:
-        #         s.append((x, x1-1, y-dy, -dy))
-        #     while x1 <= x2:
-        #         while (x1, y) in all_coords:
-        #             clump.add((x1, y))
-        #             x1 = x1 + 1
-        #             s.append((x, x1 - 1, y+dy, dy))
-        #             if (x1 - 1) > x2:
-        #                 s.append((x2 + 1, x1 - 1, y-dy, -dy))
-        #         x1 += 1
-        #         while x1 < x2 and (x1, y) not in all_coords:
-        #             x1 += 1
-        #         x = x1
-        #     pprint(s)
-        # return clump
 
     clumps: list[set[CoordType]] = []
     for y in range(2100, -1, -1):
-        # print(f"ROW:{y}", flush=True)
         for x in range(0, 2101):
             if (x, y) not in unprocesseds:
                 continue
