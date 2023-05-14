@@ -78,7 +78,7 @@ def main():
                 draw.text(
                     (cx + 5, cy + 4), regname, font=font, fill=TEXT_RGBA, stroke_width=STROKE_WIDTH, stroke_fill=STROKE_RGBA
                 )
-                if (c % 10) == 0:
+                if (i % 10) == 0:
                     print(".", end="", flush=True)
 
             targ = areagrid_dir / (areaname + ".gridonly.png")
