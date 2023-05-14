@@ -41,9 +41,9 @@ KNOWN_AREAS: Final[dict[str, AreaBounds]] = {
     "TuaruaFiji": AreaBounds(1131, 1064, 1149, 1082),
     "DragonLands": AreaBounds(859, 984, 865, 989),
     "FantasyLands": AreaBounds(841, 1001, 844, 1010),
-    "SouthWestEstates": AreaBounds(686, 920, 692, 928),
-    "FarWestEstates": AreaBounds(479, 1271, 485, 1280),
-    "Gooseberry": AreaBounds(666, 1423, 674, 1429),
+    "SeabirdIslands": AreaBounds(686, 920, 692, 928),
+    "TropicalCoralIslands": AreaBounds(479, 1271, 485, 1280),
+    "Gooseberry-Briarwood": AreaBounds(666, 1423, 674, 1429),
     # endregion
     "LindenEstateServices": AreaBounds(1025, 1014, 1031, 1016),
     "MoleIslands": AreaBounds(1006, 971, 1011, 976),
