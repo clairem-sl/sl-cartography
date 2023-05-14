@@ -44,9 +44,30 @@ KNOWN_AREAS: Final[dict[str, AreaBounds]] = {
     "SeabirdIslands": AreaBounds(686, 920, 692, 928),
     "TropicalCoralIslands": AreaBounds(479, 1271, 485, 1280),
     "Gooseberry-Briarwood": AreaBounds(666, 1423, 674, 1429),
+    "TrinidadTobago": AreaBounds(x_westmost=902, y_southmost=1372, x_eastmost=906, y_northmost=1376),
+    "NativeIslands": AreaBounds(x_westmost=733, y_southmost=1367, x_eastmost=738, y_northmost=1371),
+    "MauiIslandEstates": AreaBounds(x_westmost=548, y_southmost=1137, x_eastmost=551, y_northmost=1140),
+    "Rosehaven": AreaBounds(x_westmost=906, y_southmost=1029, x_eastmost=909, y_northmost=1034),
+    "TortugaIslands": AreaBounds(x_westmost=500, y_southmost=1010, x_eastmost=504, y_northmost=1013),
+    "SeductionEstate": AreaBounds(x_westmost=757, y_southmost=926, x_eastmost=763, y_northmost=932),
+    "AntiquityLand": AreaBounds(x_westmost=763, y_southmost=909, x_eastmost=766, y_northmost=913),
+    "NewHaven": AreaBounds(x_westmost=597, y_southmost=1181, x_eastmost=603, y_northmost=1184),
+    "TheGroveEstate": AreaBounds(x_westmost=1000, y_southmost=1166, x_eastmost=1008, y_northmost=1171),
+    "GoreanLands": AreaBounds(x_westmost=1014, y_southmost=1175, x_eastmost=1020, y_northmost=1179),
     # endregion
+    # region ### Premium Continents
+    "EastPremium": AreaBounds(x_westmost=1192, y_southmost=907, x_eastmost=1215, y_northmost=926),
+    "SouthPremium-North": AreaBounds(x_westmost=1013, y_southmost=811, x_eastmost=1028, y_northmost=828),
+    "SouthPremium-Middle": AreaBounds(x_westmost=1000, y_southmost=750, x_eastmost=1022, y_northmost=768),
+    "SouthPremium-South": AreaBounds(x_westmost=1000, y_southmost=500, x_eastmost=1022, y_northmost=518),
+    # endregion
+    # region ### Special Regions
     "LindenEstateServices": AreaBounds(1025, 1014, 1031, 1016),
     "MoleIslands": AreaBounds(1006, 971, 1011, 976),
+    "SLBRegions": AreaBounds(x_westmost=390, y_southmost=367, x_eastmost=395, y_northmost=372),
+    "SSP-15xx": AreaBounds(x_westmost=1155, y_southmost=1379, x_eastmost=1165, y_northmost=1383),
+    "SSP-40xx": AreaBounds(x_westmost=1182, y_southmost=1371, x_eastmost=1187, y_northmost=1377),
+    # endregion
 }
 
 VERIFIED_VOIDS: Final[dict["MapCoord", datetime.date]] = {
