@@ -53,17 +53,26 @@ KNOWN_AREAS: Final[dict[str, AreaBounds]] = {
     "AntiquityLand": AreaBounds(x_westmost=763, y_southmost=909, x_eastmost=766, y_northmost=913),
     "NewHaven": AreaBounds(x_westmost=597, y_southmost=1181, x_eastmost=603, y_northmost=1184),
     "TheGroveEstate": AreaBounds(x_westmost=1000, y_southmost=1166, x_eastmost=1008, y_northmost=1171),
+    "TheWastelands": AreaBounds(x_westmost=785, y_southmost=1036, x_eastmost=787, y_northmost=1039),
+    "CedarCreek": AreaBounds(x_westmost=849, y_southmost=1342, x_eastmost=853, y_northmost=1346),
+    "PlumIslandSoundEstate": AreaBounds(x_westmost=921, y_southmost=1168, x_eastmost=923, y_northmost=1171),
+    "AMEstate": AreaBounds(x_westmost=606, y_southmost=1164, x_eastmost=608, y_northmost=1167),
+    "CalasGaladhonPark": AreaBounds(x_westmost=709, y_southmost=1110, x_eastmost=713, y_northmost=1113),
+    "IsleOfWyrms": AreaBounds(x_westmost=545, y_southmost=1059, x_eastmost=548, y_northmost=1063),
+    "AmazonRiver": AreaBounds(x_westmost=832, y_southmost=969, x_eastmost=835, y_northmost=972),
+    "Baunatal": AreaBounds(x_westmost=715, y_southmost=922, x_eastmost=718, y_northmost=924),
     # region ## Tentative Naming
     "GoreanLands": AreaBounds(x_westmost=1014, y_southmost=1175, x_eastmost=1020, y_northmost=1179),
     "AngelManor": AreaBounds(x_westmost=1054, y_southmost=1397, x_eastmost=1056, y_northmost=1400),
     "NakedEstates": AreaBounds(x_westmost=1038, y_southmost=1161, x_eastmost=1042, y_northmost=1163),
     "Western": AreaBounds(x_westmost=963, y_southmost=1145, x_eastmost=967, y_northmost=1149),
-    "TheWastelands": AreaBounds(x_westmost=785, y_southmost=1036, x_eastmost=787, y_northmost=1039),
     "Babbage": AreaBounds(x_westmost=630, y_southmost=1004, x_eastmost=633, y_northmost=1007),
     "Capitol": AreaBounds(x_westmost=641, y_southmost=995, x_eastmost=645, y_northmost=998),
     "SunIslands": AreaBounds(x_westmost=876, y_southmost=987, x_eastmost=878, y_northmost=990),
     "Mieville": AreaBounds(x_westmost=533, y_southmost=1196, x_eastmost=537, y_northmost=1201),
     "Pirates1700": AreaBounds(x_westmost=940, y_southmost=1174, x_eastmost=942, y_northmost=1177),
+    "Mythera": AreaBounds(x_westmost=720, y_southmost=1324, x_eastmost=722, y_northmost=1328),
+    "SecondFrance": AreaBounds(x_westmost=556, y_southmost=1117, x_eastmost=559, y_northmost=1120),
     # endregion
     # endregion
     # region ### Premium Continents
@@ -73,6 +82,7 @@ KNOWN_AREAS: Final[dict[str, AreaBounds]] = {
     "SouthPremium-South": AreaBounds(x_westmost=1000, y_southmost=500, x_eastmost=1022, y_northmost=518),
     # endregion
     # region ### Special Regions
+    "LindenLabDE": AreaBounds(x_westmost=1105, y_southmost=1382, x_eastmost=1108, y_northmost=1388),
     "LindenEstateServices": AreaBounds(1025, 1014, 1031, 1016),
     "MoleIslands": AreaBounds(1006, 971, 1011, 976),
     "SLBRegions": AreaBounds(x_westmost=390, y_southmost=367, x_eastmost=395, y_northmost=372),
