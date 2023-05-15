@@ -4,7 +4,14 @@
 from __future__ import annotations
 
 import shutil
-import tomllib
+
+try:
+    # noinspection PyCompatibility
+    import tomllib
+except ModuleNotFoundError:
+    # noinspection PyUnresolvedReferences
+    import tomli as tomllib
+
 from collections.abc import Sequence
 from pathlib import Path
 from typing import Protocol

@@ -12,7 +12,7 @@ import signal
 import sys
 import time
 from pathlib import Path
-from typing import Final, Protocol, TypedDict, cast
+from typing import Final, Optional, Protocol, TypedDict, cast
 
 from PIL import Image
 
@@ -22,7 +22,7 @@ from sl_maptools.image_processing import (
     RGBTuple,
     calculate_dominant_colors,
 )
-from sl_maptools.utils import SLMapToolsConfig, ConfigReader
+from sl_maptools.utils import ConfigReader, SLMapToolsConfig
 from sl_maptools.validator import get_bonnie_coords, inventorize_maps_latest
 
 # region ##### Types
@@ -111,14 +111,14 @@ class CalcJob(TypedDict):
     fpath: Path
 
 
-CalcCache: None | dict[CoordType, DomColors]
+CalcCache: Optional[dict[CoordType, DomColors]]
 PatchesDict: dict[tuple[CoordType, int], list[RGBTuple]]
 CollectorQueue: MP.Queue
 
 
 def calc_domc_init(
     patches_dict: dict[tuple[CoordType, int], list[RGBTuple]],
-    calc_cache: None | dict[CoordType, DomColors],
+    calc_cache: Optional[dict[CoordType, DomColors]],
     coll_queue: MP.Queue,
 ):
     global PatchesDict, CalcCache, CollectorQueue
@@ -151,7 +151,12 @@ def calc_domc(job: tuple[CoordType, Path]) -> tuple[CoordType, DomColors]:
 
 # region ##### Worker: Collector
 
-def collector(coll_queue: MP.Queue, patches_coll: dict[tuple[CoordType, int], list[RGBTuple]], coll_lock: MP.RLock):
+
+def collector(
+    coll_queue: MP.Queue,
+    patches_coll: dict[tuple[CoordType, int], list[RGBTuple]],
+    coll_lock: MP.RLock,
+):
     signal.signal(signal.SIGINT, signal.SIG_IGN)
     while True:
         item = coll_queue.get()
@@ -164,6 +169,7 @@ def collector(coll_queue: MP.Queue, patches_coll: dict[tuple[CoordType, int], li
         with coll_lock:
             for sz, colors in domc.items():
                 patches_coll[coord, sz] = colors
+
 
 # endregion
 
@@ -195,7 +201,7 @@ def make_mosaic(
 
         _state("got_job")
         assert isinstance(item, tuple)
-        patches_bysz: None | dict[int, dict[CoordType, list[RGBTuple]]] = {
+        patches_bysz: Optional[dict[int, dict[CoordType, list[RGBTuple]]]] = {
             sz: {} for sz in item
         }
         with coll_lock:
@@ -221,10 +227,7 @@ def make_mosaic(
                 cy = tsz * (2100 - y)
                 sx = sy = 0
                 for col in colors:
-                    canvas.paste(
-                        Image.new("RGB", fbox, color=col),
-                        (cx + sx, cy + sy)
-                    )
+                    canvas.paste(Image.new("RGB", fbox, color=col), (cx + sx, cy + sy))
                     sy += fpx
                     if sy >= tsz:
                         sy = 0
@@ -239,6 +242,7 @@ def make_mosaic(
         patches_bysz = None
 
     _state("ended")
+
 
 # endregion
 
@@ -301,7 +305,11 @@ def main(opts: OptionsType):
         coll_args = (coll_queue, patches_coll, coll_lock)
 
         calc_workers = opts.calc_workers
-        calc_domc_args = (patches_coll, None if opts.no_cache else cached_domc, coll_queue)
+        calc_domc_args = (
+            patches_coll,
+            None if opts.no_cache else cached_domc,
+            coll_queue,
+        )
 
         pool_calc: MPPool.Pool
         pool_coll: MPPool.Pool
@@ -311,7 +319,9 @@ def main(opts: OptionsType):
                 calc_workers, initializer=calc_domc_init, initargs=calc_domc_args
             ) as pool_calc,
             MP.Pool(1, initializer=collector, initargs=coll_args) as pool_coll,
-            MP.Pool(maker_workers, initializer=make_mosaic, initargs=make_args) as pool_maker,
+            MP.Pool(
+                maker_workers, initializer=make_mosaic, initargs=make_args
+            ) as pool_maker,
         ):
             try:
                 for i, rslt in enumerate(
