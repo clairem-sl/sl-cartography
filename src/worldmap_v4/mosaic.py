@@ -12,7 +12,7 @@ import signal
 import sys
 import time
 from pathlib import Path
-from typing import Final, Protocol, TypedDict, cast, Any
+from typing import Final, Protocol, TypedDict, cast
 
 from PIL import Image
 
@@ -22,6 +22,7 @@ from sl_maptools.image_processing import (
     RGBTuple,
     calculate_dominant_colors,
 )
+from sl_maptools.utils import SLMapToolsConfig, ConfigReader
 from sl_maptools.validator import get_bonnie_coords, inventorize_maps_latest
 
 # region ##### Types
@@ -31,10 +32,11 @@ DomColors = dict[int, list[RGBTuple]]
 # endregion
 
 # region ##### CONSTs
+Config: SLMapToolsConfig = ConfigReader("config.toml")
 
 RE_MAP: Final[re.Pattern] = re.compile(r"^(\d+)-(\d+)_\d+-\d+.jpg$")
 
-DEFA_MAPDIR: Final[Path] = Path(r"C:\Cache\SL-Carto\Maps2")
+DEFA_MAPDIR: Final[Path] = Path(Config.maps.dir)
 CACHE_FILE: Final[str] = "CachedDominantColors.pkl"
 
 DEFA_CALC_WORKERS: Final[int] = max(1, MP.cpu_count() - 2)

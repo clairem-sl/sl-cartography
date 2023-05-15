@@ -10,19 +10,19 @@ from PIL import Image, ImageDraw, ImageFont
 
 from sl_maptools import CoordType, RegionsDBRecord
 from sl_maptools.knowns import KNOWN_AREAS
-from sl_maptools.utils import ConfigReader
+from sl_maptools.utils import ConfigReader, SLMapToolsConfig
 from sl_maptools.validator import get_bonnie_coords
 
 RGBATuple = tuple[int, int, int, int]
 
 
-Config = ConfigReader("config.toml")
+Config: SLMapToolsConfig = ConfigReader("config.toml")
 
 DB_PATH: Final[Path] = Path(Config.names.dir) / Config.names.db
 AREAMAPS_DIR: Final[Path] = Path(Config.areas.dir)
 
 FONT_PATH: Final[Path] = Path(Config.grids.font_name)
-FONT_SIZE: Final[int] = int(Config.grds.font_size)
+FONT_SIZE: Final[int] = int(Config.grids.font_size)
 TEXT_RGBA: Final[RGBATuple] = (255, 255, 255, 255)
 STROKE_WIDTH: Final[int] = 2
 STROKE_RGBA: Final[RGBATuple] = (0, 0, 0, 255)

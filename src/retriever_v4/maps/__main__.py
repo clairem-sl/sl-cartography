@@ -33,7 +33,7 @@ from sl_maptools import CoordType, MapCoord
 from sl_maptools.validator import inventorize_maps_all
 from sl_maptools.fetchers import RawResult
 from sl_maptools.fetchers.map import BoundedMapFetcher
-from sl_maptools.utils import ConfigReader
+from sl_maptools.utils import ConfigReader, SLMapToolsConfig
 
 SSIM_THRESHOLD: Final[float] = 0.895
 MSE_THRESHOLD: Final[float] = 0.01
@@ -59,8 +59,7 @@ BATCH_WAIT: Final[float] = 5.0
 # PROG_NAME: Final[str] = "MapsProgress.yaml"
 # DOMC_NAME: Final[str] = "DominantColors.pkl"
 # LOGFILE_NAME: Final[str] = "Maps.log"
-CONFIG_FILE = Path("config.toml")
-Config = ConfigReader(CONFIG_FILE)
+Config: SLMapToolsConfig = ConfigReader("config.toml")
 
 OrigSigINT: signal.Handlers = signal.getsignal(signal.SIGINT)
 SaverQueue: MP.Queue

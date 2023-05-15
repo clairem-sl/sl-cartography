@@ -7,6 +7,7 @@ import shutil
 import tomllib
 from collections.abc import Sequence
 from pathlib import Path
+from typing import Protocol
 
 
 def make_backup(the_file: Path, levels: int = 2):
@@ -67,7 +68,45 @@ class ValueTree:
         return f"{self.__class__.__name__}({repr(self.__data)}"
 
 
-class ConfigReader:
+class NamesConfig(Protocol):
+    dir: str
+    db: str
+    lock: str
+    log: str
+    progress: str
+
+
+class MapsConfig(Protocol):
+    dir: str
+    lock: str
+    log: str
+    progress: str
+
+
+class MosaicConfig(Protocol):
+    domc_cache: str
+
+
+class AreasConfig(Protocol):
+    dir: str
+
+
+class GridsConfig(Protocol):
+    dir_composite: str
+    dir_overlay: str
+    font_name: str
+    font_size: int
+
+
+class SLMapToolsConfig(Protocol):
+    names: NamesConfig
+    maps: MapsConfig
+    mosaic: MosaicConfig
+    areas: AreasConfig
+    grids: GridsConfig
+
+
+class ConfigReader(SLMapToolsConfig):
     def __init__(self, config_file: str | Path):
         self._cfg_file = Path(config_file)
         with self._cfg_file.open("rb") as fin:

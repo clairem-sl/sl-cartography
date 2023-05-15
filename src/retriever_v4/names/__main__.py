@@ -25,7 +25,7 @@ from retriever_v4 import (
 from sl_maptools import CoordType, MapCoord, RegionsDBRecord
 from sl_maptools.fetchers import CookedResult
 from sl_maptools.fetchers.cap import BoundedNameFetcher
-from sl_maptools.utils import ConfigReader
+from sl_maptools.utils import ConfigReader, SLMapToolsConfig
 
 CONN_LIMIT: Final[int] = 80
 # SEMA_SIZE: Final[int] = 180
@@ -35,8 +35,7 @@ BATCH_WAIT: Final[float] = 5.0
 MAVG_SAMPLES: Final[int] = 5
 ACCEPTABLE_STATUSCODES: Final[set[int]] = {0, 200, 403}
 
-CONFIG_FILE = Path("config.toml")
-Config = ConfigReader(CONFIG_FILE)
+Config: SLMapToolsConfig = ConfigReader("config.toml")
 
 Progress: RetrieverProgress
 
