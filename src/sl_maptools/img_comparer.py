@@ -4,6 +4,8 @@ from itertools import combinations
 import numpy as np
 from pathlib import Path
 from PIL import Image, ImageFilter
+# noinspection PyUnresolvedReferences
+from PIL.Image import Resampling, Dither
 from skimage.metrics import mean_squared_error as mse
 from skimage.metrics import structural_similarity as ssim
 from skimage.metrics import normalized_mutual_information as nmi
@@ -20,6 +22,7 @@ mapdir = Path(r"C:\Cache\SL-Carto\Maps2")
 # p2 = mapdir / "661-1275_230507-0156.jpg"
 
 
+# fmt: off
 TEST_CASES: list[tuple[bool, list[str]]] = [
     #### Should be similars
     (True, ["400-1549_230506-1422.jpg", "400-1549_230509-0227.jpg"]),
@@ -31,6 +34,7 @@ TEST_CASES: list[tuple[bool, list[str]]] = [
     (False, ["406-1576_230506-0402.jpg", "406-1576_230507-0051.jpg", "406-1576_230509-0223.jpg"]),
     (False, ["402-1572_230506-0404.jpg", "402-1572_230507-0052.jpg", "402-1572_230509-0224.jpg"]),
 ]
+# fmt: on
 
 
 def compare(im1, im2):
@@ -70,6 +74,31 @@ def enhance(method: EnhanceMethod, *i: Image.Image) -> tuple[Image.Image, ...]:
         ])
 
 
+GREY_PAL = [i for i in range(0, 256, 16)]
+
+
+def preprocess(im: Image.Image, chg_pal: bool = False) -> Image.Image:
+    im_c = im.copy()
+    # im_c.thumbnail((64, 64))
+    im_p = (
+        im_c
+        .resize((64, 64), resample=Resampling.BICUBIC)
+        .convert("L", dither=Dither.NONE)
+        .quantize(colors=16, dither=Dither.NONE)
+    )
+    if chg_pal:
+        # print(im_p.getpalette())
+        pal = []
+        for i in range(0, 256, 16):
+            pal.append(i)
+            pal.append(i)
+            pal.append(i)
+        pal.sort(reverse=True)
+        im_p.putpalette(pal)
+        # print(im_p.getpalette())
+    return im_p.convert("L", dither=Dither.NONE)
+
+
 def main():
     for i, (expected, flist) in enumerate(TEST_CASES, start=1):
         print("===== Control =====")
@@ -88,6 +117,7 @@ def main():
             fp1 = mapdir / f1
             fp2 = mapdir / f2
             with (Image.open(fp1) as im1, Image.open(fp2) as im2):
+                print(f"{fp1.name} =?= {fp2.name}  {expected=}")
                 rslt = are_similar(im1, im2)
                 if rslt.similar != expected:
                     print(f"NOT MATCH, {expected=}")
@@ -98,8 +128,28 @@ def main():
                 print("  Raw:\n    ", end="")
                 compare(im1, im2)
 
+                im1c = im1.copy()
+                im2c = im2.copy()
+                im1c.thumbnail((64, 64))
+                im2c.thumbnail((64, 64))
+                print("  Raw (thumbnail):\n    ", end="")
+                compare(im1c, im2c)
+
+                im1p = preprocess(im1)
+                im2p = preprocess(im2)
+                print("  Preprocessed:\n    ", end="")
+                compare(im1p, im2p)
+
                 im1e, im2e = enhance(EnhanceMethod.GB_FE, im1, im2)
                 print("  Enhanced GB_FE:\n    ", end="")
+                compare(im1e, im2e)
+
+                im1e, im2e = enhance(EnhanceMethod.GB_FE, im1c, im2c)
+                print("  Enhanced GB_FE (thumbnail):\n    ", end="")
+                compare(im1e, im2e)
+
+                im1e, im2e = enhance(EnhanceMethod.GB_FE, im1p, im2p)
+                print("  Enhanced GB_FE (preprocessed):\n    ", end="")
                 compare(im1e, im2e)
 
                 im1e, im2e = enhance(EnhanceMethod.GB_FE_B_FE, im1, im2)
