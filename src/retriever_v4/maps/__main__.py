@@ -54,11 +54,6 @@ HTTP2: Final[bool] = True
 START_BATCH_SIZE: Final[int] = 2000
 BATCH_WAIT: Final[float] = 5.0
 
-# DEFA_MAPS_DIR: Final[Path] = Path("C:\\Cache\\SL-Carto\\Maps2\\")
-# LOCK_NAME: Final[str] = "Maps.lock"
-# PROG_NAME: Final[str] = "MapsProgress.yaml"
-# DOMC_NAME: Final[str] = "DominantColors.pkl"
-# LOGFILE_NAME: Final[str] = "Maps.log"
 Config: SLMapToolsConfig = ConfigReader("config.toml")
 
 OrigSigINT: signal.Handlers = signal.getsignal(signal.SIGINT)
