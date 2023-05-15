@@ -16,3 +16,12 @@ progress = 'MapsProgress.yaml'
 
 [mosaic]
 domc_cache = 'CachedDominantColors.pkl'
+
+[areas]
+dir = 'C:\Cache\SL-Carto\AreaMaps'
+
+[grids]
+dir_composite = 'C:\Cache\SL-Carto\AreaMaps\Grids'
+dir_gridonly = 'C:\Cache\SL-Carto\AreaMaps\Grids'
+font_name = 'C:\Windows\Fonts\comic.ttf'
+font_size = 16
