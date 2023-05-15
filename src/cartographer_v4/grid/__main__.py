@@ -6,17 +6,20 @@ from PIL import Image, ImageDraw, ImageFont
 
 from sl_maptools import CoordType, RegionsDBRecord
 from sl_maptools.knowns import KNOWN_AREAS
+from sl_maptools.utils import ConfigReader
 from sl_maptools.validator import get_bonnie_coords
 
 
 RGBATuple = tuple[int, int, int, int]
 
 
-DB_PATH: Final[Path] = Path(r"C:\Cache\SL-Carto\RegionsDB2.pkl")
-AREAMAPS_DIR: Final[Path] = Path(r"C:\Cache\SL-Carto\AreaMaps")
+Config = ConfigReader("config.toml")
 
-FONT_PATH: Final[Path] = Path(r"C:\Windows\Fonts\comic.ttf")
-FONT_SIZE: Final[int] = 16
+DB_PATH: Final[Path] = Path(Config.names.dir) / Config.names.db
+AREAMAPS_DIR: Final[Path] = Path(Config.areas.dir)
+
+FONT_PATH: Final[Path] = Path(Config.grids.font_name)
+FONT_SIZE: Final[int] = int(Config.grds.font_size)
 TEXT_RGBA: Final[RGBATuple] = (255, 255, 255, 255)
 STROKE_WIDTH: Final[int] = 2
 STROKE_RGBA: Final[RGBATuple] = (0, 0, 0, 255)
@@ -29,9 +32,11 @@ def main():
     # Disable DecompressionBombWarning
     Image.MAX_IMAGE_PIXELS = None
 
-    areamaps_dir = AREAMAPS_DIR
-    areagrid_dir = areamaps_dir / "Grids"
-    areagrid_dir.mkdir(exist_ok=True)
+    areamaps_dir = Path(Config.areas.dir)
+    grid_composite_dir = Path(Config.grids.dir_composite)
+    grid_composite_dir.mkdir(exist_ok=True)
+    grid_overlay_dir = Path(Config.grids.dir_overlay)
+    grid_overlay_dir.mkdir(exist_ok=True)
 
     sq = Image.new("RGBA", (256, 256), color=(0, 0, 0, 0))
     sq_draw = ImageDraw.Draw(sq)
@@ -58,8 +63,10 @@ def main():
     for areamap in areamaps_dir.glob("*.png"):
         print(f"{areamap}", end="", flush=True)
         areaname = areamap.stem
-        targ = areagrid_dir / (areaname + ".gridonly.png")
-        if not targ.exists():
+
+        overlay_p = grid_overlay_dir / (areaname + ".overlay.png")
+        gridc = None
+        if not overlay_p.exists():
             bounds = KNOWN_AREAS[areaname]
             x1, y1, x2, y2 = bounds
             size_x = (x2 - x1 + 1) * 256
@@ -81,14 +88,16 @@ def main():
                 if (i % 10) == 0:
                     print(".", end="", flush=True)
 
-            targ = areagrid_dir / (areaname + ".gridonly.png")
-            gridc.save(targ)
-
-            targ = areagrid_dir / (areaname + ".grid.png")
-            with Image.open(areamap) as img:
-                out = Image.alpha_composite(img, gridc)
-                out.save(targ)
-        print(f"\n  => {targ}", flush=True)
+            gridc.save(overlay_p)
+        print(f"\n  => {overlay_p}", end="", flush=True)
+        composite_p = grid_composite_dir / (areaname + ".gridded.png")
+        if gridc:
+            if not composite_p.exists():
+                with Image.open(areamap) as img:
+                    out = Image.alpha_composite(img, gridc)
+                    out.save(composite_p)
+        if composite_p.exists():
+            print(f"\n  => {composite_p}", flush=True)
 
 
 if __name__ == "__main__":
