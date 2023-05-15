@@ -63,7 +63,7 @@ class ValueTree:
     def __process_seq(seq: Sequence):
         rslt = []
         for thing in seq:
-            if not isinstance(thing,str) and isinstance(thing, Sequence):
+            if not isinstance(thing, str) and isinstance(thing, Sequence):
                 rslt.append(ValueTree.__process_seq(thing))
             elif isinstance(thing, dict):
                 rslt.append(ValueTree(thing))
