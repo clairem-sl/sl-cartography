@@ -7,6 +7,7 @@ import io
 import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+from functools import partial
 from pathlib import Path
 from typing import Final, NamedTuple, Optional, Union, TypedDict, Generator
 
@@ -131,17 +132,13 @@ class MapRegion(object):
         return self.image is None
 
 
-def get_utc_timestamp():
-    return datetime.now(tz=timezone.utc)
-
-
 @dataclass(frozen=True)
 class MapStats:
     name: str
     regions: int
     voids: int
     timestamp: datetime = field(
-        repr=False, compare=False, default_factory=get_utc_timestamp
+        repr=False, compare=False, default_factory=partial(datetime.now, tz=timezone.utc)
     )
 
 
@@ -195,28 +192,6 @@ class MapCanvas(object):
     @property
     def size(self):
         return self.canvas.size
-
-
-def inventorize_maps_latest(mapdir: Path | str) -> dict[CoordType, Path]:
-    mapdir = Path(mapdir)
-    rslt: dict[CoordType, Path] = {}
-    for fp in sorted(mapdir.glob("*.jp*"), reverse=True):
-        if (m := RE_MAPFILE.match(fp.name)) is None:
-            continue
-        coord = int(m.group("x")), int(m.group("y"))
-        if coord not in rslt:
-            rslt[coord] = fp
-    return rslt
-
-
-def inventorize_maps_all(mapdir: Path) -> dict[CoordType, list[Path]]:
-    rslt: dict[CoordType, list[Path]] = {}
-    for fp in sorted(mapdir.glob("*.jp*")):
-        if (m := RE_MAPFILE.match(fp.name)) is None:
-            continue
-        coord = int(m.group("x")), int(m.group("y"))
-        rslt.setdefault(coord, []).append(fp)
-    return rslt
 
 
 class RegionsDBRecord(TypedDict):

@@ -9,8 +9,8 @@ from typing import Final, Protocol, TypedDict, cast
 
 from PIL import Image, ImageDraw
 
-from sl_maptools import MapCoord, inventorize_maps_all, RegionsDBRecord
-from sl_maptools.validator import get_bonnie_coords
+from sl_maptools import MapCoord, RegionsDBRecord
+from sl_maptools.validator import get_bonnie_coords, inventorize_maps_all
 
 DEFA_DB_PATH: Final[Path] = Path(r"C:\Cache\SL-Carto\RegionsDB2.pkl")
 DEFA_MAPDIR: Final[Path] = Path(r"C:\Cache\SL-Carto\Maps2")

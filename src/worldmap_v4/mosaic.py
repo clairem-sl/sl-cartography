@@ -16,13 +16,13 @@ from typing import Final, Protocol, TypedDict, cast, Any
 
 from PIL import Image
 
-from sl_maptools import CoordType, inventorize_maps_latest, RegionsDBRecord
+from sl_maptools import CoordType, RegionsDBRecord
 from sl_maptools.image_processing import (
     FASCIA_SIZES,
     RGBTuple,
     calculate_dominant_colors,
 )
-from sl_maptools.validator import get_bonnie_coords
+from sl_maptools.validator import get_bonnie_coords, inventorize_maps_latest
 
 # region ##### Types
 

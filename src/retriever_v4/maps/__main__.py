@@ -29,7 +29,8 @@ from retriever_v4 import (
     handle_sigint,
 )
 from retriever_v4.maps.saver import Thresholds, saver
-from sl_maptools import CoordType, MapCoord, inventorize_maps_all
+from sl_maptools import CoordType, MapCoord
+from sl_maptools.validator import inventorize_maps_all
 from sl_maptools.fetchers import RawResult
 from sl_maptools.fetchers.map import BoundedMapFetcher
 from sl_maptools.utils import ConfigReader

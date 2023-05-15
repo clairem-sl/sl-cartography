@@ -1,6 +1,8 @@
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
+from __future__ import annotations
+
 import asyncio
 import datetime
 import random
@@ -16,7 +18,7 @@ import httpx
 import msgpack
 from ruamel import yaml as ryaml
 
-from sl_maptools import CoordType, MapCoord, MapRegion
+from sl_maptools import CoordType, MapCoord, MapRegion, RE_MAPFILE
 
 # This source file uses data & API provided by Tyche Shepherd & gridsurvey.com
 
@@ -177,3 +179,25 @@ def get_bonnie_coords(bonniedb: None | Path, fetchbonnie: bool) -> set[CoordType
             resp = client.get(BONNIE_REGDB_URL)
             bdb_data_raw = resp.json()
     return {(int(record["region_x"]), int(record["region_y"])) for record in bdb_data_raw["regions"]}
+
+
+def inventorize_maps_latest(mapdir: Path | str) -> dict[CoordType, Path]:
+    mapdir = Path(mapdir)
+    rslt: dict[CoordType, Path] = {}
+    for fp in sorted(mapdir.glob("*.jp*"), reverse=True):
+        if (m := RE_MAPFILE.match(fp.name)) is None:
+            continue
+        coord = int(m.group("x")), int(m.group("y"))
+        if coord not in rslt:
+            rslt[coord] = fp
+    return rslt
+
+
+def inventorize_maps_all(mapdir: Path) -> dict[CoordType, list[Path]]:
+    rslt: dict[CoordType, list[Path]] = {}
+    for fp in sorted(mapdir.glob("*.jp*")):
+        if (m := RE_MAPFILE.match(fp.name)) is None:
+            continue
+        coord = int(m.group("x")), int(m.group("y"))
+        rslt.setdefault(coord, []).append(fp)
+    return rslt
