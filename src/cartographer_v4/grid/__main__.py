@@ -9,7 +9,6 @@ from sl_maptools.knowns import KNOWN_AREAS
 from sl_maptools.utils import ConfigReader
 from sl_maptools.validator import get_bonnie_coords
 
-
 RGBATuple = tuple[int, int, int, int]
 
 
@@ -83,7 +82,12 @@ def main():
                 regname = regsdb[xy]["current_name"]
                 # print(regname)
                 draw.text(
-                    (cx + 5, cy + 4), regname, font=font, fill=TEXT_RGBA, stroke_width=STROKE_WIDTH, stroke_fill=STROKE_RGBA
+                    (cx + 5, cy + 4),
+                    regname,
+                    font=font,
+                    fill=TEXT_RGBA,
+                    stroke_width=STROKE_WIDTH,
+                    stroke_fill=STROKE_RGBA,
                 )
                 if (i % 10) == 0:
                     print(".", end="", flush=True)
