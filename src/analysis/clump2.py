@@ -1,0 +1,135 @@
+import pickle
+from collections import deque
+from pathlib import Path
+from pprint import pprint
+from typing import Final
+
+from sl_maptools import inventorize_maps_latest, CoordType, RegionsDBRecord, AreaBounds
+from sl_maptools.knowns import KNOWN_AREAS
+from sl_maptools.utils import ConfigReader
+from sl_maptools.validator import get_bonnie_coords
+
+
+INTERESTING_CLUMPSIZE_THRESHOLD: Final[int] = 10
+
+
+Config = ConfigReader("config.toml")
+
+
+def main():
+    map_tiles = inventorize_maps_latest(Config.maps.dir)
+    regionsdb = Path(Config.names.dir) / Config.names.db
+
+    validation_set: set[CoordType] = set()
+    with regionsdb.open("rb") as fin:
+        regsdb: dict[CoordType, RegionsDBRecord] = pickle.load(fin)
+    validation_set.update(k for k, v in regsdb.items() if v["current_name"])
+    bonnie_coords = get_bonnie_coords(None, True)
+    print()
+    validation_set.intersection_update(bonnie_coords)
+    for co in list(map_tiles.keys()):
+        if co not in validation_set:
+            del map_tiles[co]
+
+    all_coords = set(map_tiles.keys())
+    unprocesseds = all_coords.copy()
+
+    def alone(co: CoordType, valid_set: set[CoordType]):
+        x, y = co
+        neighbors = {(x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)}
+        return not bool(neighbors.intersection(valid_set))
+
+    def get_clump(start: CoordType, valid_set: set[CoordType]):
+        clump = set()
+        q: deque[tuple[int, int]] = deque()
+        q.append(start)
+        while q:
+            n = q.popleft()
+            if n in clump:
+                continue
+            if n in valid_set:
+                clump.add(n)
+                x, y = n
+                q.append((x - 1, y))
+                q.append((x + 1, y))
+                q.append((x, y - 1))
+                q.append((x, y + 1))
+        return clump
+
+    area_clumps: dict[str, list[set[CoordType]]] = {}
+    for aname, abounds in KNOWN_AREAS.items():
+        aclumps: list[set[CoordType]] = []
+        acoords = {co for co in abounds.xy_iterator() if co in all_coords}
+        processeds = {}
+        for co in acoords:
+            if co in processeds:
+                continue
+            if alone(co, acoords):
+                continue
+            _clump = get_clump(co, acoords)
+            processeds.update(_clump)
+            aclumps.append(_clump)
+        area_clumps[aname] = aclumps
+
+    clumps: list[set[CoordType]] = []
+    for y in range(2100, -1, -1):
+        for x in range(0, 2101):
+            if (x, y) not in unprocesseds:
+                continue
+            coord = x, y
+            unprocesseds.discard(coord)
+            if alone(coord, all_coords):
+                continue
+            # print(len(unprocesseds), coord)
+            clump = get_clump(coord, all_coords)
+            unprocesseds.difference_update(clump)
+            clumps.append(clump)
+
+    # known_coords: dict[str, set[CoordType]] = {}
+    # for aname, abounds in KNOWN_AREAS.items():
+    #     known_coords[aname] = {
+    #         coord
+    #         for coord in abounds.xy_iterator()
+    #         if coord in all_coords
+    #     }
+
+    new_clump: list[set[CoordType]] = []
+    for clump in clumps:
+        l = len(clump)
+        if l < INTERESTING_CLUMPSIZE_THRESHOLD:
+            continue
+        print(l, sorted(clump, key=lambda c: (c[1], c[0]))[0:4], "...")
+        found = False
+        for aname, aclumps in area_clumps.items():
+            for aclump in aclumps:
+                cl_i_co = clump.intersection(aclump)
+                if not cl_i_co:
+                    continue
+                found = True
+                if clump == aclump:
+                    print(f"  matches {aname}")
+                elif cl_i_co == clump:
+                    print(f"  subset of {aname}")
+                elif cl_i_co == aclump:
+                    print(f"  SUPerset of {aname}")
+                else:
+                    print(f"  intersected {aname}")
+            if found:
+                break
+        if not found:
+            print("  New Clump!")
+            new_clump.append(clump)
+
+    interesting: dict[str, AreaBounds] = {}
+    for i, clump in enumerate(new_clump, start=1):
+        xs = []
+        ys = []
+        for coord in clump:
+            xs.append(coord[0])
+            ys.append(coord[1])
+        interesting[f"Interesting-{i:03}"] = AreaBounds(min(xs), min(ys), max(xs), max(ys))
+    pprint(interesting)
+
+
+if __name__ == '__main__':
+    main()
