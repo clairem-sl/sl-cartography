@@ -92,6 +92,7 @@ KNOWN_AREAS: Final[dict[str, AreaBounds]] = {
     "LR-180": AreaBounds(1193, 1206, 1196, 1210),
     "Preflight": AreaBounds(1296, 1193, 1299, 1196),
     # endregion
+    "TheMists": AreaBounds(562, 734, 567, 739),
 }
 
 VERIFIED_VOIDS: Final[dict["MapCoord", datetime.date]] = {
