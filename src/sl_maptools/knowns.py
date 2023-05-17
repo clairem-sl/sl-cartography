@@ -94,6 +94,7 @@ KNOWN_AREAS: Final[dict[str, AreaBounds]] = {
     # endregion
     "TheMists": AreaBounds(562, 734, 567, 739),
     "PaleoQuest": AreaBounds(400, 392, 401, 400),
+    # ### Below this line, are areas with < 10 regions in a clump. Much less interesting.
     "Yumix": AreaBounds(653, 1245, 654, 1249),
     "VWBPE": AreaBounds(1102, 1312, 1106, 1314),
     "Maple": AreaBounds(878, 927, 882, 928),
@@ -103,6 +104,9 @@ KNOWN_AREAS: Final[dict[str, AreaBounds]] = {
     "MacedoniaEstate": AreaBounds(540, 1182, 544, 1185),
     "Bauer": AreaBounds(899, 1200, 902, 1202),
     "Olni": AreaBounds(655, 1291, 658, 1293),
+    "PompeiiRomanum": AreaBounds(747, 1079, 749, 1083),
+    # "CH": AreaBounds(1102, 1199, 1104, 1201),  ### NOT interesting
+
 }
 
 VERIFIED_VOIDS: Final[dict["MapCoord", datetime.date]] = {
