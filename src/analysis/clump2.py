@@ -8,7 +8,7 @@ from sl_maptools.knowns import KNOWN_AREAS
 from sl_maptools.utils import ConfigReader
 from sl_maptools.validator import get_bonnie_coords, inventorize_maps_latest
 
-INTERESTING_CLUMPSIZE_THRESHOLD: Final[int] = 6
+INTERESTING_CLUMPSIZE_THRESHOLD: Final[int] = 9
 
 
 Config = ConfigReader("config.toml")
@@ -151,8 +151,8 @@ def main():
             else:
                 print(f"NEW: {len(clump)} {clump}")
                 for coord in sorted(clump, key=lambda co: regsdb[co]["current_name"]):
-                    print(coord, regsdb[coord]["current_name"])
-                print(f"{AreaBounds.from_coordset(clump)=}")
+                    print(" ", coord, regsdb[coord]["current_name"])
+                print(f"    => {AreaBounds.from_coordset(clump)=}")
 
 
 if __name__ == "__main__":
