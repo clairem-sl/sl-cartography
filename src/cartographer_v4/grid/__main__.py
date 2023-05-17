@@ -1,10 +1,10 @@
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
-
+import argparse
 import pickle
 from pathlib import Path
-from typing import Final
+from typing import Final, Protocol, cast
 
 from PIL import Image, ImageDraw, ImageFont
 
@@ -31,7 +31,29 @@ STROKE_RGBA: Final[RGBATuple] = (0, 0, 0, 255)
 ALPHA_PATTERN: Final[tuple[int, ...]] = (96, 32)
 
 
-def main():
+class GridOptions(Protocol):
+    areas: list[str]
+
+
+def get_options() -> GridOptions:
+    parser = argparse.ArgumentParser("cartographer_v4.grid")
+
+    parser.add_argument(
+        "--areas",
+        metavar="AREA_LIST",
+        type=str,
+        nargs="+",
+        help=(
+            "Space- and/or comma-separated list of areas to retrieve, in addition to prior progress. "
+            "If this option is specified, then make grid for listed areas ONLY."
+        )
+    )
+
+    _opts = parser.parse_args()
+    return cast(GridOptions, _opts)
+
+
+def main(opts: GridOptions):
     # Disable DecompressionBombWarning
     Image.MAX_IMAGE_PIXELS = None
 
@@ -63,7 +85,22 @@ def main():
     print()
     validation_set.intersection_update(bonnie_coords)
 
-    for areamap in areamaps_dir.glob("*.png"):
+    want_areas: set[Path]
+    if opts.areas:
+        cs_anames = {k.casefold(): k for k in KNOWN_AREAS.keys()}
+        want_areas = {
+            (areamaps_dir / cs_anames[a1]).with_suffix(".png")
+            for area in opts.areas
+            for a1 in map(str.casefold, area.split(","))
+            if a1 in cs_anames
+        }
+    else:
+        want_areas = {
+            areamap
+            for areamap in areamaps_dir.glob("*.png")
+        }
+
+    for areamap in want_areas:
         print(f"{areamap}", end="", flush=True)
         areaname = areamap.stem
 
@@ -109,4 +146,5 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    options = get_options()
+    main(options)
