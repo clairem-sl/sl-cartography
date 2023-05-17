@@ -7,7 +7,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Optional, Protocol, cast
 
-import ruamel.yaml as ryaml
+from ruamel.yaml import YAML, RoundTripRepresenter
 
 from sl_maptools import CoordType, RegionsDBRecord
 from sl_maptools.utils import ConfigReader, make_backup
@@ -59,8 +59,8 @@ def export(db: Path, targ: Path, quiet: bool = False):
         print(f"Retrieved {len(data)} records. Transforming...", end="", flush=True)
 
     result: dict[str, dict[str, Any]] = {}
-    for coord, info in data.items():
-        x, y = coord
+    for x, y in sorted(data, key=lambda co: (co[1], co[0])):
+        info = data[x, y]
         info["sources"] = sorted(info["sources"])
         result[f"{x},{y}"] = info
     if not quiet:
@@ -92,8 +92,11 @@ def export(db: Path, targ: Path, quiet: bool = False):
         },
         "data": result,
     }
+    yaml = YAML(typ="safe")
+    yaml.Representer = RoundTripRepresenter
+    yaml.default_flow_style = False
     with targ.open("wt") as fout:
-        ryaml.dump(exported, fout, default_flow_style=False)
+        yaml.dump(exported, fout)
     if not quiet:
         print(f"\nExported to {targ}")
 
