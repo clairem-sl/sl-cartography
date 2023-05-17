@@ -14,12 +14,12 @@ from typing import Protocol, cast
 
 from PIL import Image
 
-from sl_maptools import AreaBounds, CoordType, RegionsDBRecord, inventorize_maps_latest
+from sl_maptools import AreaBounds, CoordType, RegionsDBRecord
 from sl_maptools.knowns import KNOWN_AREAS
-from sl_maptools.utils import ConfigReader
-from sl_maptools.validator import get_bonnie_coords
+from sl_maptools.utils import ConfigReader, SLMapToolsConfig
+from sl_maptools.validator import get_bonnie_coords, inventorize_maps_latest
 
-Config = ConfigReader("config.toml")
+Config: SLMapToolsConfig = ConfigReader("config.toml")
 AbortRequested: bool = False
 
 

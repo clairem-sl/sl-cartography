@@ -9,8 +9,8 @@ from typing import cast
 
 from pytz import timezone
 
-from cartographer.roadmapper.colors import ALL_COLORS
-from cartographer.roadmapper.road import DrawMode, Point, Segment
+from _old.cartographer.roadmapper.colors import ALL_COLORS
+from _old.cartographer.roadmapper.road import DrawMode, Point, Segment
 from sl_maptools import MapCoord
 from sl_maptools.knowns import KNOWN_AREAS
 

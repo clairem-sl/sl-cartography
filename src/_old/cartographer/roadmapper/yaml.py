@@ -6,7 +6,7 @@ from typing import Any, TypedDict
 
 import ruamel.yaml as ryaml
 
-from cartographer.roadmapper.road import DrawMode, Point, Segment
+from _old.cartographer.roadmapper.road import DrawMode, Point, Segment
 
 SUPPORTED_VERSIONS = {1}
 

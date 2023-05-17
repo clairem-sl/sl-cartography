@@ -9,7 +9,7 @@ import re
 from datetime import datetime
 from pathlib import Path
 from pprint import pprint
-from typing import Final, Protocol, TypedDict, cast
+from typing import Final, Optional, Protocol, TypedDict, cast
 
 import httpx
 
@@ -25,7 +25,7 @@ from retriever_v4 import (
 from sl_maptools import CoordType, MapCoord, RegionsDBRecord
 from sl_maptools.fetchers import CookedResult
 from sl_maptools.fetchers.cap import BoundedNameFetcher
-from sl_maptools.utils import ConfigReader
+from sl_maptools.utils import ConfigReader, SLMapToolsConfig
 
 CONN_LIMIT: Final[int] = 80
 # SEMA_SIZE: Final[int] = 180
@@ -35,8 +35,7 @@ BATCH_WAIT: Final[float] = 5.0
 MAVG_SAMPLES: Final[int] = 5
 ACCEPTABLE_STATUSCODES: Final[set[int]] = {0, 200, 403}
 
-CONFIG_FILE = Path("config.toml")
-Config = ConfigReader(CONFIG_FILE)
+Config: SLMapToolsConfig = ConfigReader("config.toml")
 
 Progress: RetrieverProgress
 
@@ -91,8 +90,20 @@ def get_options() -> OptionsProtocol:
             f"({RetrieverProgress.DEFA_MAX_COORD[1]}) upon finishing row 0"
         ),
     )
-    parser.add_argument("--min-batch-size", metavar="N", type=int, default=0, help="Batch size will not go lower than this")
-    parser.add_argument("--abort-low-rps", metavar="N", type=int, default=-1, help="If rps drops below this for some time, abort")
+    parser.add_argument(
+        "--min-batch-size",
+        metavar="N",
+        type=int,
+        default=0,
+        help="Batch size will not go lower than this",
+    )
+    parser.add_argument(
+        "--abort-low-rps",
+        metavar="N",
+        type=int,
+        default=-1,
+        help="If rps drops below this for some time, abort",
+    )
 
     add_timeoptions(parser)
 
@@ -186,7 +197,7 @@ async def amain(db_path: Path, duration: int, min_batch_size: int, abort_low_rps
             nonlocal shown
             shown = False
 
-        def process_result(fut_result: None | CookedResult) -> bool:
+        def process_result(fut_result: Optional[CookedResult]) -> bool:
             nonlocal shown
             if fut_result is None:
                 return False
@@ -230,7 +241,9 @@ def main(app_context: RetrieverApplication, opts: OptionsProtocol):
 
     dur = calc_duration(opts)
 
-    Progress = RetrieverProgress((opts.dbdir / Config.names.progress), auto_reset=opts.auto_reset)
+    Progress = RetrieverProgress(
+        (opts.dbdir / Config.names.progress), auto_reset=opts.auto_reset
+    )
     if Progress.outstanding_count:
         print(f"{Progress.outstanding_count} jobs still outstanding from last session")
     else:

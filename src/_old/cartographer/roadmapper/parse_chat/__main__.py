@@ -8,9 +8,9 @@ from pprint import PrettyPrinter
 
 from pytz import timezone
 
-from cartographer.roadmapper.parse_chat import RE_TS, SLT_TIMEZONE, bake, parse
-from cartographer.roadmapper.parse_chat.config import options
-from cartographer.roadmapper.yaml import load_from_yaml, save_to_yaml
+from _old.cartographer.roadmapper.parse_chat import RE_TS, SLT_TIMEZONE, bake, parse
+from _old.cartographer.roadmapper.parse_chat.config import options
+from _old.cartographer.roadmapper.yaml import load_from_yaml, save_to_yaml
 from sl_maptools.utils import make_backup
 
 DEBUG = False
