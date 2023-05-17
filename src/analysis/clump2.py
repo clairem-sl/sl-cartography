@@ -153,6 +153,7 @@ def main():
                 print(f"NEW: {len(clump)} {clump}")
                 for coord in sorted(clump, key=lambda co: regsdb[co]["current_name"]):
                     print(coord, regsdb[coord]["current_name"])
+                print(f"{AreaBounds.from_coordset(clump)=}")
 
 
 if __name__ == '__main__':
