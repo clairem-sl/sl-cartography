@@ -30,11 +30,11 @@ from retriever_v4 import (
 )
 from retriever_v4.maps.saver import Thresholds, saver
 from sl_maptools import CoordType, MapCoord
-from sl_maptools.validator import inventorize_maps_all
 from sl_maptools.fetchers import RawResult
 from sl_maptools.fetchers.map import BoundedMapFetcher
 from sl_maptools.knowns import KNOWN_AREAS
 from sl_maptools.utils import ConfigReader, SLMapToolsConfig
+from sl_maptools.validator import inventorize_maps_all
 
 SSIM_THRESHOLD: Final[float] = 0.895
 MSE_THRESHOLD: Final[float] = 0.01
@@ -85,9 +85,7 @@ def get_options() -> OptionsProtocol:
     parser = argparse.ArgumentParser("region_auditor")
 
     parser.add_argument("--force", action="store_true")
-    parser.add_argument(
-        "--mapdir", metavar="DIR", type=Path, default=Path(Config.maps.dir)
-    )
+    parser.add_argument("--mapdir", metavar="DIR", type=Path, default=Path(Config.maps.dir))
     parser.add_argument(
         "--workers",
         metavar="N",
@@ -167,19 +165,13 @@ async def async_main(
     shm_allocator: SharedMemoryAllocator,
 ):
     global AbortRequested
-    limits = httpx.Limits(
-        max_connections=CONN_LIMIT, max_keepalive_connections=CONN_LIMIT
-    )
+    limits = httpx.Limits(max_connections=CONN_LIMIT, max_keepalive_connections=CONN_LIMIT)
     async with httpx.AsyncClient(limits=limits, timeout=10.0, http2=HTTP2) as client:
-        fetcher = BoundedMapFetcher(
-            CONN_LIMIT * 3, client, cooked=False, cancel_flag=AbortRequested
-        )
+        fetcher = BoundedMapFetcher(CONN_LIMIT * 3, client, cooked=False, cancel_flag=AbortRequested)
         shown = False
 
         def make_task(coord: CoordType):
-            return asyncio.create_task(
-                fetcher.async_fetch(MapCoord(*coord)), name=str(coord)
-            )
+            return asyncio.create_task(fetcher.async_fetch(MapCoord(*coord)), name=str(coord))
 
         def pre_batch():
             nonlocal shown
@@ -291,18 +283,12 @@ def main(
         )
         pool: MPPool.Pool
         with MP.Pool(opts.workers, initializer=saver, initargs=saver_args) as pool:
-            while (
-                sum(1 for v, _ in worker_state.values() if v == "idle") < opts.workers
-            ):
+            while sum(1 for v, _ in worker_state.values() if v == "idle") < opts.workers:
                 time.sleep(1)
 
             print("started.\nDispatching async fetchers!", flush=True)
             with handle_sigint(AbortRequested):
-                asyncio.run(
-                    async_main(
-                        dur, opts.min_batch_size, opts.abort_low_rps, shm_allocator
-                    )
-                )
+                asyncio.run(async_main(dur, opts.min_batch_size, opts.abort_low_rps, shm_allocator))
 
             print(
                 "Closing the pool, preventing new workers from spawning ... ",
@@ -337,9 +323,7 @@ def main(
             with (opts.mapdir / "PossiblyChanged.txt").open("wt") as fout:
                 for coord in sorted(possibly_changed.keys()):
                     print(coord, file=fout)
-    print(
-        f"{Progress.outstanding_count:_} outstanding jobs left. Last dispatched coordinate: {Progress.last_dispatch}"
-    )
+    print(f"{Progress.outstanding_count:_} outstanding jobs left. Last dispatched coordinate: {Progress.last_dispatch}")
     if AbortRequested.is_set():
         print("\nAborted by user.")
 
