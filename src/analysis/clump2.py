@@ -135,7 +135,7 @@ def main():
 
     for info in interesting_clumps:
         aname, clump, reason = info
-        if len(clump) >= 10:
+        if len(clump) >= INTERESTING_CLUMPSIZE_THRESHOLD:
             if aname:
                 continue
                 # if reason == "grew":
