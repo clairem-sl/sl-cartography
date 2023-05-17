@@ -3,11 +3,10 @@ from collections import deque
 from pathlib import Path
 from typing import Final
 
-from sl_maptools import CoordType, RegionsDBRecord
+from sl_maptools import AreaBounds, CoordType, RegionsDBRecord
 from sl_maptools.knowns import KNOWN_AREAS
 from sl_maptools.utils import ConfigReader
 from sl_maptools.validator import get_bonnie_coords, inventorize_maps_latest
-
 
 INTERESTING_CLUMPSIZE_THRESHOLD: Final[int] = 10
 
@@ -156,5 +155,5 @@ def main():
                 print(f"{AreaBounds.from_coordset(clump)=}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
