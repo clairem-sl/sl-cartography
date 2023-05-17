@@ -52,9 +52,9 @@ class AreaBounds(NamedTuple):
         return self.x_eastmost - self.x_westmost + 1
 
     @classmethod
-    def from_coords(cls, coord1: tuple[int, int], coord2: tuple[int, int]):
-        x1, y1 = coord1
-        x2, y2 = coord2
+    def from_corners(cls, corner1: tuple[int, int], corner2: tuple[int, int]):
+        x1, y1 = corner1
+        x2, y2 = corner2
         x_min, x_max = (x1, x2) if x1 <= x2 else (x2, x1)
         y_min, y_max = (y1, y2) if y1 <= y2 else (y2, y1)
         return cls(x_min, y_min, x_max, y_max)
