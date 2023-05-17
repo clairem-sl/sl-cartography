@@ -102,8 +102,9 @@ def export(db: Path, targ: Path, quiet: bool = False):
 
 
 def import_(src: Path, db: Path, quiet: bool = False):
+    yaml = YAML(typ="safe")
     with src.open("rt") as fin:
-        data = ryaml.safe_load(fin)
+        data = yaml.load(fin)
 
     if (_schema := data.get("_schema")) is None:
         raise InvalidSourceError("Source file does not have '_schema'")
