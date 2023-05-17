@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from functools import partial
 from pathlib import Path
-from typing import Final, NamedTuple, Optional, Union, TypedDict, Generator
+from typing import Final, Generator, Iterable, NamedTuple, Optional, TypedDict, Union
 
 from PIL import Image
 
@@ -76,6 +76,12 @@ class AreaBounds(NamedTuple):
         for y in self.y_iterator():
             for x in self.x_iterator():
                 yield x, y
+
+    @classmethod
+    def from_coordset(cls, coords: Iterable[CoordType]):
+        x_min, y_min = tuple(map(min, *coords))
+        x_max, y_max = tuple(map(max, *coords))
+        return cls(x_min, y_min, x_max, y_max)
 
 
 class MapCoord(NamedTuple):
