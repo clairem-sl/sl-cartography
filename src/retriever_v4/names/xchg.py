@@ -2,6 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 import argparse
+import packaging.version as versioning
 import pickle
 from datetime import datetime
 from pathlib import Path
@@ -112,8 +113,9 @@ def import_(src: Path, db: Path, quiet: bool = False):
         raise InvalidSourceError(
             "Source file does not seem to be an exported RegionsDB!"
         )
-    if (_ver := _schema.get("version")) not in SUPPORTED_SCHEMA_VERS:
-        raise InvalidSourceError(f"Importer does not support schema version {_ver}")
+    _ver = versioning.parse(_schema.get("version", "0.0.0"))
+    if _ver.major != 1:
+        raise InvalidSourceError(f"Schema version != 1.x.x, not supported")
 
     _metadata = data.get("_metadata")
     if not quiet:
