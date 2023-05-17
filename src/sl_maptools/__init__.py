@@ -35,6 +35,9 @@ class AreaBounds(NamedTuple):
     def __str__(self):
         return f"({self.x_westmost},{self.y_southmost})-({self.x_eastmost},{self.y_northmost})"
 
+    def __repr__(self):
+        return f"AreaBounds({self.x_westmost}, {self.y_southmost}, {self.x_eastmost}, {self.y_northmost})"
+
     def __contains__(self, item: tuple[int, int]) -> bool:
         x, y = item
         return (self.x_westmost <= x <= self.x_eastmost) and (
