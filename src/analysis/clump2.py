@@ -8,7 +8,7 @@ from sl_maptools.knowns import KNOWN_AREAS
 from sl_maptools.utils import ConfigReader
 from sl_maptools.validator import get_bonnie_coords, inventorize_maps_latest
 
-INTERESTING_CLUMPSIZE_THRESHOLD: Final[int] = 10
+INTERESTING_CLUMPSIZE_THRESHOLD: Final[int] = 6
 
 
 Config = ConfigReader("config.toml")
