@@ -13,7 +13,6 @@ from typing import Final, Generator, Iterable, NamedTuple, Optional, TypedDict, 
 
 from PIL import Image
 
-
 CoordType = tuple[int, int]
 
 
@@ -27,6 +26,7 @@ class AreaBounds(NamedTuple):
     """
     Boundaries of an area, usually in terms of Map Coordinates
     """
+
     x_westmost: int
     y_southmost: int
     x_eastmost: int
@@ -40,9 +40,7 @@ class AreaBounds(NamedTuple):
 
     def __contains__(self, item: tuple[int, int]) -> bool:
         x, y = item
-        return (self.x_westmost <= x <= self.x_eastmost) and (
-                self.y_southmost <= y <= self.y_northmost
-        )
+        return (self.x_westmost <= x <= self.x_eastmost) and (self.y_southmost <= y <= self.y_northmost)
 
     @property
     def height(self):
@@ -146,15 +144,14 @@ class MapStats:
     name: str
     regions: int
     voids: int
-    timestamp: datetime = field(
-        repr=False, compare=False, default_factory=partial(datetime.now, tz=timezone.utc)
-    )
+    timestamp: datetime = field(repr=False, compare=False, default_factory=partial(datetime.now, tz=timezone.utc))
 
 
 class MapCanvas(object):
     """
     A canvas where the map will be drawn
     """
+
     def __init__(
         self,
         south_west: MapCoord,
