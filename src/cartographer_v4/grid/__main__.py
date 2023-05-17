@@ -104,7 +104,7 @@ def main(opts: GridOptions):
         print(f"{areamap}", end="", flush=True)
         areaname = areamap.stem
 
-        overlay_p = grid_overlay_dir / (areaname + ".overlay.png")
+        overlay_p = grid_overlay_dir / (areaname + ".grid-overlay.png")
         gridc = None
         if not overlay_p.exists():
             bounds = KNOWN_AREAS[areaname]
