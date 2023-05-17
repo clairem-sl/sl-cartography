@@ -94,6 +94,15 @@ KNOWN_AREAS: Final[dict[str, AreaBounds]] = {
     # endregion
     "TheMists": AreaBounds(562, 734, 567, 739),
     "PaleoQuest": AreaBounds(400, 392, 401, 400),
+    "Yumix": AreaBounds(653, 1245, 654, 1249),
+    "VWBPE": AreaBounds(1102, 1312, 1106, 1314),
+    "Maple": AreaBounds(878, 927, 882, 928),
+    "BlackBay": AreaBounds(615, 1058, 617, 1060),
+    "Schindleria": AreaBounds(527, 1027, 529, 1029),
+    "MayaLake": AreaBounds(979, 1198, 981, 1200),
+    "MacedoniaEstate": AreaBounds(540, 1182, 544, 1185),
+    "Bauer": AreaBounds(899, 1200, 902, 1202),
+    "Olni": AreaBounds(655, 1291, 658, 1293),
 }
 
 VERIFIED_VOIDS: Final[dict["MapCoord", datetime.date]] = {
