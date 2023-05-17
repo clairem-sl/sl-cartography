@@ -135,7 +135,7 @@ def main(opts: GridOptions):
 
             gridc.save(overlay_p)
         print(f"\n  => {overlay_p}", end="", flush=True)
-        composite_p = grid_composite_dir / (areaname + ".gridded.png")
+        composite_p = grid_composite_dir / (areaname + ".composited.png")
         if gridc:
             if not composite_p.exists():
                 with Image.open(areamap) as img:
