@@ -67,6 +67,8 @@ class RetrieverProgress:
 
     @property
     def next_coordinate(self) -> tuple[int, int]:
+        if self._backlog:
+            return self._backlog[0]
         return self.next_x, self.next_y
 
     @property
@@ -102,6 +104,10 @@ class RetrieverProgress:
         }
         with self.backing_file.open("wt") as fout:
             ryaml.dump(exported, fout, default_flow_style=False)
+
+    def add(self, coord: CoordType):
+        self._backlog.append(coord)
+        self.outstanding.add(coord)
 
     async def abatch(self, batch_size: int) -> Generator[tuple[int, int], None, None]:
         c = 0

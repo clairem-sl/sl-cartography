@@ -14,7 +14,7 @@ import signal
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Final, Protocol, cast
+from typing import Final, Optional, Protocol, cast
 
 import httpx
 
@@ -33,6 +33,7 @@ from sl_maptools import CoordType, MapCoord
 from sl_maptools.validator import inventorize_maps_all
 from sl_maptools.fetchers import RawResult
 from sl_maptools.fetchers.map import BoundedMapFetcher
+from sl_maptools.knowns import KNOWN_AREAS
 from sl_maptools.utils import ConfigReader, SLMapToolsConfig
 
 SSIM_THRESHOLD: Final[float] = 0.895
@@ -72,6 +73,8 @@ class RetrieverMapsOptions(Protocol):
     debug_level: DebugLevel
     min_batch_size: int
     abort_low_rps: int
+    coordfile: Optional[Path]
+    areas: list[str]
 
 
 class OptionsProtocol(RetrieverMapsOptions, TimeOptions, Protocol):
@@ -114,6 +117,22 @@ def get_options() -> OptionsProtocol:
         type=int,
         default=-1,
         help="If rps drops below this for some time, abort",
+    )
+    parser.add_argument(
+        "--coordfile",
+        metavar="FILE",
+        type=Path,
+        help=(
+            "If specified, fetch coordinates from FILE, in addition to prior progress. "
+            "Contents of the file must by X,Y pairs, one per line."
+        ),
+    )
+    parser.add_argument(
+        "--areas",
+        metavar="AREA_LIST",
+        type=str,
+        nargs="+",
+        help="Space- and/or comma-separated list of areas to retrieve, in addition to prior progress.",
     )
 
     add_timeoptions(parser)
@@ -222,13 +241,30 @@ def main(
         print(f"{Progress.outstanding_count} jobs still outstanding from last session")
     else:
         print("No outstanding jobs from last session.")
-        if Progress.next_y < 0:
-            print("No rows left to process.")
-            print(
-                f"Delete the file {progress_file} to reset. (Or specify --auto-reset)"
-            )
-            return
+
+    if opts.coordfile and opts.coordfile.exists():
+        with opts.coordfile.open("rt") as fin:
+            for ln in fin:
+                ln = ln.strip()
+                if not ln:
+                    continue
+                x, y = ln.split(",")
+                Progress.add((int(x), int(y)))
+
+    if opts.areas:
+        cs_anames = {k.casefold(): k for k in KNOWN_AREAS.keys()}
+        want_areas: set[str] = {
+            cs_anames[a1] for area in opts.areas for a1 in map(str.casefold, area.split(",")) if a1 in cs_anames
+        }
+        for aname in want_areas:
+            for coord in KNOWN_AREAS[aname].xy_iterator():
+                Progress.add(coord)
+
     print(f"Next coordinate: {Progress.next_coordinate}")
+    if Progress.next_coordinate[1] < 0:
+        print("No rows left to process.")
+        print(f"Delete the file {progress_file} to reset. (Or specify --auto-reset)")
+        return
 
     with MP.Manager() as manager, MPMgr.SharedMemoryManager() as shm_manager:
         print("Starting saver worker...", end="", flush=True)
