@@ -101,8 +101,8 @@ def main(opts: GridOptions):
         }
 
     for areamap in want_areas:
-        print(f"{areamap}", end="", flush=True)
         areaname = areamap.stem
+        print(f"{areaname}", end="", flush=True)
 
         overlay_p = grid_overlay_dir / (areaname + ".grid-overlay.png")
         gridc = None
@@ -142,7 +142,9 @@ def main(opts: GridOptions):
                     out = Image.alpha_composite(img, gridc)
                     out.save(composite_p)
         if composite_p.exists():
-            print(f"\n  => {composite_p}", flush=True)
+            print(f"\n  => {composite_p}", end="", flush=True)
+
+        print()
 
 
 if __name__ == "__main__":
