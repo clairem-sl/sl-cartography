@@ -1,20 +1,33 @@
+import argparse
 import pickle
 from collections import deque
 from pathlib import Path
-from typing import Final
+from typing import Final, Protocol, cast
 
 from sl_maptools import AreaBounds, CoordType, RegionsDBRecord
-from sl_maptools.knowns import KNOWN_AREAS, DO_NOT_MAP_AREAS
+from sl_maptools.knowns import DO_NOT_MAP_AREAS, KNOWN_AREAS
 from sl_maptools.utils import ConfigReader
 from sl_maptools.validator import get_bonnie_coords, inventorize_maps_latest
 
-INTERESTING_CLUMPSIZE_THRESHOLD: Final[int] = 9
+INTERESTING_CLUMPSIZE_THRESHOLD: Final[int] = 10
 
 
 Config = ConfigReader("config.toml")
 
 
-def main():
+class ClumpOptions(Protocol):
+    min_clumpsize: int
+
+
+def get_options() -> ClumpOptions:
+    parser = argparse.ArgumentParser("analysis.clump2")
+    parser.add_argument("--min-clumpsize", type=int, default=INTERESTING_CLUMPSIZE_THRESHOLD)
+
+    _opts = parser.parse_args()
+    return cast(ClumpOptions, _opts)
+
+
+def main(opts: ClumpOptions):
     map_tiles = inventorize_maps_latest(Config.maps.dir)
     regionsdb = Path(Config.names.dir) / Config.names.db
 
@@ -134,7 +147,6 @@ def main():
                 interesting_clumps.append((aname, clump, "new"))
                 continue
 
-
     # Finally, let's do some blacklisting
     do_not_check_coords: set[CoordType] = set()
     for aname, abounds in DO_NOT_MAP_AREAS.items():
@@ -149,7 +161,7 @@ def main():
 
     for info in clumps_to_check:
         aname, clump, reason = info
-        if len(clump) >= INTERESTING_CLUMPSIZE_THRESHOLD:
+        if len(clump) >= opts.min_clumpsize:
             if aname:
                 continue
                 # if reason == "grew":
@@ -170,4 +182,5 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    options = get_options()
+    main(options)
