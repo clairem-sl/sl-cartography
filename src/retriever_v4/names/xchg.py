@@ -17,6 +17,7 @@ Config = ConfigReader("config.toml")
 
 
 DEFA_DB = Path(Config.names.dir) / Config.names.db
+DEFA_EXPORT = DEFA_DB.with_suffix(f".{datetime.now().strftime('%Y%m%d-%H%M')}.yaml")
 SUPPORTED_SCHEMA_VERS = {"1.0.0"}
 
 
@@ -44,7 +45,14 @@ def get_options() -> OptionsType:
     )
 
     p_export = subparsers.add_parser("export", help="Export to YAML file")
-    p_export.add_argument("to_yaml", type=Path, help="Target YAML file path")
+    p_export.add_argument(
+        "to_yaml",
+        metavar="YAML_file",
+        type=Path,
+        help=f"(Optional) Target YAML file path, defaults to {DEFA_EXPORT}",
+        nargs="?",
+        default=DEFA_EXPORT,
+    )
 
     p_import_ = subparsers.add_parser("import", help="Import from YAML file")
     p_import_.add_argument("from_yaml", type=Path, help="Source YAML file path")
