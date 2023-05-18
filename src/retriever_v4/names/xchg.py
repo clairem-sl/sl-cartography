@@ -33,9 +33,7 @@ class OptionsType(Protocol):
 
 
 def get_options() -> OptionsType:
-    parser = argparse.ArgumentParser(
-        "retriever_v4.names.xchg", epilog="For more details, do COMMAND --help"
-    )
+    parser = argparse.ArgumentParser("retriever_v4.names.xchg", epilog="For more details, do COMMAND --help")
     subparsers = parser.add_subparsers(title="COMMANDS", dest="command", required=True)
     parser.add_argument(
         "--db",
@@ -96,9 +94,7 @@ def export(db: Path, targ: Path, quiet: bool = False):
                 ),
             },
         },
-        "_metadata": {
-            "created": datetime.now().astimezone().isoformat(timespec="minutes")
-        },
+        "_metadata": {"created": datetime.now().astimezone().isoformat(timespec="minutes")},
         "data": result,
     }
     yaml = YAML(typ="safe")
@@ -120,9 +116,7 @@ def import_(src: Path, db: Path, quiet: bool = False):
     if (_schema := data.get("_schema")) is None:
         raise InvalidSourceError("Source file does not have '_schema'")
     if _schema.get("name") != "sl-carto-regionsdb":
-        raise InvalidSourceError(
-            "Source file does not seem to be an exported RegionsDB!"
-        )
+        raise InvalidSourceError("Source file does not seem to be an exported RegionsDB!")
     _ver = versioning.parse(_schema.get("version", "0.0.0"))
     if _ver.major != 1:
         raise InvalidSourceError(f"Schema version != 1.x.x, not supported")
@@ -140,9 +134,7 @@ def import_(src: Path, db: Path, quiet: bool = False):
 
     result: dict[CoordType, RegionsDBRecord] = {}
     if not quiet:
-        print(
-            f"{len(regs_data)} records retrieved. Transforming...", end="", flush=True
-        )
+        print(f"{len(regs_data)} records retrieved. Transforming...", end="", flush=True)
     for scoord, coord_info in regs_data.items():
         coord = cast(CoordType, tuple(map(int, scoord.split(","))))
         coord_info["sources"] = set(coord_info["sources"])
