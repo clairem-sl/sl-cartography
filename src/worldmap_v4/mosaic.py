@@ -37,7 +37,8 @@ Config: SLMapToolsConfig = ConfigReader("config.toml")
 RE_MAP: Final[re.Pattern] = re.compile(r"^(\d+)-(\d+)_\d+-\d+.jpg$")
 
 DEFA_MAPDIR: Final[Path] = Path(Config.maps.dir)
-CACHE_FILE: Final[str] = "CachedDominantColors.pkl"
+DEFA_OUTDIR: Final[Path] = Path(Config.mosaic.dir)
+DEFA_CACHE: Final[Path] = Path(Config.mosaic.dir) / Config.mosaic.domc_cache
 
 DEFA_CALC_WORKERS: Final[int] = max(1, MP.cpu_count() - 2)
 DEFA_MAKE_WORKERS: Final[int] = 1
@@ -59,12 +60,14 @@ FASCIA_PIXELS: Final[dict[int, int]] = {
 
 class OptionsType(Protocol):
     reset_cache: bool
+    cachefile: Path
     no_cache: bool
     calc_workers: int
     make_workers: int
     pip_every: int
     save_every: int
     mapdir: Path
+    outdir: Path
     no_validate: bool
     regionsdb: Path
     fetchbonnie: bool
@@ -77,6 +80,7 @@ def get_opts() -> OptionsType:
 
     cache_grp = parser.add_mutually_exclusive_group()
     cache_grp.add_argument("--reset-cache", action="store_true")
+    cache_grp.add_argument("--cachefile", type=Path, default=DEFA_CACHE)
     cache_grp.add_argument("--no-cache", action="store_true")
 
     parser.add_argument(
@@ -89,6 +93,7 @@ def get_opts() -> OptionsType:
     parser.add_argument("--save-every", metavar="N", type=int, default=2000)
     parser.add_argument("--final-only", action="store_true")
     parser.add_argument("--mapdir", metavar="DIR", type=Path, default=DEFA_MAPDIR)
+    parser.add_argument("--outdir", metavar="DIR", type=Path, default=DEFA_OUTDIR)
 
     parser.add_argument("--no-validate", action="store_true")
     parser.add_argument("--regionsdb", metavar="DB", type=Path, default=DEFA_REGIONSDB)
@@ -181,7 +186,7 @@ def make_mosaic(
     queue: MP.Queue,
     patches_coll: dict[tuple[CoordType, int], list[RGBTuple]],
     coll_lock: MP.RLock,
-    mapdir: Path,
+    outdir: Path,
 ):
     signal.signal(signal.SIGINT, signal.SIG_IGN)
 
@@ -233,7 +238,7 @@ def make_mosaic(
                         sy = 0
                         sx += fpx
             _state(f"save_{sz}")
-            canvas.save(mapdir / f"worldmap4_mosaic_{sz}x{sz}.png")
+            canvas.save(outdir / f"worldmap4_mosaic_{sz}x{sz}.png")
             canvas.close()
             print(f"💾{sz}", end="", flush=True)
         # noinspection PyUnusedLocal
@@ -249,7 +254,7 @@ def make_mosaic(
 
 def main(opts: OptionsType):
     cached_domc: dict[CoordType, DomColors] = {}
-    cache_path = opts.mapdir / CACHE_FILE
+    cache_path = opts.cachefile
     if not opts.reset_cache:
         if cache_path.exists():
             try:

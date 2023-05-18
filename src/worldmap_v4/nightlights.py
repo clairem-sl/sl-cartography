@@ -10,10 +10,14 @@ from typing import Final, Protocol, TypedDict, cast
 from PIL import Image, ImageDraw
 
 from sl_maptools import MapCoord, RegionsDBRecord
+from sl_maptools.utils import ConfigReader
 from sl_maptools.validator import get_bonnie_coords, inventorize_maps_all
 
-DEFA_DB_PATH: Final[Path] = Path(r"C:\Cache\SL-Carto\RegionsDB2.pkl")
-DEFA_MAPDIR: Final[Path] = Path(r"C:\Cache\SL-Carto\Maps2")
+Config = ConfigReader("config.toml")
+
+DEFA_DB_PATH: Final[Path] = Path(Config.names.dir) / Config.names.db
+DEFA_MAPDIR: Final[Path] = Path(Config.maps.dir)
+DEFA_OUTDIR: Final[Path] = Path(Config.nightlights.dir)
 
 MIN_X: Final[int] = 0
 MAX_X: Final[int] = 2100
@@ -32,11 +36,11 @@ WHITE: Final = 255
 class Options(Protocol):
     dbpath: Path
     mapdir: Path
+    outdir: Path
     no_validate: bool
     bonniedb: Path
     fetchbonnie: bool
     force: bool
-    mosaicfile: Path
 
 
 class BonnieRegionData(TypedDict):
@@ -50,13 +54,12 @@ def get_opts():
 
     parser.add_argument("--dbpath", type=Path, default=DEFA_DB_PATH)
     parser.add_argument("--mapdir", type=Path, default=DEFA_MAPDIR)
+    parser.add_argument("--outdir", type=Path, default=DEFA_OUTDIR)
     parser.add_argument("--no-validate", action="store_true")
 
     grp = parser.add_mutually_exclusive_group()
     grp.add_argument("--bonniedb", type=Path, default=None)
     grp.add_argument("--fetchbonnie", action="store_true")
-
-    parser.add_argument("mosaicfile", type=Path)
 
     parser.add_argument("--force", action="store_true")
 
@@ -287,14 +290,12 @@ def make_map(opts: Options):
     dbpath = opts.dbpath
     bonniedb = opts.bonniedb
 
-    if not opts.force and opts.mosaicfile.exists():
-        raise FileExistsError(f"{opts.mosaicfile} already exists but --force not specified!")
-
     print(f"Reading Auditor's DB from {dbpath} ... ", end="", flush=True)
     with dbpath.open("rb") as fin:
         data_raw: dict[tuple[int, int], RegionsDBRecord] = pickle.load(fin)
     print(flush=True)
 
+    targ: Path
     regions: set[tuple[int, int]] = set(k for k, v in data_raw.items() if v["current_name"])
     if not opts.no_validate:
         bonnie_coords = get_bonnie_coords(bonniedb, opts.fetchbonnie)
@@ -303,17 +304,19 @@ def make_map(opts: Options):
             print(flush=True)
         mapfiles = inventorize_maps_all(opts.mapdir)
         regions.intersection_update(mapfiles.keys())
+        targ = opts.outdir / "worldmap4_nightlights.png"
+    else:
+        targ = opts.outdir / "worldmap4_nightlights_unvalidated.png"
+
+    if not opts.force and targ.exists():
+        raise FileExistsError(f"{targ} already exists but --force not specified!")
 
     print("Creating Nightlights Map ... ", end="", flush=True)
     canvas = make_nightlights({MapCoord(x, y) for x, y in regions})
     print("\nSaving nightlights mosaic ... ", end="", flush=True)
-    if opts.mosaicfile.parent.name:
-        targ = opts.mosaicfile.with_suffix(".png")
-    else:
-        targ = (opts.mapdir / opts.mosaicfile).with_suffix(".png")
     targ.parent.mkdir(parents=True, exist_ok=True)
     canvas.save(targ, optimize=True)
-    print(f"\nNightlights mosaic saved to {opts.mosaicfile}")
+    print(f"\nNightlights mosaic saved to {targ}")
 
 
 if __name__ == '__main__':

@@ -91,7 +91,12 @@ class MapsConfig(Protocol):
 
 
 class MosaicConfig(Protocol):
+    dir: str
     domc_cache: str
+
+
+class NightlightsConfig(Protocol):
+    dir: str
 
 
 class AreasConfig(Protocol):
@@ -109,6 +114,7 @@ class SLMapToolsConfig(Protocol):
     names: NamesConfig
     maps: MapsConfig
     mosaic: MosaicConfig
+    nightlights: NightlightsConfig
     areas: AreasConfig
     grids: GridsConfig
 

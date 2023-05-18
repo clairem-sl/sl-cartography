@@ -9,13 +9,17 @@ log = 'RegionsDB2.log.yaml'
 progress = 'RegionsDB2Progress.yaml'
 
 [maps]
-dir = 'C:\Cache\SL-Carto\Maps2'
+dir = 'C:\Cache\SL-Carto\MapsTiles'
 lock = 'Maps.lock'
 log = 'Maps.log.yaml'
 progress = 'MapsProgress.yaml'
 
 [mosaic]
+dir = 'C:\Cache\SL-Carto\WorldMaps'
 domc_cache = 'CachedDominantColors.pkl'
+
+[nightlights]
+dir = 'C:\Cache\SL-Carto\WorldMaps'
 
 [areas]
 dir = 'C:\Cache\SL-Carto\AreaMaps'
