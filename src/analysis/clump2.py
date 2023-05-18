@@ -23,6 +23,7 @@ def main():
         regsdb: dict[CoordType, RegionsDBRecord] = pickle.load(fin)
     validation_set.update(k for k, v in regsdb.items() if v["current_name"])
     bonnie_coords = get_bonnie_coords(None, True)
+    print()
     # print(bonnie_coords)
     validation_set.intersection_update(bonnie_coords)
     for co in list(map_tiles.keys()):
