@@ -82,7 +82,6 @@ def main(opts: GridOptions):
         regsdb: dict[CoordType, RegionsDBRecord] = pickle.load(fin)
     validation_set.update(k for k, v in regsdb.items() if v["current_name"])
     bonnie_coords = get_bonnie_coords(None, True)
-    print()
     validation_set.intersection_update(bonnie_coords)
 
     want_areas: set[Path]
@@ -100,13 +99,16 @@ def main(opts: GridOptions):
             for areamap in areamaps_dir.glob("*.png")
         }
 
-    for areamap in want_areas:
+    tot = len(want_areas)
+    for num, areamap in enumerate(want_areas, start=1):
         areaname = areamap.stem
-        print(f"{areaname}", end="", flush=True)
+        print(f"\n({num}/{tot}) {areaname}", flush=True)
 
         overlay_p = grid_overlay_dir / (areaname + ".grid-overlay.png")
         gridc = None
+        print("  => ", end="")
         if not overlay_p.exists():
+            print("#️⃣ ", end="")
             bounds = KNOWN_AREAS[areaname]
             x1, y1, x2, y2 = bounds
             size_x = (x2 - x1 + 1) * 256
@@ -134,17 +136,18 @@ def main(opts: GridOptions):
                     print(".", end="", flush=True)
 
             gridc.save(overlay_p)
-        print(f"\n  => {overlay_p}", end="", flush=True)
+        print(f"{overlay_p}\n  => ", end="", flush=True)
         composite_p = grid_composite_dir / (areaname + ".composited.png")
         if gridc:
             if not composite_p.exists():
+                print(f"💠 ", end="")
                 with Image.open(areamap) as img:
                     out = Image.alpha_composite(img, gridc)
                     out.save(composite_p)
         if composite_p.exists():
-            print(f"\n  => {composite_p}", end="", flush=True)
+            print(f"{composite_p}", end="", flush=True)
 
-        print()
+    print()
 
 
 if __name__ == "__main__":
