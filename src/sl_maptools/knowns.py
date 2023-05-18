@@ -106,9 +106,9 @@ KNOWN_AREAS: Final[dict[str, AreaBounds]] = {
     "LR-160": AreaBounds(1187, 1206, 1190, 1210),
     "LR-180": AreaBounds(1193, 1206, 1196, 1210),
     "Preflight": AreaBounds(1296, 1193, 1299, 1196),
-    # endregion
-    "TheMists": AreaBounds(562, 734, 567, 739),
+    "TheMists": AreaBounds(562, 734, 567, 739),  ## Former site of Fantasy Faire 2023
     "PaleoQuest": AreaBounds(400, 392, 401, 400),
+    # endregion
 }
 
 DO_NOT_MAP_AREAS: dict[str, AreaBounds] = {
