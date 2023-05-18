@@ -180,6 +180,14 @@ def main(opts: ClumpOptions):
                     print(" ", coord, regsdb[coord]["current_name"])
                 print(f"    => {AreaBounds.from_coordset(clump)=}")
 
+    print("===== Requested Areas =====")
+    for clump in list_of_clumps:
+        if (698, 1132) in clump:
+            print(f"NEW: {len(clump)} {clump}")
+            for coord in sorted(clump, key=lambda c: regsdb[c]["current_name"]):
+                print(" ", coord, regsdb[coord]["current_name"])
+            print(f"    => {AreaBounds.from_coordset(clump)=}")
+
 
 if __name__ == "__main__":
     options = get_options()
