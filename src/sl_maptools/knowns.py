@@ -61,6 +61,11 @@ KNOWN_AREAS: Final[dict[str, AreaBounds]] = {
     "IsleOfWyrms": AreaBounds(545, 1059, 548, 1063),
     "AmazonRiver": AreaBounds(832, 969, 835, 972),
     "Baunatal": AreaBounds(715, 922, 718, 924),
+    "CrackDen": AreaBounds(742, 1389, 745, 1391),
+    "MadisonCounty": AreaBounds(850, 1320, 852, 1323),
+    "TempletonCove": AreaBounds(1027, 1240, 1030, 1242),
+    "Mythera": AreaBounds(720, 1324, 722, 1328),
+    "JunglesOfGor": AreaBounds(1097, 949, 1099, 951),
     # endregion
     # region ### User Continents - Tentative
     "GoreanLands": AreaBounds(1014, 1175, 1020, 1179),
@@ -72,8 +77,18 @@ KNOWN_AREAS: Final[dict[str, AreaBounds]] = {
     "SunIslands": AreaBounds(876, 987, 878, 990),
     "Mieville": AreaBounds(533, 1196, 537, 1201),
     "Pirates1700": AreaBounds(940, 1174, 942, 1177),
-    "Mythera": AreaBounds(720, 1324, 722, 1328),
     "SecondFrance": AreaBounds(556, 1117, 559, 1120),
+    # ### Below this line, are areas with < 10 regions in a clump. Much less interesting.
+    "Yumix": AreaBounds(653, 1245, 654, 1249),
+    "VWBPE": AreaBounds(1102, 1312, 1106, 1314),
+    "Maple": AreaBounds(878, 927, 882, 928),
+    "BlackBay": AreaBounds(615, 1058, 617, 1060),
+    "Schindleria": AreaBounds(527, 1027, 529, 1029),
+    "MayaLake": AreaBounds(979, 1198, 981, 1200),
+    "MacedoniaEstate": AreaBounds(540, 1182, 544, 1185),
+    "Bauer": AreaBounds(899, 1200, 902, 1202),
+    "Olni": AreaBounds(655, 1291, 658, 1293),
+    "PompeiiRomanum": AreaBounds(747, 1079, 749, 1083),
     # endregion
     # region ### Premium Continents
     "EastPremium": AreaBounds(1192, 907, 1215, 926),
@@ -94,19 +109,6 @@ KNOWN_AREAS: Final[dict[str, AreaBounds]] = {
     # endregion
     "TheMists": AreaBounds(562, 734, 567, 739),
     "PaleoQuest": AreaBounds(400, 392, 401, 400),
-    # ### Below this line, are areas with < 10 regions in a clump. Much less interesting.
-    "Yumix": AreaBounds(653, 1245, 654, 1249),
-    "VWBPE": AreaBounds(1102, 1312, 1106, 1314),
-    "Maple": AreaBounds(878, 927, 882, 928),
-    "BlackBay": AreaBounds(615, 1058, 617, 1060),
-    "Schindleria": AreaBounds(527, 1027, 529, 1029),
-    "MayaLake": AreaBounds(979, 1198, 981, 1200),
-    "MacedoniaEstate": AreaBounds(540, 1182, 544, 1185),
-    "Bauer": AreaBounds(899, 1200, 902, 1202),
-    "Olni": AreaBounds(655, 1291, 658, 1293),
-    "PompeiiRomanum": AreaBounds(747, 1079, 749, 1083),
-    # "CH": AreaBounds(1102, 1199, 1104, 1201),  ### NOT interesting
-
 }
 
 VERIFIED_VOIDS: Final[dict["MapCoord", datetime.date]] = {
