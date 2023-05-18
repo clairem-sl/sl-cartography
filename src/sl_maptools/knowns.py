@@ -66,6 +66,7 @@ KNOWN_AREAS: Final[dict[str, AreaBounds]] = {
     "TempletonCove": AreaBounds(1027, 1240, 1030, 1242),
     "Mythera": AreaBounds(720, 1324, 722, 1328),
     "JunglesOfGor": AreaBounds(1097, 949, 1099, 951),
+    "RaglanShire": AreaBounds(1083, 1296, 1086, 1299),
     # endregion
     # region ### User Continents - Tentative
     "GoreanLands": AreaBounds(1014, 1175, 1020, 1179),
