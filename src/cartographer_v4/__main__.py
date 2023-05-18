@@ -200,6 +200,7 @@ def main(opts: Options):
         if not opts.overwrite and targ.exists():
             print(f"Already exists", end="")
         else:
+            print("🌐", end="", flush=True)
             make_map(targ, area_bounds, map_tiles)
         print(f"\n  => {targ}", flush=True)
         if AbortRequested:
