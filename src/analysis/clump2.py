@@ -164,7 +164,7 @@ def main():
                 #     print(f"{aname} mutated: {diff}")
             else:
                 print(f"NEW: {len(clump)} {clump}")
-                for coord in sorted(clump, key=lambda co: regsdb[co]["current_name"]):
+                for coord in sorted(clump, key=lambda c: regsdb[c]["current_name"]):
                     print(" ", coord, regsdb[coord]["current_name"])
                 print(f"    => {AreaBounds.from_coordset(clump)=}")
 
