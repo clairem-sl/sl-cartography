@@ -22,7 +22,7 @@ from retriever_v4 import (
     dispatch_fetcher,
     handle_sigint,
 )
-from sl_maptools import CoordType, MapCoord, RegionsDBRecord
+from sl_maptools import CoordType, MapCoord, RegionsDBRecord2
 from sl_maptools.fetchers import CookedResult
 from sl_maptools.fetchers.cap import BoundedNameFetcher
 from sl_maptools.utils import ConfigReader, SLMapToolsConfig
@@ -41,7 +41,7 @@ Progress: RetrieverProgress
 
 AbortRequested = asyncio.Event()
 
-DataBase: dict[CoordType, RegionsDBRecord] = {}
+DataBase: dict[CoordType, RegionsDBRecord2] = {}
 
 
 class ChangeStatsDict(TypedDict):
@@ -115,9 +115,9 @@ def get_options() -> OptionsProtocol:
 def process(tile: CookedResult) -> bool:
     global DataBase
 
-    ts = datetime.now().astimezone().isoformat(timespec="minutes")
+    ts = datetime.now().astimezone()
     xy = tile.coord.x, tile.coord.y
-    dbxy: RegionsDBRecord = DataBase.get(xy)
+    dbxy: RegionsDBRecord2 = DataBase.get(xy)
 
     def record_history():
         nonlocal dbxy
@@ -127,7 +127,7 @@ def process(tile: CookedResult) -> bool:
         dbxy["last_check"] = ts
         if seen_name:
             dbxy["last_seen"] = ts
-        history: dict[str, list[str]] = dbxy["name_history"]
+        history: dict[str, list[tuple[datetime, datetime]]] = dbxy["name_history2"]
         if seen_name != prev_name:
             if seen_name:
                 if prev_name:
@@ -138,13 +138,14 @@ def process(tile: CookedResult) -> bool:
                 ChangeStats["gone"] += 1
         if seen_name not in history:
             print("🉑", end="", flush=True)
-            history[seen_name] = [ts]
+            history[seen_name] = [(ts, ts)]
             return
         if seen_name != prev_name:
             print("🉑", end="", flush=True)
-            history[seen_name].append(ts)
+            history[seen_name].append((ts, ts))
         else:
-            history[seen_name][-1] = ts
+            sts, _ = history[seen_name][-1]
+            history[seen_name][-1] = (sts, ts)
 
     if tile.result is None:
         if dbxy is None:
@@ -160,12 +161,12 @@ def process(tile: CookedResult) -> bool:
             raise
         if dbxy is None:
             ChangeStats["new"] += 1
-            dbxy: RegionsDBRecord = {
+            dbxy: RegionsDBRecord2 = {
                 "first_seen": ts,
-                "last_seen": "",
-                "last_check": "",
+                "last_seen": None,
+                "last_check": None,
                 "current_name": "",
-                "name_history": {},
+                "name_history2": {},
                 "sources": {"cap"},
             }
         assert isinstance(dbxy, dict)

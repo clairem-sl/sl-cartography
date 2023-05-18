@@ -211,8 +211,8 @@ class RegionsDBRecord(TypedDict):
 
 class RegionsDBRecord2(TypedDict):
     first_seen: datetime
-    last_seen: datetime
-    last_check: datetime
+    last_seen: Union[datetime, None]
+    last_check: Union[datetime, None]
     current_name: str
     name_history2: dict[str, list[tuple[datetime, datetime]]]
     sources: set[str]
