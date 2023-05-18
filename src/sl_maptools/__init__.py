@@ -207,3 +207,12 @@ class RegionsDBRecord(TypedDict):
     current_name: str
     name_history: dict[str, list[str]]
     sources: set[str]
+
+
+class RegionsDBRecord2(TypedDict):
+    first_seen: datetime
+    last_seen: datetime
+    last_check: datetime
+    current_name: str
+    name_history2: dict[str, list[tuple[datetime, datetime]]]
+    sources: set[str]
