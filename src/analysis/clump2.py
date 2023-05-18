@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Final
 
 from sl_maptools import AreaBounds, CoordType, RegionsDBRecord
-from sl_maptools.knowns import KNOWN_AREAS
+from sl_maptools.knowns import KNOWN_AREAS, DO_NOT_MAP_AREAS
 from sl_maptools.utils import ConfigReader
 from sl_maptools.validator import get_bonnie_coords, inventorize_maps_latest
 
@@ -133,7 +133,20 @@ def main():
                 interesting_clumps.append((aname, clump, "new"))
                 continue
 
-    for info in interesting_clumps:
+
+    # Finally, let's do some blacklisting
+    do_not_check_coords: set[CoordType] = set()
+    for aname, abounds in DO_NOT_MAP_AREAS.items():
+        _coords: set[CoordType] = {xy for xy in abounds.xy_iterator()}
+        _coords.intersection_update(all_coords)
+        do_not_check_coords.update(_coords)
+    clumps_to_check: list[tuple[str, set[CoordType], str]] = []
+    for aname, clump, reason in interesting_clumps:
+        if clump.intersection(do_not_check_coords):
+            continue
+        clumps_to_check.append((aname, clump, reason))
+
+    for info in clumps_to_check:
         aname, clump, reason = info
         if len(clump) >= INTERESTING_CLUMPSIZE_THRESHOLD:
             if aname:

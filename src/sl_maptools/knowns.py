@@ -111,6 +111,10 @@ KNOWN_AREAS: Final[dict[str, AreaBounds]] = {
     "PaleoQuest": AreaBounds(400, 392, 401, 400),
 }
 
+DO_NOT_MAP_AREAS: dict[str, AreaBounds] = {
+    "CH": AreaBounds(1102, 1199, 1104, 1201),  ### NOT interesting
+}
+
 VERIFIED_VOIDS: Final[dict["MapCoord", datetime.date]] = {
     # Contains voids that we manually verify using GridSurvey APIs
     # Reason for this CONST is that map sometimes return an image even though there's no actual region/sim at the
