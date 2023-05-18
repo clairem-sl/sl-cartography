@@ -122,7 +122,4 @@ VERIFIED_VOIDS: Final[dict["MapCoord", datetime.date]] = {
     # location.
     # The datetime indicates when the verification is done.
     #
-    MapCoord(650, 1265): datetime(2022, 11, 9),
-    # This used to be "Spartan Realms". Seems to be abandoned and finally removed.
-    MapCoord(1012, 1341): datetime(2022, 11, 9),
 }
