@@ -8,7 +8,6 @@ from _operator import methodcaller
 
 import packaging.version as versioning
 import pickle
-import re
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Optional, Protocol, cast, Final, TypedDict
@@ -28,8 +27,6 @@ Config = ConfigReader("config.toml")
 DEFA_DB = Path(Config.names.dir) / Config.names.db
 DEFA_EXPORT = DEFA_DB.with_suffix(f".{datetime.now().strftime('%Y%m%d-%H%M')}.yaml")
 SUPPORTED_SCHEMA_VERS: Final[set[int]] = {1, 3}
-
-RE_TS_RANGE = re.compile(r"(?P<t1>[^~,\s]+)[~,\s](?P<t2>[^~,\s]+)")
 
 
 class InvalidSourceError(RuntimeError):
@@ -98,7 +95,7 @@ def export(db: Path, targ: Path, quiet: bool = False):
             "last_check": iso_ts(info["last_check"]),
             "current_name": info["current_name"],
             "name_history3": {
-                name: [f"{iso_ts(ets)}~{iso_ts(lts)}" for ets, lts in tstamps]
+                name: [[iso_ts(ets), iso_ts(lts)] for ets, lts in tstamps]
                 for name, tstamps in info["name_history3"].items()
             },
             "sources": sorted(info["sources"])
@@ -175,8 +172,8 @@ def import_3(regs_data: dict[str, Any]) -> dict[CoordType, RegionsDBRecord3]:
         for name, tstamps in data["name_history3"].items():
             ts_list: list[tuple[datetime, datetime]] = []
             for ts in tstamps:
-                m = RE_TS_RANGE.match(ts)
-                tr = datetime.fromisoformat(m.group("t1")), datetime.fromisoformat(m.group("t2"))
+                t1, t2 = ts
+                tr = datetime.fromisoformat(t1), datetime.fromisoformat(t2)
                 ts_list.append(tr)
             hist3[name] = ts_list
         result[coord] = {
