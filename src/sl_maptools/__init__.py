@@ -214,5 +214,5 @@ class RegionsDBRecord3(TypedDict):
     last_seen: Union[datetime, None]
     last_check: Union[datetime, None]
     current_name: str
-    name_history2: dict[str, list[tuple[datetime, datetime]]]
+    name_history3: dict[str, list[tuple[datetime, datetime]]]
     sources: set[str]

@@ -77,7 +77,7 @@ class RegionsDBRecord3ForSerialization(TypedDict):
     last_seen: str
     last_check: str
     current_name: str
-    name_history2: dict[str, list[str]]
+    name_history3: dict[str, list[str]]
     sources: list[str]
 
 
@@ -97,9 +97,9 @@ def export(db: Path, targ: Path, quiet: bool = False):
             "last_seen": iso_ts(info["last_seen"]),
             "last_check": iso_ts(info["last_check"]),
             "current_name": info["current_name"],
-            "name_history2": {
+            "name_history3": {
                 name: [f"{iso_ts(ets)}~{iso_ts(lts)}" for ets, lts in tstamps]
-                for name, tstamps in info["name_history2"].items()
+                for name, tstamps in info["name_history3"].items()
             },
             "sources": sorted(info["sources"])
         }
@@ -160,7 +160,7 @@ def import_1(regs_data: dict[str, Any]) -> dict[CoordType, RegionsDBRecord3]:
             "first_seen": first_seen,
             "last_seen": datetime.fromisoformat(data["last_seen"]),
             "last_check": datetime.fromisoformat(data["last_check"]),
-            "name_history2": hist3,
+            "name_history3": hist3,
             "sources": set(data["sources"])
         }
     return result
@@ -172,7 +172,7 @@ def import_3(regs_data: dict[str, Any]) -> dict[CoordType, RegionsDBRecord3]:
         sco = scoord.split(",")
         coord: CoordType = int(sco[0]), int(sco[1])
         hist3: dict[str, list[tuple[datetime, datetime]]] = {}
-        for name, tstamps in data["name_history2"].items():
+        for name, tstamps in data["name_history3"].items():
             ts_list: list[tuple[datetime, datetime]] = []
             for ts in tstamps:
                 m = RE_TS_RANGE.match(ts)
@@ -184,7 +184,7 @@ def import_3(regs_data: dict[str, Any]) -> dict[CoordType, RegionsDBRecord3]:
             "first_seen": datetime.fromisoformat(data["last_seen"]),
             "last_seen": datetime.fromisoformat(data["last_seen"]),
             "last_check": datetime.fromisoformat(data["last_check"]),
-            "name_history2": hist3,
+            "name_history3": hist3,
             "sources": set(data["sources"])
         }
     return result

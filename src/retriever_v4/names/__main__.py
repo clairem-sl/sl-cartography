@@ -127,7 +127,7 @@ def process(tile: CookedResult) -> bool:
         dbxy["last_check"] = ts
         if seen_name:
             dbxy["last_seen"] = ts
-        history: dict[str, list[tuple[datetime, datetime]]] = dbxy["name_history2"]
+        history: dict[str, list[tuple[datetime, datetime]]] = dbxy["name_history3"]
         if seen_name != prev_name:
             if seen_name:
                 if prev_name:
@@ -166,7 +166,7 @@ def process(tile: CookedResult) -> bool:
                 "last_seen": None,
                 "last_check": None,
                 "current_name": "",
-                "name_history2": {},
+                "name_history3": {},
                 "sources": {"cap"},
             }
         assert isinstance(dbxy, dict)

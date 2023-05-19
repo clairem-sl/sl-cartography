@@ -50,7 +50,7 @@ def upgrade_db_to_db3(db: dict[CoordType, RegionsDBRecord]) -> dict[CoordType, R
             "last_seen": datetime.fromisoformat(record["last_seen"]),
             "last_check": datetime.fromisoformat(record["last_check"]),
             "current_name": record["current_name"],
-            "name_history2": upgrade_history_to_db3(first_seen, record["name_history"]),
+            "name_history3": upgrade_history_to_db3(first_seen, record["name_history"]),
             "sources": record["sources"],
         }
 
@@ -66,7 +66,7 @@ def main():
     new_db = upgrade_db_to_db3(db)
     iso_ts: Callable[[datetime], str] = operator.methodcaller("isoformat", timespec="minutes")
     for coord, record in new_db.items():
-        for aname, timestamps in record["name_history2"].items():
+        for aname, timestamps in record["name_history3"].items():
             if len(timestamps) > 1:
                 pprint({coord: {
                     "name": record["current_name"],
@@ -75,7 +75,7 @@ def main():
                     "last_check": iso_ts(record["last_check"]),
                     "history": {
                         aname: [f"{iso_ts(t1)}~{iso_ts(t2)}" for t1, t2 in tslist]
-                        for aname, tslist in record["name_history2"].items()
+                        for aname, tslist in record["name_history3"].items()
                     },
                     "sources": record["sources"]
                 }})
