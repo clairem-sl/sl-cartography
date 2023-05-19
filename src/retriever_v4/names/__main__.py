@@ -288,8 +288,9 @@ def main(app_context: RetrieverApplication, opts: OptionsProtocol):
     )
 
     if opts.export is not Ellipsis:
+        print("Exporting ... ", end="", flush=True)
         rslt = export(db_path, opts.export, quiet=True)
-        print(f"Exported to {rslt}")
+        print(f"=> {rslt}")
 
 
 if __name__ == "__main__":
