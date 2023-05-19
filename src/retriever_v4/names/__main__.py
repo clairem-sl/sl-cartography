@@ -22,7 +22,7 @@ from retriever_v4 import (
     dispatch_fetcher,
     handle_sigint,
 )
-from sl_maptools import CoordType, MapCoord, RegionsDBRecord2
+from sl_maptools import CoordType, MapCoord, RegionsDBRecord3
 from sl_maptools.fetchers import CookedResult
 from sl_maptools.fetchers.cap import BoundedNameFetcher
 from sl_maptools.utils import ConfigReader, SLMapToolsConfig
@@ -41,7 +41,7 @@ Progress: RetrieverProgress
 
 AbortRequested = asyncio.Event()
 
-DataBase: dict[CoordType, RegionsDBRecord2] = {}
+DataBase: dict[CoordType, RegionsDBRecord3] = {}
 
 
 class ChangeStatsDict(TypedDict):
@@ -117,7 +117,7 @@ def process(tile: CookedResult) -> bool:
 
     ts = datetime.now().astimezone()
     xy = tile.coord.x, tile.coord.y
-    dbxy: RegionsDBRecord2 = DataBase.get(xy)
+    dbxy: RegionsDBRecord3 = DataBase.get(xy)
 
     def record_history():
         nonlocal dbxy
@@ -161,7 +161,7 @@ def process(tile: CookedResult) -> bool:
             raise
         if dbxy is None:
             ChangeStats["new"] += 1
-            dbxy: RegionsDBRecord2 = {
+            dbxy: RegionsDBRecord3 = {
                 "first_seen": ts,
                 "last_seen": None,
                 "last_check": None,

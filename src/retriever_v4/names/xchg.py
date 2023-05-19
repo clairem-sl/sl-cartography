@@ -15,10 +15,10 @@ from typing import Any, Optional, Protocol, cast, Final, TypedDict
 
 from ruamel.yaml import YAML, RoundTripRepresenter
 
-from retriever_v4.names.upgrade_db import upgrade_history_to_db2
+from retriever_v4.names.upgrade_db import upgrade_history_to_db3
 from sl_maptools import (
     CoordType,
-    RegionsDBRecord2,
+    RegionsDBRecord3,
 )
 from sl_maptools.utils import ConfigReader, make_backup
 
@@ -27,7 +27,7 @@ Config = ConfigReader("config.toml")
 
 DEFA_DB = Path(Config.names.dir) / Config.names.db
 DEFA_EXPORT = DEFA_DB.with_suffix(f".{datetime.now().strftime('%Y%m%d-%H%M')}.yaml")
-SUPPORTED_SCHEMA_VERS: Final[set[int]] = {1, 2}
+SUPPORTED_SCHEMA_VERS: Final[set[int]] = {1, 3}
 
 RE_TS_RANGE = re.compile(r"(?P<t1>[^~,\s]+)[~,\s](?P<t2>[^~,\s]+)")
 
@@ -72,7 +72,7 @@ def get_options() -> OptionsType:
     return cast(OptionsType, _opts)
 
 
-class RegionsDBRecord2ForSerialization(TypedDict):
+class RegionsDBRecord3ForSerialization(TypedDict):
     first_seen: str
     last_seen: str
     last_check: str
@@ -83,13 +83,13 @@ class RegionsDBRecord2ForSerialization(TypedDict):
 
 def export(db: Path, targ: Path, quiet: bool = False):
     with db.open("rb") as fin:
-        data: dict[CoordType, RegionsDBRecord2] = pickle.load(fin)
+        data: dict[CoordType, RegionsDBRecord3] = pickle.load(fin)
     if not quiet:
         print(f"Retrieved {len(data)} records. Transforming...", end="", flush=True)
 
     iso_ts = methodcaller("isoformat", timespec="minutes")
 
-    result: dict[str, RegionsDBRecord2ForSerialization] = {}
+    result: dict[str, RegionsDBRecord3ForSerialization] = {}
     for x, y in sorted(data, key=lambda co: (co[1], co[0])):
         info = data[x, y]
         result[f"{x},{y}"] = {
@@ -109,7 +109,7 @@ def export(db: Path, targ: Path, quiet: bool = False):
     exported = {
         "_schema": {
             "name": "sl-carto-regionsdb",
-            "version": "2",
+            "version": "3.0.0",
             "desc": {
                 "_keys": "string representation of Coordinate Tuples in 'x,y' format",
                 "current_name": "Current name of region as of time of audit",
@@ -141,8 +141,8 @@ def export(db: Path, targ: Path, quiet: bool = False):
         print(f"\nExported to {targ}")
 
 
-def import_1(regs_data: dict[str, Any]) -> dict[CoordType, RegionsDBRecord2]:
-    result: dict[CoordType, RegionsDBRecord2] = {}
+def import_1(regs_data: dict[str, Any]) -> dict[CoordType, RegionsDBRecord3]:
+    result: dict[CoordType, RegionsDBRecord3] = {}
     for scoord, data in regs_data.items():
         sco = scoord.split(",")
         coord: CoordType = int(sco[0]), int(sco[1])
@@ -153,38 +153,38 @@ def import_1(regs_data: dict[str, Any]) -> dict[CoordType, RegionsDBRecord2]:
             for name, tstamps_s in ser_hist.items()
         }
         first_seen = datetime.fromisoformat(data["first_seen"])
-        hist2 = upgrade_history_to_db2(first_seen, hist_old)
+        hist3 = upgrade_history_to_db3(first_seen, hist_old)
 
         result[coord] = {
             "current_name": cast(str, data["current_name"]),
             "first_seen": first_seen,
             "last_seen": datetime.fromisoformat(data["last_seen"]),
             "last_check": datetime.fromisoformat(data["last_check"]),
-            "name_history2": hist2,
+            "name_history2": hist3,
             "sources": set(data["sources"])
         }
     return result
 
 
-def import_2(regs_data: dict[str, Any]) -> dict[CoordType, RegionsDBRecord2]:
-    result: dict[CoordType, RegionsDBRecord2] = {}
+def import_3(regs_data: dict[str, Any]) -> dict[CoordType, RegionsDBRecord3]:
+    result: dict[CoordType, RegionsDBRecord3] = {}
     for scoord, data in regs_data.items():
         sco = scoord.split(",")
         coord: CoordType = int(sco[0]), int(sco[1])
-        hist2: dict[str, list[tuple[datetime, datetime]]] = {}
+        hist3: dict[str, list[tuple[datetime, datetime]]] = {}
         for name, tstamps in data["name_history2"].items():
             ts_list: list[tuple[datetime, datetime]] = []
             for ts in tstamps:
                 m = RE_TS_RANGE.match(ts)
                 tr = datetime.fromisoformat(m.group("t1")), datetime.fromisoformat(m.group("t2"))
                 ts_list.append(tr)
-            hist2[name] = ts_list
+            hist3[name] = ts_list
         result[coord] = {
             "current_name": cast(str, data["current_name"]),
             "first_seen": datetime.fromisoformat(data["last_seen"]),
             "last_seen": datetime.fromisoformat(data["last_seen"]),
             "last_check": datetime.fromisoformat(data["last_check"]),
-            "name_history2": hist2,
+            "name_history2": hist3,
             "sources": set(data["sources"])
         }
     return result
@@ -223,9 +223,9 @@ def import_(src: Path, db: Path, quiet: bool = False):
         print(
             f"{len(regs_data)} records retrieved. Transforming...", end="", flush=True
         )
-    result: dict[CoordType, RegionsDBRecord2] = {
+    result: dict[CoordType, RegionsDBRecord3] = {
         1: import_1,
-        2: import_2,
+        3: import_3,
     }[_ver.major](regs_data)
 
     make_backup(db)

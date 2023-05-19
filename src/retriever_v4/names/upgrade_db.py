@@ -5,24 +5,24 @@ from pathlib import Path
 from pprint import pprint
 from typing import Callable
 
-from sl_maptools import CoordType, RegionsDBRecord, RegionsDBRecord2
+from sl_maptools import CoordType, RegionsDBRecord, RegionsDBRecord3
 from sl_maptools.utils import ConfigReader
 
 Config = ConfigReader("config.toml")
 
 
-def upgrade_history_to_db2(first_seen: datetime, hist_old: dict[str, list[str]]) -> dict[str, list[tuple[datetime, datetime]]]:
+def upgrade_history_to_db3(first_seen: datetime, hist_old: dict[str, list[str]]) -> dict[str, list[tuple[datetime, datetime]]]:
     chronology: list[tuple[str, str]] = []
     for aname, timestamps in hist_old.items():
         for ts in timestamps:
             chronology.append((ts, aname))
     chronology.sort(reverse=True)
 
-    name_hist2: dict[str, list[tuple[datetime, datetime]]] = {}
+    name_hist3: dict[str, list[tuple[datetime, datetime]]] = {}
     ts, aname = chronology.pop()
     end_dt = datetime.fromisoformat(ts)
     start_dt = first_seen
-    name_hist2[aname] = [(start_dt, end_dt)]
+    name_hist3[aname] = [(start_dt, end_dt)]
     prev_end_dt = end_dt
     while chronology:
         ts, aname = chronology.pop()
@@ -33,14 +33,14 @@ def upgrade_history_to_db2(first_seen: datetime, hist_old: dict[str, list[str]])
         else:
             delta = timedelta(days=1)
         start_dt = end_dt - delta
-        name_hist2.setdefault(aname, []).append((start_dt, end_dt))
+        name_hist3.setdefault(aname, []).append((start_dt, end_dt))
         prev_end_dt = end_dt
 
-    return name_hist2
+    return name_hist3
 
 
-def upgrade_db_to_db2(db: dict[CoordType, RegionsDBRecord]) -> dict[CoordType, RegionsDBRecord2]:
-    new_db: dict[CoordType, RegionsDBRecord2] = {}
+def upgrade_db_to_db3(db: dict[CoordType, RegionsDBRecord]) -> dict[CoordType, RegionsDBRecord3]:
+    new_db: dict[CoordType, RegionsDBRecord3] = {}
     for coord, record in db.items():
         print(coord)
 
@@ -50,7 +50,7 @@ def upgrade_db_to_db2(db: dict[CoordType, RegionsDBRecord]) -> dict[CoordType, R
             "last_seen": datetime.fromisoformat(record["last_seen"]),
             "last_check": datetime.fromisoformat(record["last_check"]),
             "current_name": record["current_name"],
-            "name_history2": upgrade_history_to_db2(first_seen, record["name_history"]),
+            "name_history2": upgrade_history_to_db3(first_seen, record["name_history"]),
             "sources": record["sources"],
         }
 
@@ -63,7 +63,7 @@ def main():
     with db_path.open("rb") as fin:
         db = pickle.load(fin)
 
-    new_db = upgrade_db_to_db2(db)
+    new_db = upgrade_db_to_db3(db)
     iso_ts: Callable[[datetime], str] = operator.methodcaller("isoformat", timespec="minutes")
     for coord, record in new_db.items():
         for aname, timestamps in record["name_history2"].items():

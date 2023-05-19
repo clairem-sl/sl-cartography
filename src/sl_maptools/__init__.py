@@ -209,7 +209,7 @@ class RegionsDBRecord(TypedDict):
     sources: set[str]
 
 
-class RegionsDBRecord2(TypedDict):
+class RegionsDBRecord3(TypedDict):
     first_seen: datetime
     last_seen: Union[datetime, None]
     last_check: Union[datetime, None]
