@@ -1,12 +1,60 @@
+import operator
 import pickle
 from datetime import datetime, timedelta
 from pathlib import Path
 from pprint import pprint
+from typing import Callable
 
 from sl_maptools import CoordType, RegionsDBRecord, RegionsDBRecord2
 from sl_maptools.utils import ConfigReader
 
 Config = ConfigReader("config.toml")
+
+
+def upgrade_history_to_db2(first_seen: datetime, hist_old: dict[str, list[str]]) -> dict[str, list[tuple[datetime, datetime]]]:
+    chronology: list[tuple[str, str]] = []
+    for aname, timestamps in hist_old.items():
+        for ts in timestamps:
+            chronology.append((ts, aname))
+    chronology.sort(reverse=True)
+
+    name_hist2: dict[str, list[tuple[datetime, datetime]]] = {}
+    ts, aname = chronology.pop()
+    end_dt = datetime.fromisoformat(ts)
+    start_dt = first_seen
+    name_hist2[aname] = [(start_dt, end_dt)]
+    prev_end_dt = end_dt
+    while chronology:
+        ts, aname = chronology.pop()
+        end_dt = datetime.fromisoformat(ts)
+        delta = end_dt - prev_end_dt
+        if delta.days < 1:
+            delta /= 2
+        else:
+            delta = timedelta(days=1)
+        start_dt = end_dt - delta
+        name_hist2.setdefault(aname, []).append((start_dt, end_dt))
+        prev_end_dt = end_dt
+
+    return name_hist2
+
+
+def upgrade_db_to_db2(db: dict[CoordType, RegionsDBRecord]) -> dict[CoordType, RegionsDBRecord2]:
+    new_db: dict[CoordType, RegionsDBRecord2] = {}
+    for coord, record in db.items():
+        print(coord)
+
+        first_seen: datetime = datetime.fromisoformat(record["first_seen"])
+        new_db[coord] = {
+            "first_seen": first_seen,
+            "last_seen": datetime.fromisoformat(record["last_seen"]),
+            "last_check": datetime.fromisoformat(record["last_check"]),
+            "current_name": record["current_name"],
+            "name_history2": upgrade_history_to_db2(first_seen, record["name_history"]),
+            "sources": record["sources"],
+        }
+
+    return new_db
 
 
 def main():
@@ -15,51 +63,18 @@ def main():
     with db_path.open("rb") as fin:
         db = pickle.load(fin)
 
-    new_db: dict[CoordType, RegionsDBRecord2] = {}
-    for coord, record in db.items():
-        print(coord)
-        chronology: list[tuple[str, str]] = []
-        for aname, timestamps in record["name_history"].items():
-            for ts in timestamps:
-                chronology.append((ts, aname))
-        chronology.sort(reverse=True)
-
-        name_hist2: dict[str, list[tuple[datetime, datetime]]] = {}
-        ts, aname = chronology.pop()
-        end_dt = datetime.fromisoformat(ts)
-        start_dt = datetime.fromisoformat(record["first_seen"])
-        name_hist2[aname] = [(start_dt, end_dt)]
-        prev_end_dt = end_dt
-        while chronology:
-            ts, aname = chronology.pop()
-            end_dt = datetime.fromisoformat(ts)
-            delta = end_dt - prev_end_dt
-            if delta.days < 1:
-                delta /= 2
-            else:
-                delta = timedelta(days=1)
-            start_dt = end_dt - delta
-            name_hist2.setdefault(aname, []).append((start_dt, end_dt))
-            prev_end_dt = end_dt
-        new_db[coord] = {
-            "first_seen": datetime.fromisoformat(record["first_seen"]),
-            "last_seen": datetime.fromisoformat(record["last_seen"]),
-            "last_check": datetime.fromisoformat(record["last_check"]),
-            "current_name": record["current_name"],
-            "name_history2": name_hist2,
-            "sources": record["sources"],
-        }
-
+    new_db = upgrade_db_to_db2(db)
+    iso_ts: Callable[[datetime], str] = operator.methodcaller("isoformat", timespec="minutes")
     for coord, record in new_db.items():
         for aname, timestamps in record["name_history2"].items():
             if len(timestamps) > 1:
                 pprint({coord: {
                     "name": record["current_name"],
-                    "first_seen": record["first_seen"].isoformat(timespec="minutes"),
-                    "last_seen": record["last_seen"].isoformat(timespec="minutes"),
-                    "last_check": record["last_check"].isoformat(timespec="minutes"),
+                    "first_seen": iso_ts(record["first_seen"]),
+                    "last_seen": iso_ts(record["last_seen"]),
+                    "last_check": iso_ts(record["last_check"]),
                     "history": {
-                        aname: [f"{t1.isoformat(timespec='minutes')}~{t2.isoformat(timespec='minutes')}" for t1, t2 in tslist]
+                        aname: [f"{iso_ts(t1)}~{iso_ts(t2)}" for t1, t2 in tslist]
                         for aname, tslist in record["name_history2"].items()
                     },
                     "sources": record["sources"]

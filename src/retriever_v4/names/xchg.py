@@ -1,16 +1,25 @@
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
+from __future__ import annotations
+
 import argparse
+from _operator import methodcaller
+
 import packaging.version as versioning
 import pickle
+import re
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional, Protocol, cast
+from typing import Any, Optional, Protocol, cast, Final, TypedDict
 
 from ruamel.yaml import YAML, RoundTripRepresenter
 
-from sl_maptools import CoordType, RegionsDBRecord
+from retriever_v4.names.upgrade_db import upgrade_history_to_db2
+from sl_maptools import (
+    CoordType,
+    RegionsDBRecord2,
+)
 from sl_maptools.utils import ConfigReader, make_backup
 
 Config = ConfigReader("config.toml")
@@ -18,7 +27,9 @@ Config = ConfigReader("config.toml")
 
 DEFA_DB = Path(Config.names.dir) / Config.names.db
 DEFA_EXPORT = DEFA_DB.with_suffix(f".{datetime.now().strftime('%Y%m%d-%H%M')}.yaml")
-SUPPORTED_SCHEMA_VERS = {"1.0.0"}
+SUPPORTED_SCHEMA_VERS: Final[set[int]] = {1, 2}
+
+RE_TS_RANGE = re.compile(r"(?P<t1>[^~,\s]+)[~,\s](?P<t2>[^~,\s]+)")
 
 
 class InvalidSourceError(RuntimeError):
@@ -33,7 +44,9 @@ class OptionsType(Protocol):
 
 
 def get_options() -> OptionsType:
-    parser = argparse.ArgumentParser("retriever_v4.names.xchg", epilog="For more details, do COMMAND --help")
+    parser = argparse.ArgumentParser(
+        "retriever_v4.names.xchg", epilog="For more details, do COMMAND --help"
+    )
     subparsers = parser.add_subparsers(title="COMMANDS", dest="command", required=True)
     parser.add_argument(
         "--db",
@@ -59,24 +72,44 @@ def get_options() -> OptionsType:
     return cast(OptionsType, _opts)
 
 
+class RegionsDBRecord2ForSerialization(TypedDict):
+    first_seen: str
+    last_seen: str
+    last_check: str
+    current_name: str
+    name_history2: dict[str, list[str]]
+    sources: list[str]
+
+
 def export(db: Path, targ: Path, quiet: bool = False):
     with db.open("rb") as fin:
-        data = pickle.load(fin)
+        data: dict[CoordType, RegionsDBRecord2] = pickle.load(fin)
     if not quiet:
         print(f"Retrieved {len(data)} records. Transforming...", end="", flush=True)
 
-    result: dict[str, dict[str, Any]] = {}
+    iso_ts = methodcaller("isoformat", timespec="minutes")
+
+    result: dict[str, RegionsDBRecord2ForSerialization] = {}
     for x, y in sorted(data, key=lambda co: (co[1], co[0])):
         info = data[x, y]
-        info["sources"] = sorted(info["sources"])
-        result[f"{x},{y}"] = info
+        result[f"{x},{y}"] = {
+            "first_seen": iso_ts(info["first_seen"]),
+            "last_seen": iso_ts(info["last_seen"]),
+            "last_check": iso_ts(info["last_check"]),
+            "current_name": info["current_name"],
+            "name_history2": {
+                name: [f"{iso_ts(ets)}~{iso_ts(lts)}" for ets, lts in tstamps]
+                for name, tstamps in info["name_history2"].items()
+            },
+            "sources": sorted(info["sources"])
+        }
     if not quiet:
         print("\nRecords transformed. Exporting...", end="", flush=True)
 
     exported = {
         "_schema": {
             "name": "sl-carto-regionsdb",
-            "version": "1.0.0",
+            "version": "2",
             "desc": {
                 "_keys": "string representation of Coordinate Tuples in 'x,y' format",
                 "current_name": "Current name of region as of time of audit",
@@ -84,9 +117,9 @@ def export(db: Path, targ: Path, quiet: bool = False):
                 "last_check": "Timestamp of last audit when region was checked",
                 "last_seen": "Timestamp of audit when region was last seen (as non-void)",
                 "name_history": (
-                    "A dict of name:[timestamps], where each entry in the timestamps list is timestamp of "
-                    "last audit when region was detected using that name. This enables proper chronology in the "
-                    "rare but possible situation of a region going Name1->Name2->Name1."
+                    "A dict of name:[(timestamp pairs)], where each entry in the timestamps list is a pair of "
+                    "timestamps (separated by tilde, comma, or space). The first timestamp represents the earliest "
+                    "time the name is seen. The second represent the latest time the name is seen before changing."
                 ),
                 "sources": (
                     "Sources of information used to generate the record. 'cap' is SL's cap server. "
@@ -94,7 +127,9 @@ def export(db: Path, targ: Path, quiet: bool = False):
                 ),
             },
         },
-        "_metadata": {"created": datetime.now().astimezone().isoformat(timespec="minutes")},
+        "_metadata": {
+            "created": datetime.now().astimezone().isoformat(timespec="minutes")
+        },
         "data": result,
     }
     yaml = YAML(typ="safe")
@@ -104,6 +139,55 @@ def export(db: Path, targ: Path, quiet: bool = False):
         yaml.dump(exported, fout)
     if not quiet:
         print(f"\nExported to {targ}")
+
+
+def import_1(regs_data: dict[str, Any]) -> dict[CoordType, RegionsDBRecord2]:
+    result: dict[CoordType, RegionsDBRecord2] = {}
+    for scoord, data in regs_data.items():
+        sco = scoord.split(",")
+        coord: CoordType = int(sco[0]), int(sco[1])
+
+        ser_hist: dict[str, list[str]] = data["name_history"]
+        hist_old: dict[str, list[str]] = {
+            name: [datetime.fromisoformat(ts) for ts in tstamps_s]
+            for name, tstamps_s in ser_hist.items()
+        }
+        first_seen = datetime.fromisoformat(data["first_seen"])
+        hist2 = upgrade_history_to_db2(first_seen, hist_old)
+
+        result[coord] = {
+            "current_name": cast(str, data["current_name"]),
+            "first_seen": first_seen,
+            "last_seen": datetime.fromisoformat(data["last_seen"]),
+            "last_check": datetime.fromisoformat(data["last_check"]),
+            "name_history2": hist2,
+            "sources": set(data["sources"])
+        }
+    return result
+
+
+def import_2(regs_data: dict[str, Any]) -> dict[CoordType, RegionsDBRecord2]:
+    result: dict[CoordType, RegionsDBRecord2] = {}
+    for scoord, data in regs_data.items():
+        sco = scoord.split(",")
+        coord: CoordType = int(sco[0]), int(sco[1])
+        hist2: dict[str, list[tuple[datetime, datetime]]] = {}
+        for name, tstamps in data["name_history2"].items():
+            ts_list: list[tuple[datetime, datetime]] = []
+            for ts in tstamps:
+                m = RE_TS_RANGE.match(ts)
+                tr = datetime.fromisoformat(m.group("t1")), datetime.fromisoformat(m.group("t2"))
+                ts_list.append(tr)
+            hist2[name] = ts_list
+        result[coord] = {
+            "current_name": cast(str, data["current_name"]),
+            "first_seen": datetime.fromisoformat(data["last_seen"]),
+            "last_seen": datetime.fromisoformat(data["last_seen"]),
+            "last_check": datetime.fromisoformat(data["last_check"]),
+            "name_history2": hist2,
+            "sources": set(data["sources"])
+        }
+    return result
 
 
 def import_(src: Path, db: Path, quiet: bool = False):
@@ -116,10 +200,13 @@ def import_(src: Path, db: Path, quiet: bool = False):
     if (_schema := data.get("_schema")) is None:
         raise InvalidSourceError("Source file does not have '_schema'")
     if _schema.get("name") != "sl-carto-regionsdb":
-        raise InvalidSourceError("Source file does not seem to be an exported RegionsDB!")
+        raise InvalidSourceError(
+            "Source file does not seem to be an exported RegionsDB!"
+        )
     _ver = versioning.parse(_schema.get("version", "0.0.0"))
-    if _ver.major != 1:
-        raise InvalidSourceError(f"Schema version != 1.x.x, not supported")
+    if _ver.major not in SUPPORTED_SCHEMA_VERS:
+        raise InvalidSourceError(f"Schema version {_ver} not supported!")
+    print(f"YAML file using schema version '{_ver}'")
 
     _metadata = data.get("_metadata")
     if not quiet:
@@ -132,13 +219,14 @@ def import_(src: Path, db: Path, quiet: bool = False):
     if (regs_data := data.get("data")) is None:
         raise InvalidSourceError("Source data does not contain data!")
 
-    result: dict[CoordType, RegionsDBRecord] = {}
     if not quiet:
-        print(f"{len(regs_data)} records retrieved. Transforming...", end="", flush=True)
-    for scoord, coord_info in regs_data.items():
-        coord = cast(CoordType, tuple(map(int, scoord.split(","))))
-        coord_info["sources"] = set(coord_info["sources"])
-        result[coord] = coord_info
+        print(
+            f"{len(regs_data)} records retrieved. Transforming...", end="", flush=True
+        )
+    result: dict[CoordType, RegionsDBRecord2] = {
+        1: import_1,
+        2: import_2,
+    }[_ver.major](regs_data)
 
     make_backup(db)
     with db.open("wb") as fout:
