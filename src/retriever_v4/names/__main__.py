@@ -192,19 +192,13 @@ def process(tile: CookedResult) -> bool:
 
 
 async def amain(db_path: Path, duration: int, min_batch_size: int, abort_low_rps: int):
-    limits = httpx.Limits(
-        max_connections=CONN_LIMIT, max_keepalive_connections=CONN_LIMIT
-    )
+    limits = httpx.Limits(max_connections=CONN_LIMIT, max_keepalive_connections=CONN_LIMIT)
     async with httpx.AsyncClient(limits=limits, timeout=10.0, http2=HTTP2) as client:
-        fetcher = BoundedNameFetcher(
-            CONN_LIMIT * 3, client, cooked=True, cancel_flag=AbortRequested
-        )
+        fetcher = BoundedNameFetcher(CONN_LIMIT * 3, client, cooked=True, cancel_flag=AbortRequested)
         shown = False
 
         def make_task(coord: CoordType):
-            return asyncio.create_task(
-                fetcher.async_fetch(MapCoord(*coord)), name=str(coord)
-            )
+            return asyncio.create_task(fetcher.async_fetch(MapCoord(*coord)), name=str(coord))
 
         def pre_batch():
             nonlocal shown
@@ -254,18 +248,14 @@ def main(app_context: RetrieverApplication, opts: OptionsProtocol):
 
     dur = calc_duration(opts)
 
-    Progress = RetrieverProgress(
-        (opts.dbdir / Config.names.progress), auto_reset=opts.auto_reset
-    )
+    Progress = RetrieverProgress((opts.dbdir / Config.names.progress), auto_reset=opts.auto_reset)
     if Progress.outstanding_count:
         print(f"{Progress.outstanding_count} jobs still outstanding from last session")
     else:
         print("No outstanding jobs from last session.")
         if Progress.next_y < 0:
             print("No rows left to process.")
-            print(
-                f"Delete the file {opts.dbdir / Config.names.progress} to reset. (Or specify --auto-reset)"
-            )
+            print(f"Delete the file {opts.dbdir / Config.names.progress} to reset. (Or specify --auto-reset)")
             return
     print(f"Next coordinate: {Progress.next_coordinate}")
 
@@ -287,9 +277,7 @@ def main(app_context: RetrieverApplication, opts: OptionsProtocol):
         end_y -= 1
     end_coord = end_x, end_y
 
-    print(
-        f"{Progress.outstanding_count:_} outstanding jobs left. Last dispatched coordinate: {Progress.last_dispatch}"
-    )
+    print(f"{Progress.outstanding_count:_} outstanding jobs left. Last dispatched coordinate: {Progress.last_dispatch}")
     print("Stats of this run:")
     pprint(ChangeStats)
     app_context.log(
