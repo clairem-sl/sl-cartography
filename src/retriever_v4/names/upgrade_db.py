@@ -1,6 +1,7 @@
 import pickle
 from datetime import datetime, timedelta
 from pathlib import Path
+from pprint import pprint
 
 from sl_maptools import CoordType, RegionsDBRecord, RegionsDBRecord2
 from sl_maptools.utils import ConfigReader
@@ -10,7 +11,7 @@ Config = ConfigReader("config.toml")
 
 def main():
     db: dict[CoordType, RegionsDBRecord]
-    db_path = Path(Config.names.dir) / Config.names.db
+    db_path = Path(Config.names.dir) / "RegionsDB2.pkl"
     with db_path.open("rb") as fin:
         db = pickle.load(fin)
 
@@ -49,11 +50,26 @@ def main():
             "sources": record["sources"],
         }
 
-    new_db_path = Path(Config.names.dir) / "RegionsDB3.pkl"
-    print(f"Saving to {new_db_path}")
-    with new_db_path.open("wb") as fout:
-        pickle.dump(new_db, fout)
-    print("Done.")
+    for coord, record in new_db.items():
+        for aname, timestamps in record["name_history2"].items():
+            if len(timestamps) > 1:
+                pprint({coord: {
+                    "name": record["current_name"],
+                    "first_seen": record["first_seen"].isoformat(timespec="minutes"),
+                    "last_seen": record["last_seen"].isoformat(timespec="minutes"),
+                    "last_check": record["last_check"].isoformat(timespec="minutes"),
+                    "history": {
+                        aname: [f"{t1.isoformat(timespec='minutes')}~{t2.isoformat(timespec='minutes')}" for t1, t2 in tslist]
+                        for aname, tslist in record["name_history2"].items()
+                    },
+                    "sources": record["sources"]
+                }})
+
+    # new_db_path = Path(Config.names.dir) / "RegionsDB3.pkl"
+    # print(f"Saving to {new_db_path}")
+    # with new_db_path.open("wb") as fout:
+    #     pickle.dump(new_db, fout)
+    # print("Done.")
 
 
 if __name__ == "__main__":
