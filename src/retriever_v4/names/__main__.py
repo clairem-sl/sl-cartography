@@ -9,7 +9,7 @@ import re
 from datetime import datetime
 from pathlib import Path
 from pprint import pprint
-from typing import Final, Optional, Protocol, TypedDict, cast
+from typing import Final, Optional, Protocol, TypedDict, Union, cast
 
 import httpx
 
@@ -22,6 +22,7 @@ from retriever_v4 import (
     dispatch_fetcher,
     handle_sigint,
 )
+from retriever_v4.names.xchg import export
 from sl_maptools import CoordType, MapCoord, RegionsDBRecord3
 from sl_maptools.fetchers import CookedResult
 from sl_maptools.fetchers.cap import BoundedNameFetcher
@@ -67,6 +68,7 @@ RE_HHMM = re.compile(r"^(\d{1,2}):(\d{1,2})$")
 class RetrieverNamesOptions(Protocol):
     dbdir: Path
     force: bool
+    export: Union[Path, Ellipsis]
     auto_reset: bool
     min_batch_size: int
     abort_low_rps: int
@@ -81,6 +83,16 @@ def get_options() -> OptionsProtocol:
 
     parser.add_argument("--dbdir", type=Path, default=Config.names.dir)
     parser.add_argument("--force", action="store_true")
+    parser.add_argument(
+        "--export",
+        metavar="YAML_file",
+        type=Path,
+        nargs="?",
+        default=Ellipsis,  # This will be the value if --export is not specified at all
+        # If --export is specified but no file name is given, the value will be None.
+        # Hence is why Ellipsis is used, to differ between not specified, and specified but not given
+        help="Export to YAML file on abort/completion. If not specified, then use default name.",
+    )
 
     parser.add_argument(
         "--auto-reset",
@@ -286,6 +298,10 @@ def main(app_context: RetrieverApplication, opts: OptionsProtocol):
             "range": f"{start_coord}~{end_coord}",
         }
     )
+
+    if opts.export is not Ellipsis:
+        rslt = export(db_path, opts.export, quiet=True)
+        print(f"Exported to {rslt}")
 
 
 if __name__ == "__main__":

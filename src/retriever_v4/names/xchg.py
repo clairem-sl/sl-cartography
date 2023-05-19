@@ -25,7 +25,6 @@ Config = ConfigReader("config.toml")
 
 
 DEFA_DB = Path(Config.names.dir) / Config.names.db
-DEFA_EXPORT = DEFA_DB.with_suffix(f".{datetime.now().strftime('%Y%m%d-%H%M')}.yaml")
 SUPPORTED_SCHEMA_VERS: Final[set[int]] = {1, 3}
 
 
@@ -57,9 +56,12 @@ def get_options() -> OptionsType:
         "to_yaml",
         metavar="YAML_file",
         type=Path,
-        help=f"(Optional) Target YAML file path, defaults to {DEFA_EXPORT}",
+        help=(
+            "(Optional) Target YAML file path. If not specified, will create a "
+            "timestamp-based one in the same dir as the db"
+        ),
         nargs="?",
-        default=DEFA_EXPORT,
+        default=None,
     )
 
     p_import_ = subparsers.add_parser("import", help="Import from YAML file")
@@ -78,7 +80,9 @@ class RegionsDBRecord3ForSerialization(TypedDict):
     sources: list[str]
 
 
-def export(db: Path, targ: Path, quiet: bool = False):
+def export(db: Path, targ: Path, quiet: bool = False) -> Path:
+    if targ is None:
+        targ = DEFA_DB.with_suffix(f".{datetime.now().strftime('%Y%m%d-%H%M')}.yaml")
     with db.open("rb") as fin:
         data: dict[CoordType, RegionsDBRecord3] = pickle.load(fin)
     if not quiet:
@@ -136,6 +140,7 @@ def export(db: Path, targ: Path, quiet: bool = False):
         yaml.dump(exported, fout)
     if not quiet:
         print(f"\nExported to {targ}")
+    return targ
 
 
 def import_1(regs_data: dict[str, Any]) -> dict[CoordType, RegionsDBRecord3]:
