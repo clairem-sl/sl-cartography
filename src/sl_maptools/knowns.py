@@ -30,6 +30,9 @@ KNOWN_AREAS: Final[dict[str, AreaBounds]] = {
     "Nautilus": AreaBounds(1106, 1047, 1138, 1081),
     "Horizons": AreaBounds(1804, 1200, 1813, 1210),
     "BlakeSea": AreaBounds(1131, 1048, 1148, 1054),
+    "BlakeSeaSurrounding": AreaBounds(1131, 1036, 1152, 1061),
+    # "Interesting988": AreaBounds(1136, 1036, 1152, 1049),
+    # "Interesting101": AreaBounds(1135, 1052, 1149, 1061),
     # endregion
     # region ### User Continents
     "SecondNorway": AreaBounds(1149, 1041, 1165, 1063),
@@ -114,8 +117,6 @@ KNOWN_AREAS: Final[dict[str, AreaBounds]] = {
     "TheMists": AreaBounds(562, 734, 567, 739),  ### Former site of Fantasy Faire 2023
     "PaleoQuest": AreaBounds(400, 392, 401, 400),
     # endregion
-    "Interesting988": AreaBounds(1136, 1036, 1152, 1049),
-    "Interesting101": AreaBounds(1135, 1052, 1149, 1061),
     "Interesting111": AreaBounds(500, 1027, 503, 1030),
 }
 
@@ -126,6 +127,16 @@ SUPPRESS_FOR_AREAS: dict[str, list[AreaBounds]] = {
         AreaBounds(1110, 1052, 1110, 1054),
     ],
     "SnugHarbor": [AreaBounds(1146, 1056, 1146, 1056)],
+    "BlakeSeaSurrounding": [
+        AreaBounds(1149, 1055, 1152, 1061),  # Second Norway
+        AreaBounds(1150, 1049, 1152, 1054),  # Second Norway
+        AreaBounds(1131, 1039, 1134, 1046),  # Satori
+        AreaBounds(1133, 1047, 1134, 1047),  # Satori
+        AreaBounds(1131, 1048, 1131, 1061),  # Nautilus / Citadel
+        AreaBounds(1132, 1052, 1132, 1061),  # Nautilus
+        AreaBounds(1133, 1055, 1134, 1061),  # Nautilus
+        AreaBounds(1134, 1054, 1134, 1054),  # Nautilus
+    ]
 }
 
 DO_NOT_MAP_AREAS: dict[str, AreaBounds] = {
