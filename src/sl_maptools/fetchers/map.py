@@ -88,7 +88,7 @@ class MapFetcher(object):
                     mul2 *= 2.0
                     continue
                 except Exception as e:
-                    raise FetcherConnectionError(internal_errors=[e], coord=coord)
+                    raise FetcherConnectionError(internal_errors=[e], coord=coord) from e
             else:
                 break
 
