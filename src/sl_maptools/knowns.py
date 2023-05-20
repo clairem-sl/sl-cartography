@@ -18,6 +18,8 @@ KNOWN_AREAS: Final[dict[str, AreaBounds]] = {
     "Zindra": AreaBounds(1797, 1179, 1821, 1202),
     "SansaraSnowlands": AreaBounds(1003, 979, 1017, 994),
     "Sansara": AreaBounds(982, 978, 1038, 1012),
+    "SeaOfFables": AreaBounds(1015, 992, 1023, 999),
+    "BayCityPlains": AreaBounds(982, 999, 995, 1006),
     "Sharp": AreaBounds(1159, 988, 1179, 1002),
     "Heterocera": AreaBounds(991, 1012, 1014, 1036),
     "Jeogeot": AreaBounds(1004, 897, 1039, 939),
