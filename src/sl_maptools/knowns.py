@@ -3,10 +3,9 @@
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 from __future__ import annotations
 
-from datetime import datetime
 from typing import Final
 
-from sl_maptools import AreaBounds, MapCoord
+from sl_maptools import AreaBounds
 
 KNOWN_AREAS: Final[dict[str, AreaBounds]] = {
     # region ### Linden Continents
@@ -123,12 +122,4 @@ SUPPRESS_FOR_AREAS: dict[str, list[AreaBounds]] = {
 
 DO_NOT_MAP_AREAS: dict[str, AreaBounds] = {
     "CH": AreaBounds(1102, 1199, 1104, 1201),  ### NOT interesting
-}
-
-VERIFIED_VOIDS: Final[dict["MapCoord", datetime.date]] = {
-    # Contains voids that we manually verify using GridSurvey APIs
-    # Reason for this CONST is that map sometimes return an image even though there's no actual region/sim at the
-    # location.
-    # The datetime indicates when the verification is done.
-    #
 }

@@ -14,7 +14,6 @@ from PIL import Image
 
 from sl_maptools import MapCoord, MapRegion
 from sl_maptools.fetchers import FetcherConnectionError, RawResult
-from sl_maptools.knowns import VERIFIED_VOIDS
 from sl_maptools.utils import QuietablePrint
 
 
@@ -65,9 +64,6 @@ class MapFetcher(object):
         """
         qprint = QuietablePrint(quiet)
         qprint(".", end="", flush=True)
-        if coord in self.skip_tiles or coord in VERIFIED_VOIDS:
-            # return MapTile(coord, None)
-            return RawResult(coord, None)
         url = self.URL_TEMPLATE.format(map_x=coord.x, map_y=coord.y)
         internal_errors = []
         multiplier = 0.25
