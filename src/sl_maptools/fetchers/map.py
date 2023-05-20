@@ -27,9 +27,7 @@ _RETRYABLE_EX: Final[tuple] = (httpx.ConnectTimeout, httpx.ReadTimeout, httpx.Re
 
 
 class MapFetcher(object):
-    URL_TEMPLATE: Final[
-        str
-    ] = "https://secondlife-maps-cdn.akamaized.net/map-1-{map_x}-{map_y}-objects.jpg"
+    URL_TEMPLATE: Final[str] = "https://secondlife-maps-cdn.akamaized.net/map-1-{map_x}-{map_y}-objects.jpg"
 
     def __init__(
         self,
@@ -108,9 +106,7 @@ class MapFetcher(object):
 
             # Don't quiet this
             print(f"{status_code}?", end="", flush=True)
-            internal_errors.append(
-                f"Unexpected HTTP status code {response.status_code}"
-            )
+            internal_errors.append(f"Unexpected HTTP status code {response.status_code}")
             await asyncio.sleep(0.5)
         print(f"ERR({coord})", end="", flush=True)
         if raise_err:
@@ -123,9 +119,7 @@ class MapFetcher(object):
         retries: int = 2,
         raise_err: bool = True,
     ) -> MapRegion:
-        raw_rslt: RawResult = await self.async_get_region_raw(
-            coord, quiet, retries, raise_err
-        )
+        raw_rslt: RawResult = await self.async_get_region_raw(coord, quiet, retries, raise_err)
         if raw_rslt.result is None:
             return MapRegion(coord, None)
 
@@ -268,9 +262,7 @@ class MapFetcher(object):
             else:
                 if skipping:
                     qprint(y, flush=True)
-            qprint(
-                f"All requested rows have been fetched, a total of {rows_processed} new rows."
-            )
+            qprint(f"All requested rows have been fetched, a total of {rows_processed} new rows.")
         except (KeyboardInterrupt, RuntimeError):
             progress.last_fail_rows.add(y)
 
@@ -314,13 +306,9 @@ class BoundedMapFetcher(MapFetcher):
                     return None
             try:
                 if self.cooked:
-                    return await self.async_get_region(
-                        coord, quiet=True, retries=self.retries
-                    )
+                    return await self.async_get_region(coord, quiet=True, retries=self.retries)
                 else:
-                    return await self.async_get_region_raw(
-                        coord, quiet=True, retries=self.retries
-                    )
+                    return await self.async_get_region_raw(coord, quiet=True, retries=self.retries)
             except asyncio.CancelledError:
                 print(f"{coord} cancelled")
                 return None
