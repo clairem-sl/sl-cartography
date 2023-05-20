@@ -322,7 +322,7 @@ class RetrieverApplication(AbstractContextManager):
     class HourMinute(argparse.Action):
         def __call__(self, parser, namespace, values, option_string=None):
             m = re.match(r"^(\d{1,2}):(\d{1,2})$", values)
-            if m is None:
+            if m is None or not (0 <= int(m.group(1)) <= 23) or not (0 <= int(m.group(2)) <= 59):
                 parser.error("Please enter time in 24h HH:MM format!")
             setattr(namespace, self.dest, (int(m.group(1)), int(m.group(2))))
 
