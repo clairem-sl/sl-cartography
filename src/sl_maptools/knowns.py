@@ -30,7 +30,7 @@ KNOWN_AREAS: Final[dict[str, AreaBounds]] = {
     "BlakeSea": AreaBounds(1131, 1048, 1148, 1054),
     # endregion
     # region ### User Continents
-    "SecondNorway": AreaBounds(1150, 1041, 1162, 1058),
+    "SecondNorway": AreaBounds(1149, 1041, 1165, 1063),
     "AzureIslands": AreaBounds(977, 959, 989, 966),
     "EdenFruitIslands": AreaBounds(456, 1700, 481, 1720),
     "Luxory": AreaBounds(621, 1033, 632, 1050),
