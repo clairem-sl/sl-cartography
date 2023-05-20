@@ -128,6 +128,12 @@ Also, please follow these guidelines:
 
 **I will NOT accept PRs that are not formatted with Black and isort!**
 
+Finally:
+
+> **ALL submitted code/PR will be released under MPL-2.0 license**
+> 
+> If you have issue with this, please do not open a PR.
+
 
 ## Licenses
 
