@@ -15,7 +15,7 @@ from typing import Protocol, cast
 from PIL import Image
 
 from sl_maptools import AreaBounds, CoordType, RegionsDBRecord
-from sl_maptools.knowns import KNOWN_AREAS
+from sl_maptools.knowns import KNOWN_AREAS, SUPPRESS_FOR_AREAS
 from sl_maptools.utils import ConfigReader, SLMapToolsConfig
 from sl_maptools.validator import get_bonnie_coords, inventorize_maps_latest
 
@@ -132,7 +132,9 @@ def get_options() -> Options:
     return cast(Options, _opts)
 
 
-def make_map(targ: Path, bounds: AreaBounds, map_tiles: dict[CoordType, Path]):
+def make_map(targ: Path, bounds: AreaBounds, map_tiles: dict[CoordType, Path], suppress_coords: set[CoordType] = None):
+    if suppress_coords is None:
+        suppress_coords = set()
     csize_x = (bounds.x_eastmost - bounds.x_westmost + 1) * 256
     csize_y = (bounds.y_northmost - bounds.y_southmost + 1) * 256
     canvas = Image.new("RGBA", (csize_x, csize_y))
@@ -142,6 +144,8 @@ def make_map(targ: Path, bounds: AreaBounds, map_tiles: dict[CoordType, Path]):
     for x, y in bounds.xy_iterator():
         # print(coord)
         if (x, y) not in map_tiles:
+            continue
+        if (x, y) in suppress_coords:
             continue
         c += 1
         if (c % 10) == 0:
@@ -195,13 +199,19 @@ def main(opts: Options):
     orig_sigint = signal.getsignal(signal.SIGINT)
     signal.signal(signal.SIGINT, handle_sigint)
     for area_name, area_bounds in wanted_areas:
+        if area_name in SUPPRESS_FOR_AREAS:
+            suppress_coords = set()
+            for bounds in SUPPRESS_FOR_AREAS[area_name]:
+                suppress_coords.update(xy for xy in bounds.xy_iterator())
+        else:
+            suppress_coords = None
         print(f"{area_name}: ", end="", flush=True)
         targ = opts.outdir / (area_name + ".png")
         if not opts.overwrite and targ.exists():
             print(f"Already exists", end="")
         else:
             print("🌐", end="", flush=True)
-            make_map(targ, area_bounds, map_tiles)
+            make_map(targ, area_bounds, map_tiles, suppress_coords)
         print(f"\n  => {targ}", flush=True)
         if AbortRequested:
             break

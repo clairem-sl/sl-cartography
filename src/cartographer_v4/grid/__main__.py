@@ -9,7 +9,7 @@ from typing import Final, Protocol, cast
 from PIL import Image, ImageDraw, ImageFont
 
 from sl_maptools import CoordType, RegionsDBRecord
-from sl_maptools.knowns import KNOWN_AREAS
+from sl_maptools.knowns import KNOWN_AREAS, SUPPRESS_FOR_AREAS
 from sl_maptools.utils import ConfigReader, SLMapToolsConfig
 from sl_maptools.validator import get_bonnie_coords
 
@@ -121,6 +121,10 @@ def main(opts: GridOptions):
         if not overlay_p.exists():
             print("#️⃣ ", end="")
             bounds = KNOWN_AREAS[areaname]
+            if areaname in SUPPRESS_FOR_AREAS:
+                suppress = {xy for bounds in SUPPRESS_FOR_AREAS[areaname] for xy in bounds.xy_iterator()}
+            else:
+                suppress = set()
             x1, y1, x2, y2 = bounds
             size_x = (x2 - x1 + 1) * 256
             size_y = (y2 - y1 + 1) * 256
@@ -128,6 +132,8 @@ def main(opts: GridOptions):
             draw = ImageDraw.Draw(gridc)
             for i, xy in enumerate(bounds.xy_iterator(), start=1):
                 if xy not in validation_set:
+                    continue
+                if xy in suppress:
                     continue
                 x, y = xy
                 cx = (x - x1) * 256

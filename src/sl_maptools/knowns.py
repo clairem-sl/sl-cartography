@@ -113,6 +113,14 @@ KNOWN_AREAS: Final[dict[str, AreaBounds]] = {
     # endregion
 }
 
+SUPPRESS_FOR_AREAS: dict[str, list[AreaBounds]] = {
+    "FairChang": [
+        AreaBounds(1106, 1057, 1110, 1061),
+        AreaBounds(1109, 1055, 1110, 1056),
+        AreaBounds(1110, 1052, 1110, 1054),
+    ],
+}
+
 DO_NOT_MAP_AREAS: dict[str, AreaBounds] = {
     "CH": AreaBounds(1102, 1199, 1104, 1201),  ### NOT interesting
 }
