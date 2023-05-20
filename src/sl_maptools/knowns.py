@@ -114,6 +114,9 @@ KNOWN_AREAS: Final[dict[str, AreaBounds]] = {
     "TheMists": AreaBounds(562, 734, 567, 739),  ### Former site of Fantasy Faire 2023
     "PaleoQuest": AreaBounds(400, 392, 401, 400),
     # endregion
+    "Interesting988": AreaBounds(1136, 1036, 1152, 1049),
+    "Interesting101": AreaBounds(1135, 1052, 1149, 1061),
+    "Interesting111": AreaBounds(500, 1027, 503, 1030),
 }
 
 SUPPRESS_FOR_AREAS: dict[str, list[AreaBounds]] = {
