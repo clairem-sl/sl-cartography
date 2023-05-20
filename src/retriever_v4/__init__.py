@@ -326,9 +326,10 @@ def calc_duration(opts: TimeOptions) -> int:
 
 
 class RetrieverApplication(AbstractContextManager):
-    def __init__(self, *, lock_file: None | Path, log_file: None | Path):
+    def __init__(self, *, lock_file: None | Path, log_file: None | Path, force: bool = False):
         self.lock_file = lock_file
         self.log_file = log_file
+        self.force = force
         self.started: float
         self.ended: float
 
@@ -336,8 +337,8 @@ class RetrieverApplication(AbstractContextManager):
         if self.lock_file is not None:
             lockf = self.lock_file
             try:
-                lockf.touch(exist_ok=False)
-            except FileExistsError:
+                lockf.touch(exist_ok=self.force)
+            except FileExistsError as e:
                 print(f"Lock file {lockf} exists!", file=sys.stderr)
                 print(
                     "You must not run multiple retrievers at the same time.",
@@ -347,7 +348,7 @@ class RetrieverApplication(AbstractContextManager):
                     "If no other retriever is running, delete the lock file to continue.",
                     file=sys.stderr,
                 )
-                raise RuntimeError("Lock file exists")
+                raise RuntimeError("Lock file exists") from e
         self.started = time.monotonic()
         return self
 

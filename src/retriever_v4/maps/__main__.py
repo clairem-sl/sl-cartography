@@ -332,5 +332,5 @@ if __name__ == "__main__":
     options = get_options()
     lock_file = options.mapdir / Config.maps.lock
     log_file = options.mapdir / Config.maps.log
-    with RetrieverApplication(lock_file=lock_file, log_file=lock_file) as app:
+    with RetrieverApplication(lock_file=lock_file, log_file=lock_file, force=options.force) as app:
         main(options)

@@ -297,5 +297,5 @@ if __name__ == "__main__":
     options = get_options()
     lock_file = options.dbdir / Config.names.lock
     log_file = options.dbdir / Config.names.log
-    with RetrieverApplication(lock_file=lock_file, log_file=lock_file) as app:
+    with RetrieverApplication(lock_file=lock_file, log_file=lock_file, force=options.force) as app:
         main(app, options)
