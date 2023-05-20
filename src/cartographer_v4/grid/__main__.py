@@ -21,10 +21,13 @@ Config: SLMapToolsConfig = ConfigReader("config.toml")
 DB_PATH: Final[Path] = Path(Config.names.dir) / Config.names.db
 AREAMAPS_DIR: Final[Path] = Path(Config.areas.dir)
 
-FONT_PATH: Final[Path] = Path(Config.grids.font_name)
-FONT_SIZE: Final[int] = int(Config.grids.font_size)
+FONT_NAME: Final[Path] = Path(Config.grids.font_name)
+FONT_TEXT_SIZE: Final[int] = 16
+FONT_COORD: Final[Path] = Path(Config.grids.font_coord)
+FONT_COORD_SIZE: Final[int] = 12
 TEXT_RGBA: Final[RGBATuple] = (255, 255, 255, 255)
-STROKE_WIDTH: Final[int] = 2
+STROKE_WIDTH_NAME: Final[int] = 2
+STROKE_WIDTH_COORD: Final[int] = 2
 STROKE_RGBA: Final[RGBATuple] = (0, 0, 0, 255)
 
 
@@ -32,12 +35,16 @@ ALPHA_PATTERN: Final[tuple[int, ...]] = (96, 32)
 
 
 class GridOptions(Protocol):
+    no_names: bool
+    no_coords: bool
     areas: list[str]
 
 
 def get_options() -> GridOptions:
     parser = argparse.ArgumentParser("cartographer_v4.grid")
 
+    parser.add_argument("--no-names", action="store_true", help="Don't add region names to the grid")
+    parser.add_argument("--no-coords", action="store_true", help="Don't add coordinates to the grid")
     parser.add_argument(
         "--areas",
         metavar="AREA_LIST",
@@ -73,9 +80,10 @@ def main(opts: GridOptions):
         ul += 1
         lr -= 1
 
-    font = ImageFont.truetype(str(FONT_PATH), FONT_SIZE)
+    font_text = ImageFont.truetype(str(FONT_NAME), FONT_TEXT_SIZE)
     # w, h = font.getsize("M", stroke_width=STROKE_WIDTH)
     # h_offs = 256 - 3 - h
+    font_coord = ImageFont.truetype(str(FONT_COORD), FONT_COORD_SIZE)
 
     validation_set: set[CoordType] = set()
     with DB_PATH.open("rb") as fin:
@@ -124,14 +132,26 @@ def main(opts: GridOptions):
                 gridc.paste(sq, (cx, cy))
                 regname = regsdb[xy]["current_name"]
                 # print(regname)
-                draw.text(
-                    (cx + 5, cy + 4),
-                    regname,
-                    font=font,
-                    fill=TEXT_RGBA,
-                    stroke_width=STROKE_WIDTH,
-                    stroke_fill=STROKE_RGBA,
-                )
+                ty = cy + 4
+                if not opts.no_names:
+                    draw.text(
+                        (cx + 5, ty),
+                        f"{regname}",
+                        font=font_text,
+                        fill=TEXT_RGBA,
+                        stroke_width=STROKE_WIDTH_NAME,
+                        stroke_fill=STROKE_RGBA,
+                    )
+                    ty += 27
+                if not opts.no_coords:
+                    draw.text(
+                        (cx + 5, ty),
+                        f"{x},{y}",
+                        font=font_coord,
+                        fill=TEXT_RGBA,
+                        stroke_width=STROKE_WIDTH_COORD,
+                        stroke_fill=STROKE_RGBA,
+                    )
                 if (i % 10) == 0:
                     print(".", end="", flush=True)
 
