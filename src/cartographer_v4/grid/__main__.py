@@ -28,7 +28,7 @@ FONT_COORD_SIZE: Final[int] = 12
 TEXT_RGBA: Final[RGBATuple] = (255, 255, 255, 255)
 STROKE_WIDTH_NAME: Final[int] = 2
 STROKE_WIDTH_COORD: Final[int] = 2
-STROKE_RGBA: Final[RGBATuple] = (0, 0, 0, 255)
+STROKE_RGBA: Final[RGBATuple] = (0, 0, 0, 191)
 
 
 ALPHA_PATTERN: Final[tuple[int, ...]] = (96, 32)
