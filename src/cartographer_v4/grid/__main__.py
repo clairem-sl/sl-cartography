@@ -111,6 +111,9 @@ def main(opts: GridOptions):
     for num, areamap in enumerate(want_areas, start=1):
         areaname = areamap.stem
         print(f"\n({num}/{tot}) {areaname}", flush=True)
+        if areaname not in KNOWN_AREAS:
+            print("  🈲 DOES NOT EXIST IN KNOWN_AREAS !!")
+            continue
 
         overlay_p = grid_overlay_dir / (areaname + ".grid-overlay.png")
         gridc = None
