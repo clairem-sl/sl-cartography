@@ -253,78 +253,6 @@ async def dispatch_fetcher(
         print()
 
 
-# region ##### Time Options
-
-
-class TimeOptions(Protocol):
-    duration: int
-    until: tuple[int, int]
-    until_utc: tuple[int, int]
-
-
-RE_HHMM = re.compile(r"^(\d{1,2}):(\d{1,2})$")
-
-
-class HourMinute(argparse.Action):
-    def __call__(self, parser, namespace, values, option_string=None):
-        m = RE_HHMM.match(values)
-        if m is None:
-            parser.error("Please enter time in 24h HH:MM format!")
-        setattr(namespace, self.dest, (int(m.group(1)), int(m.group(2))))
-
-
-def add_timeoptions(parser: argparse.ArgumentParser):
-    grp = parser.add_mutually_exclusive_group()
-    grp.add_argument(
-        "--duration",
-        metavar="SECS",
-        type=int,
-        default=0,
-        help=(
-            "Dispatch jobs for SECS seconds. When the duration is reached, stop dispatching new jobs "
-            "and try to retire still-in-flight jobs, then exit. If less than 1, that means run forever "
-            "until interrupted (Ctrl-C)"
-        ),
-    )
-    grp.add_argument(
-        "--until",
-        metavar="HH:MM",
-        action=HourMinute,
-        help="Stop dispatching new jobs when wallclock hits this time. WARNING: Does not take DST into account!",
-    )
-    grp.add_argument(
-        "--until-utc",
-        metavar="HH:MM",
-        action=HourMinute,
-        help="Same as --until but using UTC time (no DST problem)",
-    )
-
-
-def calc_duration(opts: TimeOptions) -> int:
-    nao = datetime.now()
-    if opts.duration > 0:
-        dur = opts.duration
-    elif opts.until:
-        hh, mm = opts.until
-        unt = nao.replace(hour=hh, minute=mm, second=0, microsecond=0)
-        if unt < nao:
-            unt = unt + timedelta(days=1)
-        dur = (unt - nao).seconds
-    elif opts.until_utc:
-        hh, mm = opts.until_utc
-        nao = nao.astimezone(timezone.utc)
-        unt = nao.replace(hour=hh, minute=mm, second=0, microsecond=0)
-        if unt < nao:
-            unt = unt + timedelta(days=1)
-        dur = (unt - nao).seconds
-    else:
-        dur = math.inf
-    return dur
-
-
-# endregion
-
-
 class RetrieverApplication(AbstractContextManager):
     def __init__(self, *, lock_file: None | Path, log_file: None | Path, force: bool = False):
         self.lock_file = lock_file
@@ -382,3 +310,83 @@ class RetrieverApplication(AbstractContextManager):
             ] = log_item
             finout.seek(0)
             ryaml.dump(log_data, finout)
+
+    class Options(Protocol):
+        force: bool
+        min_batch_size: int
+        abort_low_rps: int
+        duration: int
+        until: tuple[int, int]
+        until_utc: tuple[int, int]
+
+    class HourMinute(argparse.Action):
+        def __call__(self, parser, namespace, values, option_string=None):
+            m = re.match(r"^(\d{1,2}):(\d{1,2})$", values)
+            if m is None:
+                parser.error("Please enter time in 24h HH:MM format!")
+            setattr(namespace, self.dest, (int(m.group(1)), int(m.group(2))))
+
+    @staticmethod
+    def add_options(parser: argparse.ArgumentParser):
+        parser.add_argument("--force", action="store_true", help="Ignore lock file")
+        parser.add_argument(
+            "--min-batch-size",
+            metavar="N",
+            type=int,
+            default=0,
+            help="Batch size will not go lower than this",
+        )
+        parser.add_argument(
+            "--abort-low-rps",
+            metavar="N",
+            type=int,
+            default=-1,
+            help="If rps drops below this for some time, abort",
+        )
+
+        grp_time = parser.add_mutually_exclusive_group()
+        grp_time.add_argument(
+            "--duration",
+            metavar="SECS",
+            type=int,
+            default=0,
+            help=(
+                "Dispatch jobs for SECS seconds. When the duration is reached, stop dispatching new jobs "
+                "and try to retire still-in-flight jobs, then exit. If less than 1, that means run forever "
+                "until interrupted (Ctrl-C)"
+            ),
+        )
+        grp_time.add_argument(
+            "--until",
+            metavar="HH:MM",
+            action=RetrieverApplication.HourMinute,
+            help="Stop dispatching new jobs when wallclock hits this time. WARNING: Does not take DST into account!",
+        )
+        grp_time.add_argument(
+            "--until-utc",
+            metavar="HH:MM",
+            action=RetrieverApplication.HourMinute,
+            help="Same as --until but using UTC time (no DST problem)",
+        )
+
+    @staticmethod
+    def calc_duration(opts: RetrieverApplication.Options) -> int:
+        nao = datetime.now()
+        if opts.duration > 0:
+            dur = opts.duration
+        elif opts.until:
+            hh, mm = opts.until
+            unt = nao.replace(hour=hh, minute=mm, second=0, microsecond=0)
+            if unt < nao:
+                unt = unt + timedelta(days=1)
+            dur = (unt - nao).seconds
+        elif opts.until_utc:
+            hh, mm = opts.until_utc
+            nao = nao.astimezone(timezone.utc)
+            unt = nao.replace(hour=hh, minute=mm, second=0, microsecond=0)
+            if unt < nao:
+                unt = unt + timedelta(days=1)
+            dur = (unt - nao).seconds
+        else:
+            dur = math.inf
+        return dur

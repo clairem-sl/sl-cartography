@@ -22,9 +22,6 @@ from retriever_v4 import (
     DebugLevel,
     RetrieverApplication,
     RetrieverProgress,
-    TimeOptions,
-    add_timeoptions,
-    calc_duration,
     dispatch_fetcher,
     handle_sigint,
 )
@@ -69,22 +66,18 @@ class RetrieverMapsOptions(Protocol):
     mapdir: Path
     workers: int
     auto_reset: bool
-    force: bool
     debug_level: DebugLevel
-    min_batch_size: int
-    abort_low_rps: int
     coordfile: Optional[Path]
     areas: list[str]
 
 
-class OptionsProtocol(RetrieverMapsOptions, TimeOptions, Protocol):
+class OptionsProtocol(RetrieverMapsOptions, RetrieverApplication.Options, Protocol):
     pass
 
 
 def get_options() -> OptionsProtocol:
     parser = argparse.ArgumentParser("region_auditor")
 
-    parser.add_argument("--force", action="store_true", help="Ignore lock file")
     parser.add_argument("--mapdir", metavar="DIR", type=Path, default=Path(Config.maps.dir))
     parser.add_argument(
         "--workers",
@@ -103,20 +96,6 @@ def get_options() -> OptionsProtocol:
     )
     parser.add_argument("--debug_level", type=DebugLevel, default=DebugLevel.NORMAL)
     parser.add_argument(
-        "--min-batch-size",
-        metavar="N",
-        type=int,
-        default=0,
-        help="Batch size will not go lower than this",
-    )
-    parser.add_argument(
-        "--abort-low-rps",
-        metavar="N",
-        type=int,
-        default=-1,
-        help="If rps drops below this for some time, abort",
-    )
-    parser.add_argument(
         "--coordfile",
         metavar="FILE",
         type=Path,
@@ -133,10 +112,9 @@ def get_options() -> OptionsProtocol:
         help="Space- and/or comma-separated list of areas to retrieve, in addition to prior progress.",
     )
 
-    add_timeoptions(parser)
+    RetrieverApplication.add_options(parser)
 
     _opts = parser.parse_args()
-
     return cast(OptionsProtocol, _opts)
 
 
@@ -226,7 +204,7 @@ def main(
 ):
     global Progress, SaverQueue, SaveSuccessQueue
 
-    dur = calc_duration(opts)
+    dur = RetrieverApplication.calc_duration(opts)
     progress_file = opts.mapdir / Config.maps.progress
     Progress = RetrieverProgress(progress_file, auto_reset=opts.auto_reset)
     if Progress.outstanding_count:

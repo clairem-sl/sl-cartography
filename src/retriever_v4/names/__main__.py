@@ -16,9 +16,6 @@ import httpx
 from retriever_v4 import (
     RetrieverApplication,
     RetrieverProgress,
-    TimeOptions,
-    add_timeoptions,
-    calc_duration,
     dispatch_fetcher,
     handle_sigint,
 )
@@ -67,14 +64,11 @@ RE_HHMM = re.compile(r"^(\d{1,2}):(\d{1,2})$")
 
 class RetrieverNamesOptions(Protocol):
     dbdir: Path
-    force: bool
     export: Union[Path, Ellipsis]
     auto_reset: bool
-    min_batch_size: int
-    abort_low_rps: int
 
 
-class OptionsProtocol(RetrieverNamesOptions, TimeOptions, Protocol):
+class OptionsProtocol(RetrieverNamesOptions, RetrieverApplication.Options, Protocol):
     pass
 
 
@@ -82,7 +76,6 @@ def get_options() -> OptionsProtocol:
     parser = argparse.ArgumentParser("retriever_v4.names")
 
     parser.add_argument("--dbdir", type=Path, default=Config.names.dir)
-    parser.add_argument("--force", action="store_true", help="Ignore lock file")
     parser.add_argument(
         "--export",
         metavar="YAML_file",
@@ -102,22 +95,8 @@ def get_options() -> OptionsProtocol:
             f"({RetrieverProgress.DEFA_MAX_COORD[1]}) upon finishing row 0"
         ),
     )
-    parser.add_argument(
-        "--min-batch-size",
-        metavar="N",
-        type=int,
-        default=0,
-        help="Batch size will not go lower than this",
-    )
-    parser.add_argument(
-        "--abort-low-rps",
-        metavar="N",
-        type=int,
-        default=-1,
-        help="If rps drops below this for some time, abort",
-    )
 
-    add_timeoptions(parser)
+    RetrieverApplication.add_options(parser)
 
     _opts = parser.parse_args()
 
@@ -246,7 +225,7 @@ async def amain(db_path: Path, duration: int, min_batch_size: int, abort_low_rps
 def main(app_context: RetrieverApplication, opts: OptionsProtocol):
     global DataBase, Progress
 
-    dur = calc_duration(opts)
+    dur = RetrieverApplication.calc_duration(opts)
 
     Progress = RetrieverProgress((opts.dbdir / Config.names.progress), auto_reset=opts.auto_reset)
     if Progress.outstanding_count:
