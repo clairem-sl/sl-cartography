@@ -34,6 +34,7 @@ MAVG_SAMPLES: Final[int] = 5
 ACCEPTABLE_STATUSCODES: Final[set[int]] = {0, 200, 403}
 
 Config: SLMapToolsConfig = ConfigReader("config.toml")
+DEFA_DB: Final[Path] = Path(Config.names.dir) / Config.names.db
 
 Progress: RetrieverProgress
 
@@ -63,7 +64,7 @@ RE_HHMM = re.compile(r"^(\d{1,2}):(\d{1,2})$")
 
 
 class RetrieverNamesOptions(Protocol):
-    dbdir: Path
+    dbpath: Path
     export: Union[Path, Ellipsis]
     auto_reset: bool
 
@@ -75,7 +76,7 @@ class OptionsProtocol(RetrieverNamesOptions, RetrieverApplication.Options, Proto
 def get_options() -> OptionsProtocol:
     parser = argparse.ArgumentParser("retriever_v4.names")
 
-    parser.add_argument("--dbdir", type=Path, default=Config.names.dir)
+    parser.add_argument("--dbpath", type=Path, default=DEFA_DB, help="Path to Regions Database file")
     parser.add_argument(
         "--export",
         metavar="YAML_file",
@@ -227,20 +228,20 @@ def main(app_context: RetrieverApplication, opts: OptionsProtocol):
 
     dur = RetrieverApplication.calc_duration(opts)
 
-    Progress = RetrieverProgress((opts.dbdir / Config.names.progress), auto_reset=opts.auto_reset)
+    prog_file = opts.dbpath.parent / Config.names.progress
+    Progress = RetrieverProgress(prog_file, auto_reset=opts.auto_reset)
     if Progress.outstanding_count:
         print(f"{Progress.outstanding_count} jobs still outstanding from last session")
     else:
         print("No outstanding jobs from last session.")
         if Progress.next_y < 0:
             print("No rows left to process.")
-            print(f"Delete the file {opts.dbdir / Config.names.progress} to reset. (Or specify --auto-reset)")
+            print(f"Delete the file {prog_file} to reset. (Or specify --auto-reset)")
             return
     print(f"Next coordinate: {Progress.next_coordinate}")
 
-    db_path = opts.dbdir / Config.names.db
-    if db_path.exists():
-        with db_path.open("rb") as fin:
+    if opts.dbpath.exists():
+        with opts.dbpath.open("rb") as fin:
             DataBase = pickle.load(fin)
     print(f"DataBase already contains {len(DataBase)} regions.")
 
@@ -248,7 +249,7 @@ def main(app_context: RetrieverApplication, opts: OptionsProtocol):
     #
     print("Dispatching async fetchers!", flush=True)
     with handle_sigint(AbortRequested):
-        asyncio.run(amain(db_path, dur, opts.min_batch_size, opts.abort_low_rps))
+        asyncio.run(amain(opts.dbpath, dur, opts.min_batch_size, opts.abort_low_rps))
     #
     end_x, end_y = Progress.next_coordinate
     if end_x == 0:
@@ -268,13 +269,13 @@ def main(app_context: RetrieverApplication, opts: OptionsProtocol):
 
     if opts.export is not Ellipsis:
         print("Exporting ... ", end="", flush=True)
-        rslt = export(db_path, opts.export, quiet=True)
+        rslt = export(opts.dbpath, opts.export, quiet=True)
         print(f"=> {rslt}")
 
 
 if __name__ == "__main__":
     options = get_options()
-    lock_file = options.dbdir / Config.names.lock
-    log_file = options.dbdir / Config.names.log
+    lock_file = options.dbpath.parent / Config.names.lock
+    log_file = options.dbpath.parent / Config.names.log
     with RetrieverApplication(lock_file=lock_file, log_file=lock_file, force=options.force) as app:
         main(app, options)
