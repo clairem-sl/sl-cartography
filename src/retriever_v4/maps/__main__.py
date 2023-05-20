@@ -84,7 +84,7 @@ class OptionsProtocol(RetrieverMapsOptions, TimeOptions, Protocol):
 def get_options() -> OptionsProtocol:
     parser = argparse.ArgumentParser("region_auditor")
 
-    parser.add_argument("--force", action="store_true")
+    parser.add_argument("--force", action="store_true", help="Ignore lock file")
     parser.add_argument("--mapdir", metavar="DIR", type=Path, default=Path(Config.maps.dir))
     parser.add_argument(
         "--workers",

@@ -82,7 +82,7 @@ def get_options() -> OptionsProtocol:
     parser = argparse.ArgumentParser("retriever_v4.names")
 
     parser.add_argument("--dbdir", type=Path, default=Config.names.dir)
-    parser.add_argument("--force", action="store_true")
+    parser.add_argument("--force", action="store_true", help="Ignore lock file")
     parser.add_argument(
         "--export",
         metavar="YAML_file",
