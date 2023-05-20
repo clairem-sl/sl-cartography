@@ -4,21 +4,17 @@
 from __future__ import annotations
 
 import argparse
-from _operator import methodcaller
-
-import packaging.version as versioning
 import pickle
 from datetime import datetime
+from operator import methodcaller
 from pathlib import Path
-from typing import Any, Optional, Protocol, cast, Final, TypedDict
+from typing import Any, Final, Optional, Protocol, TypedDict, cast
 
+import packaging.version as versioning
 from ruamel.yaml import YAML, RoundTripRepresenter
 
 from retriever_v4.names.upgrade_db import upgrade_history_to_db3
-from sl_maptools import (
-    CoordType,
-    RegionsDBRecord3,
-)
+from sl_maptools import CoordType, RegionsDBRecord3
 from sl_maptools.utils import ConfigReader, make_backup
 
 Config = ConfigReader("config.toml")
@@ -40,9 +36,7 @@ class OptionsType(Protocol):
 
 
 def get_options() -> OptionsType:
-    parser = argparse.ArgumentParser(
-        "retriever_v4.names.xchg", epilog="For more details, do COMMAND --help"
-    )
+    parser = argparse.ArgumentParser("retriever_v4.names.xchg", epilog="For more details, do COMMAND --help")
     subparsers = parser.add_subparsers(title="COMMANDS", dest="command", required=True)
     parser.add_argument(
         "--db",
@@ -102,7 +96,7 @@ def export(db: Path, targ: Path, quiet: bool = False) -> Path:
                 name: [[iso_ts(ets), iso_ts(lts)] for ets, lts in tstamps]
                 for name, tstamps in info["name_history3"].items()
             },
-            "sources": sorted(info["sources"])
+            "sources": sorted(info["sources"]),
         }
     if not quiet:
         print("\nRecords transformed. Exporting...", end="", flush=True)
@@ -128,9 +122,7 @@ def export(db: Path, targ: Path, quiet: bool = False) -> Path:
                 ),
             },
         },
-        "_metadata": {
-            "created": datetime.now().astimezone().isoformat(timespec="minutes")
-        },
+        "_metadata": {"created": datetime.now().astimezone().isoformat(timespec="minutes")},
         "data": result,
     }
     yaml = YAML(typ="safe")
@@ -151,8 +143,7 @@ def import_1(regs_data: dict[str, Any]) -> dict[CoordType, RegionsDBRecord3]:
 
         ser_hist: dict[str, list[str]] = data["name_history"]
         hist_old: dict[str, list[str]] = {
-            name: [datetime.fromisoformat(ts) for ts in tstamps_s]
-            for name, tstamps_s in ser_hist.items()
+            name: [datetime.fromisoformat(ts) for ts in tstamps_s] for name, tstamps_s in ser_hist.items()
         }
         first_seen = datetime.fromisoformat(data["first_seen"])
         hist3 = upgrade_history_to_db3(first_seen, hist_old)
@@ -163,7 +154,7 @@ def import_1(regs_data: dict[str, Any]) -> dict[CoordType, RegionsDBRecord3]:
             "last_seen": datetime.fromisoformat(data["last_seen"]),
             "last_check": datetime.fromisoformat(data["last_check"]),
             "name_history3": hist3,
-            "sources": set(data["sources"])
+            "sources": set(data["sources"]),
         }
     return result
 
@@ -187,7 +178,7 @@ def import_3(regs_data: dict[str, Any]) -> dict[CoordType, RegionsDBRecord3]:
             "last_seen": datetime.fromisoformat(data["last_seen"]),
             "last_check": datetime.fromisoformat(data["last_check"]),
             "name_history3": hist3,
-            "sources": set(data["sources"])
+            "sources": set(data["sources"]),
         }
     return result
 
@@ -202,9 +193,7 @@ def import_(src: Path, db: Path, quiet: bool = False):
     if (_schema := data.get("_schema")) is None:
         raise InvalidSourceError("Source file does not have '_schema'")
     if _schema.get("name") != "sl-carto-regionsdb":
-        raise InvalidSourceError(
-            "Source file does not seem to be an exported RegionsDB!"
-        )
+        raise InvalidSourceError("Source file does not seem to be an exported RegionsDB!")
     _ver = versioning.parse(_schema.get("version", "0.0.0"))
     if _ver.major not in SUPPORTED_SCHEMA_VERS:
         raise InvalidSourceError(f"Schema version {_ver} not supported!")
@@ -222,13 +211,13 @@ def import_(src: Path, db: Path, quiet: bool = False):
         raise InvalidSourceError("Source data does not contain data!")
 
     if not quiet:
-        print(
-            f"{len(regs_data)} records retrieved. Transforming...", end="", flush=True
-        )
+        print(f"{len(regs_data)} records retrieved. Transforming...", end="", flush=True)
     result: dict[CoordType, RegionsDBRecord3] = {
         1: import_1,
         3: import_3,
-    }[_ver.major](regs_data)
+    }[
+        _ver.major
+    ](regs_data)
 
     make_backup(db)
     with db.open("wb") as fout:
