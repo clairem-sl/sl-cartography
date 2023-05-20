@@ -126,7 +126,7 @@ Also, please follow these guidelines:
 * Code MUST be formatted using **Black** with the configuration as stated in `pyproject.toml`
 * In addition, imports MUST be formatted using **isort** with the configuration as set in `pyproject.toml`
 
-**I will NOT accept PRs that has not formatted with Black and isort!**
+**I will NOT accept PRs that are not formatted with Black and isort!**
 
 
 ## Licenses
