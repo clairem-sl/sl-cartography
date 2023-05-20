@@ -154,18 +154,19 @@ def main(opts: GridOptions):
                     )
                 if (i % 10) == 0:
                     print(".", end="", flush=True)
-
             gridc.save(overlay_p)
         print(f"{overlay_p}\n  => ", end="", flush=True)
         composite_p = grid_composite_dir / (areaname + ".composited.png")
-        if gridc:
-            if not composite_p.exists():
-                print(f"💠 ", end="")
-                with Image.open(areamap) as img:
-                    out = Image.alpha_composite(img, gridc)
-                    out.save(composite_p)
-        if composite_p.exists():
-            print(f"{composite_p}", end="", flush=True)
+        if not composite_p.exists():
+            if gridc is None:
+                with overlay_p.open("rb") as fin:
+                    gridc = Image.open(fin)
+                    gridc.load()
+            print(f"💠 ", end="")
+            with Image.open(areamap) as img:
+                out = Image.alpha_composite(img, gridc)
+                out.save(composite_p)
+        print(f"{composite_p}", end="", flush=True)
 
     print()
 
