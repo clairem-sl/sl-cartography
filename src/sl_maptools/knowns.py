@@ -81,6 +81,8 @@ KNOWN_AREAS: Final[dict[str, AreaBounds]] = {
     "Mieville": AreaBounds(533, 1196, 537, 1201),
     "Pirates1700": AreaBounds(940, 1174, 942, 1177),
     "SecondFrance": AreaBounds(556, 1117, 559, 1120),
+    "SnugHarbor": AreaBounds(1146, 1052, 1149, 1056),
+    "ASLMetaverse": AreaBounds(763, 915, 765, 917),
     # ### Below this line, are areas with < 10 regions in a clump. Much less interesting.
     "Yumix": AreaBounds(653, 1245, 654, 1249),
     "VWBPE": AreaBounds(1102, 1312, 1106, 1314),
@@ -120,6 +122,7 @@ SUPPRESS_FOR_AREAS: dict[str, list[AreaBounds]] = {
         AreaBounds(1109, 1055, 1110, 1056),
         AreaBounds(1110, 1052, 1110, 1054),
     ],
+    "SnugHarbor": [AreaBounds(1146, 1056, 1146, 1056)],
 }
 
 DO_NOT_MAP_AREAS: dict[str, AreaBounds] = {
