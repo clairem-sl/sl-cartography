@@ -31,6 +31,7 @@ KNOWN_AREAS: Final[dict[str, AreaBounds]] = {
     "Horizons": AreaBounds(1804, 1200, 1813, 1210),
     "BlakeSea": AreaBounds(1131, 1048, 1148, 1054),
     "BlakeSeaSurrounding": AreaBounds(1131, 1036, 1152, 1061),
+    "BlakeSeaSurroundingNoSuppress": AreaBounds(1131, 1036, 1152, 1061),
     # "Interesting988": AreaBounds(1136, 1036, 1152, 1049),
     # "Interesting101": AreaBounds(1135, 1052, 1149, 1061),
     # endregion
