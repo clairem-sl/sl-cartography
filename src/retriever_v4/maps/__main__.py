@@ -25,16 +25,13 @@ from retriever_v4 import (
     dispatch_fetcher,
     handle_sigint,
 )
-from retriever_v4.maps.saver import Thresholds, saver
+from retriever_v4.maps.saver import saver
 from sl_maptools import CoordType, MapCoord
 from sl_maptools.fetchers import RawResult
 from sl_maptools.fetchers.map import BoundedMapFetcher
 from sl_maptools.knowns import KNOWN_AREAS
 from sl_maptools.utils import ConfigReader, SLMapToolsConfig
-from sl_maptools.validator import inventorize_maps_all
 
-SSIM_THRESHOLD: Final[float] = 0.895
-MSE_THRESHOLD: Final[float] = 0.01
 MAVG_SAMPLES: Final[int] = 5
 
 CONN_LIMIT: Final[int] = 80
@@ -245,19 +242,13 @@ def main(
         possibly_changed: dict[CoordType, None] = manager.dict()
         shm_allocator = SharedMemoryAllocator(shm_manager)
 
-        map_inventory = manager.dict(inventorize_maps_all(opts.mapdir))
-
-        thresholds = Thresholds(MSE=MSE_THRESHOLD, SSIM=SSIM_THRESHOLD)
         saver_args = (
             opts.mapdir,
-            map_inventory,
             SaverQueue,
             SaveSuccessQueue,
             saved_coords,
             worker_state,
             opts.debug_level,
-            thresholds,
-            possibly_changed,
         )
         pool: MPPool.Pool
         with MP.Pool(opts.workers, initializer=saver, initargs=saver_args) as pool:
