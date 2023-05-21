@@ -29,8 +29,12 @@ KNOWN_AREAS: Final[dict[str, AreaBounds]] = {
     "Corsica": AreaBounds(1100, 1082, 1159, 1100),
     "Nautilus": AreaBounds(1106, 1047, 1138, 1081),
     "Horizons": AreaBounds(1804, 1200, 1813, 1210),
-    # "Interesting988": AreaBounds(1136, 1036, 1152, 1049),
-    # "Interesting101": AreaBounds(1135, 1052, 1149, 1061),
+    # endregion
+    # region ### Premium Continents
+    "EastPremium": AreaBounds(1192, 907, 1215, 926),
+    "SouthPremium-North": AreaBounds(1013, 811, 1028, 828),
+    "SouthPremium-Middle": AreaBounds(1000, 750, 1022, 768),
+    "SouthPremium-South": AreaBounds(1000, 500, 1022, 518),
     # endregion
     # region ### User Continents
     "BlakeSea": AreaBounds(1131, 1048, 1148, 1054),
@@ -98,12 +102,6 @@ KNOWN_AREAS: Final[dict[str, AreaBounds]] = {
     "Bauer": AreaBounds(899, 1200, 902, 1202),
     "Olni": AreaBounds(655, 1291, 658, 1293),
     "PompeiiRomanum": AreaBounds(747, 1079, 749, 1083),
-    # endregion
-    # region ### Premium Continents
-    "EastPremium": AreaBounds(1192, 907, 1215, 926),
-    "SouthPremium-North": AreaBounds(1013, 811, 1028, 828),
-    "SouthPremium-Middle": AreaBounds(1000, 750, 1022, 768),
-    "SouthPremium-South": AreaBounds(1000, 500, 1022, 518),
     # endregion
     # region ### Special Areas
     "LindenLabDE": AreaBounds(1105, 1382, 1108, 1388),
