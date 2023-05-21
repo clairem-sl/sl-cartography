@@ -122,9 +122,10 @@ def main(opts: PruneOptions):
             if (i % 100) == 0:
                 print(f".", end="", flush=True)
             count += len(rslt)
-    print("\nWaiting for workers to join ... ", end="", flush=True)
-    pool.join()
-    print("joined.")
+        pool.close()
+        print("\nWaiting for workers to join ... ", end="", flush=True)
+        pool.join()
+        print("joined.")
     elapsed = time.monotonic() - start
 
     print(f"{total - count} files pruned in {elapsed:_.2f} seconds.")
