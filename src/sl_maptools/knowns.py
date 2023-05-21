@@ -29,8 +29,12 @@ KNOWN_AREAS: Final[dict[str, AreaBounds]] = {
     "Corsica": AreaBounds(1100, 1082, 1159, 1100),
     "Nautilus": AreaBounds(1106, 1047, 1138, 1081),
     "Horizons": AreaBounds(1804, 1200, 1813, 1210),
-    # "Interesting988": AreaBounds(1136, 1036, 1152, 1049),
-    # "Interesting101": AreaBounds(1135, 1052, 1149, 1061),
+    # endregion
+    # region ### Premium Continents
+    "EastPremium": AreaBounds(1192, 907, 1215, 926),
+    "SouthPremium-North": AreaBounds(1013, 811, 1028, 828),
+    "SouthPremium-Middle": AreaBounds(1000, 750, 1022, 768),
+    "SouthPremium-South": AreaBounds(1000, 500, 1022, 518),
     # endregion
     # region ### User Continents
     "BlakeSea": AreaBounds(1131, 1048, 1148, 1054),
@@ -99,19 +103,11 @@ KNOWN_AREAS: Final[dict[str, AreaBounds]] = {
     "Olni": AreaBounds(655, 1291, 658, 1293),
     "PompeiiRomanum": AreaBounds(747, 1079, 749, 1083),
     # endregion
-    # region ### Premium Continents
-    "EastPremium": AreaBounds(1192, 907, 1215, 926),
-    "SouthPremium-North": AreaBounds(1013, 811, 1028, 828),
-    "SouthPremium-Middle": AreaBounds(1000, 750, 1022, 768),
-    "SouthPremium-South": AreaBounds(1000, 500, 1022, 518),
-    # endregion
     # region ### Special Areas
     "LindenLabDE": AreaBounds(1105, 1382, 1108, 1388),
     "LindenEstateServices": AreaBounds(1025, 1014, 1031, 1016),
     "MoleIslands": AreaBounds(1006, 971, 1011, 976),
     "SLBRegions": AreaBounds(390, 359, 402, 374),
-    "SSP-15xx": AreaBounds(1155, 1379, 1165, 1383),
-    "SSP-40xx": AreaBounds(1182, 1371, 1187, 1377),
     "LR-160": AreaBounds(1187, 1206, 1190, 1210),
     "LR-180": AreaBounds(1193, 1206, 1196, 1210),
     "Preflight": AreaBounds(1296, 1193, 1299, 1196),
@@ -121,7 +117,7 @@ KNOWN_AREAS: Final[dict[str, AreaBounds]] = {
     "Interesting111": AreaBounds(500, 1027, 503, 1030),
 }
 
-SUPPRESS_FOR_AREAS: dict[str, list[AreaBounds]] = {
+SUPPRESS_FOR_AREAS: Final[dict[str, list[AreaBounds]]] = {
     "FairChang": [
         AreaBounds(1106, 1057, 1110, 1061),
         AreaBounds(1109, 1055, 1110, 1056),
@@ -140,6 +136,8 @@ SUPPRESS_FOR_AREAS: dict[str, list[AreaBounds]] = {
     ]
 }
 
-DO_NOT_MAP_AREAS: dict[str, AreaBounds] = {
+DO_NOT_MAP_AREAS: Final[dict[str, AreaBounds]] = {
     "CH": AreaBounds(1102, 1199, 1104, 1201),  ### NOT interesting
+    "SSP-15xx": AreaBounds(1155, 1379, 1165, 1383),  ### NOT interesting
+    "SSP-40xx": AreaBounds(1182, 1371, 1187, 1377),  ### NOT interesting
 }
