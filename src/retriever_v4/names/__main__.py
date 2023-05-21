@@ -120,6 +120,11 @@ def process(tile: CookedResult) -> bool:
         if seen_name:
             dbxy["last_seen"] = ts
         history: dict[str, list[tuple[datetime, datetime]]] = dbxy["name_history3"]
+        if seen_name not in history:
+            ChangeStats["new"] += 1
+            print("🉑", end="", flush=True)
+            history[seen_name] = [(ts, ts)]
+            return
         if seen_name != prev_name:
             if seen_name:
                 if prev_name:
@@ -128,11 +133,6 @@ def process(tile: CookedResult) -> bool:
                     ChangeStats["revived"] += 1
             else:
                 ChangeStats["gone"] += 1
-        if seen_name not in history:
-            print("🉑", end="", flush=True)
-            history[seen_name] = [(ts, ts)]
-            return
-        if seen_name != prev_name:
             print("🉑", end="", flush=True)
             history[seen_name].append((ts, ts))
         else:
@@ -152,7 +152,6 @@ def process(tile: CookedResult) -> bool:
             print(f"{tile=}")
             raise
         if dbxy is None:
-            ChangeStats["new"] += 1
             dbxy: RegionsDBRecord3 = {
                 "first_seen": ts,
                 "last_seen": None,
