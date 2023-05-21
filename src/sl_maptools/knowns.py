@@ -108,8 +108,6 @@ KNOWN_AREAS: Final[dict[str, AreaBounds]] = {
     "LindenEstateServices": AreaBounds(1025, 1014, 1031, 1016),
     "MoleIslands": AreaBounds(1006, 971, 1011, 976),
     "SLBRegions": AreaBounds(390, 359, 402, 374),
-    "SSP-15xx": AreaBounds(1155, 1379, 1165, 1383),
-    "SSP-40xx": AreaBounds(1182, 1371, 1187, 1377),
     "LR-160": AreaBounds(1187, 1206, 1190, 1210),
     "LR-180": AreaBounds(1193, 1206, 1196, 1210),
     "Preflight": AreaBounds(1296, 1193, 1299, 1196),
@@ -140,4 +138,6 @@ SUPPRESS_FOR_AREAS: Final[dict[str, list[AreaBounds]]] = {
 
 DO_NOT_MAP_AREAS: Final[dict[str, AreaBounds]] = {
     "CH": AreaBounds(1102, 1199, 1104, 1201),  ### NOT interesting
+    "SSP-15xx": AreaBounds(1155, 1379, 1165, 1383),  ### NOT interesting
+    "SSP-40xx": AreaBounds(1182, 1371, 1187, 1377),  ### NOT interesting
 }
