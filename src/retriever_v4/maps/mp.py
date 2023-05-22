@@ -11,7 +11,7 @@ import signal
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import cast, Final, TypedDict, NamedTuple, Optional
+from typing import cast, Final, TypedDict, NamedTuple, Optional, Union
 
 import httpx
 
@@ -24,13 +24,13 @@ CONN_LIMIT: Final[int] = 20
 HTTP2: Final[bool] = True
 
 Config = ConfigReader("config.toml")
-AbortRequest = MP.Event()
+AbortRequested = MP.Event()
 
 
 class QJob(TypedDict):
     coord: MapCoord
     tsf: str
-    shm: MPSharedMem.SharedMemory
+    buf: bytes
 
 
 class QResult(NamedTuple):
@@ -68,7 +68,7 @@ def saver(
     myname = f"SaverWorker-{num}"
     MP.current_process().name = myname
 
-    result: Optional[QResult] = None
+    result: QResult
     while True:
         if incoming_queue.empty():
             time.sleep(1)
@@ -81,8 +81,7 @@ def saver(
 
         regmap: QJob = cast(QJob, item)
         coord: MapCoord = regmap["coord"]
-        shm: MPSharedMem.SharedMemory = regmap["shm"]
-        blob = cast(bytes, shm.buf)
+        blob: bytes = regmap["buf"]
         tsf = regmap["tsf"]
         targf = mapdir / f"{coord.x}-{coord.y}_{tsf}.jpg"
         try:
@@ -92,13 +91,10 @@ def saver(
         except Exception as e:
             print(f"\nERR: {myname}:{type(e)}:{e}")
             result = QResult(coord, e)
-        finally:
-            shm.close()
-            shm.unlink()
-            result_queue.put(result)
+        result_queue.put(result)
 
 
-async def aretrieve(in_queue: MP.Queue, out_queue: MP.Queue, disp_queue: MP.Queue, shm_allocator: SharedMemoryAllocator):
+async def aretrieve(in_queue: MP.Queue, out_queue: MP.Queue, disp_queue: MP.Queue):
     limits = httpx.Limits(max_connections=CONN_LIMIT, max_keepalive_connections=CONN_LIMIT)
     async with httpx.AsyncClient(limits=limits, timeout=10.0, http2=HTTP2) as client:
         fetcher = BoundedMapFetcher(CONN_LIMIT * 3, client, cooked=False, cancel_flag=AbortRequested)
@@ -109,12 +105,13 @@ async def aretrieve(in_queue: MP.Queue, out_queue: MP.Queue, disp_queue: MP.Queu
         tasks: set[asyncio.Task] = set()
         done: set[asyncio.Task]
         pending_tasks: set[asyncio.Task]
-        job = in_queue.get()
+        job: Union[Ellipsis, QJob] = in_queue.get()
         while True:
             if job is None:
                 break
             if job is not Ellipsis:
-                cmd, x, y  = cast(tuple[str, int, int], job)
+                print(job)
+                cmd, x, y = cast(tuple[str, int, int], job)
                 if cmd == "single":
                     disp_queue.put([(x, y)])
                     tasks.add(make_task((x, y)))
@@ -128,6 +125,7 @@ async def aretrieve(in_queue: MP.Queue, out_queue: MP.Queue, disp_queue: MP.Queu
 
             if tasks:
                 done, pending_tasks = await asyncio.wait(tasks, timeout=BATCH_WAIT)
+                disp_queue.put(len(done))
 
                 for fut in done:
                     fut_result = fut.result()
@@ -135,13 +133,13 @@ async def aretrieve(in_queue: MP.Queue, out_queue: MP.Queue, disp_queue: MP.Queu
                         continue
                     if not fut_result.result:
                         continue
-                    out_queue.put(
-                        {
-                            "coord": fut_result.coord,
-                            "tsf": datetime.strftime(datetime.now(), "%y%m%d-%H%M"),
-                            "shm": shm_allocator.new(fut_result.coord, fut_result.result),
-                        }
-                    )
+                    assert isinstance(fut_result.result, bytes)
+                    job: QJob = {
+                        "coord": fut_result.coord,
+                        "tsf": datetime.strftime(datetime.now(), "%y%m%d-%H%M"),
+                        "buf": fut_result.result,
+                    }
+                    out_queue.put(job)
 
                 tasks = pending_tasks
 
@@ -149,14 +147,13 @@ async def aretrieve(in_queue: MP.Queue, out_queue: MP.Queue, disp_queue: MP.Queu
                 try:
                     job = in_queue.get_nowait()
                 except queue.Empty:
-                    await asyncio.sleep(2)
                     job = Ellipsis
             else:
                 job = Ellipsis
 
 
-def retrieve(in_queue: MP.Queue, out_queue: MP.Queue, disp_queue: MP.Queue, shm_allocator: SharedMemoryAllocator):
-    asyncio.run(aretrieve(in_queue, out_queue, disp_queue, shm_allocator))
+def retrieve(in_queue: MP.Queue, out_queue: MP.Queue, disp_queue: MP.Queue):
+    asyncio.run(aretrieve(in_queue, out_queue, disp_queue))
 
 
 def main():
@@ -174,17 +171,14 @@ def main():
             coord_queue,
             save_queue,
             dispatched_queue,
-
         )
-        s_args = (
-            Path(Config.maps.dir),
-            save_queue,
-            result_queue
-        )
+        s_args = (Path(Config.maps.dir), save_queue, result_queue)
 
         outstanding: set[CoordType] = set()
-        with MP.Pool(6, initializer=retrieve, initargs=r_args) as pool_r, MP.Pool(2, initializer=saver, initargs=s_args) as pool_s:
-            for row in range(2100, -1, -1):
+        with MP.Pool(12, initializer=retrieve, initargs=r_args) as pool_r, MP.Pool(
+            4, initializer=saver, initargs=s_args
+        ) as pool_s:
+            for row in range(1000, -1, -1):
                 coord_queue.put(("row", -1, row))
             tm: Optional[float] = None
             count: int = 0
@@ -192,28 +186,30 @@ def main():
             while not coord_queue.empty():
                 if tm is None:
                     tm = time.monotonic()
-                    count = 0
                 try:
                     while True:
-                        co = dispatched_queue.get(timeout=1)
-                        outstanding.add(co)
+                        di = dispatched_queue.get_nowait()
+                        if isinstance(di, list):
+                            outstanding.update(di)
+                        elif isinstance(di, int):
+                            total += di
                 except queue.Empty:
                     pass
                 try:
                     while True:
-                        rslt: QResult = result_queue.get(timeout=1)
+                        rslt: QResult = result_queue.get_nowait()
                         if rslt.exc is None:
                             outstanding.discard(rslt.coord)
                             count += 1
-                            total += 1
                 except queue.Empty:
                     pass
                 elapsed = time.monotonic() - tm
                 if elapsed >= 5.0:
-                    rate = count / elapsed
-                    print(f"{total:_} maptiles retrieved, at {rate:_.2f}rps", flush=True)
+                    rate = total / elapsed
+                    print(f"{total:_} coords checked, at {rate:_.2f}rps, {count:_} retrieved", flush=True)
+                    total = 0
+                    tm = time.monotonic()
 
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
