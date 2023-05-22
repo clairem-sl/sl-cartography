@@ -144,8 +144,13 @@ class DebugLevel(IntEnum):
     DETAILED = 2
 
 
+class Settable(Protocol):
+    def set(self): ...
+    def is_set(self) -> bool: ...
+
+
 @contextmanager
-def handle_sigint(interrupt_flag: asyncio.Event):
+def handle_sigint(interrupt_flag: Settable):
     """
     A context manager that provides SIGINT handling, and restore original handler upon exit
     """
