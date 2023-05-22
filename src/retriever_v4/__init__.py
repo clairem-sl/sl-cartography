@@ -23,7 +23,7 @@ from typing import Any, Callable, Final, Generator, Protocol, Type, TypedDict
 
 import ruamel.yaml as ryaml
 
-from sl_maptools import CoordType
+from sl_maptools import CoordType, Settable
 
 
 class ProgressDict(TypedDict):
@@ -146,11 +146,6 @@ class DebugLevel(IntEnum):
     DISABLED = 0
     NORMAL = 1
     DETAILED = 2
-
-
-class Settable(Protocol):
-    def set(self): ...
-    def is_set(self) -> bool: ...
 
 
 @contextmanager

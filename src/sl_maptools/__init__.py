@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from functools import partial
 from pathlib import Path
-from typing import Final, Generator, Iterable, NamedTuple, Optional, TypedDict, Union
+from typing import Final, Generator, Iterable, NamedTuple, Optional, TypedDict, Union, Protocol
 
 from PIL import Image
 
@@ -216,3 +216,8 @@ class RegionsDBRecord3(TypedDict):
     current_name: str
     name_history3: dict[str, list[tuple[datetime, datetime]]]
     sources: set[str]
+
+
+class Settable(Protocol):
+    def set(self): ...
+    def is_set(self) -> bool: ...

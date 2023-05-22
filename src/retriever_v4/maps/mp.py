@@ -15,16 +15,20 @@ from typing import cast, Final, TypedDict, NamedTuple, Optional, Union
 
 import httpx
 
-from sl_maptools import CoordType, MapCoord
+from retriever_v4 import handle_sigint
+from sl_maptools import CoordType, MapCoord, Settable
 from sl_maptools.fetchers.map import BoundedMapFetcher
 from sl_maptools.utils import ConfigReader
 
 BATCH_WAIT: Final[int] = 5
-CONN_LIMIT: Final[int] = 20
+CONN_LIMIT: Final[int] = 80
 HTTP2: Final[bool] = True
 
+RETR_WORKERS: Final[int] = 12
+SAVE_WORKERS: Final[int] = 4
+
 Config = ConfigReader("config.toml")
-AbortRequested = MP.Event()
+AbortRequested: Settable = MP.Event()
 
 
 class QJob(TypedDict):
@@ -65,7 +69,7 @@ def saver(
     mapdir.mkdir(parents=True, exist_ok=True)
     curname = MP.current_process().name
     _, num = curname.split("-")
-    myname = f"SaverWorker-{num}"
+    myname = f"Saver-{num}"
     MP.current_process().name = myname
 
     result: QResult
@@ -94,10 +98,10 @@ def saver(
         result_queue.put(result)
 
 
-async def aretrieve(in_queue: MP.Queue, out_queue: MP.Queue, disp_queue: MP.Queue):
+async def aretrieve(in_queue: MP.Queue, out_queue: MP.Queue, disp_queue: MP.Queue, abort_flag: Settable):
     limits = httpx.Limits(max_connections=CONN_LIMIT, max_keepalive_connections=CONN_LIMIT)
     async with httpx.AsyncClient(limits=limits, timeout=10.0, http2=HTTP2) as client:
-        fetcher = BoundedMapFetcher(CONN_LIMIT * 3, client, cooked=False, cancel_flag=AbortRequested)
+        fetcher = BoundedMapFetcher(CONN_LIMIT * 3, client, cooked=False, cancel_flag=abort_flag)
 
         def make_task(coord: CoordType):
             return asyncio.create_task(fetcher.async_fetch(MapCoord(*coord)), name=str(coord))
@@ -105,12 +109,12 @@ async def aretrieve(in_queue: MP.Queue, out_queue: MP.Queue, disp_queue: MP.Queu
         tasks: set[asyncio.Task] = set()
         done: set[asyncio.Task]
         pending_tasks: set[asyncio.Task]
-        job: Union[Ellipsis, QJob] = in_queue.get()
+        job: Union[Ellipsis, tuple[str, int, int]] = in_queue.get()
         while True:
             if job is None:
                 break
             if job is not Ellipsis:
-                print(job)
+                print(MP.current_process().name, job)
                 cmd, x, y = cast(tuple[str, int, int], job)
                 if cmd == "single":
                     disp_queue.put([(x, y)])
@@ -134,26 +138,35 @@ async def aretrieve(in_queue: MP.Queue, out_queue: MP.Queue, disp_queue: MP.Queu
                     if not fut_result.result:
                         continue
                     assert isinstance(fut_result.result, bytes)
-                    job: QJob = {
+                    save: QJob = {
                         "coord": fut_result.coord,
                         "tsf": datetime.strftime(datetime.now(), "%y%m%d-%H%M"),
                         "buf": fut_result.result,
                     }
-                    out_queue.put(job)
+                    out_queue.put(save)
 
                 tasks = pending_tasks
 
-            if len(tasks) < 1050:
-                try:
-                    job = in_queue.get_nowait()
-                except queue.Empty:
-                    job = Ellipsis
+            job = Ellipsis
+            if not abort_flag.is_set():
+                if len(tasks) < 1050:
+                    try:
+                        job = in_queue.get_nowait()
+                    except queue.Empty:
+                        pass
             else:
-                job = Ellipsis
+                if not tasks:
+                    break
+    print(f"{MP.current_process().name} done")
 
 
-def retrieve(in_queue: MP.Queue, out_queue: MP.Queue, disp_queue: MP.Queue):
-    asyncio.run(aretrieve(in_queue, out_queue, disp_queue))
+def retrieve(in_queue: MP.Queue, out_queue: MP.Queue, disp_queue: MP.Queue, abort_flag: Settable):
+    signal.signal(signal.SIGINT, signal.SIG_IGN)
+    curname = MP.current_process().name
+    _, num = curname.split("-")
+    myname = f"Retriever-{num}"
+    MP.current_process().name = myname
+    asyncio.run(aretrieve(in_queue, out_queue, disp_queue, abort_flag))
 
 
 def main():
@@ -162,53 +175,90 @@ def main():
 
     mgr: MPMgr.SyncManager
     with MP.Manager() as mgr:
-        coord_queue = mgr.Queue()
-        save_queue = mgr.Queue()
-        dispatched_queue = mgr.Queue()
-        result_queue = mgr.Queue()
+        coord_queue: MP.Queue = mgr.Queue()
+        save_queue: MP.Queue = mgr.Queue()
+        dispatched_queue: MP.Queue = mgr.Queue()
+        result_queue: MP.Queue = mgr.Queue()
 
         r_args = (
             coord_queue,
             save_queue,
             dispatched_queue,
+            AbortRequested,
         )
         s_args = (Path(Config.maps.dir), save_queue, result_queue)
 
         outstanding: set[CoordType] = set()
-        with MP.Pool(12, initializer=retrieve, initargs=r_args) as pool_r, MP.Pool(
-            4, initializer=saver, initargs=s_args
+        count: int = 0
+        total: int = 0
+
+        def flush_dispatched_queue():
+            nonlocal total
+            try:
+                while True:
+                    di = dispatched_queue.get_nowait()
+                    if isinstance(di, list):
+                        outstanding.update(cast(list[CoordType], di))
+                    elif isinstance(di, int):
+                        total += di
+            except queue.Empty:
+                pass
+
+        def flush_result_queue():
+            nonlocal count
+            try:
+                while True:
+                    rslt: QResult = result_queue.get_nowait()
+                    if rslt.exc is None:
+                        outstanding.discard(rslt.coord)
+                        count += 1
+            except queue.Empty:
+                pass
+
+        with MP.Pool(RETR_WORKERS, initializer=retrieve, initargs=r_args) as pool_r, MP.Pool(
+            SAVE_WORKERS, initializer=saver, initargs=s_args
         ) as pool_s:
-            for row in range(1000, -1, -1):
-                coord_queue.put(("row", -1, row))
-            tm: Optional[float] = None
-            count: int = 0
-            total: int = 0
-            while not coord_queue.empty():
-                if tm is None:
-                    tm = time.monotonic()
-                try:
-                    while True:
-                        di = dispatched_queue.get_nowait()
-                        if isinstance(di, list):
-                            outstanding.update(di)
-                        elif isinstance(di, int):
-                            total += di
-                except queue.Empty:
-                    pass
-                try:
-                    while True:
-                        rslt: QResult = result_queue.get_nowait()
-                        if rslt.exc is None:
-                            outstanding.discard(rslt.coord)
-                            count += 1
-                except queue.Empty:
-                    pass
-                elapsed = time.monotonic() - tm
-                if elapsed >= 5.0:
-                    rate = total / elapsed
-                    print(f"{total:_} coords checked, at {rate:_.2f}rps, {count:_} retrieved", flush=True)
-                    total = 0
-                    tm = time.monotonic()
+            with handle_sigint(AbortRequested):
+                for row in range(2100, -1, -1):
+                    coord_queue.put(("row", -1, row))
+                for _ in range(RETR_WORKERS):
+                    coord_queue.put(None)
+                tm: Optional[float] = None
+                while not coord_queue.empty() and not AbortRequested.is_set():
+                    if tm is None:
+                        tm = time.monotonic()
+                    flush_dispatched_queue()
+                    flush_result_queue()
+                    elapsed = time.monotonic() - tm
+                    if elapsed >= 5.0:
+                        rate = total / elapsed
+                        print(f"{total:_} coords checked, at {rate:_.2f}rps, {count:_} retrieved", flush=True)
+                        total = 0
+                        tm = time.monotonic()
+
+                print("Joining retriever workers")
+                pool_r.close()
+                pool_r.join()
+
+                print("Flushing coord_queue")
+                while not coord_queue.empty():
+                    coord_queue.get()
+
+                print("Telling saver workers to end")
+                for _ in range(SAVE_WORKERS):
+                    save_queue.put(None)
+
+                print("Joining saver workers")
+                pool_s.close()
+                pool_s.join()
+
+                print("Flushing dispatched_queue")
+                flush_dispatched_queue()
+
+                print("Flushing result_queue")
+                flush_result_queue()
+
+    print(outstanding)
 
 
 if __name__ == "__main__":
