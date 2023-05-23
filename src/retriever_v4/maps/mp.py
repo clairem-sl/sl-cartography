@@ -31,13 +31,13 @@ Config = ConfigReader("config.toml")
 AbortRequested: Settable = MP.Event()
 
 
-class QJob(TypedDict):
+class QSaveJob(TypedDict):
     coord: MapCoord
     tsf: str
     buf: bytes
 
 
-class QResult(NamedTuple):
+class QSaveResult(NamedTuple):
     coord: MapCoord
     exc: Optional[Exception]
 
@@ -72,7 +72,7 @@ def saver(
     myname = f"Saver-{num}"
     MP.current_process().name = myname
 
-    result: QResult
+    result: QSaveResult
     while True:
         if incoming_queue.empty():
             time.sleep(1)
@@ -83,7 +83,7 @@ def saver(
         if item is Ellipsis:
             continue
 
-        regmap: QJob = cast(QJob, item)
+        regmap: QSaveJob = cast(QSaveJob, item)
         coord: MapCoord = regmap["coord"]
         blob: bytes = regmap["buf"]
         tsf = regmap["tsf"]
@@ -91,10 +91,10 @@ def saver(
         try:
             with targf.open("wb") as fout:
                 fout.write(blob)
-            result = QResult(coord, None)
+            result = QSaveResult(coord, None)
         except Exception as e:
             print(f"\nERR: {myname}:{type(e)}:{e}")
-            result = QResult(coord, e)
+            result = QSaveResult(coord, e)
         result_queue.put(result)
 
 
@@ -138,7 +138,7 @@ async def aretrieve(in_queue: MP.Queue, out_queue: MP.Queue, disp_queue: MP.Queu
                     if not fut_result.result:
                         continue
                     assert isinstance(fut_result.result, bytes)
-                    save: QJob = {
+                    save: QSaveJob = {
                         "coord": fut_result.coord,
                         "tsf": datetime.strftime(datetime.now(), "%y%m%d-%H%M"),
                         "buf": fut_result.result,
@@ -208,7 +208,7 @@ def main():
             nonlocal count
             try:
                 while True:
-                    rslt: QResult = result_queue.get_nowait()
+                    rslt: QSaveResult = result_queue.get_nowait()
                     if rslt.exc is None:
                         outstanding.discard(rslt.coord)
                         count += 1
