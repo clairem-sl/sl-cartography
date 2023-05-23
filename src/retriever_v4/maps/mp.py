@@ -227,10 +227,8 @@ def main():
             with handle_sigint(AbortRequested):
                 for row in range(2100, -1, -1):
                     coord_queue.put(("row", -1, row))
-                tm: Optional[float] = None
+                tm: float = time.monotonic()
                 while not coord_queue.empty() and not AbortRequested.is_set():
-                    if tm is None:
-                        tm = time.monotonic()
                     flush_dispatched_queue()
                     flush_result_queue()
                     elapsed = time.monotonic() - tm
