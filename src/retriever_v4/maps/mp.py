@@ -34,7 +34,7 @@ AbortRequested: Settable = MP.Event()
 class QSaveJob(TypedDict):
     coord: MapCoord
     tsf: str
-    buf: bytes
+    shm_name: str
 
 
 class QSaveResult(NamedTuple):
@@ -85,12 +85,15 @@ def saver(
 
         regmap: QSaveJob = cast(QSaveJob, item)
         coord: MapCoord = regmap["coord"]
-        blob: bytes = regmap["buf"]
+        shm = MPSharedMem.SharedMemory(regmap["shm_name"])
         tsf = regmap["tsf"]
         targf = mapdir / f"{coord.x}-{coord.y}_{tsf}.jpg"
         try:
             with targf.open("wb") as fout:
-                fout.write(blob)
+                # noinspection PyTypeChecker
+                fout.write(shm.buf)
+            shm.close()
+            shm.unlink()
             result = QSaveResult(coord, None)
         except Exception as e:
             print(f"\nERR: {myname}:{type(e)}:{e}")
@@ -138,12 +141,15 @@ async def aretrieve(in_queue: MP.Queue, out_queue: MP.Queue, disp_queue: MP.Queu
                     if not fut_result.result:
                         continue
                     assert isinstance(fut_result.result, bytes)
+                    shm = MPSharedMem.SharedMemory(create=True, size=len(fut_result.result))
+                    shm.buf[:] = fut_result.result
                     save: QSaveJob = {
                         "coord": fut_result.coord,
                         "tsf": datetime.strftime(datetime.now(), "%y%m%d-%H%M"),
-                        "buf": fut_result.result,
+                        "shm_name": shm.name,
                     }
                     out_queue.put(save)
+                    shm.close()
 
                 tasks = pending_tasks
 
