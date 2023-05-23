@@ -227,8 +227,6 @@ def main():
             with handle_sigint(AbortRequested):
                 for row in range(2100, -1, -1):
                     coord_queue.put(("row", -1, row))
-                for _ in range(RETR_WORKERS):
-                    coord_queue.put(None)
                 tm: Optional[float] = None
                 while not coord_queue.empty() and not AbortRequested.is_set():
                     if tm is None:
@@ -242,8 +240,11 @@ def main():
                         total = 0
                         tm = time.monotonic()
 
-                print("Joining retriever workers")
+                print("Telling retriever workers to end")
                 pool_r.close()
+                for _ in range(RETR_WORKERS):
+                    coord_queue.put(None)
+                print("Joining retriever workers")
                 pool_r.join()
 
                 print("Flushing coord_queue")
@@ -251,11 +252,10 @@ def main():
                     coord_queue.get()
 
                 print("Telling saver workers to end")
+                pool_s.close()
                 for _ in range(SAVE_WORKERS):
                     save_queue.put(None)
-
                 print("Joining saver workers")
-                pool_s.close()
                 pool_s.join()
 
                 print("Flushing dispatched_queue")
