@@ -275,7 +275,9 @@ class RetrieverApplication(AbstractContextManager):
         self.lock_file.unlink(missing_ok=True)
         self.ended = time.monotonic()
         nao = datetime.now().astimezone().isoformat(timespec="seconds")
-        print(f"\nFinished in {(self.ended - self.started):_.2f} seconds at {nao}")
+        print(
+            f"\nFinished in {(self.ended - self.started):_.2f} seconds at {nao}"
+        )
         return False
 
     def log(self, log_item: str | dict):
