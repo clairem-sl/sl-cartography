@@ -244,19 +244,13 @@ def main(
         possibly_changed: dict[CoordType, None] = manager.dict()
         shm_allocator = SharedMemoryAllocator(shm_manager)
 
-        map_inventory = manager.dict(inventorize_maps_all(opts.mapdir))
-
-        thresholds = Thresholds(MSE=MSE_THRESHOLD, SSIM=SSIM_THRESHOLD)
         saver_args = (
             opts.mapdir,
-            map_inventory,
             SaverQueue,
             SaveSuccessQueue,
             saved_coords,
             worker_state,
             opts.debug_level,
-            thresholds,
-            possibly_changed,
         )
         pool: MPPool.Pool
         with MP.Pool(opts.workers, initializer=saver, initargs=saver_args) as pool:
