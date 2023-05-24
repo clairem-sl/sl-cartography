@@ -34,7 +34,7 @@ AbortRequested: Settable = MP.Event()
 class QSaveJob(TypedDict):
     coord: MapCoord
     tsf: str
-    shm_name: str
+    shm: MPSharedMem.SharedMemory
 
 
 class QSaveResult(NamedTuple):
@@ -85,7 +85,8 @@ def saver(
 
         regmap: QSaveJob = cast(QSaveJob, item)
         coord: MapCoord = regmap["coord"]
-        shm = MPSharedMem.SharedMemory(regmap["shm_name"])
+        # shm = MPSharedMem.SharedMemory(regmap["shm_name"])
+        shm = regmap["shm"]
         tsf = regmap["tsf"]
         targf = mapdir / f"{coord.x}-{coord.y}_{tsf}.jpg"
         try:
@@ -153,10 +154,9 @@ async def aretrieve(in_queue: MP.Queue, out_queue: MP.Queue, disp_queue: MP.Queu
                     save: QSaveJob = {
                         "coord": fut_result.coord,
                         "tsf": datetime.strftime(datetime.now(), "%y%m%d-%H%M"),
-                        "shm_name": shm.name,
+                        "shm": shm,
                     }
                     out_queue.put(save)
-                    shm.close()
 
                 tasks = pending_tasks
 
