@@ -19,12 +19,12 @@ from typing import Final, Optional, Protocol, TypedDict, Union, cast
 
 import httpx
 
-from retriever_v4 import RetrieverApplication, RetrieverProgress, handle_sigint
+from retriever_v4 import RetrieverApplication, RetrieverProgress
 from retriever_v4.names.xchg import export
 from sl_maptools import CoordType, MapCoord, RegionsDBRecord3
 from sl_maptools.fetchers import CookedResult
 from sl_maptools.fetchers.cap import BoundedNameFetcher
-from sl_maptools.utils import ConfigReader, Settable, SLMapToolsConfig
+from sl_maptools.utils import ConfigReader, Settable, SLMapToolsConfig, handle_sigint
 
 WORKERS: Final[int] = 4
 CONN_LIMIT: Final[int] = 80
