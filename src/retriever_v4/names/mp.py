@@ -19,15 +19,12 @@ from typing import Final, Optional, Protocol, TypedDict, Union, cast
 
 import httpx
 
-from retriever_v4 import (
-    RetrieverApplication,
-    RetrieverProgress,
-    handle_sigint, )
+from retriever_v4 import RetrieverApplication, RetrieverProgress, handle_sigint
 from retriever_v4.names.xchg import export
 from sl_maptools import CoordType, MapCoord, RegionsDBRecord3
 from sl_maptools.fetchers import CookedResult
 from sl_maptools.fetchers.cap import BoundedNameFetcher
-from sl_maptools.utils import ConfigReader, SLMapToolsConfig, Settable
+from sl_maptools.utils import ConfigReader, Settable, SLMapToolsConfig
 
 WORKERS: Final[int] = 4
 CONN_LIMIT: Final[int] = 80
@@ -71,7 +68,9 @@ class OptionsProtocol(RetrieverNamesOptions, RetrieverApplication.Options, Proto
 def get_options() -> OptionsProtocol:
     parser = argparse.ArgumentParser("retriever_v4.names")
 
-    parser.add_argument("--dbpath", type=Path, default=DEFA_DB, help="Path to Regions Database file")
+    parser.add_argument(
+        "--dbpath", type=Path, default=DEFA_DB, help="Path to Regions Database file"
+    )
     parser.add_argument(
         "--export",
         metavar="YAML_file",
@@ -207,12 +206,18 @@ def integrator(in_queue: MP.Queue, dbpath: Path, change_stats: ChangeStatsDict):
 
 
 async def aretriever(in_queue: MP.Queue, out_queue: MP.Queue, abort_flag: Settable):
-    limits = httpx.Limits(max_connections=CONN_LIMIT, max_keepalive_connections=CONN_LIMIT)
+    limits = httpx.Limits(
+        max_connections=CONN_LIMIT, max_keepalive_connections=CONN_LIMIT
+    )
     async with httpx.AsyncClient(limits=limits, timeout=10.0, http2=HTTP2) as client:
-        fetcher = BoundedNameFetcher(CONN_LIMIT * 3, client, cooked=True, cancel_flag=abort_flag)
+        fetcher = BoundedNameFetcher(
+            CONN_LIMIT * 3, client, cooked=True, cancel_flag=abort_flag
+        )
 
         def make_task(coord: CoordType):
-            return asyncio.create_task(fetcher.async_fetch(MapCoord(*coord)), name=str(coord))
+            return asyncio.create_task(
+                fetcher.async_fetch(MapCoord(*coord)), name=str(coord)
+            )
 
         tasks: set[asyncio.Task] = set()
         job = in_queue.get()
@@ -273,16 +278,22 @@ def main(opts: OptionsProtocol):
         args_i = result_queue, dbpath, stats
         pool_r: MPPool.Pool
         pool_i: MPPool.Pool
-        with MP.Pool(WORKERS, initializer=retriever, initargs=args_r) as pool_r, \
-                MP.Pool(1, initializer=integrator, initargs=args_i) as pool_i:
-
+        with MP.Pool(
+            WORKERS, initializer=retriever, initargs=args_r
+        ) as pool_r, MP.Pool(1, initializer=integrator, initargs=args_i) as pool_i:
             with handle_sigint(abort_flag):
                 for row in range(2100, -1, -1):
                     fetch_queue.put(("row", row))
-                print("### All jobs queued to Retriever Workers, waiting until all jobs consumed ###", flush=True)
+                print(
+                    "### All jobs queued to Retriever Workers, waiting until all jobs consumed ###",
+                    flush=True,
+                )
                 while not fetch_queue.empty():
                     time.sleep(5)
-                print("### All jobs consumed, pausing to allow workers to finish ###", flush=True)
+                print(
+                    "### All jobs consumed, pausing to allow workers to finish ###",
+                    flush=True,
+                )
                 time.sleep(10)
 
             print("Teling Retriever Workers to end")
@@ -318,5 +329,7 @@ if __name__ == "__main__":
     options = get_options()
     lock_file = options.dbpath.parent / Config.names.lock
     log_file = options.dbpath.parent / Config.names.log
-    with RetrieverApplication(lock_file=lock_file, log_file=lock_file, force=options.force) as app:
+    with RetrieverApplication(
+        lock_file=lock_file, log_file=lock_file, force=options.force
+    ) as app:
         main(options)
