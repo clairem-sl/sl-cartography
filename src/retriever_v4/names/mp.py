@@ -142,7 +142,6 @@ def integrator(in_queue: MP.Queue, dbpath: Path, change_stats: ChangeStatsDict):
     st = time.monotonic()
     dones: deque[float] = deque(maxlen=WMA_SAMPLES)
     elapses: deque[float] = deque(maxlen=WMA_SAMPLES)
-    tweight = sum(c for c in range(1, WMA_SAMPLES + 1))
     while True:
         job: Union[None, Ellipsis, CookedResult] = in_queue.get()
         if job is None:
@@ -195,8 +194,7 @@ def integrator(in_queue: MP.Queue, dbpath: Path, change_stats: ChangeStatsDict):
         if elapsed > BATCH_WAIT:
             dones.append(count)
             elapses.append(elapsed)
-            wsum = sum(c * v for c, v in enumerate(dones, start=1))
-            rate = wsum / sum(elapses) / tweight
+            rate = sum(dones) / sum(elapses)
             print(f"{total} names retrieved @ mavg. {rate:_.2f} rps")
             with dbpath.open("wb") as fout:
                 pickle.dump(database, fout)
