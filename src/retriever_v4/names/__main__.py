@@ -76,7 +76,9 @@ class OptionsProtocol(RetrieverNamesOptions, RetrieverApplication.Options, Proto
 def get_options() -> OptionsProtocol:
     parser = argparse.ArgumentParser("retriever_v4.names")
 
-    parser.add_argument("--dbpath", type=Path, default=DEFA_DB, help="Path to Regions Database file")
+    parser.add_argument(
+        "--dbpath", type=Path, default=DEFA_DB, help="Path to Regions Database file"
+    )
     parser.add_argument(
         "--export",
         metavar="YAML_file",
@@ -84,7 +86,7 @@ def get_options() -> OptionsProtocol:
         nargs="?",
         default=Ellipsis,  # This will be the value if --export is not specified at all
         # If --export is specified but no file name is given, the value will be None.
-        # Hence is why Ellipsis is used, to differ between not specified, and specified but not given
+        # Hence, is why Ellipsis is used, to differ between not specified, and specified but not given
         help="Export to YAML file on abort/completion. If not specified, then use default name.",
     )
 
@@ -171,13 +173,19 @@ def process(tile: CookedResult) -> bool:
 
 
 async def amain(db_path: Path, duration: int, min_batch_size: int, abort_low_rps: int):
-    limits = httpx.Limits(max_connections=CONN_LIMIT, max_keepalive_connections=CONN_LIMIT)
+    limits = httpx.Limits(
+        max_connections=CONN_LIMIT, max_keepalive_connections=CONN_LIMIT
+    )
     async with httpx.AsyncClient(limits=limits, timeout=10.0, http2=HTTP2) as client:
-        fetcher = BoundedNameFetcher(CONN_LIMIT * 3, client, cooked=True, cancel_flag=AbortRequested)
+        fetcher = BoundedNameFetcher(
+            CONN_LIMIT * 3, client, cooked=True, cancel_flag=AbortRequested
+        )
         shown = False
 
         def make_task(coord: CoordType):
-            return asyncio.create_task(fetcher.async_fetch(MapCoord(*coord)), name=str(coord))
+            return asyncio.create_task(
+                fetcher.async_fetch(MapCoord(*coord)), name=str(coord)
+            )
 
         def pre_batch():
             nonlocal shown
@@ -256,7 +264,9 @@ def main(app_context: RetrieverApplication, opts: OptionsProtocol):
         end_y -= 1
     end_coord = end_x, end_y
 
-    print(f"{Progress.outstanding_count:_} outstanding jobs left. Last dispatched coordinate: {Progress.last_dispatch}")
+    print(
+        f"{Progress.outstanding_count:_} outstanding jobs left. Last dispatched coordinate: {Progress.last_dispatch}"
+    )
     print("Stats of this run:")
     pprint(ChangeStats)
     app_context.log(
@@ -276,5 +286,7 @@ if __name__ == "__main__":
     options = get_options()
     lock_file = options.dbpath.parent / Config.names.lock
     log_file = options.dbpath.parent / Config.names.log
-    with RetrieverApplication(lock_file=lock_file, log_file=lock_file, force=options.force) as app:
+    with RetrieverApplication(
+        lock_file=lock_file, log_file=lock_file, force=options.force
+    ) as app:
         main(app, options)
