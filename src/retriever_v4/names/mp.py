@@ -191,9 +191,6 @@ def integrator(in_queue: MP.Queue, dbpath: Path, change_stats: ChangeStatsDict):
             else:
                 database[xy] = dbxy
 
-            with dbpath.open("wb") as fout:
-                pickle.dump(database, fout)
-
         elapsed = time.monotonic() - st
         if elapsed > BATCH_WAIT:
             dones.append(count)
@@ -201,6 +198,8 @@ def integrator(in_queue: MP.Queue, dbpath: Path, change_stats: ChangeStatsDict):
             wsum = sum(c * v for c, v in enumerate(dones, start=1))
             rate = wsum / sum(elapses) / tweight
             print(f"{total} names retrieved @ mavg. {rate:_.2f} rps")
+            with dbpath.open("wb") as fout:
+                pickle.dump(database, fout)
             st = time.monotonic()
             count = 0
 
