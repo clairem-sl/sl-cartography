@@ -26,7 +26,7 @@ from sl_maptools.fetchers import CookedResult
 from sl_maptools.fetchers.cap import BoundedNameFetcher
 from sl_maptools.utils import ConfigReader, Settable, SLMapToolsConfig, handle_sigint
 
-WORKERS: Final[int] = 4
+WORKERS: Final[int] = 2
 CONN_LIMIT: Final[int] = 80
 HTTP2: Final[bool] = False
 START_BATCH_SIZE: Final[int] = 600
