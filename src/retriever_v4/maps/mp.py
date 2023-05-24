@@ -6,12 +6,13 @@ import multiprocessing as MP
 import multiprocessing.managers as MPMgr
 import multiprocessing.pool as mp_pool
 import multiprocessing.shared_memory as MPSharedMem
+import pickle
 import queue
 import signal
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Final, NamedTuple, Optional, TypedDict, Union, cast
+from typing import Final, NamedTuple, Optional, TypedDict, Union, cast, Any, Iterable
 
 import httpx
 
@@ -174,9 +175,27 @@ def retrieve(in_queue: MP.Queue, out_queue: MP.Queue, disp_queue: MP.Queue, abor
     asyncio.run(aretrieve(in_queue, out_queue, disp_queue, abort_flag))
 
 
+class ProgressDict(TypedDict):
+    next_row: Optional[int]
+    backlog: set[CoordType]
+
+
 def main():
     pool_r: mp_pool.Pool
     pool_s: mp_pool.Pool
+
+    progress_file = Path(Config.maps.dir) / Config.maps.mp_progress
+    if progress_file.exists():
+        with progress_file.open("rb") as fin:
+            progress: ProgressDict = pickle.load(fin)
+        if progress["next_row"] is None:
+            progress["next_row"] = -1
+    else:
+        progress = {
+            "next_row": 2100,
+            "backlog": set(),
+        }
+    print(f"Backlog from previous run: {len(progress['backlog']):_}\nNext row after backlog: {progress['next_row']}")
 
     mgr: MPMgr.SyncManager
     with MP.Manager() as mgr:
@@ -261,7 +280,14 @@ def main():
                 print("Flushing result_queue")
                 flush_result_queue()
 
-    print(outstanding)
+    progress = {
+        "next_row": next_row,
+        "backlog": outstanding,
+    }
+    with progress_file.open("wb") as fout:
+        pickle.dump(progress, fout)
+
+    print(f"{len(outstanding):_} coordinates in backlog, next row will be {next_row}")
 
 
 if __name__ == "__main__":
