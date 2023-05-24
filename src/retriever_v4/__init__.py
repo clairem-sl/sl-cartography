@@ -253,7 +253,9 @@ async def dispatch_fetcher(
 
 
 class RetrieverApplication(AbstractContextManager):
-    def __init__(self, *, lock_file: None | Path, log_file: None | Path, force: bool = False):
+    def __init__(
+        self, *, lock_file: None | Path, log_file: None | Path, force: bool = False
+    ):
         self.lock_file = lock_file
         self.log_file = log_file
         self.force = force
@@ -288,9 +290,7 @@ class RetrieverApplication(AbstractContextManager):
         self.lock_file.unlink(missing_ok=True)
         self.ended = time.monotonic()
         nao = datetime.now().astimezone().isoformat(timespec="seconds")
-        print(
-            f"\nFinished in {(self.ended - self.started):_.2f} seconds at {nao}"
-        )
+        print(f"\nFinished in {(self.ended - self.started):_.2f} seconds at {nao}")
         return False
 
     def log(self, log_item: str | dict):
@@ -321,7 +321,11 @@ class RetrieverApplication(AbstractContextManager):
     class HourMinute(argparse.Action):
         def __call__(self, parser, namespace, values, option_string=None):
             m = re.match(r"^(\d{1,2}):(\d{1,2})$", values)
-            if m is None or not (0 <= int(m.group(1)) <= 23) or not (0 <= int(m.group(2)) <= 59):
+            if (
+                m is None
+                or not (0 <= int(m.group(1)) <= 23)
+                or not (0 <= int(m.group(2)) <= 59)
+            ):
                 parser.error("Please enter time in 24h HH:MM format!")
             setattr(namespace, self.dest, (int(m.group(1)), int(m.group(2))))
 
