@@ -12,7 +12,7 @@ import httpx
 
 from sl_maptools import MapCoord
 from sl_maptools.fetchers import CookedResult, FetcherConnectionError, RawResult
-from sl_maptools.utils import QuietablePrint
+from sl_maptools.utils import QuietablePrint, Settable
 
 RE_REGION_NAME: Final[re.Pattern] = re.compile(
     r"\s*var\s*region\s*=\s*(['\"])([^'\"]+)\1"
@@ -141,7 +141,7 @@ class BoundedNameFetcher(NameFetcher):
         async_session: httpx.AsyncClient,
         retries: int = 3,
         cooked: bool = False,
-        cancel_flag: asyncio.Event = None,
+        cancel_flag: Settable = None,
     ):
         """
 

@@ -134,3 +134,8 @@ class ConfigReader(SLMapToolsConfig):
 
     def __repr__(self):
         return f"{self.__class__.__name__}({repr(self._cfg_file)})"
+
+
+class Settable(Protocol):
+    def set(self): ...
+    def is_set(self) -> bool: ...

@@ -22,13 +22,12 @@ import httpx
 from retriever_v4 import (
     RetrieverApplication,
     RetrieverProgress,
-    handle_sigint,
-)
+    handle_sigint, )
 from retriever_v4.names.xchg import export
 from sl_maptools import CoordType, MapCoord, RegionsDBRecord3
 from sl_maptools.fetchers import CookedResult
 from sl_maptools.fetchers.cap import BoundedNameFetcher
-from sl_maptools.utils import ConfigReader, SLMapToolsConfig
+from sl_maptools.utils import ConfigReader, SLMapToolsConfig, Settable
 
 WORKERS: Final[int] = 4
 CONN_LIMIT: Final[int] = 80
@@ -207,7 +206,7 @@ def integrator(in_queue: MP.Queue, dbpath: Path, change_stats: ChangeStatsDict):
             count = 0
 
 
-async def aretriever(in_queue: MP.Queue, out_queue: MP.Queue, abort_flag: MP.Event):
+async def aretriever(in_queue: MP.Queue, out_queue: MP.Queue, abort_flag: Settable):
     limits = httpx.Limits(max_connections=CONN_LIMIT, max_keepalive_connections=CONN_LIMIT)
     async with httpx.AsyncClient(limits=limits, timeout=10.0, http2=HTTP2) as client:
         fetcher = BoundedNameFetcher(CONN_LIMIT * 3, client, cooked=True, cancel_flag=abort_flag)
@@ -255,10 +254,6 @@ async def aretriever(in_queue: MP.Queue, out_queue: MP.Queue, abort_flag: MP.Eve
                         job = in_queue.get_nowait()
                     except queue.Empty:
                         pass
-
-
-class Settable:
-    pass
 
 
 def retriever(in_queue: MP.Queue, out_queue: MP.Queue, abort_flag: Settable):
