@@ -112,23 +112,30 @@ async def aretrieve(in_queue: MP.Queue, out_queue: MP.Queue, disp_queue: MP.Queu
         tasks: set[asyncio.Task] = set()
         done: set[asyncio.Task]
         pending_tasks: set[asyncio.Task]
-        job: Union[Ellipsis, tuple[str, int, int]] = in_queue.get()
+        job: Union[Ellipsis, tuple[str, Union[CoordType, Iterable[CoordType], int]]] = in_queue.get()
+        co: CoordType
         while True:
             if job is None:
                 break
             if job is not Ellipsis:
-                print(MP.current_process().name, job)
-                cmd, x, y = cast(tuple[str, int, int], job)
+                cmd, det = job
                 if cmd == "single":
-                    disp_queue.put([(x, y)])
-                    tasks.add(make_task((x, y)))
+                    disp_queue.put([det])
+                    tasks.add(make_task(det))
+                    msg = f"single({det})"
+                elif cmd == "set":
+                    tasks.update(make_task(co) for co in det)
+                    disp_queue.put(det)
+                    msg = f"set(...{len(det)}...)"
                 elif cmd == "row":
                     d = []
                     for x in range(0, 2101):
-                        co = x, y
+                        co = x, det
                         d.append(co)
                         tasks.add(make_task(co))
                     disp_queue.put(d)
+                    msg = f"row({det})"
+                print(MP.current_process().name, msg)
 
             if tasks:
                 done, pending_tasks = await asyncio.wait(tasks, timeout=BATCH_WAIT)
@@ -243,8 +250,16 @@ def main():
             SAVE_WORKERS, initializer=saver, initargs=s_args
         ) as pool_s:
             with handle_sigint(AbortRequested):
-                for row in range(2100, -1, -1):
-                    coord_queue.put(("row", -1, row))
+                backlog = sorted(progress["backlog"], key=lambda i: (i[1], i[0]))
+                if backlog:
+                    _chunksize = (len(backlog) // RETR_WORKERS) + 1
+                    _chunksize = min(2000, _chunksize)
+                    _i = 0
+                    while _i < len(backlog):
+                        coord_queue.put(("set", backlog[_i:(_i + _chunksize)]))
+                        _i += _chunksize
+                for row in range(progress["next_row"], -1, -1):
+                    coord_queue.put(("row", row))
                 tm: float = time.monotonic()
                 while not coord_queue.empty() and not AbortRequested.is_set():
                     flush_dispatched_queue()
@@ -264,8 +279,18 @@ def main():
                 pool_r.join()
 
                 print("Flushing coord_queue")
-                while not coord_queue.empty():
-                    coord_queue.get()
+                next_row = None
+                try:
+                    cmd, det = coord_queue.get_nowait()
+                    if cmd == "row":
+                        if next_row is None:
+                            next_row = det
+                    elif cmd == "single":
+                        outstanding.add(det)
+                    elif cmd == "set":
+                        outstanding.update(det)
+                except queue.Empty:
+                    pass
 
                 print("Telling saver workers to end")
                 pool_s.close()
