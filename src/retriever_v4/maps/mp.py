@@ -15,10 +15,9 @@ from typing import Final, NamedTuple, Optional, TypedDict, Union, cast
 
 import httpx
 
-from retriever_v4 import handle_sigint
 from sl_maptools import CoordType, MapCoord, Settable
 from sl_maptools.fetchers.map import BoundedMapFetcher
-from sl_maptools.utils import ConfigReader
+from sl_maptools.utils import ConfigReader, handle_sigint
 
 BATCH_WAIT: Final[int] = 5
 CONN_LIMIT: Final[int] = 80

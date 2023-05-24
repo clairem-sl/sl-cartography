@@ -8,13 +8,12 @@ import argparse
 import asyncio
 import math
 import re
-import signal
 import statistics
 import sys
 import time
 from asyncio import Task
 from collections import deque
-from contextlib import AbstractContextManager, contextmanager
+from contextlib import AbstractContextManager
 from datetime import datetime, timedelta, timezone
 from enum import IntEnum
 from pathlib import Path
@@ -23,7 +22,7 @@ from typing import Any, Callable, Final, Generator, Protocol, Type, TypedDict
 
 import ruamel.yaml as ryaml
 
-from sl_maptools import CoordType, Settable
+from sl_maptools import CoordType
 
 
 class ProgressDict(TypedDict):
@@ -146,26 +145,6 @@ class DebugLevel(IntEnum):
     DISABLED = 0
     NORMAL = 1
     DETAILED = 2
-
-
-@contextmanager
-def handle_sigint(interrupt_flag: Settable):
-    """
-    A context manager that provides SIGINT handling, and restore original handler upon exit
-    """
-
-    def _handler(_, __):
-        if interrupt_flag.is_set():
-            return
-        interrupt_flag.set()
-        print("\n### USER INTERRUPT ###")
-        print("Cleaning up in-flight job (if any)...", flush=True)
-
-    orig_sigint = signal.getsignal(signal.SIGINT)
-    signal.signal(signal.SIGINT, _handler)
-    yield
-    time.sleep(1)
-    signal.signal(signal.SIGINT, orig_sigint)
 
 
 async def dispatch_fetcher(

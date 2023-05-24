@@ -17,13 +17,12 @@ from retriever_v4 import (
     RetrieverApplication,
     RetrieverProgress,
     dispatch_fetcher,
-    handle_sigint,
 )
 from retriever_v4.names.xchg import export
 from sl_maptools import CoordType, MapCoord, RegionsDBRecord3
 from sl_maptools.fetchers import CookedResult
 from sl_maptools.fetchers.cap import BoundedNameFetcher
-from sl_maptools.utils import ConfigReader, SLMapToolsConfig
+from sl_maptools.utils import ConfigReader, SLMapToolsConfig, handle_sigint
 
 CONN_LIMIT: Final[int] = 80
 # SEMA_SIZE: Final[int] = 180

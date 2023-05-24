@@ -4,6 +4,11 @@
 from __future__ import annotations
 
 import shutil
+import signal
+import time
+from contextlib import contextmanager
+
+from sl_maptools import Settable
 
 try:
     # noinspection PyCompatibility
@@ -134,3 +139,23 @@ class ConfigReader(SLMapToolsConfig):
 
     def __repr__(self):
         return f"{self.__class__.__name__}({repr(self._cfg_file)})"
+
+
+@contextmanager
+def handle_sigint(interrupt_flag: Settable):
+    """
+    A context manager that provides SIGINT handling, and restore original handler upon exit
+    """
+
+    def _handler(_, __):
+        if interrupt_flag.is_set():
+            return
+        interrupt_flag.set()
+        print("\n### USER INTERRUPT ###")
+        print("Cleaning up in-flight job (if any)...", flush=True)
+
+    orig_sigint = signal.getsignal(signal.SIGINT)
+    signal.signal(signal.SIGINT, _handler)
+    yield
+    time.sleep(1)
+    signal.signal(signal.SIGINT, orig_sigint)
