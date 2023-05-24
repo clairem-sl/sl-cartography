@@ -207,7 +207,7 @@ def main():
     mgr: MPMgr.SyncManager
     with MP.Manager() as mgr:
         coord_queue: MP.Queue = mgr.Queue()
-        save_queue: MP.Queue = mgr.Queue()
+        save_queue: MP.Queue = mgr.Queue(maxsize=4000)
         dispatched_queue: MP.Queue = mgr.Queue()
         result_queue: MP.Queue = mgr.Queue()
 
