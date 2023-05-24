@@ -23,14 +23,13 @@ from retriever_v4 import (
     RetrieverApplication,
     RetrieverProgress,
     dispatch_fetcher,
-    handle_sigint,
 )
 from retriever_v4.maps.saver import Thresholds, saver
 from sl_maptools import CoordType, MapCoord
 from sl_maptools.fetchers import RawResult
 from sl_maptools.fetchers.map import BoundedMapFetcher
 from sl_maptools.knowns import KNOWN_AREAS
-from sl_maptools.utils import ConfigReader, SLMapToolsConfig
+from sl_maptools.utils import ConfigReader, SLMapToolsConfig, handle_sigint
 from sl_maptools.validator import inventorize_maps_all
 
 SSIM_THRESHOLD: Final[float] = 0.895
