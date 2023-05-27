@@ -278,7 +278,8 @@ def main(opts: MPMapOptions):
                     rslt: QResult = result_queue.get_nowait()
                     if rslt.exc is None:
                         outstanding.discard(rslt.coord)
-                        total += 1
+                        if rslt.entity.startswith("Saver"):
+                            total += 1
                     else:
                         errs.append(rslt)
             except queue.Empty:
