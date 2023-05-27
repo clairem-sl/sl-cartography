@@ -25,8 +25,8 @@ BATCH_WAIT: Final[int] = 1
 CONN_LIMIT: Final[int] = 80
 HTTP2: Final[bool] = True
 
-RETR_WORKERS: Final[int] = 12
-SAVE_WORKERS: Final[int] = 4
+RETR_WORKERS: Final[int] = max((MP.cpu_count() - 2) * 2, 2)
+SAVE_WORKERS: Final[int] = min((RETR_WORKERS // 2), 4)
 
 START_ROW: Final[int] = 2100
 COLS_PER_ROW: Final[int] = 2100
