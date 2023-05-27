@@ -114,7 +114,7 @@ KNOWN_AREAS: Final[dict[str, AreaBounds]] = {
     "TheMists": AreaBounds(562, 734, 567, 739),  ### Former site of Fantasy Faire 2023
     "PaleoQuest": AreaBounds(400, 392, 401, 400),
     # "RFL2023": AreaBounds(503, 705, 554, 1621),
-    "RFL2023": AreaBounds(547, 705, 554, 715),
+    "RFL2023": AreaBounds(547, 705, 554, 716),
     # "SLB2023": AreaBounds(386, 368, 403, 377),
     "SLB2023": AreaBounds(386, 359, 403, 377),
     # endregion
