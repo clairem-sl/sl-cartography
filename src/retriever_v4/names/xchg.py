@@ -111,10 +111,10 @@ def export(db: Path, targ: Path, quiet: bool = False) -> Path:
                 "first_seen": "Timestamp of audit when region was first detected (as non-void)",
                 "last_check": "Timestamp of last audit when region was checked",
                 "last_seen": "Timestamp of audit when region was last seen (as non-void)",
-                "name_history": (
-                    "A dict of name:[(timestamp pairs)], where each entry in the timestamps list is a pair of "
-                    "timestamps (separated by tilde, comma, or space). The first timestamp represents the earliest "
-                    "time the name is seen. The second represent the latest time the name is seen before changing."
+                "name_history3": (
+                    "A dict of name:[[timestamp pairs], ...], where each entry in the timestamps list is a pair of "
+                    "timestamps. The first timestamp is the time of retrieval when the name was first seen. "
+                    "The second is the time of retrieval when the name was last seen."
                 ),
                 "sources": (
                     "Sources of information used to generate the record. 'cap' is SL's cap server. "
