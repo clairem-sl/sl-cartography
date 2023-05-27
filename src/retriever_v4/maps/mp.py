@@ -158,6 +158,7 @@ async def aretrieve(in_queue: MP.Queue, out_queue: MP.Queue, disp_queue: MP.Queu
                         "shm": shm,
                     }
                     out_queue.put(save)
+                    shm.close()
 
                 tasks = pending_tasks
 
