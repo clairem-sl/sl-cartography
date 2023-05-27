@@ -20,7 +20,7 @@ from sl_maptools import CoordType, MapCoord, Settable
 from sl_maptools.fetchers.map import BoundedMapFetcher
 from sl_maptools.utils import ConfigReader, handle_sigint
 
-BATCH_WAIT: Final[int] = 5
+BATCH_WAIT: Final[int] = 1
 CONN_LIMIT: Final[int] = 80
 HTTP2: Final[bool] = True
 
