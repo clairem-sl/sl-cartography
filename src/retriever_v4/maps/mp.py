@@ -191,7 +191,7 @@ def main():
     pool_r: mp_pool.Pool
     pool_s: mp_pool.Pool
 
-    progress_file = Path(Config.maps.dir) / Config.maps.mp_progress
+    progress_file = Path(Config.maps.mp_dir) / Config.maps.mp_progress
     if progress_file.exists():
         with progress_file.open("rb") as fin:
             progress: ProgressDict = pickle.load(fin)
@@ -217,7 +217,7 @@ def main():
             dispatched_queue,
             AbortRequested,
         )
-        s_args = (Path(Config.maps.dir), save_queue, result_queue)
+        s_args = (Path(Config.maps.mp_dir), save_queue, result_queue)
 
         outstanding: set[CoordType] = set()
         count: int = 0
