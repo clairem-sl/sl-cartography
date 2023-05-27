@@ -17,10 +17,11 @@ from pathlib import Path
 from typing import Final, Iterable, NamedTuple, Optional, Protocol, TypedDict, Union, cast
 
 import httpx
+from ruamel.yaml import YAML, RoundTripRepresenter
 
 from sl_maptools import CoordType, MapCoord, Settable
 from sl_maptools.fetchers.map import BoundedMapFetcher
-from sl_maptools.utils import ConfigReader, handle_sigint
+from sl_maptools.utils import ConfigReader, handle_sigint, make_backup
 
 UNKNOWN_COORD: Final[MapCoord] = MapCoord(-1, -1)
 
@@ -221,6 +222,12 @@ class ProgressDict(TypedDict):
     backlog: set[CoordType]
 
 
+class ProgressionDict(TypedDict):
+    start: Optional[datetime]
+    left: int
+    last: Optional[datetime]
+
+
 def main(opts: MPMapOptions):
     pool_r: mp_pool.Pool
     pool_s: mp_pool.Pool
@@ -255,6 +262,14 @@ def main(opts: MPMapOptions):
         )
         s_args = (Path(Config.maps.mp_dir), save_queue, result_queue)
 
+        progression: dict[int, ProgressionDict] = {
+            y: {
+                "start": None,
+                "left": 2101,
+                "last": None
+            }
+            for y in range(0, 2101)
+        }
         outstanding: set[CoordType] = set()
         total: int = 0
         count: int = 0
@@ -280,6 +295,13 @@ def main(opts: MPMapOptions):
                         outstanding.discard(rslt.coord)
                         if rslt.entity.startswith("Saver"):
                             total += 1
+                        else:
+                            _, y = rslt.coord
+                            _prog = progression[y]
+                            if _prog["start"] is None:
+                                _prog["start"] = datetime.now()
+                            _prog["left"] -= 1
+                            _prog["last"] = datetime.now()
                     else:
                         errs.append(rslt)
             except queue.Empty:
@@ -358,6 +380,24 @@ def main(opts: MPMapOptions):
     }
     with progress_file.open("wb") as fout:
         pickle.dump(progress, fout)
+
+    normalized_time_per_row: dict[int, float] = {}
+    for y, prog in progression.items():
+        n = 2100 - prog["left"]
+        if n == 0:
+            continue
+        if prog["start"] is None or prog["last"] is None:
+            continue
+        delta = prog["last"] - prog["start"]
+        if delta.seconds < 0.1:
+            continue
+        normalized_time_per_row[y] = 2100 * delta.seconds / n
+    yaml = YAML(typ="safe")
+    yaml.Representer = RoundTripRepresenter
+    performance_file = opts.mapdir / "performance.yaml"
+    make_backup(performance_file)
+    with performance_file.open("wt") as fout:
+        yaml.dump(normalized_time_per_row, fout)
 
     print(f"{len(outstanding):_} coordinates in backlog, next row will be {next_row}")
 
