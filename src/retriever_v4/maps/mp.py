@@ -63,24 +63,6 @@ class QSaveResult(NamedTuple):
     exc: Optional[Exception]
 
 
-class SharedMemoryAllocator:
-    def __init__(self, manager: MPMgr.SharedMemoryManager):
-        self.mgr = manager
-        self.allocations: dict[CoordType, MPSharedMem.SharedMemory] = {}
-
-    def new(self, coord: CoordType, data: bytes) -> MPSharedMem.SharedMemory:
-        shm = self.mgr.SharedMemory(len(data))
-        shm.buf[:] = data
-        self.allocations[coord] = shm
-        return shm
-
-    def retire(self, coord: CoordType) -> None:
-        shm = self.allocations[coord]
-        shm.close()
-        shm.unlink()
-        del self.allocations[coord]
-
-
 def saver(
     mapdir: Path,
     incoming_queue: MP.Queue,
