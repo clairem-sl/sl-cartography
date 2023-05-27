@@ -158,16 +158,20 @@ async def aretrieve(in_queue: MP.Queue, out_queue: MP.Queue, disp_queue: MP.Queu
 
                 tasks = pending_tasks
 
-            if job is None and not tasks:
-                break
+            if abort_flag.is_set():
+                job = None
+            if job is None:
+                if not tasks:
+                    break
+                continue
 
             job = Ellipsis
-            if not abort_flag.is_set():
-                if len(tasks) < 1050:
-                    try:
-                        job = in_queue.get_nowait()
-                    except queue.Empty:
-                        time.sleep(1)
+            if len(tasks) > 1050:
+                continue
+            try:
+                job = in_queue.get_nowait()
+            except queue.Empty:
+                time.sleep(1)
 
     print(f"{MP.current_process().name} done")
 
