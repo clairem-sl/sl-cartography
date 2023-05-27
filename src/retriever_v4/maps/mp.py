@@ -10,6 +10,7 @@ import multiprocessing.shared_memory as MPSharedMem
 import pickle
 import queue
 import signal
+import sys
 import time
 from datetime import datetime
 from pathlib import Path
@@ -63,10 +64,16 @@ class QSaveResult(NamedTuple):
     exc: Optional[Exception]
 
 
+class QErr(NamedTuple):
+    entity: str
+    exc: Exception
+
+
 def saver(
     mapdir: Path,
     incoming_queue: MP.Queue,
     result_queue: MP.Queue,
+    err_queue: MP.Queue,
 ):
     signal.signal(signal.SIGINT, signal.SIG_IGN)
     mapdir.mkdir(parents=True, exist_ok=True)
@@ -100,15 +107,23 @@ def saver(
             shm.unlink()
             result = QSaveResult(coord, None)
         except Exception as e:
-            print(f"\nERR: {myname}:{type(e)}:{e}")
+            print(f"\nERR: {myname}:{type(e)}:{e}", file=sys.stderr, flush=True)
             result = QSaveResult(coord, e)
+            _err = QErr(myname, e)
+            err_queue.put(_err)
         result_queue.put(result)
 
 
 async def aretrieve(
-    in_queue: MP.Queue, out_queue: MP.Queue, disp_queue: MP.Queue, retire_queue: MP.Queue, abort_flag: Settable
+    in_queue: MP.Queue,
+    out_queue: MP.Queue,
+    disp_queue: MP.Queue,
+    retire_queue: MP.Queue,
+    err_queue: MP.Queue,
+    abort_flag: Settable,
 ):
     _half_cols = COLS_PER_ROW // 2
+    _myname = MP.current_process().name
     limits = httpx.Limits(max_connections=CONN_LIMIT, max_keepalive_connections=CONN_LIMIT)
     async with httpx.AsyncClient(limits=limits, timeout=10.0, http2=HTTP2) as client:
         fetcher = BoundedMapFetcher(CONN_LIMIT * 3, client, cooked=False, cancel_flag=abort_flag)
@@ -148,7 +163,9 @@ async def aretrieve(
 
                 for fut in done:
                     if (exc := fut.exception()) is not None:
-                        print(f"{fut.get_name()} ERR <{type(exc)}>{exc}")
+                        print(f"{_myname}:{fut.get_name()} ERR <{type(exc)}>{exc}", file=sys.stderr, flush=True)
+                        _err = QErr(f"{_myname}:{fut.get_name()}", cast(Exception, exc))
+                        err_queue.put(_err)
                         continue
                     fut_result = fut.result()
                     if fut_result is None:
@@ -189,14 +206,19 @@ async def aretrieve(
 
 
 def retrieve(
-    in_queue: MP.Queue, out_queue: MP.Queue, disp_queue: MP.Queue, retire_queue: MP.Queue, abort_flag: Settable
+    in_queue: MP.Queue,
+    out_queue: MP.Queue,
+    disp_queue: MP.Queue,
+    retire_queue: MP.Queue,
+    err_queue: MP.Queue,
+    abort_flag: Settable,
 ):
     signal.signal(signal.SIGINT, signal.SIG_IGN)
     curname = MP.current_process().name
     _, num = curname.split("-")
     myname = f"Retriever-{num}"
     MP.current_process().name = myname
-    asyncio.run(aretrieve(in_queue, out_queue, disp_queue, retire_queue, abort_flag))
+    asyncio.run(aretrieve(in_queue, out_queue, disp_queue, retire_queue, err_queue, abort_flag))
 
 
 class ProgressDict(TypedDict):
@@ -221,21 +243,24 @@ def main(opts: MPMapOptions):
         }
     print(f"Backlog from previous run: {len(progress['backlog']):_}\nNext row after backlog: {progress['next_row']}")
 
+    errs: list[QErr] = []
     mgr: MPMgr.SyncManager
     with MP.Manager() as mgr:
         coord_queue: MP.Queue = mgr.Queue()
         save_queue: MP.Queue = mgr.Queue(maxsize=4000)
         dispatched_queue: MP.Queue = mgr.Queue()
         result_queue: MP.Queue = mgr.Queue()
+        err_queue: MP.Queue = mgr.Queue()
 
         r_args = (
             coord_queue,
             save_queue,
             dispatched_queue,
             result_queue,
+            err_queue,
             AbortRequested,
         )
-        s_args = (Path(Config.maps.mp_dir), save_queue, result_queue)
+        s_args = (Path(Config.maps.mp_dir), save_queue, result_queue, err_queue)
 
         outstanding: set[CoordType] = set()
         count: int = 0
@@ -322,6 +347,16 @@ def main(opts: MPMapOptions):
 
                 print("Flushing result_queue")
                 flush_result_queue()
+
+                print("Collecting seen errors")
+                while not err_queue.empty():
+                    errs.append(err_queue.get())
+
+    if errs:
+        print("During retrieval, the following errors are seen:", flush=True)
+        time.sleep(1)
+        for entity, exc in errs:
+            print(f"    {entity} <{type(exc)}>{exc}", file=sys.stderr)
 
     progress = {
         "next_row": next_row,
