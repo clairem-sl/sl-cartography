@@ -348,6 +348,8 @@ def main(opts: MPMapOptions):
         time.sleep(1)
         for entity, coord, exc in errs:
             print(f"    {entity} <{type(exc)}>{exc}", file=sys.stderr)
+        time.sleep(1)
+        print(f"  A total of {len(errs)} errors")
 
     progress = {
         "next_row": next_row,
