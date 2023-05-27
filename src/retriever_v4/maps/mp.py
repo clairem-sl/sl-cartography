@@ -208,7 +208,7 @@ def main():
             progress["next_row"] = -1
     else:
         progress = {
-            "next_row": 2100,
+            "next_row": START_ROW,
             "backlog": set(),
         }
     print(f"Backlog from previous run: {len(progress['backlog']):_}\nNext row after backlog: {progress['next_row']}")
