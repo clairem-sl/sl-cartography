@@ -12,7 +12,7 @@ import signal
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Final, NamedTuple, Optional, TypedDict, Union, cast, Iterable
+from typing import Final, Iterable, NamedTuple, Optional, TypedDict, Union, cast
 
 import httpx
 
@@ -105,7 +105,9 @@ def saver(
         result_queue.put(result)
 
 
-async def aretrieve(in_queue: MP.Queue, out_queue: MP.Queue, disp_queue: MP.Queue, retire_queue: MP.Queue, abort_flag: Settable):
+async def aretrieve(
+    in_queue: MP.Queue, out_queue: MP.Queue, disp_queue: MP.Queue, retire_queue: MP.Queue, abort_flag: Settable
+):
     _half_cols = COLS_PER_ROW // 2
     limits = httpx.Limits(max_connections=CONN_LIMIT, max_keepalive_connections=CONN_LIMIT)
     async with httpx.AsyncClient(limits=limits, timeout=10.0, http2=HTTP2) as client:
@@ -186,7 +188,9 @@ async def aretrieve(in_queue: MP.Queue, out_queue: MP.Queue, disp_queue: MP.Queu
     print(f"{MP.current_process().name} done")
 
 
-def retrieve(in_queue: MP.Queue, out_queue: MP.Queue, disp_queue: MP.Queue, retire_queue: MP.Queue, abort_flag: Settable):
+def retrieve(
+    in_queue: MP.Queue, out_queue: MP.Queue, disp_queue: MP.Queue, retire_queue: MP.Queue, abort_flag: Settable
+):
     signal.signal(signal.SIGINT, signal.SIG_IGN)
     curname = MP.current_process().name
     _, num = curname.split("-")
@@ -270,7 +274,7 @@ def main():
                     _chunksize = min(2000, _chunksize)
                     _i = 0
                     while _i < len(backlog):
-                        coord_queue.put(("set", backlog[_i:(_i + _chunksize)]))
+                        coord_queue.put(("set", backlog[_i : (_i + _chunksize)]))
                         _i += _chunksize
                 for row in range(progress["next_row"], -1, -1):
                     coord_queue.put(("row", row))
