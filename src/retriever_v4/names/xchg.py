@@ -107,10 +107,10 @@ def export(db: Path, targ: Path, quiet: bool = False) -> Path:
             "version": "3.0.0",
             "desc": {
                 "_keys": "string representation of Coordinate Tuples in 'x,y' format",
-                "current_name": "Current name of region as of time of audit",
-                "first_seen": "Timestamp of audit when region was first detected (as non-void)",
-                "last_check": "Timestamp of last audit when region was checked",
-                "last_seen": "Timestamp of audit when region was last seen (as non-void)",
+                "current_name": "Current name of region as of time of retrieval",
+                "first_seen": "Timestamp of retrieval when region was first detected (as non-void)",
+                "last_check": "Timestamp of last retrieval when region was checked",
+                "last_seen": "Timestamp of retrieval when region was last seen (as non-void)",
                 "name_history3": (
                     "A dict of name:[[timestamp pairs], ...], where each entry in the timestamps list is a pair of "
                     "timestamps. The first timestamp is the time of retrieval when the name was first seen. "
