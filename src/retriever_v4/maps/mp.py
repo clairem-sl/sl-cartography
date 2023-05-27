@@ -22,6 +22,8 @@ from sl_maptools import CoordType, MapCoord, Settable
 from sl_maptools.fetchers.map import BoundedMapFetcher
 from sl_maptools.utils import ConfigReader, handle_sigint
 
+UNKNOWN_COORD: Final[MapCoord] = MapCoord(-1, -1)
+
 BATCH_WAIT: Final[int] = 1
 CONN_LIMIT: Final[int] = 80
 HTTP2: Final[bool] = True
@@ -61,21 +63,16 @@ class QSaveJob(TypedDict):
     shm: MPSharedMem.SharedMemory
 
 
-class QSaveResult(NamedTuple):
+class QResult(NamedTuple):
+    entity: str
     coord: MapCoord
     exc: Optional[Exception]
-
-
-class QErr(NamedTuple):
-    entity: str
-    exc: Exception
 
 
 def saver(
     mapdir: Path,
     incoming_queue: MP.Queue,
     result_queue: MP.Queue,
-    err_queue: MP.Queue,
 ):
     signal.signal(signal.SIGINT, signal.SIG_IGN)
     mapdir.mkdir(parents=True, exist_ok=True)
@@ -84,7 +81,7 @@ def saver(
     myname = f"Saver-{num}"
     MP.current_process().name = myname
 
-    result: QSaveResult
+    result: QResult
     while True:
         if incoming_queue.empty():
             time.sleep(1)
@@ -107,12 +104,10 @@ def saver(
                 fout.write(shm.buf)
             shm.close()
             shm.unlink()
-            result = QSaveResult(coord, None)
+            result = QResult(myname, coord, None)
         except Exception as e:
             print(f"\nERR: {myname}:{type(e)}:{e}", file=sys.stderr, flush=True)
-            result = QSaveResult(coord, e)
-            _err = QErr(myname, e)
-            err_queue.put(_err)
+            result = QResult(myname, coord, e)
         result_queue.put(result)
 
 
@@ -120,8 +115,7 @@ async def aretrieve(
     in_queue: MP.Queue,
     out_queue: MP.Queue,
     disp_queue: MP.Queue,
-    retire_queue: MP.Queue,
-    err_queue: MP.Queue,
+    result_queue: MP.Queue,
     abort_flag: Settable,
 ):
     _half_cols = COLS_PER_ROW // 2
@@ -166,15 +160,15 @@ async def aretrieve(
                 for fut in done:
                     if (exc := fut.exception()) is not None:
                         print(f"{_myname}:{fut.get_name()} ERR <{type(exc)}>{exc}", file=sys.stderr, flush=True)
-                        _err = QErr(f"{_myname}:{fut.get_name()}", cast(Exception, exc))
-                        err_queue.put(_err)
+                        _err = QResult(f"{_myname}:{fut.get_name()}", UNKNOWN_COORD, cast(Exception, exc))
+                        result_queue.put(_err)
                         continue
                     fut_result = fut.result()
                     if fut_result is None:
                         continue
                     if not fut_result.result:
-                        _retire: QSaveResult = QSaveResult(fut_result.coord, None)
-                        retire_queue.put(_retire)
+                        _retire: QResult = QResult(_myname, fut_result.coord, None)
+                        result_queue.put(_retire)
                         continue
                     assert isinstance(fut_result.result, bytes)
                     shm = MPSharedMem.SharedMemory(create=True, size=len(fut_result.result))
@@ -212,7 +206,6 @@ def retrieve(
     out_queue: MP.Queue,
     disp_queue: MP.Queue,
     retire_queue: MP.Queue,
-    err_queue: MP.Queue,
     abort_flag: Settable,
 ):
     signal.signal(signal.SIGINT, signal.SIG_IGN)
@@ -220,7 +213,7 @@ def retrieve(
     _, num = curname.split("-")
     myname = f"Retriever-{num}"
     MP.current_process().name = myname
-    asyncio.run(aretrieve(in_queue, out_queue, disp_queue, retire_queue, err_queue, abort_flag))
+    asyncio.run(aretrieve(in_queue, out_queue, disp_queue, retire_queue, abort_flag))
 
 
 class ProgressDict(TypedDict):
@@ -245,24 +238,22 @@ def main(opts: MPMapOptions):
         }
     print(f"Backlog from previous run: {len(progress['backlog']):_}\nNext row after backlog: {progress['next_row']}")
 
-    errs: list[QErr] = []
+    errs: list[QResult] = []
     mgr: MPMgr.SyncManager
     with MP.Manager() as mgr:
         coord_queue: MP.Queue = mgr.Queue()
         save_queue: MP.Queue = mgr.Queue(maxsize=4000)
         dispatched_queue: MP.Queue = mgr.Queue()
         result_queue: MP.Queue = mgr.Queue()
-        err_queue: MP.Queue = mgr.Queue()
 
         r_args = (
             coord_queue,
             save_queue,
             dispatched_queue,
             result_queue,
-            err_queue,
             AbortRequested,
         )
-        s_args = (Path(Config.maps.mp_dir), save_queue, result_queue, err_queue)
+        s_args = (Path(Config.maps.mp_dir), save_queue, result_queue)
 
         outstanding: set[CoordType] = set()
         total: int = 0
@@ -284,10 +275,12 @@ def main(opts: MPMapOptions):
             nonlocal total
             try:
                 while True:
-                    rslt: QSaveResult = result_queue.get_nowait()
+                    rslt: QResult = result_queue.get_nowait()
                     if rslt.exc is None:
                         outstanding.discard(rslt.coord)
                         total += 1
+                    else:
+                        errs.append(rslt)
             except queue.Empty:
                 pass
 
@@ -350,14 +343,10 @@ def main(opts: MPMapOptions):
                 print("Flushing result_queue")
                 flush_result_queue()
 
-                print("Collecting seen errors")
-                while not err_queue.empty():
-                    errs.append(err_queue.get())
-
     if errs:
         print("During retrieval, the following errors are seen:", flush=True)
         time.sleep(1)
-        for entity, exc in errs:
+        for entity, coord, exc in errs:
             print(f"    {entity} <{type(exc)}>{exc}", file=sys.stderr)
 
     progress = {
