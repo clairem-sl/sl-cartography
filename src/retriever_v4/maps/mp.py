@@ -1,6 +1,7 @@
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
+import argparse
 import asyncio
 import multiprocessing as MP
 import multiprocessing.managers as MPMgr
@@ -12,7 +13,7 @@ import signal
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Final, Iterable, NamedTuple, Optional, TypedDict, Union, cast
+from typing import Final, Iterable, NamedTuple, Optional, Protocol, TypedDict, Union, cast
 
 import httpx
 
@@ -32,6 +33,23 @@ COLS_PER_ROW: Final[int] = 2100
 
 Config = ConfigReader("config.toml")
 AbortRequested: Settable = MP.Event()
+
+
+class MPMapOptions(Protocol):
+    mapdir: Path
+    workers: int
+    savers: int
+
+
+def get_options() -> MPMapOptions:
+    parser = argparse.ArgumentParser("retriever.maps.mp")
+
+    parser.add_argument("--mapdir", type=Path, default=Path(Config.maps.mp_dir))
+    parser.add_argument("--workers", type=int, default=RETR_WORKERS)
+    parser.add_argument("--savers", type=int, default=SAVE_WORKERS)
+
+    _opts = parser.parse_args()
+    return cast(MPMapOptions, _opts)
 
 
 class QSaveJob(TypedDict):
@@ -204,11 +222,11 @@ class ProgressDict(TypedDict):
     backlog: set[CoordType]
 
 
-def main():
+def main(opts: MPMapOptions):
     pool_r: mp_pool.Pool
     pool_s: mp_pool.Pool
 
-    progress_file = Path(Config.maps.mp_dir) / Config.maps.mp_progress
+    progress_file = opts.mapdir / Config.maps.mp_progress
     if progress_file.exists():
         with progress_file.open("rb") as fin:
             progress: ProgressDict = pickle.load(fin)
@@ -264,13 +282,13 @@ def main():
             except queue.Empty:
                 pass
 
-        with MP.Pool(RETR_WORKERS, initializer=retrieve, initargs=r_args) as pool_r, MP.Pool(
-            SAVE_WORKERS, initializer=saver, initargs=s_args
+        with MP.Pool(opts.workers, initializer=retrieve, initargs=r_args) as pool_r, MP.Pool(
+            opts.savers, initializer=saver, initargs=s_args
         ) as pool_s:
             with handle_sigint(AbortRequested):
                 backlog = sorted(progress["backlog"], key=lambda i: (i[1], i[0]))
                 if backlog:
-                    _chunksize = (len(backlog) // RETR_WORKERS) + 1
+                    _chunksize = (len(backlog) // opts.workers) + 1
                     _chunksize = min(2000, _chunksize)
                     _i = 0
                     while _i < len(backlog):
@@ -291,7 +309,7 @@ def main():
 
                 print("Telling retriever workers to end")
                 pool_r.close()
-                for _ in range(RETR_WORKERS):
+                for _ in range(opts.workers):
                     coord_queue.put(None)
                 print("Joining retriever workers")
                 pool_r.join()
@@ -312,7 +330,7 @@ def main():
 
                 print("Telling saver workers to end")
                 pool_s.close()
-                for _ in range(SAVE_WORKERS):
+                for _ in range(opts.savers):
                     save_queue.put(None)
                 print("Joining saver workers")
                 pool_s.join()
@@ -334,4 +352,5 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    options = get_options()
+    main(options)
