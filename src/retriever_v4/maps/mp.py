@@ -12,7 +12,7 @@ import signal
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Final, NamedTuple, Optional, TypedDict, Union, cast, Any, Iterable
+from typing import Final, NamedTuple, Optional, TypedDict, Union, cast, Iterable
 
 import httpx
 
@@ -116,9 +116,7 @@ async def aretrieve(in_queue: MP.Queue, out_queue: MP.Queue, disp_queue: MP.Queu
         job: Union[Ellipsis, tuple[str, Union[CoordType, Iterable[CoordType], int]]] = in_queue.get()
         co: CoordType
         while True:
-            if job is None:
-                break
-            if job is not Ellipsis:
+            if job is not None and job is not Ellipsis:
                 cmd, det = job
                 if cmd == "single":
                     disp_queue.put([det])
@@ -160,16 +158,17 @@ async def aretrieve(in_queue: MP.Queue, out_queue: MP.Queue, disp_queue: MP.Queu
 
                 tasks = pending_tasks
 
+            if job is None and not tasks:
+                break
+
             job = Ellipsis
             if not abort_flag.is_set():
                 if len(tasks) < 1050:
                     try:
                         job = in_queue.get_nowait()
                     except queue.Empty:
-                        pass
-            else:
-                if not tasks:
-                    break
+                        time.sleep(1)
+
     print(f"{MP.current_process().name} done")
 
 
