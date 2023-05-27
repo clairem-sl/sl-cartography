@@ -107,14 +107,16 @@ KNOWN_AREAS: Final[dict[str, AreaBounds]] = {
     "LindenLabDE": AreaBounds(1105, 1382, 1108, 1388),
     "LindenEstateServices": AreaBounds(1025, 1014, 1031, 1016),
     "MoleIslands": AreaBounds(1006, 971, 1011, 976),
-    "SLBRegions": AreaBounds(390, 359, 402, 374),
+    # "SLBRegions": AreaBounds(390, 359, 402, 374),
     "LR-160": AreaBounds(1187, 1206, 1190, 1210),
     "LR-180": AreaBounds(1193, 1206, 1196, 1210),
     "Preflight": AreaBounds(1296, 1193, 1299, 1196),
     "TheMists": AreaBounds(562, 734, 567, 739),  ### Former site of Fantasy Faire 2023
     "PaleoQuest": AreaBounds(400, 392, 401, 400),
-    "RFL2023": AreaBounds(503, 705, 554, 1621),
-    "SLB2023": AreaBounds(386, 368, 403, 377),
+    # "RFL2023": AreaBounds(503, 705, 554, 1621),
+    "RFL2023": AreaBounds(547, 705, 554, 715),
+    # "SLB2023": AreaBounds(386, 368, 403, 377),
+    "SLB2023": AreaBounds(386, 359, 403, 377),
     # endregion
     "Interesting111": AreaBounds(500, 1027, 503, 1030),
 }
