@@ -26,6 +26,8 @@ BATCH_WAIT: Final[int] = 1
 CONN_LIMIT: Final[int] = 80
 HTTP2: Final[bool] = True
 
+INFO_EVERY: Final[float] = 5.0
+
 RETR_WORKERS: Final[int] = max((MP.cpu_count() - 2) * 2, 2)
 SAVE_WORKERS: Final[int] = min((RETR_WORKERS // 2), 4)
 
@@ -263,29 +265,29 @@ def main(opts: MPMapOptions):
         s_args = (Path(Config.maps.mp_dir), save_queue, result_queue, err_queue)
 
         outstanding: set[CoordType] = set()
-        count: int = 0
         total: int = 0
+        count: int = 0
 
         def flush_dispatched_queue():
-            nonlocal total
+            nonlocal count
             try:
                 while True:
                     di = dispatched_queue.get_nowait()
                     if isinstance(di, list):
                         outstanding.update(cast(list[CoordType], di))
                     elif isinstance(di, int):
-                        total += di
+                        count += di
             except queue.Empty:
                 pass
 
         def flush_result_queue():
-            nonlocal count
+            nonlocal total
             try:
                 while True:
                     rslt: QSaveResult = result_queue.get_nowait()
                     if rslt.exc is None:
                         outstanding.discard(rslt.coord)
-                        count += 1
+                        total += 1
             except queue.Empty:
                 pass
 
@@ -308,10 +310,10 @@ def main(opts: MPMapOptions):
                     flush_dispatched_queue()
                     flush_result_queue()
                     elapsed = time.monotonic() - tm
-                    if elapsed >= 5.0:
-                        rate = total / elapsed
-                        print(f"{total:_} coords checked, at {rate:_.2f}rps, {count:_} retrieved", flush=True)
-                        total = 0
+                    if elapsed >= INFO_EVERY:
+                        rate = count / elapsed
+                        print(f"{count:_} coords checked, at {rate:_.2f}rps, {total:_} retrieved", flush=True)
+                        count = 0
                         tm = time.monotonic()
 
                 print("Telling retriever workers to end")
