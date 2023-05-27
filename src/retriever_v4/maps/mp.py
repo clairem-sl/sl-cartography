@@ -102,7 +102,7 @@ def saver(
         result_queue.put(result)
 
 
-async def aretrieve(in_queue: MP.Queue, out_queue: MP.Queue, disp_queue: MP.Queue, abort_flag: Settable):
+async def aretrieve(in_queue: MP.Queue, out_queue: MP.Queue, disp_queue: MP.Queue, retire_queue: MP.Queue, abort_flag: Settable):
     limits = httpx.Limits(max_connections=CONN_LIMIT, max_keepalive_connections=CONN_LIMIT)
     async with httpx.AsyncClient(limits=limits, timeout=10.0, http2=HTTP2) as client:
         fetcher = BoundedMapFetcher(CONN_LIMIT * 3, client, cooked=False, cancel_flag=abort_flag)
@@ -148,6 +148,8 @@ async def aretrieve(in_queue: MP.Queue, out_queue: MP.Queue, disp_queue: MP.Queu
                     if fut_result is None:
                         continue
                     if not fut_result.result:
+                        _retire: QSaveResult = QSaveResult(fut_result.coord, None)
+                        retire_queue.put(_retire)
                         continue
                     assert isinstance(fut_result.result, bytes)
                     shm = MPSharedMem.SharedMemory(create=True, size=len(fut_result.result))
@@ -180,13 +182,13 @@ async def aretrieve(in_queue: MP.Queue, out_queue: MP.Queue, disp_queue: MP.Queu
     print(f"{MP.current_process().name} done")
 
 
-def retrieve(in_queue: MP.Queue, out_queue: MP.Queue, disp_queue: MP.Queue, abort_flag: Settable):
+def retrieve(in_queue: MP.Queue, out_queue: MP.Queue, disp_queue: MP.Queue, retire_queue: MP.Queue, abort_flag: Settable):
     signal.signal(signal.SIGINT, signal.SIG_IGN)
     curname = MP.current_process().name
     _, num = curname.split("-")
     myname = f"Retriever-{num}"
     MP.current_process().name = myname
-    asyncio.run(aretrieve(in_queue, out_queue, disp_queue, abort_flag))
+    asyncio.run(aretrieve(in_queue, out_queue, disp_queue, retire_queue, abort_flag))
 
 
 class ProgressDict(TypedDict):
@@ -222,6 +224,7 @@ def main():
             coord_queue,
             save_queue,
             dispatched_queue,
+            result_queue,
             AbortRequested,
         )
         s_args = (Path(Config.maps.mp_dir), save_queue, result_queue)
