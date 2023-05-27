@@ -141,6 +141,9 @@ async def aretrieve(in_queue: MP.Queue, out_queue: MP.Queue, disp_queue: MP.Queu
                 disp_queue.put(len(done))
 
                 for fut in done:
+                    if (exc := fut.exception()) is not None:
+                        print(f"{fut.get_name()} ERR <{type(exc)}>{exc}")
+                        continue
                     fut_result = fut.result()
                     if fut_result is None:
                         continue
