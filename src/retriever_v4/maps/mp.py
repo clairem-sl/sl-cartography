@@ -27,6 +27,9 @@ HTTP2: Final[bool] = True
 RETR_WORKERS: Final[int] = 12
 SAVE_WORKERS: Final[int] = 4
 
+START_ROW: Final[int] = 2100
+COLS_PER_ROW: Final[int] = 2100
+
 Config = ConfigReader("config.toml")
 AbortRequested: Settable = MP.Event()
 
@@ -103,6 +106,7 @@ def saver(
 
 
 async def aretrieve(in_queue: MP.Queue, out_queue: MP.Queue, disp_queue: MP.Queue, retire_queue: MP.Queue, abort_flag: Settable):
+    _half_cols = COLS_PER_ROW // 2
     limits = httpx.Limits(max_connections=CONN_LIMIT, max_keepalive_connections=CONN_LIMIT)
     async with httpx.AsyncClient(limits=limits, timeout=10.0, http2=HTTP2) as client:
         fetcher = BoundedMapFetcher(CONN_LIMIT * 3, client, cooked=False, cancel_flag=abort_flag)
@@ -128,7 +132,7 @@ async def aretrieve(in_queue: MP.Queue, out_queue: MP.Queue, disp_queue: MP.Queu
                     msg = f"set(...{len(det)}...)"
                 elif cmd == "row":
                     d = []
-                    for x in range(0, 2101):
+                    for x in range(0, COLS_PER_ROW + 1):
                         co = x, det
                         d.append(co)
                         tasks.add(make_task(co))
@@ -172,7 +176,7 @@ async def aretrieve(in_queue: MP.Queue, out_queue: MP.Queue, disp_queue: MP.Queu
                 continue
 
             job = Ellipsis
-            if len(tasks) > 1050:
+            if len(tasks) > _half_cols:
                 continue
             try:
                 job = in_queue.get_nowait()
