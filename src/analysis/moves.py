@@ -1,11 +1,12 @@
 
 import pickle
 from datetime import datetime, timedelta
+from io import StringIO
 from pathlib import Path
 from pprint import pprint
 from typing import NamedTuple
 
-from ruamel.yaml import YAML
+from ruamel.yaml import YAML, RoundTripRepresenter
 
 from sl_maptools import CoordType, RegionsDBRecord3, AreaBounds
 
@@ -23,12 +24,18 @@ def main():
     with DB_PATH.open("rb") as fin:
         DATABASE.update(pickle.load(fin))
 
+    yaml = YAML()
+    yaml.Representer = RoundTripRepresenter
+
     region_locations: dict[str, set[CoordType]] = {}
     for co, data in DATABASE.items():
         if not data["current_name"]:
             continue
         if data["current_name"] == "Beorn City":
-            print(data)
+            with StringIO() as fout:
+                yaml.dump({str(co): data}, fout)
+                fout.seek(0)
+                print(fout.read())
         region_locations.setdefault(data["current_name"], set()).add(co)
         for hname in data["name_history3"]:
             if not hname:
