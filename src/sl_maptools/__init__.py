@@ -8,8 +8,18 @@ import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from functools import partial
+from operator import methodcaller
 from pathlib import Path
-from typing import Final, Generator, Iterable, NamedTuple, Optional, TypedDict, Union
+from typing import (
+    Callable,
+    Final,
+    Generator,
+    Iterable,
+    NamedTuple,
+    Optional,
+    TypedDict,
+    Union,
+)
 
 from PIL import Image
 
@@ -216,3 +226,17 @@ class RegionsDBRecord3(TypedDict):
     current_name: str
     name_history3: dict[str, list[tuple[datetime, datetime]]]
     sources: set[str]
+
+
+def friendly_db_record(record: RegionsDBRecord3) -> dict:
+    isofmin: Callable[[datetime], str] = methodcaller("isoformat", timespec="minutes")
+    rslt = {"current_name": record["current_name"]}
+    for _field in ("last_seen", "last_check", "first_seen"):
+        # noinspection PyTypedDict
+        rslt[_field] = isofmin(record.get(_field)).replace("T", " ")
+    rslt["name_history3"] = {
+        name: [(isofmin(t1), isofmin(t2)) for t1, t2 in hist]
+        for name, hist in record["name_history3"].items()
+    }
+    rslt["sources"] = record["sources"]
+    return rslt
