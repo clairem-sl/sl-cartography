@@ -396,8 +396,11 @@ def main(opts: MPMapOptions):
     yaml.Representer = RoundTripRepresenter
     performance_file = opts.mapdir / "performance.yaml"
     make_backup(performance_file)
+    with performance_file.open("rt") as fin:
+        perfdata: dict[datetime, dict[int, float]] = yaml.load(fin)
+    perfdata[datetime.now().astimezone()] = normalized_time_per_row
     with performance_file.open("wt") as fout:
-        yaml.dump(normalized_time_per_row, fout)
+        yaml.dump(perfdata, fout)
 
     print(f"{len(outstanding):_} coordinates in backlog, next row will be {next_row}")
 
