@@ -4,10 +4,10 @@ from pathlib import Path
 from pprint import pprint
 from typing import Final
 
-from sl_maptools import inventorize_maps_latest, CoordType, RegionsDBRecord, AreaBounds
+from sl_maptools import CoordType, RegionsDBRecord, AreaBounds
 from sl_maptools.knowns import KNOWN_AREAS
 from sl_maptools.utils import ConfigReader
-from sl_maptools.validator import get_bonnie_coords
+from sl_maptools.validator import get_bonnie_coords, inventorize_maps_latest
 
 
 INTERESTING_CLUMPSIZE_THRESHOLD: Final[int] = 10
@@ -34,27 +34,27 @@ def main():
     all_coords = set(map_tiles.keys())
     unprocesseds = all_coords.copy()
 
-    def alone(co: CoordType):
-        x, y = co
-        neighbors = {(x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)}
+    def alone(_co: CoordType):
+        _x, _y = _co
+        neighbors = {(_x - 1, _y), (_x + 1, _y), (_x, _y - 1), (_x, _y + 1)}
         return not bool(neighbors.intersection(all_coords))
 
     def get_clump(start: CoordType):
-        clump = set()
+        _clump = set()
         q: deque[tuple[int, int]] = deque()
         q.append(start)
         while q:
             n = q.popleft()
-            if n in clump:
+            if n in _clump:
                 continue
             if n in all_coords:
-                clump.add(n)
-                x, y = n
-                q.append((x - 1, y))
-                q.append((x + 1, y))
-                q.append((x, y - 1))
-                q.append((x, y + 1))
-        return clump
+                _clump.add(n)
+                _x, _y = n
+                q.append((_x - 1, _y))
+                q.append((_x + 1, _y))
+                q.append((_x, _y - 1))
+                q.append((_x, _y + 1))
+        return _clump
 
     clumps: list[set[CoordType]] = []
     for y in range(2100, -1, -1):
@@ -80,10 +80,10 @@ def main():
 
     new_clup: list[set[CoordType]] = []
     for clump in clumps:
-        l = len(clump)
-        if l < INTERESTING_CLUMPSIZE_THRESHOLD:
+        clumplen = len(clump)
+        if clumplen < INTERESTING_CLUMPSIZE_THRESHOLD:
             continue
-        print(l, sorted(clump, key=lambda i: (i[1], i[0]))[0:5], "...")
+        print(clumplen, sorted(clump, key=lambda _i: (_i[1], _i[0]))[0:5], "...")
         found = False
         for aname, coords in known_coords.items():
             cl_i_co = clump.intersection(coords)
