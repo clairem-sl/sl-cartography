@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import pickle
+import re
 from datetime import datetime
 from operator import methodcaller
 from pathlib import Path
@@ -16,6 +17,8 @@ from ruamel.yaml import YAML, RoundTripRepresenter
 from retriever_v4.names.upgrade_db import upgrade_history_to_db3
 from sl_maptools import CoordType, RegionsDBRecord3
 from sl_maptools.utils import ConfigReader, make_backup
+
+RE_COORD = re.compile(r"\D*(?P<x>\d+)\D*(?P<y>\d+)")
 
 Config = ConfigReader("config.toml")
 
@@ -138,8 +141,8 @@ def export(db: Path, targ: Path, quiet: bool = False) -> Path:
 def import_1(regs_data: dict[str, Any]) -> dict[CoordType, RegionsDBRecord3]:
     result: dict[CoordType, RegionsDBRecord3] = {}
     for scoord, data in regs_data.items():
-        sco = scoord.split(",")
-        coord: CoordType = int(sco[0]), int(sco[1])
+        m = RE_COORD.match(scoord)
+        coord: CoordType = int(m.group("x")), int(m.group("y"))
 
         ser_hist: dict[str, list[str]] = data["name_history"]
         hist_old: dict[str, list[str]] = {
@@ -162,8 +165,8 @@ def import_1(regs_data: dict[str, Any]) -> dict[CoordType, RegionsDBRecord3]:
 def import_3(regs_data: dict[str, Any]) -> dict[CoordType, RegionsDBRecord3]:
     result: dict[CoordType, RegionsDBRecord3] = {}
     for scoord, data in regs_data.items():
-        sco = scoord.split(",")
-        coord: CoordType = int(sco[0]), int(sco[1])
+        m = RE_COORD.match(scoord)
+        coord: CoordType = int(m.group("x")), int(m.group("y"))
         hist3: dict[str, list[tuple[datetime, datetime]]] = {}
         for name, tstamps in data["name_history3"].items():
             ts_list: list[tuple[datetime, datetime]] = []
