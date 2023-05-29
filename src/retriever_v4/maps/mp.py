@@ -224,7 +224,7 @@ class ProgressDict(TypedDict):
 
 class ProgressionDict(TypedDict):
     start: Optional[datetime]
-    left: int
+    done: int
     last: Optional[datetime]
 
 
@@ -265,7 +265,7 @@ def main(opts: MPMapOptions):
         progression: dict[int, ProgressionDict] = {
             y: {
                 "start": None,
-                "left": 2101,
+                "done": 0,
                 "last": None
             }
             for y in range(0, 2101)
@@ -300,7 +300,7 @@ def main(opts: MPMapOptions):
                             _prog = progression[y]
                             if _prog["start"] is None:
                                 _prog["start"] = datetime.now()
-                            _prog["left"] -= 1
+                            _prog["done"] += 1
                             _prog["last"] = datetime.now()
                     else:
                         errs.append(rslt)
@@ -383,7 +383,7 @@ def main(opts: MPMapOptions):
 
     normalized_time_per_row: dict[int, float] = {}
     for y, prog in progression.items():
-        n = 2100 - prog["left"]
+        n = prog["done"]
         if n == 0:
             continue
         if prog["start"] is None or prog["last"] is None:
