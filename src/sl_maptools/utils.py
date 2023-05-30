@@ -5,6 +5,9 @@ from __future__ import annotations
 
 import shutil
 
+from typing import IO, Optional
+
+
 try:
     # noinspection PyCompatibility
     import tomllib
@@ -31,12 +34,22 @@ def make_backup(the_file: Path, levels: int = 2):
 
 
 class QuietablePrint:
-    def __init__(self, quiet: bool = False):
+    def __init__(self, quiet: bool = False, flush: Optional[bool] = ...):
         self.quiet = quiet
+        self.flush = flush
 
-    def __call__(self, *args, **kwargs):
+    def __call__(
+        self,
+        *values: object,
+        sep: Optional[str] = ...,
+        end: Optional[str] = ...,
+        file: Optional[IO] = ...,
+        flush: Optional[bool] = ...,
+    ) -> None:
+        if flush is Ellipsis:
+            flush = self.flush
         if not self.quiet:
-            print(*args, **kwargs)
+            print(*values, sep=sep, end=end, file=file, flush=flush)
 
 
 class ValueTree:
