@@ -222,6 +222,14 @@ async def dispatch_fetcher(
                 print("Cancelling the rest of the tasks...")
                 for t in pending_tasks:
                     t.cancel()
+                for fut in await asyncio.gather(*pending_tasks):
+                    if exc := fut.exception():
+                        if isinstance(exc, asyncio.CancelledError):
+                            pass
+                        else:
+                            print(f"\n{fut.get_name()} raised Exception: <{type(exc)}> {exc}")
+                pending_tasks.clear()
+                abort_event.set()
 
         post_batch()
 

@@ -157,11 +157,11 @@ class BoundedNameFetcher(NameFetcher):
 
     async def async_fetch(self, coord: MapCoord) -> Optional[RawResult | CookedResult]:
         """Perform async fetch, but won't actually start fetching if semaphore is depleted."""
-        async with self.sema:
-            if self.cancel_flag is not None:
-                if self.cancel_flag.is_set():
-                    return None
-            try:
+        try:
+            async with self.sema:
+                if self.cancel_flag is not None:
+                    if self.cancel_flag.is_set():
+                        return None
                 if self.cooked:
                     return await self.async_get_name(
                         coord, quiet=True, retries=self.retries
@@ -170,6 +170,6 @@ class BoundedNameFetcher(NameFetcher):
                     return await self.async_get_name_raw(
                         coord, quiet=True, retries=self.retries
                     )
-            except asyncio.CancelledError:
-                print(f"{coord} cancelled")
-                return None
+        except asyncio.CancelledError:
+            print(f"{coord} cancelled")
+            raise

@@ -300,15 +300,15 @@ class BoundedMapFetcher(MapFetcher):
 
     async def async_fetch(self, coord: MapCoord) -> Optional[MapRegion | RawResult]:
         """Perform async fetch, but won't actually start fetching if semaphore is depleted."""
-        async with self.sema:
-            if self.cancel_flag is not None:
-                if self.cancel_flag.is_set():
-                    return None
-            try:
+        try:
+            async with self.sema:
+                if self.cancel_flag is not None:
+                    if self.cancel_flag.is_set():
+                        return None
                 if self.cooked:
                     return await self.async_get_region(coord, quiet=True, retries=self.retries)
                 else:
                     return await self.async_get_region_raw(coord, quiet=True, retries=self.retries)
-            except asyncio.CancelledError:
-                print(f"{coord} cancelled")
-                return None
+        except asyncio.CancelledError:
+            print(f"{coord} cancelled")
+            raise
