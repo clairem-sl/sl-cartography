@@ -230,7 +230,7 @@ async def dispatch_fetcher(
                         else:
                             print(f"\n{fut.get_name()} raised Exception: <{type(exc)}> {exc}")
                 pending_tasks.clear()
-                abort_event.set()
+                break
 
         post_batch()
 
