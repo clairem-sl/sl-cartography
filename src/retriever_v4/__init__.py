@@ -212,6 +212,7 @@ async def dispatch_fetcher(
                 continue
 
             # Actual result handling
+            # result_handler() should perform outstanding jobs retiring!
             if result_handler(fut.result()):
                 has_response += 1
 
