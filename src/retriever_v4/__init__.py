@@ -228,7 +228,7 @@ async def dispatch_fetcher(
                         if isinstance(exc, asyncio.CancelledError):
                             pass
                         else:
-                            print(f"\n{fut.get_name()} raised Exception: <{type(exc)}> {exc}")
+                            print(f"\n{fut.get_name()} on cancel, raised <{type(exc)}> {exc}")
                 pending_tasks.clear()
                 break
 
