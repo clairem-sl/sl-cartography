@@ -205,15 +205,15 @@ async def dispatch_fetcher(
 
         # Handle results
         completed_count = exc_count = 0
-        for completed_count, fut in enumerate(done, start=1):
-            if exc := fut.exception():
+        for completed_count, task in enumerate(done, start=1):
+            if exc := task.exception():
                 exc_count += 1
-                print(f"\n{fut.get_name()} raised Exception: <{type(exc)}> {exc}")
+                print(f"\n{task.get_name()} raised Exception: <{type(exc)}> {exc}")
                 continue
 
             # Actual result handling
             # result_handler() should perform outstanding jobs retiring!
-            if result_handler(fut.result()):
+            if result_handler(task.result()):
                 has_response += 1
 
         if completed_count:
