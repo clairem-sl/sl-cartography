@@ -1,40 +1,149 @@
+import asyncio
+import time
+from collections import deque
 from datetime import datetime
-import pickle
 from pathlib import Path
-from pprint import pprint
-from typing import Any, TypedDict
+from typing import Any, Final, TypedDict, Optional
 
 import httpx
+from ruamel.yaml import RoundTripRepresenter, YAML
 
-from sl_maptools import CoordType
+from retriever_v4 import dispatch_fetcher, ProgressInterface
+from sl_maptools import CoordType, MapCoord
+from sl_maptools.fetchers.bonnie import BoundedBonnieFetcher, CookedBonnieResult
+from sl_maptools.utils import SLMapToolsConfig, ConfigReader, make_backup
+
+CONN_LIMIT: Final[int] = 400
+HTTP2: Final[bool] = False
+ACCEPTABLE_STATUSCODES: Final[set[int]] = {200, 403}
+
+
+Config: SLMapToolsConfig = ConfigReader("config.toml")
 
 
 BONNIE_RAW = "BonnieRaw.pkl"
 BONNIE_BY_COORD = "BonnieByCoord.pkl"
-BONNIE_DETAILS_BY_COORD = "BonnieDetailsByCoord.pkl"
+BONNIE_DB_PATH = Path(Config.names.dir) / "BonnieDetailsByCoord.yaml"
+
+AbortRequested = asyncio.Event()
+
+
+class BonnieRegionPointers(TypedDict):
+    region_name: str
+    region_x: int
+    region_y: int
+
+
+class BonnieRegionDetails(TypedDict):
+    region_name: str
+    region_map_image: str
+    region_x: int
+    region_y: int
+    region_owner: str
+    region_product_sku: str
+    region_product_name: str
+    estate_id: int
+    hard_max_agents: int
+    hard_max_objects: int
+    deny_age_unverified: bool
+    region_access: int
+    deleted_at: Optional[str]
+    estate_name: str
+    region_ip: str
+    region_port: int
+    channel_version: str
+    region_updated_at: str
+    access_name: str
+
+
+class BonnieRegionsAll(TypedDict):
+    updated: int
+    regions: list[BonnieRegionPointers]
 
 
 class BonnieMeta(TypedDict):
-    current: dict[str,Any]
+    current: dict[str, Any]
+    last_update: datetime
     diff: dict[datetime, dict[str, Any]]
 
 
-det_by_co: dict[CoordType, BonnieMeta] = {}
+BonnieDB: dict[CoordType, BonnieMeta] = {}
 
 
-def update_bonniedata(x: int, y: int, curdata: dict):
-    global det_by_co
+class BonnieProgress:
+    def __init__(self, bonnie_regions_url: str = "https://www.bonniebots.com/static-api/regions/index.json"):
+        global BonnieDB
 
-    _nao = datetime.now().astimezone()
+        with httpx.Client() as client:
+            resp_all = client.get(bonnie_regions_url)
+            self._all_data: BonnieRegionsAll = resp_all.json()
+
+        at_end: set[tuple[datetime, CoordType]] = set()
+        at_beginning: set[CoordType] = set()
+        for reg in self._all_data["regions"]:
+            co: CoordType = reg["region_x"], reg["region_y"]
+            # Prioritize coordinates not yet in DB
+            if co not in BonnieDB:
+                at_beginning.add(co)
+            else:
+                # Record last_update as well so we can sort by datapoint age
+                at_end.add((BonnieDB[co]["last_update"], co))
+        self._to_fetch: deque[CoordType] = deque(at_beginning)
+        # Prioritize oldest datapoints. Oldest = smallest timestamp of course
+        self._to_fetch.extend(co for _, co in sorted(at_end))
+
+        self._outstanding: set[CoordType] = set()
+
+    @property
+    def all_data(self) -> BonnieRegionsAll:
+        return self._all_data
+
+    @property
+    def next_coordinate(self) -> CoordType:
+        return self._to_fetch[0]
+
+    @property
+    def outstanding_count(self) -> int:
+        return len(self._outstanding)
+
+    @property
+    def total_to_fetch(self):
+        return len(self._to_fetch)
+
+    async def abatch(self, batch_size: int):
+        for _ in range(batch_size):
+            if not self._to_fetch:
+                return
+            coord = self._to_fetch.popleft()
+            self._outstanding.add(coord)
+            yield coord
+
+    def retire(self, item: CoordType):
+        self._outstanding.discard(item)
+
+    def save(self):
+        pass
+
+
+Progress: ProgressInterface
+
+
+def update_bonniedata(result: CookedBonnieResult):
+    global BonnieDB
+
+    (x, y), curdata, _ = result
     _co = x, y
-    if _co not in det_by_co:
-        det_by_co[_co] = {
+    _nao = datetime.now().astimezone()
+    if _co not in BonnieDB:
+        BonnieDB[_co] = {
             "current": curdata,
+            "last_update": _nao,
             "diff": {}
         }
         return
-    prev = det_by_co[_co]["current"]
-    det_by_co[_co]["current"] = curdata
+    prev = BonnieDB[_co]["current"]
+    BonnieDB[_co]["current"] = curdata
+    BonnieDB[_co]["last_update"] = _nao
     prev_diff = {}
     for k, v in prev.items():
         if k not in curdata:
@@ -44,56 +153,104 @@ def update_bonniedata(x: int, y: int, curdata: dict):
             prev_diff[k] = v
             continue
     if prev_diff:
-        det_by_co[_co]["diff"][_nao] = prev_diff
+        BonnieDB[_co]["diff"][_nao] = prev_diff
+        return True
+    return False
+
+
+async def amain(duration: int, min_batch_size: int, abort_low_rps: int):
+    limits = httpx.Limits(max_connections=CONN_LIMIT, max_keepalive_connections=CONN_LIMIT)
+    async with httpx.AsyncClient(limits=limits, timeout=10.0, http2=HTTP2) as client:
+        fetcher = BoundedBonnieFetcher(CONN_LIMIT * 3, client, cancel_flag=AbortRequested)
+        shown = False
+
+        def make_task(coord: CoordType):
+            return asyncio.create_task(fetcher.async_fetch(MapCoord(*coord)), name=str(coord))
+
+        def pre_batch():
+            nonlocal shown
+            shown = False
+
+        def process_result(fut_result: Optional[CookedBonnieResult]) -> bool:
+            nonlocal shown
+            if fut_result is None:
+                return False
+            if fut_result.status_code not in ACCEPTABLE_STATUSCODES:
+                return False
+            if fut_result.result:
+                if not shown:
+                    shown = True
+                    print("🌐", end="")
+                print(
+                    f'({fut_result.coord.x},{fut_result.coord.y})',
+                    end="",
+                    flush=True,
+                )
+            return update_bonniedata(fut_result)
+
+        def post_batch():
+            if not shown:
+                print("Nothing retrieved", end="")
+                return
+            # yaml = YAML(typ="safe")
+            # yaml.Representer = RoundTripRepresenter
+            # with bdb_path.open("wt") as fout:
+            #     yaml.dump(BonnieDB, fout)
+
+        await dispatch_fetcher(
+            progress=Progress,
+            duration=duration,
+            taskmaker=make_task,
+            result_handler=process_result,
+            pre_batch=pre_batch,
+            post_batch=post_batch,
+            abort_event=AbortRequested,
+            min_batch_size=min_batch_size,
+            abort_low_rps=abort_low_rps,
+        )
 
 
 def main():
-    global det_by_co
+    global BonnieDB, Progress
+    yaml = YAML(typ="safe")
+    yaml.Representer = RoundTripRepresenter
 
-    with httpx.Client() as client:
-        resp_all = client.get("https://www.bonniebots.com/static-api/regions/index.json")
-        all_data = resp_all.json()
-        fp = Path(BONNIE_RAW)
-        with fp.open("wb") as fout:
-            pickle.dump(all_data, fout)
-
-    by_coord: dict[CoordType, set[str]] = {}
-    for regdata in all_data["regions"]:
-        _co = int(regdata["region_x"]), int(regdata["region_y"])
-        by_coord.setdefault(_co, set()).add(regdata["region_name"])
-    with Path(BONNIE_BY_COORD).open("wb") as fout:
-        pickle.dump(by_coord, fout)
-
-    fp = Path(BONNIE_DETAILS_BY_COORD)
-    if fp.exists():
-        with fp.open("rb") as fin:
-            det_by_co = pickle.load(fin)
-
-    want_co: set[CoordType] = {
-        (int(regdata["region_x"]), int(regdata["region_y"]))
-        for regdata in all_data["regions"]
-    }
+    if BONNIE_DB_PATH.exists():
+        print(f"Reading existing BonnieDB {BONNIE_DB_PATH} ...", end="", flush=True)
+        with BONNIE_DB_PATH.open("rt") as fin:
+            _bdb = yaml.load(fin)
+        if isinstance(_bdb, dict):
+            print(f" {len(_bdb)} records read.")
+            # _bdb_k = list(_bdb.keys())
+            # print(f"First key: <{type(_bdb_k[0])}>{_bdb_k[0]}")
+            BonnieDB = _bdb
+        else:
+            print(" empty DB")
+    Progress = BonnieProgress()
+    print(f"Total to fetch: {Progress.total_to_fetch}", flush=True)
+    time.sleep(3)
 
     try:
-        with httpx.Client(http2=True) as client:
-            for i, (x, y) in enumerate(want_co, start=1):
-                print(f"{x},{y}", end="  ", flush=True)
-                resp = client.get(f"https://www.bonniebots.com/static-api/regions/{x}/{y}/index.json")
-                update_bonniedata(x, y, resp.json())
-                if (i % 10) == 0:
-                    with fp.open("wb") as fout:
-                        pickle.dump(det_by_co, fout)
+        make_backup(BONNIE_DB_PATH)
+        AbortRequested.clear()
+        asyncio.run(
+            amain(-1, 100, 0)
+        )
+    except asyncio.CancelledError:
+        print("Something cancelled asyncio!")
     except KeyboardInterrupt:
         print("User Interrupted")
-
-    pprint(det_by_co)
-
-    with fp.open("wb") as fout:
-        pickle.dump(det_by_co, fout)
-
-"""
-{"region_name":"Blake Sea - Turnbuckle","region_map_image":"c0bb2964-af2c-0c2a-27bb-dd36aac5ba3b","region_x":1133,"region_y":1049,"region_owner":"00000000-0000-0000-0000-000000000000","region_product_sku":"129","region_product_name":"Mainland / Homestead","estate_id":1,"hard_max_agents":25,"hard_max_objects":5000,"deny_age_unverified":false,"region_access":21,"deleted_at":null,"estate_name":"mainland","region_ip":"35.87.7.207","region_port":13055,"channel_version":"Second Life Server 2023-05-05.579955","region_updated_at":"2023-05-29T05:17:13.336Z","access_name":"Moderate"}
-"""
+    finally:
+        # pprint(BonnieDB)
+        print(f"{len(BonnieDB)} regions in total now. Saving ...", end="", flush=True)
+        with BONNIE_DB_PATH.open("wt") as fout:
+            yaml.dump(BonnieDB, fout)
+        print(f" saved to {BONNIE_DB_PATH}", flush=True)
+    still_need = len(Progress.all_data["regions"]) - len(BonnieDB)
+    if still_need == 0:
+        print("BonnieDB seems to be complete")
+    else:
+        print(f"{still_need} records still need to be retrieved")
 
 
 if __name__ == '__main__':
