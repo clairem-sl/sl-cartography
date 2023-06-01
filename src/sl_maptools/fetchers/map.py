@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import asyncio
 import io
-import random
 import time
 from typing import Any, Callable, Dict, Final, FrozenSet, Optional, Protocol, Set, Union
 
@@ -13,7 +12,7 @@ import httpx
 from PIL import Image
 
 from sl_maptools import MapCoord, MapRegion
-from sl_maptools.fetchers import FetcherConnectionError, RawResult
+from sl_maptools.fetchers import Fetcher, FetcherConnectionError, RawResult
 from sl_maptools.utils import QuietablePrint
 
 
@@ -23,11 +22,8 @@ class MapProgressProtocol(Protocol):
     last_fail_rows: Set[int] = set()
 
 
-_RETRYABLE_EX: Final[tuple] = (httpx.ConnectTimeout, httpx.ReadTimeout, httpx.ReadError)
-
-
-class MapFetcher(object):
-    URL_TEMPLATE: Final[str] = "https://secondlife-maps-cdn.akamaized.net/map-1-{map_x}-{map_y}-objects.jpg"
+class MapFetcher(Fetcher):
+    URL_TEMPLATE: Final[str] = "https://secondlife-maps-cdn.akamaized.net/map-1-{x}-{y}-objects.jpg"
 
     def __init__(
         self,
@@ -40,8 +36,8 @@ class MapFetcher(object):
         :param skip_tiles: A Set of coordinates to skip from being fetched
         :param a_session: An Async client session
         """
+        super().__init__(a_session=a_session)
         self.skip_tiles: Set[MapCoord] = set() if skip_tiles is None else skip_tiles
-        self.a_session: httpx.AsyncClient = a_session
         self.seen_http_vers: set[str] = set()
 
     async def async_get_region_raw(
@@ -60,57 +56,25 @@ class MapFetcher(object):
         :param raise_err: If True (default), will (re-)raise error
         :return: An instance of MapTile fetched from (X, Y)
         """
-        qprint = QuietablePrint(quiet)
-        qprint(".", end="", flush=True)
-        url = self.URL_TEMPLATE.format(map_x=coord.x, map_y=coord.y)
-        internal_errors = []
-        multiplier = 0.25
-        for _ in range(0, retries):
-            multiplier *= 2.0
-            await asyncio.sleep(random.random() * multiplier)
+        qprint = QuietablePrint(quiet=quiet, flush=True)
+        result: RawResult = await self.async_get_raw(coord, quiet, retries, raise_err)
 
-            for _ in range(0, 8):
-                mul2 = 0.5
-                try:
-                    response = await self.a_session.get(url)
-                    break
-                except _RETRYABLE_EX as e1:
-                    # Not quietable
-                    print(">", end="", flush=True)
-                    internal_errors.append(e1)
-                    await asyncio.sleep(random.random() * mul2)
-                    mul2 *= 2.0
-                    continue
-                except Exception as e:
-                    raise FetcherConnectionError(internal_errors=[e], coord=coord) from e
-            else:
-                break
+        if result.status_code == 403:
+            # "403 Forbidden" means the tile is a void
+            qprint("-", end="", flush=True)
+            # return MapTile(coord, None)
+            return RawResult(coord, None, result.status_code)
 
-            self.seen_http_vers.add(response.http_version)
-            status_code = response.status_code
+        if result.status_code == 200:
+            qprint("+", end="", flush=True)
+            # with io.BytesIO(response.content) as bio:
+            #     grabbed = Image.open(bio)
+            #     # Need to call .load() because .open() is lazy
+            #     grabbed.load()
+            # return MapTile(coord, grabbed)
+            return result
 
-            if status_code == 403:
-                # "403 Forbidden" means the tile is a void
-                qprint("-", end="", flush=True)
-                # return MapTile(coord, None)
-                return RawResult(coord, None, status_code)
-
-            if status_code == 200:
-                qprint("+", end="", flush=True)
-                # with io.BytesIO(response.content) as bio:
-                #     grabbed = Image.open(bio)
-                #     # Need to call .load() because .open() is lazy
-                #     grabbed.load()
-                # return MapTile(coord, grabbed)
-                return RawResult(coord, response.content, status_code)
-
-            # Don't quiet this
-            print(f"{status_code}?", end="", flush=True)
-            internal_errors.append(f"Unexpected HTTP status code {response.status_code}")
-            await asyncio.sleep(0.5)
-        print(f"ERR({coord})", end="", flush=True)
-        if raise_err:
-            raise FetcherConnectionError(internal_errors=internal_errors, coord=coord)
+        raise RuntimeError(f"Unexpected result: {result}")
 
     async def async_get_region(
         self,
