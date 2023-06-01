@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import collections
 import math
 import re
 import signal
@@ -30,6 +31,25 @@ class ProgressDict(TypedDict):
     next_x: int
     next_y: int
     outstanding: list[str]
+
+
+# fmt: off
+class ProgressInterface(Protocol):
+    next_coordinate: CoordType
+    outstanding_count: int
+    def retire(self, item: CoordType) -> None: ...
+    def load(self) -> None: ...
+    def save(self) -> None: ...
+    def add(self, coord: CoordType) -> None: ...
+    def abatch(self, batch_size: int) -> collections.AsyncIterable[CoordType]: ...
+
+
+class Dispatchable(Protocol):
+    def abatch(self, batch_size: int) -> collections.AsyncIterable[CoordType]: ...
+    def save(self) -> None: ...
+    def retire(self, item: CoordType) -> None: ...
+
+# fmt: on
 
 
 class RetrieverProgress:
@@ -164,7 +184,7 @@ def handle_sigint(interrupt_flag: asyncio.Event):
 
 
 async def dispatch_fetcher(
-    progress: RetrieverProgress,
+    progress: Dispatchable,
     duration: int,
     taskmaker: Callable[[CoordType], Task],
     result_handler: Callable[[Any], bool],
