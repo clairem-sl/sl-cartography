@@ -181,11 +181,11 @@ async def amain(duration: int, min_batch_size: int, abort_low_rps: int):
                 if not shown:
                     shown = True
                     print("🌐", end="")
-                print(
-                    f'({fut_result.coord.x},{fut_result.coord.y})',
-                    end="",
-                    flush=True,
-                )
+                # print(
+                #     f'({fut_result.coord.x},{fut_result.coord.y})',
+                #     end="",
+                #     flush=True,
+                # )
             return update_bonniedata(fut_result)
 
         def post_batch():
