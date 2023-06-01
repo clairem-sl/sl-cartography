@@ -26,7 +26,7 @@ class BonnieFetcher(Fetcher):
         self,
         coord: MapCoord,
         quiet: bool = False,
-        retries: int = 2,
+        retries: int = 6,
         raise_err: bool = True,
     ) -> CookedBonnieResult:
         """ """
