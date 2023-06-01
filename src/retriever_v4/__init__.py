@@ -117,10 +117,7 @@ class RetrieverProgress:
         exported: ProgressDict = {
             "next_x": self.next_x,
             "next_y": self.next_y,
-            "outstanding": [
-                f"{x},{y}"
-                for x, y in sorted(self.outstanding, key=lambda t: (t[1], t[0]))
-            ],
+            "outstanding": [f"{x},{y}" for x, y in sorted(self.outstanding, key=lambda t: (t[1], t[0]))],
         }
         with self.backing_file.open("wt") as fout:
             ryaml.dump(exported, fout, default_flow_style=False)
@@ -198,9 +195,7 @@ async def dispatch_fetcher(
     abort_low_rps: int = -1,
 ):
     start = time.monotonic()
-    tasks: set[asyncio.Task] = {
-        taskmaker(coord) async for coord in progress.abatch(start_batch_size)
-    }
+    tasks: set[asyncio.Task] = {taskmaker(coord) async for coord in progress.abatch(start_batch_size)}
     if not tasks:
         print("No undispatched jobs, exiting immediately!")
         return
@@ -273,9 +268,7 @@ async def dispatch_fetcher(
             print("(!A)", end=" ")
             continue
         if (2 * len(tasks)) < batch_size:
-            new_tasks = {
-                taskmaker(coord) async for coord in progress.abatch(batch_size)
-            }
+            new_tasks = {taskmaker(coord) async for coord in progress.abatch(batch_size)}
             print(f"(+{len(new_tasks)})", end=" ")
             tasks.update(new_tasks)
     if abort_event.is_set():
@@ -318,9 +311,7 @@ class RetrieverApplication(AbstractContextManager):
         self.lock_file.unlink(missing_ok=True)
         self.ended = time.monotonic()
         nao = datetime.now().astimezone().isoformat(timespec="seconds")
-        print(
-            f"\nFinished in {(self.ended - self.started):_.2f} seconds at {nao}"
-        )
+        print(f"\nFinished in {(self.ended - self.started):_.2f} seconds at {nao}")
         return False
 
     def log(self, log_item: str | dict):
@@ -334,9 +325,7 @@ class RetrieverApplication(AbstractContextManager):
                 log_data = {}
             if not isinstance(log_item, dict):
                 log_item = {"msg": str(log_item)}
-            log_data[
-                datetime.now().astimezone().isoformat(timespec="minutes")
-            ] = log_item
+            log_data[datetime.now().astimezone().isoformat(timespec="minutes")] = log_item
             finout.seek(0)
             ryaml.dump(log_data, finout)
 
