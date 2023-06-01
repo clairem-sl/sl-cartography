@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import asyncio
 import json
-from typing import Any, Dict, NamedTuple, Protocol, Set
+from typing import NamedTuple, Optional
 
 import httpx
 
@@ -13,20 +13,10 @@ from sl_maptools import MapCoord
 from sl_maptools.fetchers import Fetcher
 
 
-class RawTile(NamedTuple):
+class CookedBonnieResult(NamedTuple):
     coord: MapCoord
-    result: bytes | None
-
-
-class CookedTile(NamedTuple):
-    coord: MapCoord
-    result: str | None
-
-
-class MapProgressProtocol(Protocol):
-    regions: Dict[MapCoord, Any] = {}
-    seen: Set[MapCoord] = set()
-    last_fail_rows: Set[int] = set()
+    result: Optional[dict]
+    status_code: int = 0
 
 
 class BonnieFetcher(Fetcher):
@@ -38,11 +28,12 @@ class BonnieFetcher(Fetcher):
         quiet: bool = False,
         retries: int = 2,
         raise_err: bool = True,
-    ) -> dict:
+    ) -> CookedBonnieResult:
         """ """
         blob: bytes
-        _, blob, _ = await self.async_get_raw(coord, quiet, retries, raise_err)
-        return json.loads(blob.decode("utf-8"))
+        status_code: int
+        _, blob, status_code = await self.async_get_raw(coord, quiet, retries, raise_err)
+        return CookedBonnieResult(coord, json.loads(blob.decode("utf-8")), status_code)
 
 
 class BoundedBonnieFetcher(BonnieFetcher):
@@ -74,7 +65,7 @@ class BoundedBonnieFetcher(BonnieFetcher):
         self.retries = retries
         self.cancel_flag = cancel_flag
 
-    async def async_fetch(self, coord: MapCoord) -> dict:
+    async def async_fetch(self, coord: MapCoord) -> Optional[CookedBonnieResult]:
         """Perform async fetch, but won't actually start fetching if semaphore is depleted."""
         try:
             async with self.sema:
