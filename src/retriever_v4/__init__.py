@@ -267,7 +267,7 @@ async def dispatch_fetcher(
         tasks = pending_tasks
         if statistics.median(done_last10) < abort_low_rps:
             abort_event.set()
-        if elapsed >= duration:
+        if elapsed >= duration > 0:
             abort_event.set()
         if abort_event.is_set():
             print("(!A)", end=" ")
