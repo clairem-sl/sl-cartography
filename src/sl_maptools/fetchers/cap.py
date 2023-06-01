@@ -11,7 +11,7 @@ from typing import Any, Dict, Final, Optional, Protocol, Set
 import httpx
 
 from sl_maptools import MapCoord
-from sl_maptools.fetchers import CookedResult, FetcherConnectionError, RawResult
+from sl_maptools.fetchers import CookedResult, Fetcher, FetcherConnectionError, RawResult
 from sl_maptools.utils import QuietablePrint
 
 RE_REGION_NAME: Final[re.Pattern] = re.compile(
@@ -28,86 +28,27 @@ class MapProgressProtocol(Protocol):
 _RETRYABLE_EX: Final[tuple] = (httpx.ConnectTimeout, httpx.ReadTimeout, httpx.ReadError)
 
 
-class NameFetcher(object):
+class NameFetcher(Fetcher):
     URL_TEMPLATE: Final[str] = (
         "https://cap.secondlife.com/cap/0/b713fe80-283b-4585-af4d-a3b7d9a32492?"
         "var=region&grid_x={x}&grid_y={y}"
     )
 
-    def __init__(self, a_session: httpx.AsyncClient):
-        """
-        Creates a Map Tile Getter with logic to retrieve map tiles
-
-        :param a_session: An Async client session
-        """
-        self.a_session: httpx.AsyncClient = a_session
-
     async def async_get_name_raw(
         self,
         coord: MapCoord,
         quiet: bool = False,
-        retries: int = 2,
+        retries: int = 6,
         raise_err: bool = True,
     ) -> RawResult:
         """ """
-        qprint = QuietablePrint(quiet)
-        qprint(".", end="", flush=True)
-        url = self.URL_TEMPLATE.format(x=coord.x, y=coord.y)
-        internal_errors = []
-        multiplier = 0.25
-        for _ in range(0, retries):
-            multiplier *= 2.0
-            await asyncio.sleep(random.random() * multiplier)
-
-            for _ in range(0, 8):
-                mul2 = 0.5
-                try:
-                    response = await self.a_session.get(url)
-                    break
-                except _RETRYABLE_EX as e1:
-                    # Not quietable
-                    print(">", end="", flush=True)
-                    internal_errors.append(e1)
-                    await asyncio.sleep(random.random() * mul2)
-                    mul2 *= 2.0
-                    continue
-                except Exception as e:
-                    raise FetcherConnectionError(internal_errors=[e], coord=coord) from e
-            else:
-                break
-
-            status_code = response.status_code
-
-            if status_code == 403:
-                # "403 Forbidden" means the tile is a void
-                qprint(status_code, end=" ", flush=True)
-                # return MapTile(coord, None)
-                return RawResult(coord, str(status_code).encode("utf-8"), status_code)
-
-            if status_code == 200:
-                qprint("+", end="", flush=True)
-                # with io.BytesIO(response.content) as bio:
-                #     grabbed = Image.open(bio)
-                #     # Need to call .load() because .open() is lazy
-                #     grabbed.load()
-                # return MapTile(coord, grabbed)
-                return RawResult(coord, response.content, status_code)
-
-            # Don't quiet this
-            print(f"{status_code}?", end="", flush=True)
-            internal_errors.append(
-                f"Unexpected HTTP status code {response.status_code}"
-            )
-            await asyncio.sleep(0.5)
-        print(f"ERR({coord})", end="", flush=True)
-        if raise_err:
-            raise FetcherConnectionError(internal_errors=internal_errors, coord=coord)
+        return await self.async_get_raw(coord, quiet, retries, raise_err, {200, 403})
 
     async def async_get_name(
         self,
         coord: MapCoord,
         quiet: bool = False,
-        retries: int = 2,
+        retries: int = 6,
         raise_err: bool = True,
     ) -> CookedResult:
         raw_result = await self.async_get_name_raw(coord, quiet, retries, raise_err)

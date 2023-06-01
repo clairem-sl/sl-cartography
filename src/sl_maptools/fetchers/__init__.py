@@ -52,10 +52,13 @@ class Fetcher(metaclass=abc.ABCMeta):
         quiet: bool = False,
         retries: int = 6,
         raise_err: bool = True,
+        acceptable_codes: set[int] = None,
     ) -> RawResult:
         """ """
         qprint = QuietablePrint(quiet, flush=True)
         qprint(".", end="")
+        if acceptable_codes is None:
+            acceptable_codes = {200}
         url = self.URL_TEMPLATE.format(x=coord.x, y=coord.y)
         internal_errors = []
         multiplier = 0.25
@@ -74,7 +77,7 @@ class Fetcher(metaclass=abc.ABCMeta):
 
             status_code = response.status_code
 
-            if status_code == 200:
+            if status_code in acceptable_codes:
                 qprint("+", end="")
                 return RawResult(coord, response.content, status_code)
 
