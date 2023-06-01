@@ -51,7 +51,8 @@ class BoundedBonnieFetcher(BonnieFetcher):
         self,
         sema_size: int,
         async_session: httpx.AsyncClient,
-        retries: int = 3,
+        retries: int = 6,
+        timeout: int = 60,
         cancel_flag: Optional[asyncio.Event] = None,
     ):
         """
@@ -64,6 +65,7 @@ class BoundedBonnieFetcher(BonnieFetcher):
         self.sema = asyncio.Semaphore(sema_size)
         self.retries = retries
         self.cancel_flag = cancel_flag
+        self.timeout = timeout
 
     async def async_fetch(self, coord: MapCoord) -> Optional[CookedBonnieResult]:
         """Perform async fetch, but won't actually start fetching if semaphore is depleted."""
@@ -72,7 +74,7 @@ class BoundedBonnieFetcher(BonnieFetcher):
                 if self.cancel_flag is not None:
                     if self.cancel_flag.is_set():
                         return None
-                return await asyncio.wait_for(self.async_get_data(coord, quiet=True, retries=self.retries), 10)
+                return await asyncio.wait_for(self.async_get_data(coord, quiet=True, retries=self.retries), self.timeout)
         except asyncio.CancelledError:
             print(f"{coord} cancelled")
             raise
