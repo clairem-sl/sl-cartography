@@ -79,14 +79,14 @@ class RetrieverProgress:
         self.maxc = max_coord
         self.next_x = min_coord[0]
         self.next_y = max_coord[1]
-        self.outstanding: set[tuple[int, int]] = set()
-        self._backlog: deque[tuple[int, int]] = deque()
-        self.last_dispatch: tuple[int, int] = (-1, -1)
+        self.outstanding: set[CoordType] = set()
+        self._backlog: deque[CoordType] = deque()
+        self.last_dispatch: CoordType = (-1, -1)
         if backing_file.exists():
             self.load()
 
     @property
-    def next_coordinate(self) -> tuple[int, int]:
+    def next_coordinate(self) -> CoordType:
         if self._backlog:
             return self._backlog[0]
         return self.next_x, self.next_y
@@ -95,7 +95,7 @@ class RetrieverProgress:
     def outstanding_count(self) -> int:
         return len(self.outstanding)
 
-    def retire(self, item: tuple[int, int]):
+    def retire(self, item: CoordType):
         if item is None:
             return
         self.outstanding.discard(item)
@@ -129,7 +129,7 @@ class RetrieverProgress:
         self._backlog.append(coord)
         self.outstanding.add(coord)
 
-    async def abatch(self, batch_size: int) -> Generator[tuple[int, int], None, None]:
+    async def abatch(self, batch_size: int) -> Generator[CoordType, None, None]:
         c = 0
         while self._backlog:
             c += 1
