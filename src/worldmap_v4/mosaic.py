@@ -40,7 +40,7 @@ DEFA_MAPDIR: Final[Path] = Path(Config.maps.dir)
 DEFA_OUTDIR: Final[Path] = Path(Config.mosaic.dir)
 DEFA_CACHE: Final[Path] = Path(Config.mosaic.dir) / Config.mosaic.domc_cache
 
-DEFA_CALC_WORKERS: Final[int] = max(1, MP.cpu_count() - 2)
+DEFA_CALC_WORKERS: Final[int] = max(1, MP.cpu_count() - 2) * 2
 DEFA_MAKE_WORKERS: Final[int] = 1
 
 DEFA_REGIONSDB = Path(r"C:\Cache\SL-Carto\RegionsDB2.pkl")
