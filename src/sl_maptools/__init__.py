@@ -76,14 +76,6 @@ class AreaBounds(NamedTuple):
         """Width of map in Units of Regions"""
         return self.x_eastmost - self.x_westmost + 1
 
-    @classmethod
-    def from_corners(cls, corner1: tuple[int, int], corner2: tuple[int, int]):
-        x1, y1 = corner1
-        x2, y2 = corner2
-        x_min, x_max = (x1, x2) if x1 <= x2 else (x2, x1)
-        y_min, y_max = (y1, y2) if y1 <= y2 else (y2, y1)
-        return cls(x_min, y_min, x_max, y_max)
-
     def y_iterator(self) -> Generator[int, None, None]:
         min_y = min(self.y_southmost, self.y_northmost)
         max_y = max(self.y_northmost, self.y_southmost)
@@ -98,6 +90,14 @@ class AreaBounds(NamedTuple):
         for y in self.y_iterator():
             for x in self.x_iterator():
                 yield x, y
+
+    @classmethod
+    def from_corners(cls, corner1: tuple[int, int], corner2: tuple[int, int]):
+        x1, y1 = corner1
+        x2, y2 = corner2
+        x_min, x_max = (x1, x2) if x1 <= x2 else (x2, x1)
+        y_min, y_max = (y1, y2) if y1 <= y2 else (y2, y1)
+        return cls(x_min, y_min, x_max, y_max)
 
     @classmethod
     def from_coordset(cls, coords: Iterable[CoordType]):
