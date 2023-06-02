@@ -61,7 +61,6 @@ FASCIA_PIXELS: Final[dict[int, int]] = {
 class OptionsType(Protocol):
     reset_cache: bool
     cachefile: Path
-    no_cache: bool
     calc_workers: int
     make_workers: int
     pip_every: int
@@ -81,7 +80,6 @@ def get_opts() -> OptionsType:
     cache_grp = parser.add_mutually_exclusive_group()
     cache_grp.add_argument("--reset-cache", action="store_true")
     cache_grp.add_argument("--cachefile", type=Path, default=DEFA_CACHE)
-    cache_grp.add_argument("--no-cache", action="store_true")
 
     parser.add_argument(
         "--calc-workers", metavar="N", type=int, default=DEFA_CALC_WORKERS
@@ -116,36 +114,29 @@ class CalcJob(TypedDict):
     fpath: Path
 
 
-CalcCache: Optional[dict[CoordType, DomColors]]
 PatchesDict: dict[tuple[CoordType, int], list[RGBTuple]]
 CollectorQueue: MP.Queue
 
 
 def calc_domc_init(
     patches_dict: dict[tuple[CoordType, int], list[RGBTuple]],
-    calc_cache: Optional[dict[CoordType, DomColors]],
     coll_queue: MP.Queue,
 ):
-    global PatchesDict, CalcCache, CollectorQueue
+    global PatchesDict, CollectorQueue
     signal.signal(signal.SIGINT, signal.SIG_IGN)
     PatchesDict = patches_dict
-    CalcCache = calc_cache
     CollectorQueue = coll_queue
 
 
 def calc_domc(job: tuple[CoordType, Path]) -> tuple[CoordType, DomColors]:
-    global PatchesDict, CalcCache
+    global PatchesDict
     coord, fpath = job
 
-    # If cache is None that means we want to ignore cache
-    if CalcCache is not None and coord in CalcCache:
-        domc: DomColors = CalcCache[coord]
-    else:
-        with Image.open(fpath) as img:
-            img.load()
-            domc: DomColors = {
-                fsz: calculate_dominant_colors(img, fsz) for fsz in FASCIA_SIZES
-            }
+    with Image.open(fpath) as img:
+        img.load()
+        domc: DomColors = {
+            fsz: calculate_dominant_colors(img, fsz) for fsz in FASCIA_SIZES
+        }
 
     rslt = coord, domc
     CollectorQueue.put(rslt)
@@ -263,9 +254,6 @@ def main(opts: OptionsType):
             except EOFError:
                 pass
     print(f"Cached Dominant Colors = {len(cached_domc)}")
-    if opts.no_cache:
-        print("  ^^ Will be ignored because of --no-cache!")
-        print("     (But new ones will still be saved)")
 
     mapfiles_d: dict[CoordType, Path] = inventorize_maps_latest(opts.mapdir)
     if not opts.no_validate:
@@ -287,6 +275,11 @@ def main(opts: OptionsType):
                 if k not in bonnie_coords:
                     del mapfiles_d[k]
 
+    total = len(mapfiles_d)
+    for k in list(mapfiles_d):
+        if k in cached_domc:
+            del mapfiles_d[k]
+
     mapfiles: list[tuple[CoordType, Path]] = sorted(
         mapfiles_d.items(), key=lambda c: (-c[0][1], c[0][0])
     )
@@ -294,14 +287,18 @@ def main(opts: OptionsType):
         print("ERROR: No valid mapfiles!", file=sys.stderr)
         sys.exit(1)
     print(
-        f"\n{len(mapfiles)} regions to mosaicize."
+        f"\n{len(mapfiles)} regions left to mosaicize (out of a total of {total})."
         f"\nStarting up Mosaic-Making Engine ({opts.calc_workers}, {opts.make_workers})"
     )
 
     start = time.monotonic()
     manager: MPMgrs.SyncManager
     with MP.Manager() as manager:
-        patches_coll = manager.dict()
+        patches_coll = manager.dict({
+            (co, sz): vals
+            for co, domc in cached_domc.items()
+            for sz, vals in domc.items()
+        })
         coll_lock = manager.RLock()
 
         maker_workers = opts.make_workers
@@ -315,7 +312,6 @@ def main(opts: OptionsType):
         calc_workers = opts.calc_workers
         calc_domc_args = (
             patches_coll,
-            None if opts.no_cache else cached_domc,
             coll_queue,
         )
 
