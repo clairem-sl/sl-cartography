@@ -22,7 +22,7 @@ from sl_maptools.image_processing import (
     RGBTuple,
     calculate_dominant_colors,
 )
-from sl_maptools.utils import ConfigReader, SLMapToolsConfig
+from sl_maptools.utils import ConfigReader, SLMapToolsConfig, make_backup
 from sl_maptools.validator import get_bonnie_coords, inventorize_maps_latest
 
 # region ##### Types
@@ -361,6 +361,7 @@ def main(opts: OptionsType):
             finally:
                 orig_sigint = signal.signal(signal.SIGINT, signal.SIG_IGN)
                 print(f"\nCached Dominant Colors is now {len(cached_domc)}, ", end="")
+                make_backup(cache_path)
                 with cache_path.open("wb") as fout:
                     pickle.dump(cached_domc, fout)
                 print(f"saved to {cache_path}")
