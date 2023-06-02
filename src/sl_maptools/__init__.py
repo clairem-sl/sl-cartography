@@ -91,6 +91,27 @@ class AreaBounds(NamedTuple):
             for x in self.x_iterator():
                 yield x, y
 
+    def intersection(self, other: AreaBounds) -> Union[AreaBounds, None]:
+        oth_x1, oth_y1, oth_x2, oth_y2 = other
+        my = set(range(self.x_westmost, self.x_eastmost + 1))
+        their = set(range(oth_x1, oth_x2 + 1))
+        inter = my.intersection(their)
+        if not inter:
+            return None
+        new_x1 = min(inter)
+        new_x2 = max(inter)
+        my = set(range(self.y_southmost, self.y_northmost + 1))
+        their = set(range(oth_y1, oth_y2 + 1))
+        inter = my.intersection(their)
+        if not inter:
+            return None
+        new_y1 = min(inter)
+        new_y2 = max(inter)
+        return AreaBounds(new_x1, new_y1, new_x2, new_y2)
+
+    def __and__(self, other: AreaBounds) -> Union[AreaBounds, None]:
+        return self.intersection(other)
+
     @classmethod
     def from_corners(cls, corner1: tuple[int, int], corner2: tuple[int, int]):
         x1, y1 = corner1
