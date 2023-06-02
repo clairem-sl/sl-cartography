@@ -102,7 +102,7 @@ KNOWN_AREAS: Final[dict[str, AreaBounds]] = {
     "MacedoniaEstate": AreaBounds(540, 1182, 544, 1185),
     "Bauer": AreaBounds(899, 1200, 902, 1202),
     "Olni": AreaBounds(655, 1291, 658, 1293),
-    "PompeiiRomanum": AreaBounds(747, 1079, 749, 1083),
+    "Romanum": AreaBounds(747, 1079, 749, 1083),
     # endregion
     # region ### Special Areas
     "LindenEstateServices": AreaBounds(1025, 1014, 1031, 1016),
