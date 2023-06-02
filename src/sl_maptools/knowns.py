@@ -77,6 +77,7 @@ KNOWN_AREAS: Final[dict[str, AreaBounds]] = {
     "JunglesOfGor": AreaBounds(1097, 949, 1099, 951),
     "RaglanShire": AreaBounds(1083, 1296, 1086, 1299),
     "FairChang": AreaBounds(1103, 1048, 1110, 1060),
+    "MeisterbastlerKreis": AreaBounds.from_slgi("1105-1114/1382-1388"),
     # endregion
     # region ### User Continents - Tentative
     "GoreanLands": AreaBounds(1014, 1175, 1020, 1179),
@@ -104,7 +105,6 @@ KNOWN_AREAS: Final[dict[str, AreaBounds]] = {
     "PompeiiRomanum": AreaBounds(747, 1079, 749, 1083),
     # endregion
     # region ### Special Areas
-    "LindenLabDE": AreaBounds(1105, 1382, 1108, 1388),
     "LindenEstateServices": AreaBounds(1025, 1014, 1031, 1016),
     "MoleIslands": AreaBounds(1006, 971, 1011, 976),
     # "SLBRegions": AreaBounds(390, 359, 402, 374),
