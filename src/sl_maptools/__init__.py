@@ -29,7 +29,19 @@ COORD_RANGE: Final[tuple[int, int]] = (0, 2100)
 """Minimum and maximum coordinates, inclusive"""
 
 RE_MAPFILE: Final[re.Pattern] = re.compile(r"^(?P<x>\d+)-(?P<y>\d+)_(?P<ts>\d{6}-\d{4}).jpe?g")
-
+RE_SLGI_NOTATION: Final[re.Pattern] = re.compile(
+    r"""
+    ^\D*             # Possible open parenthesis
+    (?P<x1>\d+)      # First longitude
+    (-(?P<x2>\d+))?  # Optional second longitude
+    (                  # Optional latitude
+        \s*[,/]\s*       # Long/Lat separator
+        (?P<y1>\d+)      # First latitude
+        (-(?P<y2>\d+))?  # Optional second latitude
+    )?
+    """,
+    re.VERBOSE
+)
 
 _REGION_SIZE: Final[int] = 256
 
@@ -92,6 +104,18 @@ class AreaBounds(NamedTuple):
         x_min, y_min = tuple(map(min, *coords))
         x_max, y_max = tuple(map(max, *coords))
         return cls(x_min, y_min, x_max, y_max)
+
+    @classmethod
+    def from_slgi(cls, notation: str) -> AreaBounds:
+        if (m := RE_SLGI_NOTATION.match(notation)) is None:
+            raise ValueError(f"Not an SLGI notation: {notation}")
+        x_min = m.group("x1")
+        x_max = m.group("x2") or x_min
+        y_min = m.group("y1")
+        y_max = m.group("y2") or y_min
+        if y_min is None:
+            raise ValueError(f"Albeit valid, the notation does not describe an area: {notation}")
+        return cls(int(x_min), int(y_min), int(x_max), int(y_max))
 
 
 class MapCoord(NamedTuple):
