@@ -359,10 +359,12 @@ def main(opts: OptionsType):
             except KeyboardInterrupt:
                 print("\nUser request abort...", flush=True)
             finally:
+                orig_sigint = signal.signal(signal.SIGINT, signal.SIG_IGN)
                 print(f"\nCached Dominant Colors is now {len(cached_domc)}, ", end="")
                 with cache_path.open("wb") as fout:
                     pickle.dump(cached_domc, fout)
                 print(f"saved to {cache_path}")
+                signal.signal(signal.SIGINT, orig_sigint)
 
             print("Enjoining pool_calc ... ", end="", flush=True)
             pool_calc.close()
