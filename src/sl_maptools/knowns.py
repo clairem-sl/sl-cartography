@@ -113,7 +113,7 @@ KNOWN_AREAS: Final[dict[str, AreaBounds]] = {
     "SecondFrance": AreaBounds(556, 1117, 559, 1120),
     "SnugHarbor": AreaBounds(1146, 1052, 1149, 1056),
     "ASLMetaverse": AreaBounds(763, 915, 765, 917),
-    # ### Below this line, are areas with < 10 regions in a clump. Much less interesting.
+    # ### Below this line, are areas with < 10 regions in a clump
     "Yumix": AreaBounds(653, 1245, 654, 1249),
     "VWBPE": AreaBounds(1102, 1312, 1106, 1314),
     "Maple": AreaBounds(878, 927, 882, 928),
