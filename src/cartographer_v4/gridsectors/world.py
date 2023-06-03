@@ -32,10 +32,13 @@ OVERLAY_VARIANTS = {
 
 class Options(Protocol):
     worldmapfile: Path
+    tag: str
 
 
 def get_options() -> Options:
     parser = argparse.ArgumentParser("cartographer_v4.gridsectors.world")
+
+    parser.add_argument("--tag", type=str, default="")
 
     parser.add_argument("worldmapfile", type=Path)
 
@@ -124,7 +127,10 @@ def main(opts: Options):
             draw.text((canvas_sz - cx, cy), str(y), **common_kwargs)
 
         print("  Saving ...", end="", flush=True)
-        gridsector_p = gridsector_dir / f"WorldGridSectors_{variant}.png"
+        if opts.tag:
+            gridsector_p = gridsector_dir / f"WorldGridSectors_{opts.tag}_{variant}.png"
+        else:
+            gridsector_p = gridsector_dir / f"WorldGridSectors_{variant}.png"
         canvas.save(gridsector_p)
         print(f" {gridsector_p}", flush=True)
 
