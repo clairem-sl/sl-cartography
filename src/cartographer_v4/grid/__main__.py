@@ -8,31 +8,17 @@ from typing import Final, Protocol, cast
 
 from PIL import Image, ImageFont
 
-from cartographer_v4.grid import make_grid, TextSettings
+from cartographer_v4.grid import make_grid, TextSettings, TEXT_RGBA, STROKE_WIDTH_NAME, STROKE_RGBA
 from sl_maptools import CoordType, RegionsDBRecord3
 from sl_maptools.knowns import KNOWN_AREAS
 from sl_maptools.utils import ConfigReader, SLMapToolsConfig
 from sl_maptools.validator import get_bonnie_coords
-
-RGBATuple = tuple[int, int, int, int]
 
 
 Config: SLMapToolsConfig = ConfigReader("config.toml")
 
 DB_PATH: Final[Path] = Path(Config.names.dir) / Config.names.db
 AREAMAPS_DIR: Final[Path] = Path(Config.areas.dir)
-
-FONT_NAME: Final[Path] = Path(Config.grids.font_name)
-FONT_TEXT_SIZE: Final[int] = 16
-FONT_COORD: Final[Path] = Path(Config.grids.font_coord)
-FONT_COORD_SIZE: Final[int] = 12
-TEXT_RGBA: Final[RGBATuple] = (255, 255, 255, 191)
-STROKE_WIDTH_NAME: Final[int] = 2
-STROKE_WIDTH_COORD: Final[int] = 2
-STROKE_RGBA: Final[RGBATuple] = (0, 0, 0, 191)
-
-
-ALPHA_PATTERN: Final[tuple[int, ...]] = (96, 32)
 
 
 class GridOptions(Protocol):
@@ -71,10 +57,10 @@ def main(opts: GridOptions):
     grid_overlay_dir = Path(Config.grids.dir_overlay)
     grid_overlay_dir.mkdir(exist_ok=True)
 
-    font_text = ImageFont.truetype(str(FONT_NAME), FONT_TEXT_SIZE)
+    font_text = ImageFont.truetype(Config.grids.font_name, Config.grids.size_name)
     # w, h = font.getsize("M", stroke_width=STROKE_WIDTH)
     # h_offs = 256 - 3 - h
-    font_coord = ImageFont.truetype(str(FONT_COORD), FONT_COORD_SIZE)
+    font_coord = ImageFont.truetype(Config.grids.font_coord, Config.grids.size_coord)
 
     validation_set: set[CoordType] = set()
     with DB_PATH.open("rb") as fin:

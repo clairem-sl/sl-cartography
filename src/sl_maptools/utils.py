@@ -127,7 +127,9 @@ class GridsConfig(Protocol):
     dir_composite: str
     dir_overlay: str
     font_name: str
+    size_name: int
     font_coord: str
+    size_coord: int
 
 
 class SLMapToolsConfig(Protocol):

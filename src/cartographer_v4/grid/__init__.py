@@ -2,14 +2,27 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 from pathlib import Path
-from typing import Optional, TypedDict
+from typing import Optional, TypedDict, Final
 
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
 from PIL.ImageFont import FreeTypeFont
 
-from cartographer_v4.grid.__main__ import ALPHA_PATTERN, TEXT_RGBA, STROKE_WIDTH_NAME, STROKE_RGBA, STROKE_WIDTH_COORD
 from sl_maptools import CoordType, RegionsDBRecord3
 from sl_maptools.knowns import KNOWN_AREAS, SUPPRESS_FOR_AREAS
+from sl_maptools.utils import SLMapToolsConfig, ConfigReader
+
+
+RGBATuple = tuple[int, int, int, int]
+
+
+TEXT_RGBA: Final[RGBATuple] = (255, 255, 255, 191)
+STROKE_WIDTH_NAME: Final[int] = 2
+STROKE_WIDTH_COORD: Final[int] = 2
+STROKE_RGBA: Final[RGBATuple] = (0, 0, 0, 191)
+ALPHA_PATTERN: Final[tuple[int, ...]] = (96, 32)
+
+
+Config: SLMapToolsConfig = ConfigReader("config.toml")
 
 
 _SQ: Optional[Image.Image] = None
@@ -17,9 +30,9 @@ _SQ: Optional[Image.Image] = None
 
 class TextSettings(TypedDict):
     font: FreeTypeFont
-    fill: tuple[int, int, int, int]
+    fill: RGBATuple
     stroke_width: int
-    stroke_fill: tuple[int, int, int, int]
+    stroke_fill: RGBATuple
 
 
 def make_grid(
@@ -27,8 +40,8 @@ def make_grid(
     regsdb: dict[CoordType, RegionsDBRecord3],
     out_dir: Path,
     validation_set: set[CoordType],
-    regname_settings: TextSettings,
-    coord_setttings: TextSettings,
+    regname_settings: TextSettings = None,
+    coord_setttings: TextSettings = None,
     no_names: bool = False,
     no_coords: bool = False,
 ):
@@ -42,6 +55,21 @@ def make_grid(
             sq_draw.rectangle((ul, ul, lr, lr), width=1, outline=(255, 255, 255, a))
             ul += 1
             lr -= 1
+
+    if regname_settings is None:
+        regname_settings = {
+            "font": ImageFont.truetype(Config.grids.font_name, Config.grids.size_name),
+            "fill": TEXT_RGBA,
+            "stroke_width": STROKE_WIDTH_NAME,
+            "stroke_fill": STROKE_RGBA,
+        }
+    if coord_setttings is None:
+        coord_setttings = {
+            "font": ImageFont.truetype(Config.grids.font_coord, Config.grids.size_coord),
+            "fill": TEXT_RGBA,
+            "stroke_width": STROKE_WIDTH_NAME,
+            "stroke_fill": STROKE_RGBA,
+        }
 
     areaname = areamap.stem
     if areaname not in KNOWN_AREAS:
