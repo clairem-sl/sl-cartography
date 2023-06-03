@@ -75,9 +75,9 @@ def main():
                     with Image.open(mapp) as immap:
                         immap.thumbnail((64, 64), resample=Resampling.LANCZOS)
                         grid_canvas.paste(immap, (cx, cy))
-                    out = Image.alpha_composite(grid_canvas, gridsec_overlay)
-                    out.save(gridsector_mapp)
-                    print(f" 💾 ", end="", flush=True)
+                out = Image.alpha_composite(grid_canvas, gridsec_overlay)
+                out.save(gridsector_mapp)
+                print(f" 💾 ", end="", flush=True)
             print(f"{gridsector_mapp}")
 
 
