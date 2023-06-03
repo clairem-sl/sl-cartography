@@ -8,13 +8,31 @@ from typing import Final
 from sl_maptools import AreaBounds
 
 KNOWN_AREAS: Final[dict[str, AreaBounds]] = {
-    # region ### Linden Continents
+    # region ### Linden Continents - Bellisseria
+
+    # region ## Original, self-made segmentation of Bellisseria area
     "BellisseriaSouth": AreaBounds(1038, 950, 1063, 977),
     "BellisseriaWest": AreaBounds(1023, 940, 1045, 977),
     "BellisseriaAtolls": AreaBounds(1023, 928, 1032, 940),
     "BellisseriaAnnex": AreaBounds(1037, 930, 1053, 949),
     "BellisseriaCentral": AreaBounds(1058, 967, 1081, 1000),
     "BellisseriaNorth": AreaBounds(1078, 987, 1100, 1024),
+    # endregion
+
+    # region ## SLGI-assigned names / segmentation of the Belli. area
+    "BellisseriaForest": AreaBounds(1043, 950, 1063, 977),
+    "BellisseriaVictorian": AreaBounds(1024, 941, 1046, 966),
+    "BellisseriaJeogeot": AreaBounds(1023, 928, 1035, 943),
+    "BellisseriaEast": AreaBounds(1078, 987, 1100, 1024),
+    "BellisseriaMagic": AreaBounds(1037, 930, 1053, 949),
+    "BellisseriaPrimordial": AreaBounds(1023, 953, 1045, 977),
+    "BellisseriaSakura": AreaBounds(1063, 992, 1072, 1000),
+    "BellisseriaWaterParadise": AreaBounds(1058, 967, 1081, 992),
+    # endregion
+
+    # endregion
+
+    # region ### Linden Continents - Non Bellisseria
     "Zindra": AreaBounds(1797, 1179, 1821, 1202),
     "SansaraSnowlands": AreaBounds(1003, 979, 1017, 994),
     "Sansara": AreaBounds(982, 978, 1038, 1012),
@@ -30,12 +48,14 @@ KNOWN_AREAS: Final[dict[str, AreaBounds]] = {
     "Nautilus": AreaBounds(1106, 1047, 1138, 1081),
     "Horizons": AreaBounds(1804, 1200, 1813, 1210),
     # endregion
+
     # region ### Premium Continents
     "EastPremium": AreaBounds(1192, 907, 1215, 926),
     "SouthPremium-North": AreaBounds(1013, 811, 1028, 828),
     "SouthPremium-Middle": AreaBounds(1000, 750, 1022, 768),
     "SouthPremium-South": AreaBounds(1000, 500, 1022, 518),
     # endregion
+
     # region ### User Continents
     "BlakeSea": AreaBounds(1131, 1048, 1148, 1054),
     "BlakeSeaSurrounding": AreaBounds(1131, 1036, 1152, 1061),
@@ -138,7 +158,66 @@ SUPPRESS_FOR_AREAS: Final[dict[str, list[AreaBounds]]] = {
         AreaBounds(1132, 1052, 1132, 1061),  # Nautilus
         AreaBounds(1133, 1055, 1134, 1061),  # Nautilus
         AreaBounds(1134, 1054, 1134, 1054),  # Nautilus
-    ]
+    ],
+    "BelliseriaForest": [
+        AreaBounds(1063, 977, 1063, 977),  # Part of Belliseria Water Paradise
+        AreaBounds(1038, 964, 1045, 977),  # Part of Belliseria Primordial / Victorian
+        AreaBounds(1038, 963, 1044, 963),  # Part of Belliseria Primordial / Victorian
+        AreaBounds(1038, 950, 1042, 962),  # Part of Belliseria Primordial / Victorian
+        AreaBounds(1043, 955, 1043, 956),  # Part of Belliseria Primordial / Victorian
+    ],
+    "BelliseriaVictorian": [
+        AreaBounds(1024, 966, 1043, 966),
+        AreaBounds(1024, 965, 1042, 965),
+        AreaBounds(1024, 964, 1041, 964),
+        AreaBounds(1024, 959, 1040, 963),
+        AreaBounds(1024, 954, 1039, 958),
+        AreaBounds(1046, 941, 1046, 962),
+        AreaBounds(1045, 941, 1045, 961),
+        AreaBounds(1044, 958, 1044, 961),
+        AreaBounds(1044, 941, 1044, 953),
+        AreaBounds(1040, 941, 1043, 948),
+        AreaBounds(1037, 941, 1039, 945),
+        AreaBounds(1035, 941, 1039, 943),
+        AreaBounds(1024, 941, 1024, 941),
+    ],
+    "BelliseriaJeogeot": [
+        AreaBounds(1023, 942, 1034, 943),
+        AreaBounds(1025, 941, 1034, 941),
+        AreaBounds(1031, 935, 1035, 939),
+        AreaBounds(1029, 935, 1030, 937),
+        AreaBounds(1031, 935, 1035, 939),
+        AreaBounds(1032, 928, 1035, 934),
+        AreaBounds(1029, 928, 1031, 931),
+        AreaBounds.from_slgi("1028/928-929"),
+        AreaBounds.from_slgi("1026-1027/928"),
+    ],
+    "BellisseriaEast": [
+        AreaBounds.from_slgi("1100/1005-1010"),
+        AreaBounds(1078, 987, 1080, 989),
+    ],
+    "BellisseriaMagic": [
+        AreaBounds(1037, 947, 1038, 948),
+        AreaBounds.from_slgi("1037/930-939"),
+        AreaBounds(1038, 930, 1039, 934),
+    ],
+    "BellisseriaPrimordial": [
+        AreaBounds(1044, 953, 1045, 966),
+        AreaBounds.from_slgi("1043/964-965"),
+        AreaBounds.from_slgi("1042-1043/953-963"),
+        AreaBounds.from_slgi("1041/953-962"),
+        AreaBounds.from_slgi("1040/953-958"),
+        AreaBounds.from_slgi("1035-1039/953"),
+    ],
+    "BellisseriaWaterParadise": [
+        AreaBounds(1058, 967, 1063, 974),
+        AreaBounds.from_slgi("1058-1062/975"),
+        AreaBounds.from_slgi("1060-1061/976"),
+        AreaBounds.from_slgi("1064-1068/992"),
+        AreaBounds(1080, 990, 1081, 992),
+        AreaBounds.from_slgi("1081/989"),
+    ],
+
 }
 
 DO_NOT_MAP_AREAS: Final[dict[str, AreaBounds]] = {
