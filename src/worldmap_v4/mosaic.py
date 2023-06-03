@@ -304,7 +304,7 @@ def main(opts: OptionsType):
         maker_workers = opts.make_workers
         maker_states = manager.dict()
         maker_queue = manager.Queue()
-        make_args = (maker_states, maker_queue, patches_coll, coll_lock, opts.mapdir)
+        make_args = (maker_states, maker_queue, patches_coll, coll_lock, opts.outdir)
 
         coll_queue = manager.Queue(maxsize=(opts.save_every * 2))
         coll_args = (coll_queue, patches_coll, coll_lock)
