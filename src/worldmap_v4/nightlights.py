@@ -308,8 +308,10 @@ def make_map(opts: Options):
     else:
         targ = opts.outdir / "worldmap4_nightlights_unvalidated.png"
 
-    if not opts.force and targ.exists():
-        raise FileExistsError(f"{targ} already exists but --force not specified!")
+    if targ.exists():
+        if not opts.force:
+            raise FileExistsError(f"{targ} already exists but --force not specified!")
+        targ.unlink()
 
     print("Creating Nightlights Map ... ", end="", flush=True)
     canvas = make_nightlights({MapCoord(x, y) for x, y in regions})
