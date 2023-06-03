@@ -52,7 +52,7 @@ KNOWN_AREAS: Final[dict[str, AreaBounds]] = {
     "FantasyLands": AreaBounds(841, 1001, 844, 1010),
     "SeabirdIslands": AreaBounds(686, 920, 692, 928),
     "TropicalCoralIslands": AreaBounds(479, 1271, 485, 1280),
-    "Gooseberry-Briarwood": AreaBounds(666, 1423, 674, 1429),
+    "Gooseberry": AreaBounds(669, 1423, 674, 1429),
     # "TrinidadTobago": AreaBounds(902, 1372, 906, 1376),
     "AllenCommunity": AreaBounds.from_slgi("902-906/1372-1376"),
     "NativeIslands": AreaBounds(733, 1367, 738, 1371),
