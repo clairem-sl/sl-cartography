@@ -124,6 +124,7 @@ KNOWN_AREAS: Final[dict[str, AreaBounds]] = {
     "Bauer": AreaBounds(899, 1200, 902, 1202),
     "Olni": AreaBounds(655, 1291, 658, 1293),
     "Romanum": AreaBounds(747, 1079, 749, 1083),
+    "EndOfTime": AreaBounds(500, 1027, 503, 1030),
     # endregion
     # region ### Special Areas
     "LindenEstateServices": AreaBounds(1025, 1014, 1031, 1016),
@@ -140,7 +141,6 @@ KNOWN_AREAS: Final[dict[str, AreaBounds]] = {
     # "SLB2023": AreaBounds(386, 368, 403, 377),
     "SLB2023": AreaBounds(386, 359, 403, 377),
     # endregion
-    "Interesting111": AreaBounds(500, 1027, 503, 1030),
 }
 
 SUPPRESS_FOR_AREAS: Final[dict[str, list[AreaBounds]]] = {
