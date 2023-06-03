@@ -15,7 +15,7 @@ from typing import Protocol, cast
 
 from PIL import Image
 
-from sl_maptools import AreaBounds, CoordType, RegionsDBRecord
+from sl_maptools import AreaBounds, CoordType, RegionsDBRecord3
 from sl_maptools.knowns import KNOWN_AREAS, SUPPRESS_FOR_AREAS
 from sl_maptools.utils import ConfigReader, Settable, SLMapToolsConfig, handle_sigint
 from sl_maptools.validator import get_bonnie_coords, inventorize_maps_latest
@@ -29,7 +29,6 @@ class CartographerOptions(Protocol):
     areas: list[AreaBounds]
     mapdir: Path
     outdir: Path
-    no_validate: bool
     regionsdb: Path
     overwrite: bool
 
@@ -105,14 +104,6 @@ def get_options() -> Options:
         help="Directory to put the resulting hi-res maps in. Defaults to the same as --mapdir",
     )
     parser.add_argument(
-        "--no-validate",
-        action="store_true",
-        help=(
-            "If specified, do not perform validation (against database of known regions and "
-            "BonnieBots Regions DB). I.e, generate maps using all retrieved map tiles in the areas"
-        ),
-    )
-    parser.add_argument(
         "--regionsdb",
         type=Path,
         default=Path(Config.names.dir) / Config.names.db,
@@ -177,16 +168,15 @@ def main(opts: Options):
 
     map_tiles = inventorize_maps_latest(opts.mapdir)
 
-    if not opts.no_validate:
-        validation_set: set[CoordType] = set()
-        with opts.regionsdb.open("rb") as fin:
-            regsdb: dict[CoordType, RegionsDBRecord] = pickle.load(fin)
-        validation_set.update(k for k, v in regsdb.items() if v["current_name"])
-        bonnie_coords = get_bonnie_coords(None, True)
-        validation_set.intersection_update(bonnie_coords)
-        for co in list(map_tiles.keys()):
-            if co not in validation_set:
-                del map_tiles[co]
+    with opts.regionsdb.open("rb") as fin:
+        regsdb: dict[CoordType, RegionsDBRecord3] = pickle.load(fin)
+    validation_set: set[CoordType] = set()
+    validation_set.update(k for k, v in regsdb.items() if v["current_name"])
+    bonnie_coords = get_bonnie_coords(None, True)
+    validation_set.intersection_update(bonnie_coords)
+    for co in list(map_tiles.keys()):
+        if co not in validation_set:
+            del map_tiles[co]
 
     print("\nMaking maps:")
     opts.outdir.mkdir(exist_ok=True)
