@@ -229,6 +229,8 @@ class ProgressionDict(TypedDict):
 
 
 def main(opts: MPMapOptions):
+    start = time.monotonic()
+
     pool_r: mp_pool.Pool
     pool_s: mp_pool.Pool
 
@@ -405,6 +407,9 @@ def main(opts: MPMapOptions):
         yaml.dump(perfdata, fout)
 
     print(f"{len(outstanding):_} coordinates in backlog, next row will be {next_row}")
+
+    finish = time.monotonic()
+    print(f"Finished in {finish - start:_.2f}s on {datetime.now().isoformat(timespec='minutes')}")
 
 
 if __name__ == "__main__":
