@@ -132,7 +132,8 @@ KNOWN_AREAS: Final[dict[str, AreaBounds]] = {
     "LR-160": AreaBounds(1187, 1206, 1190, 1210),
     "LR-180": AreaBounds(1193, 1206, 1196, 1210),
     "Preflight": AreaBounds(1296, 1193, 1299, 1196),
-    "TheMists": AreaBounds(562, 734, 567, 739),  ### Former site of Fantasy Faire 2023
+    # "TheMists": AreaBounds(562, 734, 567, 739),  ### Former site of Fantasy Faire 2023
+    # TheMists disappeared in June 2023
     "PaleoQuest": AreaBounds(400, 392, 401, 400),
     # "RFL2023": AreaBounds(503, 705, 554, 1621),
     "RFL2023": AreaBounds(547, 705, 554, 716),
