@@ -48,7 +48,7 @@ KNOWN_AREAS: Final[dict[str, AreaBounds]] = {
     "PlayaIsles": AreaBounds(824, 1207, 831, 1217),
     "Freedom": AreaBounds(750, 1013, 758, 1020),
     "TuaruaFiji": AreaBounds(1131, 1064, 1149, 1082),
-    "DragonLands": AreaBounds(859, 984, 865, 989),
+    "Uhre": AreaBounds(860, 984, 865, 989),
     "FantasyLands": AreaBounds(841, 1001, 844, 1010),
     "SeabirdIslands": AreaBounds(686, 920, 692, 928),
     "TropicalCoralIslands": AreaBounds(479, 1271, 485, 1280),
