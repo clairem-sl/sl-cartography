@@ -1,5 +1,6 @@
+import argparse
 from pathlib import Path
-from typing import Final
+from typing import Final, Protocol, cast
 
 from PIL import Image, ImageDraw, ImageFont
 
@@ -29,9 +30,23 @@ OVERLAY_VARIANTS = {
 }
 
 
-def main():
-    worldmap_dir = Path(r"C:\Cache\SL-Carto\WorldMaps")
-    worldmap_p = worldmap_dir / "worldmap4_mosaic_5x5.png"
+class Options(Protocol):
+    worldmapfile: Path
+
+
+def get_options() -> Options:
+    parser = argparse.ArgumentParser("cartographer_v4.gridsectors.world")
+
+    parser.add_argument("worldmapfile", type=Path)
+
+    _opts = parser.parse_args()
+    return cast(Options, _opts)
+
+
+def main(opts: Options):
+    # worldmap_dir = Path(r"C:\Cache\SL-Carto\WorldMaps")
+    # worldmap_p = worldmap_dir / "worldmap4_mosaic_5x5.png"
+    worldmap_p = opts.worldmapfile
     Image.MAX_IMAGE_PIXELS = None
 
     min_co, max_co = COORD_RANGE
@@ -48,7 +63,7 @@ def main():
     padded_sz = ((sx + sect_sz - 1) // sect_sz) * sect_sz
     canvas_sz = padded_sz + 2 * sect_sz
 
-    gridsector_dir = worldmap_dir / "GridSectors"
+    gridsector_dir = worldmap_p.parent / "GridSectors"
     gridsector_dir.mkdir(exist_ok=True)
     common_kwargs = {
         "font": ImageFont.truetype(str(FONT_NAME), 480),
@@ -115,4 +130,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    main(get_options())
