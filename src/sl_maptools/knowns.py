@@ -11,23 +11,23 @@ KNOWN_AREAS: Final[dict[str, AreaBounds]] = {
     # region ### Linden Continents - Bellisseria
 
     # region ## Original, self-made segmentation of Bellisseria area
-    "BellisseriaSouth": AreaBounds(1038, 950, 1063, 977),
-    "BellisseriaWest": AreaBounds(1023, 940, 1045, 977),
-    "BellisseriaAtolls": AreaBounds(1023, 928, 1032, 940),
-    "BellisseriaAnnex": AreaBounds(1037, 930, 1053, 949),
-    "BellisseriaCentral": AreaBounds(1058, 967, 1081, 1000),
-    "BellisseriaNorth": AreaBounds(1078, 987, 1100, 1024),
+    "Bellisseria_CM_South": AreaBounds(1038, 950, 1063, 977),
+    "Bellisseria_CM_West": AreaBounds(1023, 940, 1045, 977),
+    "Bellisseria_CM_Atolls": AreaBounds(1023, 928, 1032, 940),
+    "Bellisseria_CM_Annex": AreaBounds(1037, 930, 1053, 949),
+    "Bellisseria_CM_Central": AreaBounds(1058, 967, 1081, 1000),
+    "Bellisseria_CM_North": AreaBounds(1078, 987, 1100, 1024),
     # endregion
 
     # region ## SLGI-assigned names / segmentation of the Belli. area
-    "BellisseriaForest": AreaBounds(1043, 950, 1063, 977),
-    "BellisseriaVictorian": AreaBounds(1024, 941, 1046, 966),
-    "BellisseriaJeogeot": AreaBounds(1023, 928, 1035, 943),
-    "BellisseriaEast": AreaBounds(1078, 987, 1100, 1024),
-    "BellisseriaMagic": AreaBounds(1037, 930, 1053, 949),
-    "BellisseriaPrimordial": AreaBounds(1023, 953, 1045, 977),
-    "BellisseriaSakura": AreaBounds(1063, 992, 1072, 1000),
-    "BellisseriaWaterParadise": AreaBounds(1058, 967, 1081, 992),
+    "Bellisseria_SLGI_Forest": AreaBounds(1043, 950, 1063, 977),
+    "Bellisseria_SLGI_Victorian": AreaBounds(1024, 941, 1046, 966),
+    "Bellisseria_SLGI_Jeogeot": AreaBounds(1023, 928, 1035, 943),
+    "Bellisseria_SLGI_East": AreaBounds(1078, 987, 1100, 1024),
+    "Bellisseria_SLGI_Magic": AreaBounds(1037, 930, 1053, 949),
+    "Bellisseria_SLGI_Primordial": AreaBounds(1023, 953, 1045, 977),
+    "Bellisseria_SLGI_Sakura": AreaBounds(1063, 992, 1072, 1000),
+    "Bellisseria_SLGI_WaterParadise": AreaBounds(1058, 967, 1081, 992),
     # endregion
 
     # endregion
@@ -160,14 +160,14 @@ SUPPRESS_FOR_AREAS: Final[dict[str, list[AreaBounds]]] = {
         AreaBounds(1133, 1055, 1134, 1061),  # Nautilus
         AreaBounds(1134, 1054, 1134, 1054),  # Nautilus
     ],
-    "BelliseriaForest": [
+    "Bellisseria_SLGI_Forest": [
         AreaBounds(1063, 977, 1063, 977),  # Part of Belliseria Water Paradise
         AreaBounds(1038, 964, 1045, 977),  # Part of Belliseria Primordial / Victorian
         AreaBounds(1038, 963, 1044, 963),  # Part of Belliseria Primordial / Victorian
         AreaBounds(1038, 950, 1042, 962),  # Part of Belliseria Primordial / Victorian
         AreaBounds(1043, 955, 1043, 956),  # Part of Belliseria Primordial / Victorian
     ],
-    "BelliseriaVictorian": [
+    "Bellisseria_SLGI_Victorian": [
         AreaBounds(1024, 966, 1043, 966),
         AreaBounds(1024, 965, 1042, 965),
         AreaBounds(1024, 964, 1041, 964),
@@ -182,7 +182,7 @@ SUPPRESS_FOR_AREAS: Final[dict[str, list[AreaBounds]]] = {
         AreaBounds(1035, 941, 1039, 943),
         AreaBounds(1024, 941, 1024, 941),
     ],
-    "BelliseriaJeogeot": [
+    "Bellisseria_SLGI_Jeogeot": [
         AreaBounds(1023, 942, 1034, 943),
         AreaBounds(1025, 941, 1034, 941),
         AreaBounds(1031, 935, 1035, 939),
@@ -193,16 +193,16 @@ SUPPRESS_FOR_AREAS: Final[dict[str, list[AreaBounds]]] = {
         AreaBounds.from_slgi("1028/928-929"),
         AreaBounds.from_slgi("1026-1027/928"),
     ],
-    "BellisseriaEast": [
+    "Bellisseria_SLGI_East": [
         AreaBounds.from_slgi("1100/1005-1010"),
         AreaBounds(1078, 987, 1080, 989),
     ],
-    "BellisseriaMagic": [
+    "Bellisseria_SLGI_Magic": [
         AreaBounds(1037, 947, 1038, 948),
         AreaBounds.from_slgi("1037/930-939"),
         AreaBounds(1038, 930, 1039, 934),
     ],
-    "BellisseriaPrimordial": [
+    "Bellisseria_SLGI_Primordial": [
         AreaBounds(1044, 953, 1045, 966),
         AreaBounds.from_slgi("1043/964-965"),
         AreaBounds.from_slgi("1042-1043/953-963"),
@@ -210,7 +210,7 @@ SUPPRESS_FOR_AREAS: Final[dict[str, list[AreaBounds]]] = {
         AreaBounds.from_slgi("1040/953-958"),
         AreaBounds.from_slgi("1035-1039/953"),
     ],
-    "BellisseriaWaterParadise": [
+    "Bellisseria_SLGI_WaterParadise": [
         AreaBounds(1058, 967, 1063, 974),
         AreaBounds.from_slgi("1058-1062/975"),
         AreaBounds.from_slgi("1060-1061/976"),
