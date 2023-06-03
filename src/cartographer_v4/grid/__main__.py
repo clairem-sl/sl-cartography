@@ -8,7 +8,7 @@ from typing import Final, Protocol, cast
 
 from PIL import Image, ImageFont
 
-from cartographer_v4.grid import make_grid, TextSettings, TEXT_RGBA, STROKE_WIDTH_NAME, STROKE_RGBA
+from cartographer_v4.grid import GridMaker, TextSettings, TEXT_RGBA, STROKE_WIDTH_NAME, STROKE_RGBA
 from sl_maptools import CoordType, RegionsDBRecord3
 from sl_maptools.knowns import KNOWN_AREAS
 from sl_maptools.utils import ConfigReader, SLMapToolsConfig
@@ -97,20 +97,18 @@ def main(opts: GridOptions):
         "stroke_fill": STROKE_RGBA,
     }
 
+    maker = GridMaker(
+        regions_db=regsdb,
+        validation_set=validation_set,
+        out_dir=grid_overlay_dir,
+        regname_settings=regname_settings,
+        coord_setttings=coord_settings,
+    )
+
     tot = len(want_areas)
     for num, areamap in enumerate(want_areas, start=1):
         print(f"\n({num}/{tot}) {areamap.stem}", flush=True)
-        make_grid(
-            areamap,
-            regsdb,
-            grid_overlay_dir,
-            validation_set,
-            regname_settings,
-            coord_settings,
-            opts.no_names,
-            opts.no_coords
-        )
-
+        maker.make_grid(areamap)
     print()
 
 
