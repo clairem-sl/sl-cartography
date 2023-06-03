@@ -75,6 +75,7 @@ class GridMaker:
     def make_grid(
             self,
             areamap: Path,
+            overwrite: bool = False,
             out_dir: Path = None,
             no_names: bool = False,
             no_coords: bool = False,
@@ -99,7 +100,7 @@ class GridMaker:
         overlay_p = out_dir / (areaname + ".grid-overlay.png")
         gridc = None
         print("  => ", end="")
-        if not overlay_p.exists():
+        if overwrite or not overlay_p.exists():
             print("#️⃣ ", end="")
             bounds = KNOWN_AREAS[areaname]
             if areaname in SUPPRESS_FOR_AREAS:
@@ -141,7 +142,7 @@ class GridMaker:
             gridc.save(overlay_p)
         print(f"{overlay_p}\n  => ", end="", flush=True)
         composite_p = out_dir / (areaname + ".composited.png")
-        if not composite_p.exists():
+        if overwrite or not composite_p.exists():
             if gridc is None:
                 with overlay_p.open("rb") as fin:
                     gridc = Image.open(fin)

@@ -15,6 +15,7 @@ from typing import Protocol, cast
 
 from PIL import Image
 
+from cartographer_v4.grid import GridMaker
 from sl_maptools import AreaBounds, CoordType, RegionsDBRecord3
 from sl_maptools.knowns import KNOWN_AREAS, SUPPRESS_FOR_AREAS
 from sl_maptools.utils import ConfigReader, Settable, SLMapToolsConfig, handle_sigint
@@ -25,6 +26,7 @@ AbortRequested: Settable = Event()
 
 
 class CartographerOptions(Protocol):
+    no_grid: bool
     continents: list[str]
     areas: list[AreaBounds]
     mapdir: Path
@@ -65,6 +67,12 @@ class AreaParser(argparse.Action):
 
 def get_options() -> Options:
     parser = argparse.ArgumentParser("cartographer_v4")
+
+    parser.add_argument(
+        "--no-grid",
+        action="store_true",
+        help="Skip creation of grid overlay"
+    )
 
     parser.add_argument(
         "--continents",
@@ -181,6 +189,8 @@ def main(opts: Options):
     print("\nMaking maps:")
     opts.outdir.mkdir(exist_ok=True)
     with handle_sigint(AbortRequested):
+        if not opts.no_grid:
+            grid_maker = GridMaker(regions_db=regsdb, validation_set=validation_set)
         for area_name, area_bounds in wanted_areas:
             if area_name in SUPPRESS_FOR_AREAS:
                 suppress_coords = set()
@@ -196,6 +206,9 @@ def main(opts: Options):
                 print("🌐", end="", flush=True)
                 make_map(targ, area_bounds, map_tiles, suppress_coords)
             print(f"\n  => {targ}", flush=True)
+            if not opts.no_grid:
+                grid_maker.make_grid(targ, overwrite=opts.overwrite)
+                print()
             if AbortRequested.is_set():
                 break
 
