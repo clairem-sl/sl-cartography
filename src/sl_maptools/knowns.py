@@ -76,7 +76,7 @@ KNOWN_AREAS: Final[dict[str, AreaBounds]] = {
     "TempletonCove": AreaBounds(1027, 1240, 1030, 1242),
     "Mythera": AreaBounds(720, 1324, 722, 1328),
     "JunglesOfGor": AreaBounds(1097, 949, 1099, 951),
-    "RaglanShire": AreaBounds(1083, 1296, 1086, 1299),
+    "Raglan": AreaBounds(1083, 1296, 1086, 1299),
     "FairChang": AreaBounds(1103, 1048, 1110, 1060),
     "MeisterbastlerKreis": AreaBounds.from_slgi("1105-1114/1382-1388"),
     # endregion
