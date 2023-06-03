@@ -1,17 +1,14 @@
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
-import argparse
-import pickle
 from pathlib import Path
-from typing import Final, Protocol, cast
+from typing import Final
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw
 # noinspection PyUnresolvedReferences
 from PIL.Image import Resampling
 
-from sl_maptools import COORD_RANGE, CoordType, RegionsDBRecord, AreaBounds
-from sl_maptools.knowns import KNOWN_AREAS, SUPPRESS_FOR_AREAS
+from sl_maptools import CoordType
 from sl_maptools.utils import ConfigReader, SLMapToolsConfig
 from sl_maptools.validator import get_bonnie_coords, inventorize_maps_latest
 
