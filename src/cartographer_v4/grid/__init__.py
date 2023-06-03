@@ -130,7 +130,7 @@ class GridMaker:
                         **regname_settings
                     )
                     ty += 27
-                if no_coords:
+                if not no_coords:
                     draw.text(
                         (cx + 5, ty),
                         f"{x},{y}",
