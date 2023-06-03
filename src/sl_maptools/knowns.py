@@ -34,7 +34,7 @@ KNOWN_AREAS: Final[dict[str, AreaBounds]] = {
 
     # region ### Linden Continents - Non Bellisseria
     "Zindra": AreaBounds(1797, 1179, 1821, 1202),
-    "SansaraSnowlands": AreaBounds(1003, 979, 1017, 994),
+    "SansaraSnowlands": AreaBounds(1003, 979, 1018, 995),
     "Sansara": AreaBounds(982, 978, 1038, 1012),
     "SeaOfFables": AreaBounds(1015, 992, 1023, 999),
     "BayCityPlains": AreaBounds(982, 999, 995, 1006),
