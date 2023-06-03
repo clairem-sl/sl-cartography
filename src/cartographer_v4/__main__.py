@@ -9,6 +9,7 @@ import signal
 import time
 from datetime import datetime
 from itertools import chain
+from multiprocessing import Event
 from pathlib import Path
 from typing import Protocol, cast
 
@@ -16,18 +17,11 @@ from PIL import Image
 
 from sl_maptools import AreaBounds, CoordType, RegionsDBRecord
 from sl_maptools.knowns import KNOWN_AREAS, SUPPRESS_FOR_AREAS
-from sl_maptools.utils import ConfigReader, SLMapToolsConfig
+from sl_maptools.utils import ConfigReader, Settable, SLMapToolsConfig, handle_sigint
 from sl_maptools.validator import get_bonnie_coords, inventorize_maps_latest
 
 Config: SLMapToolsConfig = ConfigReader("config.toml")
-AbortRequested: bool = False
-
-
-def handle_sigint(_, __):
-    global AbortRequested
-    if AbortRequested:
-        return
-    AbortRequested = True
+AbortRequested: Settable = Event()
 
 
 class CartographerOptions(Protocol):
@@ -196,25 +190,24 @@ def main(opts: Options):
 
     print("\nMaking maps:")
     opts.outdir.mkdir(exist_ok=True)
-    orig_sigint = signal.signal(signal.SIGINT, handle_sigint)
-    for area_name, area_bounds in wanted_areas:
-        if area_name in SUPPRESS_FOR_AREAS:
-            suppress_coords = set()
-            for bounds in SUPPRESS_FOR_AREAS[area_name]:
-                suppress_coords.update(xy for xy in bounds.xy_iterator())
-        else:
-            suppress_coords = None
-        print(f"{area_name}: ", end="", flush=True)
-        targ = opts.outdir / (area_name + ".png")
-        if not opts.overwrite and targ.exists():
-            print(f"Already exists", end="")
-        else:
-            print("🌐", end="", flush=True)
-            make_map(targ, area_bounds, map_tiles, suppress_coords)
-        print(f"\n  => {targ}", flush=True)
-        if AbortRequested:
-            break
-    signal.signal(signal.SIGINT, orig_sigint)
+    with handle_sigint(AbortRequested):
+        for area_name, area_bounds in wanted_areas:
+            if area_name in SUPPRESS_FOR_AREAS:
+                suppress_coords = set()
+                for bounds in SUPPRESS_FOR_AREAS[area_name]:
+                    suppress_coords.update(xy for xy in bounds.xy_iterator())
+            else:
+                suppress_coords = None
+            print(f"{area_name}: ", end="", flush=True)
+            targ = opts.outdir / (area_name + ".png")
+            if not opts.overwrite and targ.exists():
+                print(f"Already exists", end="")
+            else:
+                print("🌐", end="", flush=True)
+                make_map(targ, area_bounds, map_tiles, suppress_coords)
+            print(f"\n  => {targ}", flush=True)
+            if AbortRequested.is_set():
+                break
 
     finish = time.monotonic()
     print("=" * 40)
