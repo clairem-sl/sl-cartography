@@ -394,10 +394,12 @@ def main(opts: MPMapOptions):
         normalized_time_per_row[y] = 2100 * delta.seconds / n
     yaml = YAML(typ="safe")
     yaml.Representer = RoundTripRepresenter
+    perfdata: dict[datetime, dict[int, float]] = {}
     performance_file = opts.mapdir / "performance.yaml"
-    make_backup(performance_file)
-    with performance_file.open("rt") as fin:
-        perfdata: dict[datetime, dict[int, float]] = yaml.load(fin)
+    if performance_file.exists():
+        make_backup(performance_file)
+        with performance_file.open("rt") as fin:
+            perfdata = yaml.load(fin)
     perfdata[datetime.now().astimezone()] = normalized_time_per_row
     with performance_file.open("wt") as fout:
         yaml.dump(perfdata, fout)
