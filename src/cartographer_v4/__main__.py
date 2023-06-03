@@ -187,11 +187,12 @@ def main(opts: Options):
             del map_tiles[co]
 
     print("\nMaking maps:")
-    opts.outdir.mkdir(exist_ok=True)
     with handle_sigint(AbortRequested):
         if not opts.no_grid:
             grid_maker = GridMaker(regions_db=regsdb, validation_set=validation_set)
         for area_name, area_bounds in wanted_areas:
+            targdir = opts.outdir / area_name
+            targdir.mkdir(parents=True, exist_ok=True)
             if area_name in SUPPRESS_FOR_AREAS:
                 suppress_coords = set()
                 for bounds in SUPPRESS_FOR_AREAS[area_name]:
@@ -199,7 +200,7 @@ def main(opts: Options):
             else:
                 suppress_coords = None
             print(f"{area_name}: ", end="", flush=True)
-            targ = opts.outdir / (area_name + ".png")
+            targ = targdir / (area_name + ".png")
             if not opts.overwrite and targ.exists():
                 print(f"Already exists", end="")
             else:
