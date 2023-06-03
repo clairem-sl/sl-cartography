@@ -71,7 +71,7 @@ KNOWN_AREAS: Final[dict[str, AreaBounds]] = {
     "Uhre": AreaBounds(860, 984, 865, 989),
     "FantasyLands": AreaBounds(841, 1001, 844, 1010),
     "SeabirdIslands": AreaBounds(686, 920, 692, 928),
-    "TropicalCoralIslands": AreaBounds(479, 1271, 485, 1280),
+    "CoralOcean": AreaBounds(479, 1271, 485, 1280),
     "Gooseberry": AreaBounds(669, 1423, 674, 1429),
     # "TrinidadTobago": AreaBounds(902, 1372, 906, 1376),
     "AllenCommunity": AreaBounds.from_slgi("902-906/1372-1376"),
