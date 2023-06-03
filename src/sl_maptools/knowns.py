@@ -47,6 +47,7 @@ KNOWN_AREAS: Final[dict[str, AreaBounds]] = {
     "Corsica": AreaBounds(1100, 1082, 1159, 1100),
     "Nautilus": AreaBounds(1106, 1047, 1138, 1081),
     "Horizons": AreaBounds(1804, 1200, 1813, 1210),
+    "BlakeSea": AreaBounds(1131, 1048, 1148, 1054),
     # endregion
 
     # region ### Premium Continents
@@ -57,7 +58,6 @@ KNOWN_AREAS: Final[dict[str, AreaBounds]] = {
     # endregion
 
     # region ### User Continents
-    "BlakeSea": AreaBounds(1131, 1048, 1148, 1054),
     "BlakeSeaSurrounding": AreaBounds(1131, 1036, 1152, 1061),
     "BlakeSeaSurroundingNoSuppress": AreaBounds(1131, 1036, 1152, 1061),
     "SecondNorway": AreaBounds(1149, 1041, 1165, 1063),
