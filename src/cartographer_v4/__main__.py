@@ -196,8 +196,7 @@ def main(opts: Options):
 
     print("\nMaking maps:")
     opts.outdir.mkdir(exist_ok=True)
-    orig_sigint = signal.getsignal(signal.SIGINT)
-    signal.signal(signal.SIGINT, handle_sigint)
+    orig_sigint = signal.signal(signal.SIGINT, handle_sigint)
     for area_name, area_bounds in wanted_areas:
         if area_name in SUPPRESS_FOR_AREAS:
             suppress_coords = set()
