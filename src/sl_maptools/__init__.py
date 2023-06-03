@@ -17,6 +17,7 @@ from typing import (
     Iterable,
     NamedTuple,
     Optional,
+    Protocol,
     TypedDict,
     Union,
 )
@@ -273,6 +274,11 @@ class RegionsDBRecord3(TypedDict):
     current_name: str
     name_history3: dict[str, list[tuple[datetime, datetime]]]
     sources: set[str]
+
+
+class Settable(Protocol):
+    def set(self): ...
+    def is_set(self) -> bool: ...
 
 
 def friendly_db_record(record: RegionsDBRecord3) -> dict:

@@ -11,7 +11,7 @@ from typing import Any, Callable, Dict, Final, FrozenSet, Optional, Protocol, Se
 import httpx
 from PIL import Image
 
-from sl_maptools import MapCoord, MapRegion
+from sl_maptools import MapCoord, MapRegion, Settable
 from sl_maptools.fetchers import Fetcher, FetcherConnectionError, RawResult
 from sl_maptools.utils import QuietablePrint
 
@@ -248,7 +248,7 @@ class BoundedMapFetcher(MapFetcher):
         async_session: httpx.AsyncClient,
         retries: int = 3,
         cooked: bool = False,
-        cancel_flag: asyncio.Event = None,
+        cancel_flag: Settable = None,
     ):
         """
 

@@ -127,6 +127,10 @@ class RetrieverProgress:
         self.outstanding.add(coord)
 
     async def abatch(self, batch_size: int) -> Generator[CoordType, None, None]:
+        for one in self.batch(batch_size):
+            yield one
+
+    def batch(self, batch_size: int) -> Generator[CoordType, None, None]:
         c = 0
         while self._backlog:
             c += 1

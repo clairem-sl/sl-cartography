@@ -194,6 +194,12 @@ def inventorize_maps_latest(mapdir: Path | str) -> dict[CoordType, Path]:
 
 
 def inventorize_maps_all(mapdir: Path) -> dict[CoordType, list[Path]]:
+    """
+    Returns a dict (by coordinate) of maptile files in mapdir, sorted ascending by filename.
+    (So if filename has timestamp, the latest will be the last)
+
+    :param mapdir: Directory containing the maptile files
+    """
     rslt: dict[CoordType, list[Path]] = {}
     for fp in sorted(mapdir.glob("*.jp*")):
         if (m := RE_MAPFILE.match(fp.name)) is None:
