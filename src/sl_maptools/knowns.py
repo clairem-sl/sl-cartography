@@ -218,7 +218,10 @@ SUPPRESS_FOR_AREAS: Final[dict[str, list[AreaBounds]]] = {
         AreaBounds(1080, 990, 1081, 992),
         AreaBounds.from_slgi("1081/989"),
     ],
-
+    "SecondNorway": [
+        AreaBounds(1149, 1046, 1152, 1047),
+        AreaBounds(1149, 1049, 1149, 1054),
+    ],
 }
 
 DO_NOT_MAP_AREAS: Final[dict[str, AreaBounds]] = {
