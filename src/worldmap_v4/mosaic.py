@@ -23,7 +23,7 @@ from sl_maptools.image_processing import (
     calculate_dominant_colors,
 )
 from sl_maptools.utils import ConfigReader, SLMapToolsConfig, make_backup
-from sl_maptools.validator import get_bonnie_coords, inventorize_maps_latest
+from sl_maptools.validator import get_bonnie_coords, inventorize_maps_all
 
 # region ##### Types
 
@@ -67,7 +67,6 @@ class OptionsType(Protocol):
     save_every: int
     mapdir: Path
     outdir: Path
-    no_validate: bool
     regionsdb: Path
     fetchbonnie: bool
     bonniedb: Path
@@ -93,7 +92,6 @@ def get_opts() -> OptionsType:
     parser.add_argument("--mapdir", metavar="DIR", type=Path, default=DEFA_MAPDIR)
     parser.add_argument("--outdir", metavar="DIR", type=Path, default=DEFA_OUTDIR)
 
-    parser.add_argument("--no-validate", action="store_true")
     parser.add_argument("--regionsdb", metavar="DB", type=Path, default=DEFA_REGIONSDB)
 
     bonnie_grp = parser.add_mutually_exclusive_group()
@@ -128,7 +126,10 @@ def calc_domc_init(
     CollectorQueue = coll_queue
 
 
-def calc_domc(job: tuple[CoordType, Path]) -> tuple[CoordType, DomColors]:
+CalcResultType = tuple[CoordType, Path, DomColors]
+
+
+def calc_domc(job: tuple[CoordType, Path]) -> CalcResultType:
     global PatchesDict
     coord, fpath = job
 
@@ -138,7 +139,7 @@ def calc_domc(job: tuple[CoordType, Path]) -> tuple[CoordType, DomColors]:
             fsz: calculate_dominant_colors(img, fsz) for fsz in FASCIA_SIZES
         }
 
-    rslt = coord, domc
+    rslt = coord, fpath, domc
     CollectorQueue.put(rslt)
     return rslt
 
@@ -161,7 +162,7 @@ def collector(
         if item is Ellipsis:
             continue
 
-        coord, domc = cast(tuple[CoordType, DomColors], item)
+        coord, _, domc = cast(CalcResultType, item)
         with coll_lock:
             for sz, colors in domc.items():
                 patches_coll[coord, sz] = colors
@@ -244,7 +245,7 @@ def make_mosaic(
 
 
 def main(opts: OptionsType):
-    cached_domc: dict[CoordType, DomColors] = {}
+    cached_domc: dict[CoordType, dict[Path, DomColors]] = {}
     cache_path = opts.cachefile
     if not opts.reset_cache:
         if cache_path.exists():
@@ -255,48 +256,60 @@ def main(opts: OptionsType):
                 pass
     print(f"Cached Dominant Colors = {len(cached_domc)}")
 
-    mapfiles_d: dict[CoordType, Path] = inventorize_maps_latest(opts.mapdir)
-    if not opts.no_validate:
-        #
-        regions_db: dict[CoordType, RegionsDBRecord] = {}
-        if opts.regionsdb.exists():
-            with opts.regionsdb.open("rb") as fin:
-                regions_db = pickle.load(fin)
-        if regions_db:
-            for k in list(mapfiles_d.keys()):
-                if k not in regions_db:
-                    del mapfiles_d[k]
-                elif regions_db[k]["current_name"] == "":
-                    del mapfiles_d[k]
-        #
-        bonnie_coords = get_bonnie_coords(opts.bonniedb, opts.fetchbonnie)
-        if bonnie_coords:
-            for k in list(mapfiles_d.keys()):
-                if k not in bonnie_coords:
-                    del mapfiles_d[k]
+    mapfiles_d: dict[CoordType, list[Path]] = inventorize_maps_all(opts.mapdir)
+    #
+    regions_db: dict[CoordType, RegionsDBRecord] = {}
+    if opts.regionsdb.exists():
+        with opts.regionsdb.open("rb") as fin:
+            regions_db = pickle.load(fin)
+    if regions_db:
+        for k in list(mapfiles_d.keys()):
+            if k not in regions_db:
+                del mapfiles_d[k]
+            elif regions_db[k]["current_name"] == "":
+                del mapfiles_d[k]
+    #
+    bonnie_coords = get_bonnie_coords(opts.bonniedb, opts.fetchbonnie)
+    if bonnie_coords:
+        for k in list(mapfiles_d.keys()):
+            if k not in bonnie_coords:
+                del mapfiles_d[k]
 
-    total = len(mapfiles_d)
-    for k in list(mapfiles_d):
-        if k in cached_domc:
-            del mapfiles_d[k]
-
-    mapfiles: list[tuple[CoordType, Path]] = sorted(
-        mapfiles_d.items(), key=lambda c: (-c[0][1], c[0][0])
-    )
-    if len(mapfiles) == 0:
+    # Grab only files that are not yet analyzed
+    mapfiles: list[tuple[CoordType, Path]] = []
+    for co, mapfl in mapfiles_d.items():
+        for mapf in mapfl:
+            if mapf not in cached_domc.get(co, {}):
+                mapfiles.append((co, mapf))
+    if not mapfiles:
         print("ERROR: No valid mapfiles!", file=sys.stderr)
         sys.exit(1)
+    total = len(mapfiles_d)
+
+    # Sort by CoordType[0] row[1] descending (-)
+    # then by CoordType[0] col[0] ascending
+    # then by Filepath[1] ascending
+    mapfiles.sort(key=lambda c: (-c[0][1], c[0][0], c[1]))
     print(
-        f"\n{len(mapfiles)} regions left to mosaicize (out of a total of {total})."
+        f"\n{len(mapfiles)} files to analyze, {total} regions to mosaicize."
         f"\nStarting up Mosaic-Making Engine ({opts.calc_workers}, {opts.make_workers})"
     )
+
+    latest_domc: dict[CoordType, DomColors] = {
+        # data.items() will be a sequence of (path, domcolors)
+        # If we sort, the newest file (latest timestamp) will be at end, so [-1]
+        # Then we get the domcolors component of the tuple [1]
+        co: sorted(data.items())[-1][1]
+        for co, data in cached_domc.items()
+        if co in mapfiles_d
+    }
 
     start = time.monotonic()
     manager: MPMgrs.SyncManager
     with MP.Manager() as manager:
         patches_coll = manager.dict({
             (co, sz): vals
-            for co, domc in cached_domc.items()
+            for co, domc in latest_domc.items()
             for sz, vals in domc.items()
         })
         coll_lock = manager.RLock()
@@ -332,8 +345,8 @@ def main(opts: OptionsType):
                     pool_calc.imap_unordered(calc_domc, mapfiles, chunksize=10), start=1
                 ):
                     make_recently_triggered = False
-                    coord, domc = rslt
-                    cached_domc[coord] = domc
+                    coord, fpath, domc = rslt
+                    cached_domc.setdefault(coord, {})[fpath] = domc
                     if (i % opts.pip_every) == 0:
                         print(".", end="", flush=True)
                     if not opts.final_only:
@@ -362,9 +375,16 @@ def main(opts: OptionsType):
                 orig_sigint = signal.signal(signal.SIGINT, signal.SIG_IGN)
                 print(f"\nCached Dominant Colors is now {len(cached_domc)}, ", end="")
                 make_backup(cache_path)
+                # Sort so it's right and nice order
+                sorted_cache = {}
+                for co, data in sorted(cached_domc.items(), key=lambda c: (c[0][1], c[0][0])):
+                    inner = {}
+                    for fp, domc in sorted(data.items()):
+                        inner[fp] = domc
+                    sorted_cache[co] = inner
                 with cache_path.open("wb") as fout:
-                    pickle.dump(cached_domc, fout)
-                print(f"saved to {cache_path}")
+                    pickle.dump(sorted_cache, fout)
+                print(f"saved to {cache_path}", end="", flush=True)
                 signal.signal(signal.SIGINT, orig_sigint)
 
             print("Enjoining pool_calc ... ", end="", flush=True)
