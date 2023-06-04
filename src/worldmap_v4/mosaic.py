@@ -384,7 +384,7 @@ def main(opts: OptionsType):
                     sorted_cache[co] = inner
                 with cache_path.open("wb") as fout:
                     pickle.dump(sorted_cache, fout)
-                print(f"saved to {cache_path}", end="", flush=True)
+                print(f"saved to {cache_path}", flush=True)
                 signal.signal(signal.SIGINT, orig_sigint)
 
             print("Enjoining pool_calc ... ", end="", flush=True)
