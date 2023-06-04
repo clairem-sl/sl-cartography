@@ -46,7 +46,7 @@ class Thresholds:
     SSIM: float
 
 
-def prune(
+def do_prune(
     filelist: list[Path],
     *,
     thresholds: Thresholds,
@@ -96,25 +96,22 @@ def prune(
 
 def prune_job(job: tuple):
     if len(job) == 2:
-        return prune(job[0], thresholds=job[1])
+        return do_prune(job[0], thresholds=job[1])
     else:
-        return prune(job[0], thresholds=job[1], quiet=job[2])
+        return do_prune(job[0], thresholds=job[1], quiet=job[2])
 
 
-def main(opts: PruneOptions):
-    print(f"Pruning {opts.mapdir}")
-    mapfiles_bycoord: dict[CoordType, list[Path]] = inventorize_maps_all(opts.mapdir)
+def prune(mapfiles_bycoord: dict[CoordType, list[Path]], quiet: bool = False):
     thresholds = Thresholds(MSE=MSE_THRESHOLD, SSIM=SSIM_THRESHOLD)
 
     total = 0
-    jobs: list[tuple[list[Path], Thresholds]] = []
+    jobs: list[tuple[list[Path], Thresholds, bool]] = []
     for maptiles in mapfiles_bycoord.values():
         if len(maptiles) > 1:
             total += len(maptiles)
-            jobs.append((maptiles, thresholds))
+            jobs.append((maptiles, thresholds, quiet))
     print(f"Files to process: {total}")
 
-    start = time.monotonic()
     count = 0
     pool: MPPool
     with MP.Pool() as pool:
@@ -126,8 +123,15 @@ def main(opts: PruneOptions):
         print("\nWaiting for workers to join ... ", end="", flush=True)
         pool.join()
         print("joined.")
-    elapsed = time.monotonic() - start
 
+    return total, count
+
+
+def main(opts: PruneOptions):
+    print(f"Pruning {opts.mapdir}")
+    start = time.monotonic()
+    total, count = prune(inventorize_maps_all(opts.mapdir))
+    elapsed = time.monotonic() - start
     print(f"{total - count} files pruned in {elapsed:_.2f} seconds.")
 
 
