@@ -112,7 +112,7 @@ class MapsConfig(Protocol):
 
 class MosaicConfig(Protocol):
     dir: str
-    domc_cache: str
+    domc_db: str
 
 
 class NightlightsConfig(Protocol):

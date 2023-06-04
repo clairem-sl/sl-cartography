@@ -37,7 +37,7 @@ RE_MAP: Final[re.Pattern] = re.compile(r"^(\d+)-(\d+)_\d+-\d+.jpg$")
 
 DEFA_MAPDIR: Final[Path] = Path(Config.maps.dir)
 DEFA_OUTDIR: Final[Path] = Path(Config.mosaic.dir)
-DEFA_CACHE: Final[Path] = Path(Config.mosaic.dir) / Config.mosaic.domc_cache
+DEFA_DOMC_DBP: Final[Path] = Path(Config.mosaic.dir) / Config.mosaic.domc_db
 
 DEFA_CALC_WORKERS: Final[int] = max(1, MP.cpu_count() - 2) * 2
 DEFA_MAKE_WORKERS: Final[int] = 1
@@ -58,8 +58,7 @@ FASCIA_PIXELS: Final[dict[int, int]] = {
 
 
 class OptionsType(Protocol):
-    reset_cache: bool
-    cachefile: Path
+    domc_db_path: Path
     calc_workers: int
     make_workers: int
     pip_every: int
@@ -75,9 +74,7 @@ class OptionsType(Protocol):
 def get_opts() -> OptionsType:
     parser = argparse.ArgumentParser("worldmap_v4.mosaic")
 
-    cache_grp = parser.add_mutually_exclusive_group()
-    cache_grp.add_argument("--reset-cache", action="store_true")
-    cache_grp.add_argument("--cachefile", type=Path, default=DEFA_CACHE)
+    parser.add_argument("--domc-db", dest="domc_db_path", type=Path, default=DEFA_DOMC_DBP)
 
     parser.add_argument(
         "--calc-workers", metavar="N", type=int, default=DEFA_CALC_WORKERS
@@ -244,16 +241,15 @@ def make_mosaic(
 
 
 def main(opts: OptionsType):
-    cached_domc: dict[CoordType, dict[Path, DomColors]] = {}
-    cache_path = opts.cachefile
-    if not opts.reset_cache:
-        if cache_path.exists():
-            try:
-                with cache_path.open("rb") as fin:
-                    cached_domc.update(pickle.load(fin))
-            except EOFError:
-                pass
-    print(f"Cached Dominant Colors = {len(cached_domc)}")
+    domc_db: dict[CoordType, dict[Path, DomColors]] = {}
+    domc_db_path = opts.domc_db_path
+    if domc_db_path.exists():
+        try:
+            with domc_db_path.open("rb") as fin:
+                domc_db.update(pickle.load(fin))
+        except EOFError:
+            pass
+    print(f"Cached Dominant Colors = {len(domc_db)}")
 
     mapfiles_d: dict[CoordType, list[Path]] = inventorize_maps_all(opts.mapdir)
     #
@@ -278,7 +274,7 @@ def main(opts: OptionsType):
     mapfiles: list[tuple[CoordType, Path]] = []
     for co, mapfl in mapfiles_d.items():
         for mapf in mapfl:
-            if mapf not in cached_domc.get(co, {}):
+            if mapf not in domc_db.get(co, {}):
                 mapfiles.append((co, mapf))
 
     # Sort by CoordType[0] row[1] descending (-)
@@ -295,7 +291,7 @@ def main(opts: OptionsType):
         # If we sort, the newest file (latest timestamp) will be at end, so [-1]
         # Then we get the domcolors component of the tuple [1]
         co: sorted(data.items())[-1][1]
-        for co, data in cached_domc.items()
+        for co, data in domc_db.items()
         if co in mapfiles_d
     }
 
@@ -341,7 +337,7 @@ def main(opts: OptionsType):
                 ):
                     make_recently_triggered = False
                     coord, fpath, domc = rslt
-                    cached_domc.setdefault(coord, {})[fpath] = domc
+                    domc_db.setdefault(coord, {})[fpath] = domc
                     if (i % opts.pip_every) == 0:
                         print(".", end="", flush=True)
                     if not opts.final_only:
@@ -368,20 +364,20 @@ def main(opts: OptionsType):
                 print("\nUser request abort...", flush=True)
             finally:
                 orig_sigint = signal.signal(signal.SIGINT, signal.SIG_IGN)
-                print(f"\nCached Dominant Colors is now {len(cached_domc)}, ", end="")
-                make_backup(cache_path)
+                print(f"\nCached Dominant Colors is now {len(domc_db)}, ", end="")
+                make_backup(domc_db_path)
                 # Sort so it's right and nice order
                 sorted_cache = {}
                 # By row ascending, then by col ascending ...
-                for co, data in sorted(cached_domc.items(), key=lambda c: (c[0][1], c[0][0])):
+                for co, data in sorted(domc_db.items(), key=lambda c: (c[0][1], c[0][0])):
                     inner = {}
                     # ... then by filepath ascending
                     for fp, domc in sorted(data.items()):
                         inner[fp] = domc
                     sorted_cache[co] = inner
-                with cache_path.open("wb") as fout:
+                with domc_db_path.open("wb") as fout:
                     pickle.dump(sorted_cache, fout)
-                print(f"saved to {cache_path}", flush=True)
+                print(f"saved to {domc_db_path}", flush=True)
                 signal.signal(signal.SIGINT, orig_sigint)
 
             print("Enjoining pool_calc ... ", end="", flush=True)
