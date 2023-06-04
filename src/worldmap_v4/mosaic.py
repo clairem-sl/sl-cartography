@@ -9,7 +9,6 @@ import multiprocessing.pool as MPPool
 import pickle
 import re
 import signal
-import sys
 import time
 from pathlib import Path
 from typing import Final, Optional, Protocol, TypedDict, cast
@@ -281,17 +280,13 @@ def main(opts: OptionsType):
         for mapf in mapfl:
             if mapf not in cached_domc.get(co, {}):
                 mapfiles.append((co, mapf))
-    if not mapfiles:
-        print("ERROR: No valid mapfiles!", file=sys.stderr)
-        sys.exit(1)
-    total = len(mapfiles_d)
 
     # Sort by CoordType[0] row[1] descending (-)
     # then by CoordType[0] col[0] ascending
     # then by Filepath[1] ascending
     mapfiles.sort(key=lambda c: (-c[0][1], c[0][0], c[1]))
     print(
-        f"\n{len(mapfiles)} files to analyze, {total} regions to mosaicize."
+        f"\n{len(mapfiles)} files to analyze, {len(mapfiles_d)} regions to mosaicize."
         f"\nStarting up Mosaic-Making Engine ({opts.calc_workers}, {opts.make_workers})"
     )
 
