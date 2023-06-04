@@ -377,8 +377,10 @@ def main(opts: OptionsType):
                 make_backup(cache_path)
                 # Sort so it's right and nice order
                 sorted_cache = {}
+                # By row ascending, then by col ascending ...
                 for co, data in sorted(cached_domc.items(), key=lambda c: (c[0][1], c[0][0])):
                     inner = {}
+                    # ... then by filepath ascending
                     for fp, domc in sorted(data.items()):
                         inner[fp] = domc
                     sorted_cache[co] = inner
