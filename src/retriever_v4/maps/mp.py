@@ -19,9 +19,11 @@ from typing import Final, Iterable, NamedTuple, Optional, Protocol, TypedDict, U
 import httpx
 from ruamel.yaml import YAML, RoundTripRepresenter
 
+from retriever_v4.maps.prune import prune
 from sl_maptools import CoordType, MapCoord, Settable
 from sl_maptools.fetchers.map import BoundedMapFetcher
 from sl_maptools.utils import ConfigReader, handle_sigint, make_backup
+from sl_maptools.validator import inventorize_maps_all
 
 UNKNOWN_COORD: Final[MapCoord] = MapCoord(-1, -1)
 
@@ -45,6 +47,8 @@ class MPMapOptions(Protocol):
     mapdir: Path
     workers: int
     savers: int
+    prune_on_abort: bool
+    no_prune: bool
 
 
 def get_options() -> MPMapOptions:
@@ -53,6 +57,10 @@ def get_options() -> MPMapOptions:
     parser.add_argument("--mapdir", type=Path, default=Path(Config.maps.mp_dir))
     parser.add_argument("--workers", type=int, default=RETR_WORKERS)
     parser.add_argument("--savers", type=int, default=SAVE_WORKERS)
+
+    grp_prune = parser.add_mutually_exclusive_group()
+    grp_prune.add_argument("--prune-on-abort", action="store_true", help="Prune on abort as well (default: prune on finish)")
+    grp_prune.add_argument("--no-prune", action="store_true", help="Do not prune at all")
 
     _opts = parser.parse_args()
     return cast(MPMapOptions, _opts)
@@ -410,6 +418,16 @@ def main(opts: MPMapOptions):
 
     finish = time.monotonic()
     print(f"Finished in {finish - start:_.2f}s on {datetime.now().isoformat(timespec='minutes')}")
+
+    if opts.no_prune:
+        return
+
+    if AbortRequested.is_set() and not opts.prune_on_abort:
+        return
+
+    print("Starting prune:", flush=True)
+    total, count = prune(inventorize_maps_all(opts.mapdir), quiet=True)
+    print(f"{total - count} files pruned.")
 
 
 if __name__ == "__main__":
