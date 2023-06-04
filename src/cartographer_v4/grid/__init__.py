@@ -112,11 +112,13 @@ class GridMaker:
             size_y = (y2 - y1 + 1) * 256
             gridc = Image.new("RGBA", (size_x, size_y), color=(0, 0, 0, 0))
             draw = ImageDraw.Draw(gridc)
+            regs = 0
             for i, xy in enumerate(bounds.xy_iterator(), start=1):
                 if xy not in self.validation_set:
                     continue
                 if xy in suppress:
                     continue
+                regs += 1
                 x, y = xy
                 cx = (x - x1) * 256
                 cy = (y2 - y) * 256
@@ -139,6 +141,7 @@ class GridMaker:
                     )
                 if (i % 10) == 0:
                     print(".", end="", flush=True)
+            print(f"[{regs}]", end="", flush=True)
             gridc.save(overlay_p)
         print(f"{overlay_p}\n  => ", end="", flush=True)
         composite_p = out_dir / (areaname + ".composited.png")
