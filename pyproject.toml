@@ -73,6 +73,7 @@ py_version = 310
 
 [tool.black]
 line-length = 120
+target-version = ['py311']
 
 [tool.pytest.ini_options]
 addopts = [

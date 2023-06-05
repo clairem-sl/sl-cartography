@@ -9,15 +9,16 @@ from PIL import Image, ImageDraw, ImageFont
 
 from sl_maptools import COORD_RANGE
 
-
-FONT_NAME = r'C:\Games\Genesis\fonts\Roboto-Bold.ttf'
+FONT_NAME = r"C:\Games\Genesis\fonts\Roboto-Bold.ttf"
 GRID_THICKNESS = 5
 
 GRIDSECTOR_SIZE: Final[int] = 100
 
+# fmt: off
 GRID_COLS: Final[list[str]] = [
     "AA", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U"
 ]
+# fmt: on
 
 ALPHA_PATTERN: Final[tuple[int, ...]] = (96, 64, 32)
 
@@ -138,5 +139,5 @@ def main(opts: Options):
         print(f" {gridsector_p}", flush=True)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main(get_options())

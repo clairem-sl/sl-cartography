@@ -298,11 +298,13 @@ def main(opts: OptionsType):
     start = time.monotonic()
     manager: MPMgrs.SyncManager
     with MP.Manager() as manager:
-        patches_coll = manager.dict({
-            (co, sz): vals
-            for co, domc in latest_domc.items()
-            for sz, vals in domc.items()
-        })
+        patches_coll = manager.dict(
+            {
+                (co, sz): vals
+                for co, domc in latest_domc.items()
+                for sz, vals in domc.items()
+            }
+        )
         coll_lock = manager.RLock()
 
         maker_workers = opts.make_workers
@@ -369,7 +371,9 @@ def main(opts: OptionsType):
                 # Sort so it's right and nice order
                 sorted_cache = {}
                 # By row ascending, then by col ascending ...
-                for co, data in sorted(domc_db.items(), key=lambda c: (c[0][1], c[0][0])):
+                for co, data in sorted(
+                    domc_db.items(), key=lambda c: (c[0][1], c[0][0])
+                ):
                     inner = {}
                     # ... then by filepath ascending
                     for fp, domc in sorted(data.items()):

@@ -3,7 +3,6 @@
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 import argparse
 import pickle
-
 from pathlib import Path
 from typing import Final, Protocol, TypedDict, cast
 
@@ -84,7 +83,9 @@ def canvas_coord(region_x: int, region_y: int, multiplier: int = 1) -> tuple[int
     return (region_x - MIN_X) * multiplier, (MAX_Y - region_y) * multiplier
 
 
-def make_nightlights(regions: set[MapCoord], *, region_size: int = DEFA_REGION_SZ) -> Image.Image:
+def make_nightlights(
+    regions: set[MapCoord], *, region_size: int = DEFA_REGION_SZ
+) -> Image.Image:
     slab_sz, _rem = divmod(region_size, 3)
     if _rem:
         raise ValueError("region_size must be an integer multiple of 3!")
@@ -183,7 +184,9 @@ def make_nightlights(regions: set[MapCoord], *, region_size: int = DEFA_REGION_S
     return canvas
 
 
-def make_nightlights2(regions: set[MapCoord], *, region_size: int = DEFA_REGION_SZ) -> Image.Image:
+def make_nightlights2(
+    regions: set[MapCoord], *, region_size: int = DEFA_REGION_SZ
+) -> Image.Image:
     _, _rem = divmod(region_size, 8)
     if _rem:
         raise ValueError("region_size must be an integer multiple of 8!")
@@ -296,7 +299,9 @@ def make_map(opts: Options):
     print(flush=True)
 
     targ: Path
-    regions: set[tuple[int, int]] = set(k for k, v in data_raw.items() if v["current_name"])
+    regions: set[tuple[int, int]] = set(
+        k for k, v in data_raw.items() if v["current_name"]
+    )
     if not opts.no_validate:
         bonnie_coords = get_bonnie_coords(bonniedb, opts.fetchbonnie)
         if bonnie_coords:
@@ -321,5 +326,5 @@ def make_map(opts: Options):
     print(f"\nNightlights mosaic saved to {targ}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     make_map(cast(Options, get_opts()))
