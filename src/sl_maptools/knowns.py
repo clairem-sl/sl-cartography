@@ -111,7 +111,7 @@ KNOWN_AREAS: Final[dict[str, AreaBounds]] = {
     "SunIslands": AreaBounds(876, 987, 878, 990),
     "Mieville": AreaBounds(533, 1196, 537, 1201),
     "Pirates1700": AreaBounds(940, 1174, 942, 1177),
-    "SecondFrance": AreaBounds(556, 1117, 559, 1120),
+    "Coeur": AreaBounds(554, 1117, 559, 1124),
     "SnugHarbor": AreaBounds(1146, 1052, 1149, 1056),
     "ASLMetaverse": AreaBounds(763, 915, 765, 917),
     # ### Below this line, are areas with < 10 regions in a clump
