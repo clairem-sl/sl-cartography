@@ -109,7 +109,7 @@ KNOWN_AREAS: Final[dict[str, AreaBounds]] = {
     "Babbage": AreaBounds(630, 1004, 633, 1007),
     "Capitol": AreaBounds(641, 995, 645, 998),
     "SunIslands": AreaBounds(876, 987, 878, 990),
-    "Mieville": AreaBounds(533, 1196, 537, 1201),
+    "Mieville": AreaBounds(533, 1196, 537, 1202),
     "Pirates1700": AreaBounds(940, 1174, 942, 1177),
     "Coeur": AreaBounds(554, 1117, 559, 1124),
     "SnugHarbor": AreaBounds(1146, 1052, 1149, 1056),
