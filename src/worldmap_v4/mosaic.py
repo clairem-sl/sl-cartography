@@ -76,12 +76,8 @@ def get_opts() -> OptionsType:
 
     parser.add_argument("--domc-db", dest="domc_db_path", type=Path, default=DEFA_DOMC_DBP)
 
-    parser.add_argument(
-        "--calc-workers", metavar="N", type=int, default=DEFA_CALC_WORKERS
-    )
-    parser.add_argument(
-        "--make-workers", metavar="N", type=int, default=DEFA_MAKE_WORKERS
-    )
+    parser.add_argument("--calc-workers", metavar="N", type=int, default=DEFA_CALC_WORKERS)
+    parser.add_argument("--make-workers", metavar="N", type=int, default=DEFA_MAKE_WORKERS)
     parser.add_argument("--pip-every", metavar="N", type=int, default=100)
     parser.add_argument("--save-every", metavar="N", type=int, default=2000)
     parser.add_argument("--final-only", action="store_true")
@@ -131,9 +127,7 @@ def calc_domc(job: tuple[CoordType, Path]) -> CalcResultType:
 
     with Image.open(fpath) as img:
         img.load()
-        domc: DomColors = {
-            fsz: calculate_dominant_colors(img, fsz) for fsz in FASCIA_SIZES
-        }
+        domc: DomColors = {fsz: calculate_dominant_colors(img, fsz) for fsz in FASCIA_SIZES}
 
     rslt = coord, fpath, domc
     CollectorQueue.put(rslt)
@@ -194,9 +188,7 @@ def make_mosaic(
 
         _state("got_job")
         assert isinstance(item, tuple)
-        patches_bysz: Optional[dict[int, dict[CoordType, list[RGBTuple]]]] = {
-            sz: {} for sz in item
-        }
+        patches_bysz: Optional[dict[int, dict[CoordType, list[RGBTuple]]]] = {sz: {} for sz in item}
         with coll_lock:
             _state("transform")
             for k, v in dict(patches_coll).items():
@@ -298,13 +290,7 @@ def main(opts: OptionsType):
     start = time.monotonic()
     manager: MPMgrs.SyncManager
     with MP.Manager() as manager:
-        patches_coll = manager.dict(
-            {
-                (co, sz): vals
-                for co, domc in latest_domc.items()
-                for sz, vals in domc.items()
-            }
-        )
+        patches_coll = manager.dict({(co, sz): vals for co, domc in latest_domc.items() for sz, vals in domc.items()})
         coll_lock = manager.RLock()
 
         maker_workers = opts.make_workers
@@ -325,18 +311,12 @@ def main(opts: OptionsType):
         pool_coll: MPPool.Pool
         pool_maker: MPPool.Pool
         with (
-            MP.Pool(
-                calc_workers, initializer=calc_domc_init, initargs=calc_domc_args
-            ) as pool_calc,
+            MP.Pool(calc_workers, initializer=calc_domc_init, initargs=calc_domc_args) as pool_calc,
             MP.Pool(1, initializer=collector, initargs=coll_args) as pool_coll,
-            MP.Pool(
-                maker_workers, initializer=make_mosaic, initargs=make_args
-            ) as pool_maker,
+            MP.Pool(maker_workers, initializer=make_mosaic, initargs=make_args) as pool_maker,
         ):
             try:
-                for i, rslt in enumerate(
-                    pool_calc.imap_unordered(calc_domc, mapfiles, chunksize=10), start=1
-                ):
+                for i, rslt in enumerate(pool_calc.imap_unordered(calc_domc, mapfiles, chunksize=10), start=1):
                     make_recently_triggered = False
                     coord, fpath, domc = rslt
                     domc_db.setdefault(coord, {})[fpath] = domc
@@ -371,9 +351,7 @@ def main(opts: OptionsType):
                 # Sort so it's right and nice order
                 sorted_cache = {}
                 # By row ascending, then by col ascending ...
-                for co, data in sorted(
-                    domc_db.items(), key=lambda c: (c[0][1], c[0][0])
-                ):
+                for co, data in sorted(domc_db.items(), key=lambda c: (c[0][1], c[0][0])):
                     inner = {}
                     # ... then by filepath ascending
                     for fp, domc in sorted(data.items()):

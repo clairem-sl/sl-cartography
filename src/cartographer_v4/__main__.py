@@ -67,11 +67,7 @@ class AreaParser(argparse.Action):
 def get_options() -> Options:
     parser = argparse.ArgumentParser("cartographer_v4")
 
-    parser.add_argument(
-        "--no-grid",
-        action="store_true",
-        help="Skip creation of grid overlay"
-    )
+    parser.add_argument("--no-grid", action="store_true", help="Skip creation of grid overlay")
 
     parser.add_argument(
         "--continents",
@@ -116,7 +112,11 @@ def get_options() -> Options:
         default=Path(Config.names.dir) / Config.names.db,
         help="RegionsDB for validation. If not specified, use names.db in config.toml",
     )
-    parser.add_argument("--overwrite", action="store_true", help="If specified, overwrite existing hi-res map file.")
+    parser.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="If specified, overwrite existing hi-res map file.",
+    )
 
     _opts = parser.parse_args()
     if _opts.outdir is None:
@@ -124,7 +124,12 @@ def get_options() -> Options:
     return cast(Options, _opts)
 
 
-def make_map(targ: Path, bounds: AreaBounds, map_tiles: dict[CoordType, Path], suppress_coords: set[CoordType] = None):
+def make_map(
+    targ: Path,
+    bounds: AreaBounds,
+    map_tiles: dict[CoordType, Path],
+    suppress_coords: set[CoordType] = None,
+):
     if suppress_coords is None:
         suppress_coords = set()
     csize_x = (bounds.x_eastmost - bounds.x_westmost + 1) * 256

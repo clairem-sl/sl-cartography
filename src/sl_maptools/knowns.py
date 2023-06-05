@@ -7,6 +7,7 @@ from typing import Final
 
 from sl_maptools import AreaBounds
 
+# fmt: off
 KNOWN_AREAS: Final[dict[str, AreaBounds]] = {
     # region ### Linden Continents - Bellisseria
 
@@ -225,7 +226,9 @@ SUPPRESS_FOR_AREAS: Final[dict[str, list[AreaBounds]]] = {
 }
 
 DO_NOT_MAP_AREAS: Final[dict[str, AreaBounds]] = {
-    "CH": AreaBounds(1102, 1199, 1104, 1201),  ### NOT interesting
+    "CH": AreaBounds(1102, 1199, 1104, 1201),        ### NOT interesting
     "SSP-15xx": AreaBounds(1155, 1379, 1165, 1383),  ### NOT interesting
     "SSP-40xx": AreaBounds(1182, 1371, 1187, 1377),  ### NOT interesting
 }
+
+# fmt: on

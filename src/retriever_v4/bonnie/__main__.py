@@ -6,15 +6,15 @@ import time
 from collections import deque
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Final, TypedDict, Optional
+from typing import Any, Final, Optional, TypedDict
 
 import httpx
-from ruamel.yaml import RoundTripRepresenter, YAML
+from ruamel.yaml import YAML, RoundTripRepresenter
 
-from retriever_v4 import dispatch_fetcher, ProgressInterface
+from retriever_v4 import ProgressInterface, dispatch_fetcher
 from sl_maptools import CoordType, MapCoord
 from sl_maptools.fetchers.bonnie import BoundedBonnieFetcher, CookedBonnieResult
-from sl_maptools.utils import SLMapToolsConfig, ConfigReader, make_backup
+from sl_maptools.utils import ConfigReader, SLMapToolsConfig, make_backup
 
 CONN_LIMIT: Final[int] = 400
 HTTP2: Final[bool] = False
@@ -74,7 +74,10 @@ BonnieDB: dict[CoordType, BonnieMeta] = {}
 
 
 class BonnieProgress:
-    def __init__(self, bonnie_regions_url: str = "https://www.bonniebots.com/static-api/regions/index.json"):
+    def __init__(
+        self,
+        bonnie_regions_url: str = "https://www.bonniebots.com/static-api/regions/index.json",
+    ):
         global BonnieDB
 
         with httpx.Client() as client:
@@ -138,11 +141,7 @@ def update_bonniedata(result: CookedBonnieResult):
     _co = x, y
     _nao = datetime.now().astimezone()
     if _co not in BonnieDB:
-        BonnieDB[_co] = {
-            "current": curdata,
-            "last_update": _nao,
-            "diff": {}
-        }
+        BonnieDB[_co] = {"current": curdata, "last_update": _nao, "diff": {}}
         return
     prev = BonnieDB[_co]["current"]
     BonnieDB[_co]["current"] = curdata
@@ -236,9 +235,7 @@ def main():
     try:
         make_backup(BONNIE_DB_PATH)
         AbortRequested.clear()
-        asyncio.run(
-            amain(-1, 100, 0)
-        )
+        asyncio.run(amain(-1, 100, 0))
     except asyncio.CancelledError:
         print("Something cancelled asyncio!")
     except KeyboardInterrupt:
@@ -256,5 +253,5 @@ def main():
         print(f"{still_need} records still need to be retrieved")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

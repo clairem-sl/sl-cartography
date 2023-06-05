@@ -14,7 +14,16 @@ import sys
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Final, Iterable, NamedTuple, Optional, Protocol, TypedDict, Union, cast
+from typing import (
+    Final,
+    Iterable,
+    NamedTuple,
+    Optional,
+    Protocol,
+    TypedDict,
+    Union,
+    cast,
+)
 
 import httpx
 from ruamel.yaml import YAML, RoundTripRepresenter
@@ -59,7 +68,11 @@ def get_options() -> MPMapOptions:
     parser.add_argument("--savers", type=int, default=SAVE_WORKERS)
 
     grp_prune = parser.add_mutually_exclusive_group()
-    grp_prune.add_argument("--prune-on-abort", action="store_true", help="Prune on abort as well (default: prune on finish)")
+    grp_prune.add_argument(
+        "--prune-on-abort",
+        action="store_true",
+        help="Prune on abort as well (default: prune on finish)",
+    )
     grp_prune.add_argument("--no-prune", action="store_true", help="Do not prune at all")
 
     _opts = parser.parse_args()
@@ -168,8 +181,16 @@ async def aretrieve(
 
                 for fut in done:
                     if (exc := fut.exception()) is not None:
-                        print(f"{_myname}:{fut.get_name()} ERR <{type(exc)}>{exc}", file=sys.stderr, flush=True)
-                        _err = QResult(f"{_myname}:{fut.get_name()}", UNKNOWN_COORD, cast(Exception, exc))
+                        print(
+                            f"{_myname}:{fut.get_name()} ERR <{type(exc)}>{exc}",
+                            file=sys.stderr,
+                            flush=True,
+                        )
+                        _err = QResult(
+                            f"{_myname}:{fut.get_name()}",
+                            UNKNOWN_COORD,
+                            cast(Exception, exc),
+                        )
                         result_queue.put(_err)
                         continue
                     fut_result = fut.result()
@@ -272,14 +293,7 @@ def main(opts: MPMapOptions):
         )
         s_args = (Path(Config.maps.mp_dir), save_queue, result_queue)
 
-        progression: dict[int, ProgressionDict] = {
-            y: {
-                "start": None,
-                "done": 0,
-                "last": None
-            }
-            for y in range(0, 2101)
-        }
+        progression: dict[int, ProgressionDict] = {y: {"start": None, "done": 0, "last": None} for y in range(0, 2101)}
         outstanding: set[CoordType] = set()
         total: int = 0
         count: int = 0
@@ -338,7 +352,10 @@ def main(opts: MPMapOptions):
                     elapsed = time.monotonic() - tm
                     if elapsed >= INFO_EVERY:
                         rate = count / elapsed
-                        print(f"{count:_} coords checked, at {rate:_.2f}rps, {total:_} retrieved", flush=True)
+                        print(
+                            f"{count:_} coords checked, at {rate:_.2f}rps, {total:_} retrieved",
+                            flush=True,
+                        )
                         count = 0
                         tm = time.monotonic()
 

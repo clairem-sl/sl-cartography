@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Final
 
 from PIL import Image, ImageDraw
+
 # noinspection PyUnresolvedReferences
 from PIL.Image import Resampling
 
@@ -19,10 +20,11 @@ Config: SLMapToolsConfig = ConfigReader("config.toml")
 MAP_DIR: Final[Path] = Path(Config.maps.dir)
 GRID_DIR: Final[Path] = Path(r"C:\Cache\SL-Carto\WorldMaps\GridSectors")
 
-
+# fmt: off
 GRID_COLS: Final[list[str]] = [
     "AA", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U"
 ]
+# fmt: on
 
 ALPHA_PATTERN: Final[tuple[int, ...]] = (96, 64, 32)
 
@@ -30,11 +32,7 @@ ALPHA_PATTERN: Final[tuple[int, ...]] = (96, 64, 32)
 def main():
     GRID_DIR.mkdir(parents=True, exist_ok=True)
     valid_coords = get_bonnie_coords(None, True)
-    maptiles = {
-        co: mapp
-        for co, mapp in inventorize_maps_latest(MAP_DIR).items()
-        if co in valid_coords
-    }
+    maptiles = {co: mapp for co, mapp in inventorize_maps_latest(MAP_DIR).items() if co in valid_coords}
 
     sq = Image.new("RGBA", (640, 640), color=(0, 0, 0, 0))
     sq_draw = ImageDraw.Draw(sq)
@@ -78,5 +76,5 @@ def main():
             print(f"{gridsector_mapp}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

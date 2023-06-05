@@ -4,19 +4,15 @@
 from __future__ import annotations
 
 import asyncio
-import random
 import re
 from typing import Any, Dict, Final, Optional, Protocol, Set
 
 import httpx
 
 from sl_maptools import MapCoord
-from sl_maptools.fetchers import CookedResult, Fetcher, FetcherConnectionError, RawResult
-from sl_maptools.utils import QuietablePrint
+from sl_maptools.fetchers import CookedResult, Fetcher, RawResult
 
-RE_REGION_NAME: Final[re.Pattern] = re.compile(
-    r"\s*var\s*region\s*=\s*(['\"])([^'\"]+)\1"
-)
+RE_REGION_NAME: Final[re.Pattern] = re.compile(r"\s*var\s*region\s*=\s*(['\"])([^'\"]+)\1")
 
 
 class MapProgressProtocol(Protocol):
@@ -30,8 +26,7 @@ _RETRYABLE_EX: Final[tuple] = (httpx.ConnectTimeout, httpx.ReadTimeout, httpx.Re
 
 class NameFetcher(Fetcher):
     URL_TEMPLATE: Final[str] = (
-        "https://cap.secondlife.com/cap/0/b713fe80-283b-4585-af4d-a3b7d9a32492?"
-        "var=region&grid_x={x}&grid_y={y}"
+        "https://cap.secondlife.com/cap/0/b713fe80-283b-4585-af4d-a3b7d9a32492?" "var=region&grid_x={x}&grid_y={y}"
     )
 
     async def async_get_name_raw(
@@ -104,13 +99,9 @@ class BoundedNameFetcher(NameFetcher):
                     if self.cancel_flag.is_set():
                         return None
                 if self.cooked:
-                    return await self.async_get_name(
-                        coord, quiet=True, retries=self.retries
-                    )
+                    return await self.async_get_name(coord, quiet=True, retries=self.retries)
                 else:
-                    return await self.async_get_name_raw(
-                        coord, quiet=True, retries=self.retries
-                    )
+                    return await self.async_get_name_raw(coord, quiet=True, retries=self.retries)
         except asyncio.CancelledError:
             print(f"{coord} cancelled")
             raise

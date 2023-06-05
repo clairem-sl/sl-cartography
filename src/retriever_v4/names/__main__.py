@@ -13,11 +13,7 @@ from typing import Final, Optional, Protocol, TypedDict, Union, cast
 
 import httpx
 
-from retriever_v4 import (
-    RetrieverApplication,
-    RetrieverProgress,
-    dispatch_fetcher,
-)
+from retriever_v4 import RetrieverApplication, RetrieverProgress, dispatch_fetcher
 from retriever_v4.names.xchg import export
 from sl_maptools import CoordType, MapCoord, RegionsDBRecord3
 from sl_maptools.fetchers import CookedResult

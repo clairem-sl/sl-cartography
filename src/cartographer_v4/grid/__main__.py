@@ -8,12 +8,17 @@ from typing import Final, Protocol, cast
 
 from PIL import Image, ImageFont
 
-from cartographer_v4.grid import GridMaker, TextSettings, TEXT_RGBA, STROKE_WIDTH_NAME, STROKE_RGBA
+from cartographer_v4.grid import (
+    STROKE_RGBA,
+    STROKE_WIDTH_NAME,
+    TEXT_RGBA,
+    GridMaker,
+    TextSettings,
+)
 from sl_maptools import CoordType, RegionsDBRecord3
 from sl_maptools.knowns import KNOWN_AREAS
 from sl_maptools.utils import ConfigReader, SLMapToolsConfig
 from sl_maptools.validator import get_bonnie_coords
-
 
 Config: SLMapToolsConfig = ConfigReader("config.toml")
 
@@ -40,7 +45,7 @@ def get_options() -> GridOptions:
         help=(
             "Space- and/or comma-separated list of areas to retrieve, in addition to prior progress. "
             "If this option is specified, then make grid for listed areas ONLY."
-        )
+        ),
     )
 
     _opts = parser.parse_args()
@@ -79,10 +84,7 @@ def main(opts: GridOptions):
             if a1 in cs_anames
         }
     else:
-        want_areas = {
-            areamap
-            for areamap in areamaps_dir.glob("*.png")
-        }
+        want_areas = {areamap for areamap in areamaps_dir.glob("*.png")}
 
     regname_settings: TextSettings = {
         "font": font_text,

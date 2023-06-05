@@ -74,7 +74,10 @@ class BoundedBonnieFetcher(BonnieFetcher):
                 if self.cancel_flag is not None:
                     if self.cancel_flag.is_set():
                         return None
-                return await asyncio.wait_for(self.async_get_data(coord, quiet=True, retries=self.retries), self.timeout)
+                return await asyncio.wait_for(
+                    self.async_get_data(coord, quiet=True, retries=self.retries),
+                    self.timeout,
+                )
         except asyncio.CancelledError:
             print(f"{coord} cancelled")
             raise
