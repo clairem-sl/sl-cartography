@@ -194,7 +194,7 @@ KNOWN_AREAS: Final[dict[str, AreaDescriptor]] = {
     "CoralOcean": AreaDescriptor(includes=AreaBounds(479, 1271, 485, 1280)),
     "Gooseberry": AreaDescriptor(includes=AreaBounds(669, 1423, 674, 1429)),
     # "TrinidadTobago": AreaDescriptor(includes=AreaBounds(902, 1372, 906, 1376)),
-    "AllenCommunity": AreaBounds.from_slgi("902-906/1372-1376"),
+    "AllenCommunity": AreaDescriptor(includes=AreaBounds.from_slgi("902-906/1372-1376")),
     "NativeIslands": AreaDescriptor(includes=AreaBounds(733, 1367, 738, 1371)),
     "MauiIslandEstates": AreaDescriptor(includes=AreaBounds(548, 1137, 551, 1140)),
     "Rosehaven": AreaDescriptor(includes=AreaBounds(906, 1029, 909, 1034)),
@@ -225,7 +225,7 @@ KNOWN_AREAS: Final[dict[str, AreaDescriptor]] = {
             AreaBounds(1110, 1052, 1110, 1054),
         ]
     ),
-    "MeisterbastlerKreis": AreaBounds.from_slgi("1105-1114/1382-1388"),
+    "MeisterbastlerKreis": AreaDescriptor(includes=AreaBounds.from_slgi("1105-1114/1382-1388")),
     # endregion
     # region ### User Continents - Tentative
     "GoreanLands": AreaDescriptor(includes=AreaBounds(1014, 1175, 1020, 1179)),
