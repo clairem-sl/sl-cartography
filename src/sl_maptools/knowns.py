@@ -3,12 +3,15 @@
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 from __future__ import annotations
 
-from typing import Final
+from pathlib import Path
+from typing import Final, Literal, Union
+
+from ruamel.yaml import YAML
 
 from sl_maptools import AreaBounds, AreaDescriptor
 
 # fmt: off
-KNOWN_AREAS: Final[dict[str, AreaDescriptor]] = {
+_KNOWN_AREAS: Final[dict[str, AreaDescriptor]] = {
     # region ### Linden Continents - Bellisseria
 
     # region ## Original, self-made segmentation of Bellisseria area
@@ -280,3 +283,23 @@ DO_NOT_MAP_AREAS: Final[dict[str, AreaBounds]] = {
 }
 
 # fmt: on
+
+KNOWN_AREAS: Final[dict[str, AreaDescriptor]] = {}
+
+_data: dict[str, dict[Union[Literal["includes"], Literal["excludes"]], list[Union[str, list[int]]]]]
+with Path(__file__).with_suffix(".yaml").open("rt") as fin:
+    _data = YAML(typ="safe").load(fin)
+
+
+def _to_abounds(item) -> AreaBounds:
+    if isinstance(item, str):
+        return AreaBounds.from_slgi(item)
+    if isinstance(item, list) and len(item) == 4:
+        return AreaBounds(*item)
+    raise ValueError()
+
+
+for _n, _d in _data.items():
+    _incs = {_to_abounds(i) for i in _d["includes"]}
+    _excs = {_to_abounds(i) for i in _d.get("excludes", [])}
+    KNOWN_AREAS[_n] = AreaDescriptor(includes=_incs, excludes=_excs)

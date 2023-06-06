@@ -1,0 +1,510 @@
+Bellisseria_CM_South:
+  includes:
+    - [1038, 950, 1063, 977]
+
+Bellisseria_CM_West:
+  includes:
+    - [1023, 940, 1045, 977]
+
+Bellisseria_CM_Atolls:
+  includes:
+    - [1023, 928, 1032, 940]
+
+Bellisseria_CM_Annex:
+  includes:
+    - [1037, 930, 1053, 949]
+
+Bellisseria_CM_Central:
+  includes:
+    - [1058, 967, 1081, 1000]
+
+Bellisseria_CM_North:
+  includes:
+    - [1078, 987, 1100, 1024]
+
+Bellisseria_SLGI_Forest:
+  includes:
+    - [1043, 950, 1063, 977]
+  excludes:
+    - [1063, 977, 1063, 977]
+    - [1038, 964, 1045, 977]
+    - [1038, 963, 1044, 963]
+    - [1038, 950, 1042, 962]
+    - [1043, 955, 1043, 956]
+
+Bellisseria_SLGI_East:
+  includes:
+    - [1078, 987, 1100, 1024]
+  excludes:
+    - 1100/1005-1010
+    - [1078, 987, 1080, 989]
+
+Bellisseria_SLGI_Victorian:
+  includes:
+    - [1024, 941, 1046, 966]
+  excludes:
+    - [1024, 966, 1043, 966]
+    - [1024, 965, 1042, 965]
+    - [1024, 964, 1041, 964]
+    - [1024, 959, 1040, 963]
+    - [1024, 954, 1039, 958]
+    - [1046, 941, 1046, 962]
+    - [1045, 941, 1045, 961]
+    - [1044, 958, 1044, 961]
+    - [1044, 941, 1044, 953]
+    - [1040, 941, 1043, 948]
+    - [1037, 941, 1039, 945]
+    - [1035, 941, 1039, 943]
+    - [1024, 941, 1024, 941]
+
+Bellisseria_SLGI_Jeogeot:
+  includes:
+    - [1023, 928, 1035, 943]
+  excludes:
+    - [1023, 942, 1034, 943]
+    - [1025, 941, 1034, 941]
+    - [1031, 935, 1035, 939]
+    - [1029, 935, 1030, 937]
+    - [1031, 935, 1035, 939]
+    - [1032, 928, 1035, 934]
+    - [1029, 928, 1031, 931]
+    - 1028/928-929
+    - 1026-1027/928
+
+Bellisseria_SLGI_Magic:
+  includes:
+    - [1037, 930, 1053, 949]
+  excludes:
+    - [1037, 947, 1038, 948]
+    - 1037/930-939
+    - [1038, 930, 1039, 934]
+
+Bellisseria_SLGI_Primordial:
+  includes:
+    - [1023, 953, 1045, 977]
+  excludes:
+    - [1044, 953, 1045, 966]
+    - 1043/964-965
+    - 1042-1043/953-963
+    - 1041/953-962
+    - 1040/953-958
+    - 1035-1039/953
+
+Bellisseria_SLGI_Sakura:
+  includes:
+    - [1063, 992, 1072, 1000]
+
+Bellisseria_SLGI_WaterParadise:
+  includes:
+    - [1058, 967, 1081, 992]
+  excludes:
+    - [1058, 967, 1063, 974]
+    - 1058-1062/975
+    - 1060-1061/976
+    - 1064-1068/992
+    - [1080, 990, 1081, 992]
+    - 1081/989
+
+Bellisseria-Fantasseria:
+  includes:
+    - [1037, 930, 1053, 949]
+  excludes:
+    - [1037, 947, 1038, 948]
+    - 1037/930-939
+    - [1038, 930, 1039, 934]
+
+Bellisseria-Sakurasseria:
+  includes:
+    - [1063, 992, 1072, 1000]
+
+Bellisseria-Stiltlands:
+  includes:
+    - [1058, 967, 1081, 992]
+  excludes:
+    - [1063, 992, 1072, 992]
+    - [1079, 991, 1081, 992]
+    - [1080, 990, 1081, 990]
+    - [1081, 989, 1081, 989]
+    - [1058, 967, 1063, 974]
+    - [1058, 975, 1062, 975]
+    - [1060, 976, 1061, 976]
+
+Zindra:
+  includes:
+    - [1797, 1179, 1821, 1202]
+
+SansaraSnowlands:
+  includes:
+    - [1003, 979, 1018, 995]
+
+Sansara:
+  includes:
+    - [982, 978, 1038, 1012]
+
+SeaOfFables:
+  includes:
+    - [1015, 992, 1023, 999]
+
+BayCityPlains:
+  includes:
+    - [982, 999, 995, 1006]
+
+Sharp:
+  includes:
+    - [1159, 988, 1179, 1002]
+
+Heterocera:
+  includes:
+    - [991, 1012, 1014, 1036]
+
+Jeogeot:
+  includes:
+    - [1004, 897, 1039, 939]
+
+GaetaV:
+  includes:
+    - [1159, 1081, 1189, 1099]
+
+GaetaI:
+  includes:
+    - [1140, 1112, 1155, 1130]
+
+Satori:
+  includes:
+    - [1099, 1005, 1134, 1047]
+
+Corsica:
+  includes:
+    - [1100, 1082, 1159, 1100]
+
+Nautilus:
+  includes:
+    - [1106, 1047, 1138, 1081]
+
+Horizons:
+  includes:
+    - [1804, 1200, 1813, 1210]
+
+BlakeSea:
+  includes:
+    - [1131, 1048, 1148, 1054]
+
+EastPremium:
+  includes:
+    - [1192, 907, 1215, 926]
+
+SouthPremium-North:
+  includes:
+    - [1013, 811, 1028, 828]
+
+SouthPremium-Middle:
+  includes:
+    - [1000, 750, 1022, 768]
+
+SouthPremium-South:
+  includes:
+    - [1000, 500, 1022, 518]
+
+BlakeSeaSurrounding:
+  includes:
+    - [1131, 1036, 1152, 1061]
+  excludes:
+    - [1149, 1055, 1152, 1061]
+    - [1150, 1049, 1152, 1054]
+    - [1131, 1039, 1134, 1046]
+    - [1133, 1047, 1134, 1047]
+    - [1131, 1048, 1131, 1061]
+    - [1132, 1052, 1132, 1061]
+    - [1133, 1055, 1134, 1061]
+    - [1134, 1054, 1134, 1054]
+
+BlakeSeaSurroundingNoSuppress:
+  includes:
+    - [1131, 1036, 1152, 1061]
+
+SecondNorway:
+  includes:
+    - [1149, 1041, 1165, 1063]
+  excludes:
+    - [1149, 1046, 1152, 1047]
+    - [1149, 1049, 1149, 1054]
+
+AzureIslands:
+  includes:
+    - [977, 959, 989, 966]
+
+EdenFruitIslands:
+  includes:
+    - [459, 1700, 481, 1720]
+
+Luxory:
+  includes:
+    - [621, 1033, 632, 1050]
+
+Caledon:
+  includes:
+    - [905, 1020, 909, 1025]
+
+PlayaIsles:
+  includes:
+    - [824, 1207, 831, 1217]
+
+Freedom:
+  includes:
+    - [750, 1013, 758, 1020]
+
+TuaruaFiji:
+  includes:
+    - [1131, 1064, 1149, 1082]
+
+Uhre:
+  includes:
+    - [860, 984, 865, 989]
+
+FantasyLands:
+  includes:
+    - [841, 1001, 844, 1010]
+
+SeabirdIslands:
+  includes:
+    - [686, 920, 692, 928]
+
+CoralOcean:
+  includes:
+    - [479, 1271, 485, 1280]
+
+Gooseberry:
+  includes:
+    - [669, 1423, 674, 1429]
+
+AllenCommunity:
+  includes:
+    - 902-906/1372-1376
+
+NativeIslands:
+  includes:
+    - [733, 1367, 738, 1371]
+
+MauiIslandEstates:
+  includes:
+    - [548, 1137, 551, 1140]
+
+Rosehaven:
+  includes:
+    - [906, 1029, 909, 1034]
+
+TortugaIslands:
+  includes:
+    - [500, 1010, 504, 1013]
+
+SeductionEstate:
+  includes:
+    - [757, 926, 763, 932]
+
+AntiquityLand:
+  includes:
+    - [763, 909, 766, 913]
+
+NewHaven:
+  includes:
+    - [597, 1181, 603, 1184]
+
+TheGroveEstate:
+  includes:
+    - [1000, 1166, 1008, 1171]
+
+TheWastelands:
+  includes:
+    - [785, 1036, 787, 1039]
+
+CedarCreek:
+  includes:
+    - [849, 1342, 853, 1346]
+
+PlumIslandSoundEstate:
+  includes:
+    - [921, 1168, 923, 1171]
+
+AMEstate:
+  includes:
+    - [604, 1164, 609, 1169]
+
+CalasGaladhonPark:
+  includes:
+    - [709, 1110, 713, 1113]
+
+IsleOfWyrms:
+  includes:
+    - [545, 1059, 548, 1063]
+
+AmazonRiver:
+  includes:
+    - [832, 969, 835, 972]
+
+Baunatal:
+  includes:
+    - [715, 922, 718, 924]
+
+CrackDen:
+  includes:
+    - [742, 1389, 745, 1391]
+
+MadisonCounty:
+  includes:
+    - [850, 1320, 852, 1323]
+
+TempletonCove:
+  includes:
+    - [1027, 1240, 1030, 1242]
+
+Mythera:
+  includes:
+    - [720, 1324, 722, 1328]
+
+JunglesOfGor:
+  includes:
+    - [1097, 949, 1099, 951]
+
+Raglan:
+  includes:
+    - [1083, 1296, 1086, 1299]
+
+FairChang:
+  includes:
+    - [1103, 1048, 1110, 1060]
+  excludes:
+    - [1106, 1057, 1110, 1061]
+    - [1109, 1055, 1110, 1056]
+    - [1110, 1052, 1110, 1054]
+
+MeisterbastlerKreis:
+  includes:
+    - 1105-1114/1382-1388
+
+GoreanLands:
+  includes:
+    - [1014, 1175, 1020, 1179]
+
+AngelManor:
+  includes:
+    - [1054, 1397, 1056, 1400]
+
+NakedEstates:
+  includes:
+    - [1038, 1161, 1042, 1163]
+
+WildWest:
+  includes:
+    - [963, 1145, 967, 1149]
+
+Babbage:
+  includes:
+    - [630, 1004, 633, 1007]
+
+Capitol:
+  includes:
+    - [641, 995, 645, 998]
+
+SunIslands:
+  includes:
+    - [876, 987, 878, 990]
+
+Mieville:
+  includes:
+    - [533, 1196, 537, 1202]
+
+Pirates1700:
+  includes:
+    - [940, 1174, 942, 1177]
+
+Coeur:
+  includes:
+    - [554, 1117, 559, 1124]
+
+SnugHarbor:
+  includes:
+    - [1146, 1052, 1149, 1056]
+  excludes:
+    - [1146, 1056, 1146, 1056]
+
+ASLMetaverse:
+  includes:
+    - [763, 915, 765, 917]
+
+Yumix:
+  includes:
+    - [653, 1245, 654, 1249]
+
+VWBPE:
+  includes:
+    - [1102, 1312, 1106, 1314]
+
+Maple:
+  includes:
+    - [878, 927, 882, 928]
+
+BlackBay:
+  includes:
+    - [615, 1058, 617, 1060]
+
+Schindleria:
+  includes:
+    - [527, 1027, 529, 1029]
+
+MayaLake:
+  includes:
+    - [979, 1198, 981, 1200]
+
+MacedoniaEstate:
+  includes:
+    - [540, 1182, 544, 1185]
+
+Bauer:
+  includes:
+    - [899, 1200, 902, 1202]
+
+Olni:
+  includes:
+    - [655, 1291, 658, 1293]
+
+Romanum:
+  includes:
+    - [747, 1079, 749, 1083]
+
+EndOfTime:
+  includes:
+    - [500, 1027, 503, 1030]
+
+LindenEstateServices:
+  includes:
+    - [1025, 1014, 1031, 1016]
+
+MoleIslands:
+  includes:
+    - [1006, 971, 1011, 976]
+
+LR-160:
+  includes:
+    - [1187, 1206, 1190, 1210]
+
+LR-180:
+  includes:
+    - [1193, 1206, 1196, 1210]
+
+Preflight:
+  includes:
+    - [1296, 1193, 1299, 1196]
+
+PaleoQuest:
+  includes:
+    - [400, 392, 401, 400]
+
+RFL2023:
+  includes:
+    - [547, 705, 554, 716]
+
+SLB2023:
+  includes:
+    - [386, 359, 403, 377]
+
+

@@ -79,4 +79,6 @@ $RECYCLE.BIN/
 *.pickle
 *.pkl
 *.yaml
+## ... except these
 !example*.yaml
+!src/sl_maptools/knowns.yaml
