@@ -199,12 +199,32 @@ class AreaDescriptor:
         self.includes = AreaBoundsSet(includes)
         self.excludes = AreaBoundsSet(excludes)
         self.description = description
+        self._bbox: Optional[AreaBounds] = None
 
     def __contains__(self, item: CoordType):
         return (item in self.includes) and not (item in self.excludes)
 
+    @property
     def bounding_box(self) -> AreaBounds:
-        return self.includes.bounding_box()
+        if self._bbox is None:
+            self._bbox = self.includes.bounding_box()
+        return self._bbox
+
+    @property
+    def x_westmost(self):
+        return self.bounding_box.x_westmost
+
+    @property
+    def x_eastmost(self):
+        return self.bounding_box.x_eastmost
+
+    @property
+    def y_southmost(self):
+        return self.bounding_box.y_southmost
+
+    @property
+    def y_northmost(self):
+        return self.bounding_box.y_northmost
 
     def to_coords(self) -> set[CoordType]:
         return self.includes.to_coords() - self.excludes.to_coords()
