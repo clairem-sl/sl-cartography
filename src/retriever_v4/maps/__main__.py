@@ -223,7 +223,7 @@ def main(
             cs_anames[a1] for area in opts.areas for a1 in map(str.casefold, area.split(",")) if a1 in cs_anames
         }
         for aname in want_areas:
-            for coord in KNOWN_AREAS[aname].xy_iterator():
+            for coord in KNOWN_AREAS[aname].bounding_box.xy_iterator():
                 Progress.add(coord)
 
     print(f"Next coordinate: {Progress.next_coordinate}")
