@@ -15,8 +15,8 @@ from typing import Protocol, cast
 from PIL import Image
 
 from cartographer_v4.grid import GridMaker
-from sl_maptools import AreaBounds, CoordType, RegionsDBRecord3
-from sl_maptools.knowns import KNOWN_AREAS, SUPPRESS_FOR_AREAS
+from sl_maptools import AreaBounds, AreaDescriptor, CoordType, RegionsDBRecord3
+from sl_maptools.knowns import KNOWN_AREAS
 from sl_maptools.utils import ConfigReader, Settable, SLMapToolsConfig, handle_sigint
 from sl_maptools.validator import get_bonnie_coords, inventorize_maps_latest
 
@@ -126,12 +126,11 @@ def get_options() -> Options:
 
 def make_map(
     targ: Path,
-    bounds: AreaBounds,
+    area: AreaDescriptor,
     map_tiles: dict[CoordType, Path],
-    suppress_coords: set[CoordType] = None,
 ):
-    if suppress_coords is None:
-        suppress_coords = set()
+    suppress_coords = area.excludes
+    bounds = area.bounding_box
     csize_x = (bounds.x_eastmost - bounds.x_westmost + 1) * 256
     csize_y = (bounds.y_northmost - bounds.y_southmost + 1) * 256
     canvas = Image.new("RGBA", (csize_x, csize_y))
@@ -161,7 +160,7 @@ def main(opts: Options):
     start = time.monotonic()
 
     ts = datetime.now().strftime("%Y%m%d-%H%M")
-    wanted_areas: list[tuple[str, AreaBounds]] = []
+    wanted_areas: list[tuple[str, AreaDescriptor]] = []
     if not opts.areas:
         if not opts.continents:
             wanted_areas.extend((name, area) for name, area in KNOWN_AREAS.items())
@@ -172,7 +171,7 @@ def main(opts: Options):
     else:
         for a in opts.areas:
             aname = f"{a.x_westmost}-{a.y_southmost}-{a.x_eastmost}-{a.y_northmost}-{ts}"
-            wanted_areas.append((aname, a))
+            wanted_areas.append((aname, AreaDescriptor(includes=a)))
         if opts.continents:
             for aa in chain(map(lambda s: s.split(","), opts.continents)):
                 for a in aa:
@@ -194,22 +193,16 @@ def main(opts: Options):
     with handle_sigint(AbortRequested):
         if not opts.no_grid:
             grid_maker = GridMaker(regions_db=regsdb, validation_set=validation_set)
-        for area_name, area_bounds in wanted_areas:
+        for area_name, area_desc in wanted_areas:
             targdir = opts.outdir / area_name
             targdir.mkdir(parents=True, exist_ok=True)
-            if area_name in SUPPRESS_FOR_AREAS:
-                suppress_coords = set()
-                for bounds in SUPPRESS_FOR_AREAS[area_name]:
-                    suppress_coords.update(xy for xy in bounds.xy_iterator())
-            else:
-                suppress_coords = None
             print(f"{area_name}: ", end="", flush=True)
             targ = targdir / (area_name + ".png")
             if not opts.overwrite and targ.exists():
                 print(f"Already exists", end="")
             else:
                 print("🌐", end="", flush=True)
-                make_map(targ, area_bounds, map_tiles, suppress_coords)
+                make_map(targ, area_desc, map_tiles)
             print(f"\n  => {targ}", flush=True)
             if not opts.no_grid:
                 grid_maker.make_grid(targ, overwrite=opts.overwrite)
