@@ -164,6 +164,9 @@ class AreaBoundsSet(Iterable):
     def __iter__(self) -> Iterator[AreaBounds]:
         return iter(self.areas)
 
+    def __eq__(self, other: AreaBoundsSet):
+        return self.areas == other.areas
+
     def to_coords(self) -> set[CoordType]:
         return {(x, y) for area in self.areas for x, y in area.xy_iterator()}
 
@@ -203,6 +206,9 @@ class AreaDescriptor:
 
     def __contains__(self, item: CoordType):
         return (item in self.includes) and not (item in self.excludes)
+
+    def __eq__(self, other: AreaDescriptor):
+        return self.includes == other.includes and self.excludes == other.excludes and self.description == other.description
 
     @property
     def bounding_box(self) -> AreaBounds:
