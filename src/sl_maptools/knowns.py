@@ -231,6 +231,8 @@ DO_NOT_MAP_AREAS: Final[dict[str, AreaBounds]] = {
     "SSP-40xx": AreaBounds(1182, 1371, 1187, 1377),  ### NOT interesting
 }
 
+# fmt: on
+
 
 class _GetSupressed:
     @staticmethod
@@ -268,5 +270,3 @@ class _GetSupressed:
 
 
 SUPPRESS_FOR_AREAS = _GetSupressed()
-
-# fmt: on
