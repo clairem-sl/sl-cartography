@@ -9,6 +9,7 @@ import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from functools import partial
+from itertools import chain
 from operator import methodcaller
 from pathlib import Path
 from typing import (
@@ -164,6 +165,14 @@ class AreaBoundsSet(Iterable):
     def to_coords(self) -> set[CoordType]:
         return {(x, y) for area in self.areas for x, y in area.xy_iterator()}
 
+    def xy_iterator(self) -> Generator[CoordType, None, None]:
+        _seen = set()
+        xy: CoordType
+        for xy in chain(*self.areas):
+            if xy not in _seen:
+                _seen.add(xy)
+                yield xy
+
     def bounding_box(self) -> AreaBounds:
         x_min = y_min = math.inf
         x_max = y_max = -math.inf
@@ -198,7 +207,7 @@ class AreaDescriptor:
         return self.includes.to_coords() - self.excludes.to_coords()
 
     def xy_iterator(self) -> Generator[CoordType, None, None]:
-        yield from sorted(self.to_coords(), key=lambda i: (-i[1], i[0]))
+        yield from (xy for xy in self.includes.xy_iterator() if xy not in self.excludes)
 
     def intersect_coords(self, other: AreaDescriptor) -> set[CoordType]:
         my_coords = self.to_coords()
