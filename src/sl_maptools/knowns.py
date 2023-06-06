@@ -296,7 +296,7 @@ def _to_abounds(item) -> AreaBounds:
         return AreaBounds.from_slgi(item)
     if isinstance(item, list) and len(item) == 4:
         return AreaBounds(*item)
-    raise ValueError()
+    raise ValueError(f"Don't understand this item: {item}")
 
 
 for _n, _d in _data.items():
