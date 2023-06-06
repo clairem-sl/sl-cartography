@@ -5,10 +5,10 @@ from __future__ import annotations
 
 from typing import Final
 
-from sl_maptools import AreaBounds
+from sl_maptools import AreaBounds, AreaDescriptor
 
 # fmt: off
-KNOWN_AREAS: Final[dict[str, AreaBounds]] = {
+KNOWN_AREAS: Final[dict[str, Union[AreaBounds, AreaDescriptor]]] = {
     # region ### Linden Continents - Bellisseria
 
     # region ## Original, self-made segmentation of Bellisseria area
