@@ -59,9 +59,27 @@ KNOWN_AREAS: Final[dict[str, Union[AreaBounds, AreaDescriptor]]] = {
     # endregion
 
     # region ### User Continents
-    "BlakeSeaSurrounding": AreaBounds(1131, 1036, 1152, 1061),
+    "BlakeSeaSurrounding": AreaDescriptor(
+        includes=AreaBounds(1131, 1036, 1152, 1061),
+        excludes=[
+            AreaBounds(1149, 1055, 1152, 1061),  # Second Norway
+            AreaBounds(1150, 1049, 1152, 1054),  # Second Norway
+            AreaBounds(1131, 1039, 1134, 1046),  # Satori
+            AreaBounds(1133, 1047, 1134, 1047),  # Satori
+            AreaBounds(1131, 1048, 1131, 1061),  # Nautilus / Citadel
+            AreaBounds(1132, 1052, 1132, 1061),  # Nautilus
+            AreaBounds(1133, 1055, 1134, 1061),  # Nautilus
+            AreaBounds(1134, 1054, 1134, 1054),  # Nautilus
+        ],
+    ),
     "BlakeSeaSurroundingNoSuppress": AreaBounds(1131, 1036, 1152, 1061),
-    "SecondNorway": AreaBounds(1149, 1041, 1165, 1063),
+    "SecondNorway": AreaDescriptor(
+        includes=AreaBounds(1149, 1041, 1165, 1063),
+        excludes=[
+            AreaBounds(1149, 1046, 1152, 1047),
+            AreaBounds(1149, 1049, 1149, 1054),
+        ],
+    ),
     "AzureIslands": AreaBounds(977, 959, 989, 966),
     "EdenFruitIslands": AreaBounds(459, 1700, 481, 1720),
     "Luxory": AreaBounds(621, 1033, 632, 1050),
@@ -98,7 +116,14 @@ KNOWN_AREAS: Final[dict[str, Union[AreaBounds, AreaDescriptor]]] = {
     "Mythera": AreaBounds(720, 1324, 722, 1328),
     "JunglesOfGor": AreaBounds(1097, 949, 1099, 951),
     "Raglan": AreaBounds(1083, 1296, 1086, 1299),
-    "FairChang": AreaBounds(1103, 1048, 1110, 1060),
+    "FairChang": AreaDescriptor(
+        includes=AreaBounds(1103, 1048, 1110, 1060),
+        excludes=[
+            AreaBounds(1106, 1057, 1110, 1061),
+            AreaBounds(1109, 1055, 1110, 1056),
+            AreaBounds(1110, 1052, 1110, 1054),
+        ]
+    ),
     "MeisterbastlerKreis": AreaBounds.from_slgi("1105-1114/1382-1388"),
     # endregion
     # region ### User Continents - Tentative
@@ -112,7 +137,10 @@ KNOWN_AREAS: Final[dict[str, Union[AreaBounds, AreaDescriptor]]] = {
     "Mieville": AreaBounds(533, 1196, 537, 1202),
     "Pirates1700": AreaBounds(940, 1174, 942, 1177),
     "Coeur": AreaBounds(554, 1117, 559, 1124),
-    "SnugHarbor": AreaBounds(1146, 1052, 1149, 1056),
+    "SnugHarbor": AreaDescriptor(
+        includes=AreaBounds(1146, 1052, 1149, 1056),
+        excludes=AreaBounds(1146, 1056, 1146, 1056),
+    ),
     "ASLMetaverse": AreaBounds(763, 915, 765, 917),
     # ### Below this line, are areas with < 10 regions in a clump
     "Yumix": AreaBounds(653, 1245, 654, 1249),
@@ -145,22 +173,6 @@ KNOWN_AREAS: Final[dict[str, Union[AreaBounds, AreaDescriptor]]] = {
 }
 
 _SUPPRESS_FOR_AREAS: Final[dict[str, list[AreaBounds]]] = {
-    "FairChang": [
-        AreaBounds(1106, 1057, 1110, 1061),
-        AreaBounds(1109, 1055, 1110, 1056),
-        AreaBounds(1110, 1052, 1110, 1054),
-    ],
-    "SnugHarbor": [AreaBounds(1146, 1056, 1146, 1056)],
-    "BlakeSeaSurrounding": [
-        AreaBounds(1149, 1055, 1152, 1061),  # Second Norway
-        AreaBounds(1150, 1049, 1152, 1054),  # Second Norway
-        AreaBounds(1131, 1039, 1134, 1046),  # Satori
-        AreaBounds(1133, 1047, 1134, 1047),  # Satori
-        AreaBounds(1131, 1048, 1131, 1061),  # Nautilus / Citadel
-        AreaBounds(1132, 1052, 1132, 1061),  # Nautilus
-        AreaBounds(1133, 1055, 1134, 1061),  # Nautilus
-        AreaBounds(1134, 1054, 1134, 1054),  # Nautilus
-    ],
     "Bellisseria_SLGI_Forest": [
         AreaBounds(1063, 977, 1063, 977),  # Part of Belliseria Water Paradise
         AreaBounds(1038, 964, 1045, 977),  # Part of Belliseria Primordial / Victorian
@@ -218,10 +230,6 @@ _SUPPRESS_FOR_AREAS: Final[dict[str, list[AreaBounds]]] = {
         AreaBounds.from_slgi("1064-1068/992"),
         AreaBounds(1080, 990, 1081, 992),
         AreaBounds.from_slgi("1081/989"),
-    ],
-    "SecondNorway": [
-        AreaBounds(1149, 1046, 1152, 1047),
-        AreaBounds(1149, 1049, 1149, 1054),
     ],
 }
 
