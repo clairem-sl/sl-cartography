@@ -152,8 +152,11 @@ class AreaBounds(NamedTuple):
 
 
 class AreaBoundsSet(Iterable):
-    def __init__(self, areas: Union[AreaBounds, Iterable[AreaBounds]]):
-        self.areas = set([areas] if isinstance(areas, AreaBounds) else areas)
+    def __init__(self, areas: Union[AreaBounds, Iterable[AreaBounds]] = None):
+        if areas is None:
+            self.areas = frozenset()
+        else:
+            self.areas = frozenset([areas] if isinstance(areas, AreaBounds) else areas)
 
     def __contains__(self, item: CoordType):
         return any(item in area for area in self.areas)
@@ -190,7 +193,7 @@ class AreaDescriptor:
         self,
         includes: Union[AreaBounds, Iterable[AreaBounds]],
         *,
-        excludes: Union[AreaBounds, Iterable[AreaBounds]],
+        excludes: Union[AreaBounds, Iterable[AreaBounds]] = None,
         description: str = None
     ):
         self.includes = AreaBoundsSet(includes)
