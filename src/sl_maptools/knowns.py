@@ -3,7 +3,7 @@
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 from __future__ import annotations
 
-from typing import Final
+from typing import Final, Generator, Union
 
 from sl_maptools import AreaBounds, AreaDescriptor
 
@@ -144,7 +144,7 @@ KNOWN_AREAS: Final[dict[str, Union[AreaBounds, AreaDescriptor]]] = {
     # endregion
 }
 
-SUPPRESS_FOR_AREAS: Final[dict[str, list[AreaBounds]]] = {
+_SUPPRESS_FOR_AREAS: Final[dict[str, list[AreaBounds]]] = {
     "FairChang": [
         AreaBounds(1106, 1057, 1110, 1061),
         AreaBounds(1109, 1055, 1110, 1056),
@@ -230,5 +230,29 @@ DO_NOT_MAP_AREAS: Final[dict[str, AreaBounds]] = {
     "SSP-15xx": AreaBounds(1155, 1379, 1165, 1383),  ### NOT interesting
     "SSP-40xx": AreaBounds(1182, 1371, 1187, 1377),  ### NOT interesting
 }
+
+
+class _GetSupressed:
+    @staticmethod
+    def __getitem__(item: str):
+        if isinstance(KNOWN_AREAS[item], AreaDescriptor):
+            area: AreaDescriptor = KNOWN_AREAS[item]
+            return list(area.excludes)
+        return _SUPPRESS_FOR_AREAS[item]
+
+    @staticmethod
+    def items() -> Generator[tuple[str, list[AreaBounds]], None, None]:
+        seen = set()
+        for name, desc in KNOWN_AREAS.items():
+            if isinstance(desc, AreaDescriptor):
+                seen.add(name)
+                yield name, list(desc.excludes)
+        for name, exc in _SUPPRESS_FOR_AREAS.items():
+            if name in seen:
+                continue
+            yield name, exc
+
+
+SUPPRESS_FOR_AREAS = _GetSupressed()
 
 # fmt: on
