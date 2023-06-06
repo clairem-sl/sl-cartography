@@ -115,6 +115,15 @@ class AreaBounds(NamedTuple):
     def __and__(self, other: AreaBounds) -> Union[AreaBounds, None]:
         return self.intersection(other)
 
+    def to_slgi(self) -> str:
+        rslt = [str(self.x_westmost)]
+        if self.x_eastmost != self.x_westmost:
+            rslt.append(f"-{self.x_eastmost}")
+        rslt.append(f"/{self.y_southmost}")
+        if self.y_northmost != self.y_southmost:
+            rslt.append(f"-{self.y_northmost}")
+        return "".join(rslt)
+
     @classmethod
     def from_corners(cls, corner1: tuple[int, int], corner2: tuple[int, int]):
         x1, y1 = corner1
