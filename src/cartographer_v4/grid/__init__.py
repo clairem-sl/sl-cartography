@@ -8,7 +8,7 @@ from PIL import Image, ImageDraw, ImageFont
 from PIL.ImageFont import FreeTypeFont
 
 from sl_maptools import CoordType, RegionsDBRecord3
-from sl_maptools.knowns import KNOWN_AREAS, SUPPRESS_FOR_AREAS
+from sl_maptools.knowns import KNOWN_AREAS
 from sl_maptools.utils import SLMapToolsConfig, ConfigReader
 
 
@@ -102,21 +102,14 @@ class GridMaker:
         print("  => ", end="")
         if overwrite or not overlay_p.exists():
             print("#️⃣ ", end="")
-            bounds = KNOWN_AREAS[areaname]
-            if areaname in SUPPRESS_FOR_AREAS:
-                suppress = {xy for bounds in SUPPRESS_FOR_AREAS[areaname] for xy in bounds.xy_iterator()}
-            else:
-                suppress = set()
-            x1, y1, x2, y2 = bounds
+            x1, y1, x2, y2 = KNOWN_AREAS[areaname].bounding_box
             size_x = (x2 - x1 + 1) * 256
             size_y = (y2 - y1 + 1) * 256
             gridc = Image.new("RGBA", (size_x, size_y), color=(0, 0, 0, 0))
             draw = ImageDraw.Draw(gridc)
             regs = 0
-            for i, xy in enumerate(bounds.xy_iterator(), start=1):
+            for i, xy in enumerate(KNOWN_AREAS[areaname].xy_iterator(), start=1):
                 if xy not in self.validation_set:
-                    continue
-                if xy in suppress:
                     continue
                 regs += 1
                 x, y = xy
