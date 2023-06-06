@@ -1,3 +1,18 @@
+# Schema
+# ======
+# <area name>:
+#   includes:
+#     - <area bounds>
+#     - <more if needed>
+#   excludes:   # This part is optional
+#     - <area bounds>
+#     - ...
+#
+# Valid syntax for <area bounds>:
+#   - [x1, y1, x2, y2]   ## The corners notation: A list of 4 elements
+#   - x1-x2/y1-y2        ## The SLGI notation: A string
+# ## (x1, y1) is the southwest corner, (x2, y2) is the northeast corner, inclusive
+
 Bellisseria_CM_South:
   includes:
     - [1038, 950, 1063, 977]
@@ -506,5 +521,3 @@ RFL2023:
 SLB2023:
   includes:
     - [386, 359, 403, 377]
-
-
