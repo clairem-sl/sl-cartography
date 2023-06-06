@@ -129,25 +129,21 @@ def make_map(
     area: AreaDescriptor,
     map_tiles: dict[CoordType, Path],
 ):
-    suppress_coords = area.excludes
-    bounds = area.bounding_box
-    csize_x = (bounds.x_eastmost - bounds.x_westmost + 1) * 256
-    csize_y = (bounds.y_northmost - bounds.y_southmost + 1) * 256
+    print(f"{area.bounding_box}", end="", flush=True)
+    csize_x = (area.x_eastmost - area.x_westmost + 1) * 256
+    csize_y = (area.y_northmost - area.y_southmost + 1) * 256
     canvas = Image.new("RGBA", (csize_x, csize_y))
 
-    print(f"{bounds}", end="", flush=True)
     c = 0
-    for x, y in bounds.xy_iterator():
+    for x, y in area.xy_iterator():
         # print(coord)
         if (x, y) not in map_tiles:
-            continue
-        if (x, y) in suppress_coords:
             continue
         c += 1
         if (c % 10) == 0:
             print(".", end="", flush=True)
-        canv_x = (x - bounds.x_westmost) * 256
-        canv_y = (bounds.y_northmost - y) * 256
+        canv_x = (x - area.x_westmost) * 256
+        canv_y = (area.y_northmost - y) * 256
         with Image.open(map_tiles[x, y]) as img:
             img.load()
             canvas.paste(img, (canv_x, canv_y))
