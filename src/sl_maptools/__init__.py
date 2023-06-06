@@ -9,7 +9,6 @@ import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from functools import partial
-from itertools import chain
 from operator import methodcaller
 from pathlib import Path
 from typing import (
@@ -168,10 +167,11 @@ class AreaBoundsSet(Iterable):
     def xy_iterator(self) -> Generator[CoordType, None, None]:
         _seen = set()
         xy: CoordType
-        for xy in chain(*self.areas):
-            if xy not in _seen:
-                _seen.add(xy)
-                yield xy
+        for area in self.areas:
+            for xy in area.xy_iterator():
+                if xy not in _seen:
+                    _seen.add(xy)
+                    yield xy
 
     def bounding_box(self) -> AreaBounds:
         x_min = y_min = math.inf
