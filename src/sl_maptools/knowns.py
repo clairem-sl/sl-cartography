@@ -234,6 +234,13 @@ DO_NOT_MAP_AREAS: Final[dict[str, AreaBounds]] = {
 
 class _GetSupressed:
     @staticmethod
+    def __contains__(item: str):
+        area = KNOWN_AREAS[item]
+        if isinstance(area, AreaDescriptor):
+            return bool(area.excludes)
+        return item in _SUPPRESS_FOR_AREAS
+
+    @staticmethod
     def __getitem__(item: str):
         if isinstance(KNOWN_AREAS[item], AreaDescriptor):
             area: AreaDescriptor = KNOWN_AREAS[item]
@@ -251,6 +258,13 @@ class _GetSupressed:
             if name in seen:
                 continue
             yield name, exc
+
+    @staticmethod
+    def get(item: str, default=None) -> Union[list[AreaBounds] | None]:
+        area = KNOWN_AREAS[item]
+        if isinstance(area, AreaDescriptor):
+            return list(area.excludes)
+        return _SUPPRESS_FOR_AREAS.get(item, default)
 
 
 SUPPRESS_FOR_AREAS = _GetSupressed()
