@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import io
+import math
 import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -15,6 +16,7 @@ from typing import (
     Final,
     Generator,
     Iterable,
+    Iterator,
     NamedTuple,
     Optional,
     Protocol,
@@ -138,6 +140,52 @@ class AreaBounds(NamedTuple):
         if y_min is None:
             raise ValueError(f"Albeit valid, the notation does not describe an area: {notation}")
         return cls(int(x_min), int(y_min), int(x_max), int(y_max))
+
+
+class AreaBoundsSet(Iterable):
+    def __init__(self, areas: Iterable[AreaBounds]):
+        self.areas = set(areas)
+
+    def __contains__(self, item: CoordType):
+        return any(item in area for area in self.areas)
+
+    def __iter__(self) -> Iterator[AreaBounds]:
+        return iter(self.areas)
+
+    def to_coords(self) -> set[CoordType]:
+        return {(x, y) for area in self.areas for x, y in area.xy_iterator()}
+
+    def bounding_box(self) -> AreaBounds:
+        x_min = y_min = math.inf
+        x_max = y_max = -math.inf
+        for area in self.areas:
+            x1, y1, x2, y2 = area
+            x_min = min(x_min, x1)
+            y_min = min(y_min, y1)
+            x_max = max(x_max, x2)
+            y_max = max(y_max, y2)
+        return AreaBounds(x_min, y_min, x_max, y_max)
+
+
+class AreaDescriptor:
+    def __init__(self, includes: Iterable[AreaBounds], *, excludes: Iterable[AreaBounds], description: str = None):
+        self.includes = AreaBoundsSet(includes)
+        self.excludes = AreaBoundsSet(excludes)
+        self.description = description
+
+    def __contains__(self, item: CoordType):
+        return (item in self.includes) and not (item in self.excludes)
+
+    def bounding_box(self) -> AreaBounds:
+        return self.includes.bounding_box()
+
+    def to_coords(self) -> set[CoordType]:
+        return self.includes.to_coords() - self.excludes.to_coords()
+
+    def intersect_coords(self, other: AreaDescriptor) -> set[CoordType]:
+        my_coords = self.to_coords()
+        theirs = other.includes.to_coords() - other.excludes.to_coords()
+        return my_coords - theirs
 
 
 class MapCoord(NamedTuple):
