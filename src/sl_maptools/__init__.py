@@ -197,6 +197,9 @@ class AreaDescriptor:
     def to_coords(self) -> set[CoordType]:
         return self.includes.to_coords() - self.excludes.to_coords()
 
+    def xy_iterator(self) -> Generator[CoordType, None, None]:
+        yield from sorted(self.to_coords(), key=lambda i: (-i[1], i[0]))
+
     def intersect_coords(self, other: AreaDescriptor) -> set[CoordType]:
         my_coords = self.to_coords()
         theirs = other.includes.to_coords() - other.excludes.to_coords()
