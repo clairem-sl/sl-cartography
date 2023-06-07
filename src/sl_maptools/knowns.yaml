@@ -278,6 +278,26 @@ SLB2023:
   includes:
     - [386, 359, 403, 377]
 
+K13-Areas:
+  includes:
+    - 1135-1162/1300-1319
+
+Etopia:
+  includes:
+    - [1136, 1315, 1137, 1317]
+
+CoDS:
+  includes:
+    - [1138, 1311, 1139, 1313]
+
+Rockcliffe:
+  includes:
+    - 1150-1153/1306-1308
+
+ScienceCluster:
+  includes:
+    - [1138, 1296, 1160, 1317]
+
 # endregion
 
 # region # User/Private Continents
@@ -551,5 +571,9 @@ Romanum:
 EndOfTime:
   includes:
     - [500, 1027, 503, 1030]
+
+LondonCity:
+  includes:
+    - 850-851/895-897
 
 # endregion
