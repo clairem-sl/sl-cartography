@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Final, Literal, Union
+from typing import Final, Literal
 
 from ruamel.yaml import YAML
 
