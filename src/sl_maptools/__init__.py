@@ -210,7 +210,7 @@ class AreaDescriptor:
         return (item in self.includes) and not (item in self.excludes)
 
     def __eq__(self, other: AreaDescriptor):
-        return self.includes == other.includes and self.excludes == other.excludes and self.description == other.description
+        return self.includes == other.includes and self.excludes == other.excludes
 
     @property
     def bounding_box(self) -> AreaBounds:
