@@ -244,6 +244,42 @@ SouthPremium-South:
 
 # endregion
 
+# region # Special Linden Areas
+
+LindenEstateServices:
+  includes:
+    - [1025, 1014, 1031, 1016]
+
+MoleIslands:
+  includes:
+    - [1006, 971, 1011, 976]
+
+LR-160:
+  includes:
+    - [1187, 1206, 1190, 1210]
+
+LR-180:
+  includes:
+    - [1193, 1206, 1196, 1210]
+
+Preflight:
+  includes:
+    - [1296, 1193, 1299, 1196]
+
+PaleoQuest:
+  includes:
+    - [400, 392, 401, 400]
+
+RFL2023:
+  includes:
+    - [547, 705, 554, 716]
+
+SLB2023:
+  includes:
+    - [386, 359, 403, 377]
+
+# endregion
+
 # region # User/Private Continents
 
 BlakeSeaSurrounding:
@@ -515,41 +551,5 @@ Romanum:
 EndOfTime:
   includes:
     - [500, 1027, 503, 1030]
-
-# endregion
-
-# region # Special Linden Areas
-
-LindenEstateServices:
-  includes:
-    - [1025, 1014, 1031, 1016]
-
-MoleIslands:
-  includes:
-    - [1006, 971, 1011, 976]
-
-LR-160:
-  includes:
-    - [1187, 1206, 1190, 1210]
-
-LR-180:
-  includes:
-    - [1193, 1206, 1196, 1210]
-
-Preflight:
-  includes:
-    - [1296, 1193, 1299, 1196]
-
-PaleoQuest:
-  includes:
-    - [400, 392, 401, 400]
-
-RFL2023:
-  includes:
-    - [547, 705, 554, 716]
-
-SLB2023:
-  includes:
-    - [386, 359, 403, 377]
 
 # endregion
