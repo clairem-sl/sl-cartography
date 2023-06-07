@@ -32,7 +32,7 @@ class CartographerOptions(Protocol):
     outdir: Path
     regionsdb: Path
     overwrite: bool
-    exclusion_method: str
+    exclusion_method: ExclusionMethod
 
 
 class Options(CartographerOptions, Protocol):
@@ -121,7 +121,8 @@ def get_options() -> Options:
     parser.add_argument(
         "--exclusion-method",
         metavar="METHOD",
-        choices=ExclusionMethod.__members__.keys(),
+        type=ExclusionMethod.__members__.get,
+        choices=ExclusionMethod.__members__.values(),
         default="HIDE",
         help="One of " + ", ".join(ExclusionMethod.__members__.keys())
     )
