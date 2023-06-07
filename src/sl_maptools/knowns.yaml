@@ -13,6 +13,10 @@
 #   - x1-x2/y1-y2        ## The SLGI notation: A string
 # ## (x1, y1) is the southwest corner, (x2, y2) is the northeast corner, inclusive
 
+# region # Linden Continents - Bellisseria
+
+# region ## Claire's Belli separation
+
 Bellisseria_CM_South:
   includes:
     - [1038, 950, 1063, 977]
@@ -36,6 +40,10 @@ Bellisseria_CM_Central:
 Bellisseria_CM_North:
   includes:
     - [1078, 987, 1100, 1024]
+
+# endregion
+
+# region ## SLGI's Belli separation
 
 Bellisseria_SLGI_Forest:
   includes:
@@ -120,6 +128,10 @@ Bellisseria_SLGI_WaterParadise:
     - [1080, 990, 1081, 992]
     - 1081/989
 
+# endregion
+
+# region ## BBB's & BB's Belli separation
+
 Bellisseria-Fantasseria:
   includes:
     - [1037, 930, 1053, 949]
@@ -143,6 +155,12 @@ Bellisseria-Stiltlands:
     - [1058, 967, 1063, 974]
     - [1058, 975, 1062, 975]
     - [1060, 976, 1061, 976]
+
+# endregion
+
+# endregion
+
+# region # Linden Continents - Mainland
 
 Zindra:
   includes:
@@ -204,6 +222,10 @@ BlakeSea:
   includes:
     - [1131, 1048, 1148, 1054]
 
+# endregion
+
+# region # Linden Continents - Premium
+
 EastPremium:
   includes:
     - [1192, 907, 1215, 926]
@@ -219,6 +241,10 @@ SouthPremium-Middle:
 SouthPremium-South:
   includes:
     - [1000, 500, 1022, 518]
+
+# endregion
+
+# region # User/Private Continents
 
 BlakeSeaSurrounding:
   includes:
@@ -490,6 +516,10 @@ EndOfTime:
   includes:
     - [500, 1027, 503, 1030]
 
+# endregion
+
+# region # Special Linden Areas
+
 LindenEstateServices:
   includes:
     - [1025, 1014, 1031, 1016]
@@ -521,3 +551,5 @@ RFL2023:
 SLB2023:
   includes:
     - [386, 359, 403, 377]
+
+# endregion
