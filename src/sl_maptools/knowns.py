@@ -306,7 +306,7 @@ def read_known_areas(yaml_file: Path):
     for _n, _d in _data.items():
         _incs = {_to_abounds(i) for i in _d["includes"]}
         _excs = {_to_abounds(i) for i in _d.get("excludes", [])}
-        KNOWN_AREAS[_n] = AreaDescriptor(includes=_incs, excludes=_excs)
+        KNOWN_AREAS[_n] = AreaDescriptor(includes=_incs, excludes=_excs, name=_n)
 
 
 read_known_areas(Path(__file__).with_suffix(".yaml"))
