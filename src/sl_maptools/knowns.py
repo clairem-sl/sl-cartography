@@ -286,20 +286,27 @@ DO_NOT_MAP_AREAS: Final[dict[str, AreaBounds]] = {
 
 KNOWN_AREAS: Final[dict[str, AreaDescriptor]] = {}
 
-_data: dict[str, dict[Union[Literal["includes"], Literal["excludes"]], list[Union[str, list[int]]]]]
-with Path(__file__).with_suffix(".yaml").open("rt") as fin:
-    _data = YAML(typ="safe").load(fin)
+
+AreaDef = dict[Literal["includes"] | Literal["excludes"], list[str | list[int]]]
 
 
-def _to_abounds(item) -> AreaBounds:
-    if isinstance(item, str):
-        return AreaBounds.from_slgi(item)
-    if isinstance(item, list) and len(item) == 4:
-        return AreaBounds(*item)
-    raise ValueError(f"Don't understand this item: {item}")
+def read_known_areas(yaml_file: Path):
+    KNOWN_AREAS.clear()
+    _data: dict[str, AreaDef]
+    with yaml_file.open("rt") as fin:
+        _data = YAML(typ="safe").load(fin)
+
+    def _to_abounds(item) -> AreaBounds:
+        if isinstance(item, str):
+            return AreaBounds.from_slgi(item)
+        if isinstance(item, list) and len(item) == 4:
+            return AreaBounds(*item)
+        raise ValueError(f"Don't understand this item: {item}")
+
+    for _n, _d in _data.items():
+        _incs = {_to_abounds(i) for i in _d["includes"]}
+        _excs = {_to_abounds(i) for i in _d.get("excludes", [])}
+        KNOWN_AREAS[_n] = AreaDescriptor(includes=_incs, excludes=_excs)
 
 
-for _n, _d in _data.items():
-    _incs = {_to_abounds(i) for i in _d["includes"]}
-    _excs = {_to_abounds(i) for i in _d.get("excludes", [])}
-    KNOWN_AREAS[_n] = AreaDescriptor(includes=_incs, excludes=_excs)
+read_known_areas(Path(__file__).with_suffix(".yaml"))
