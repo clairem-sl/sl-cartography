@@ -1,6 +1,7 @@
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
+from enum import Enum, auto, unique
 from pathlib import Path
 from typing import Optional, TypedDict, Final
 
@@ -30,6 +31,20 @@ class TextSettings(TypedDict):
     fill: RGBATuple
     stroke_width: int
     stroke_fill: RGBATuple
+
+
+@unique
+class ExclusionMethod(Enum):
+    NONE = auto()
+    """Do not hide regions excluded from areas (they will still not be labeled/gridded)"""
+    HIDE = auto()
+    """Hide regions excluded from areas"""
+    TRANSP = auto()
+    """Excluded areas are made semi-transparent, but not covered"""
+    HATCHED = auto()
+    """Excluded areas are covered by half-transparent hatched square"""
+    FOG = auto()
+    """Excluded areas are covered by a fog square (solid but half-transparent fill)"""
 
 
 class GridMaker:
@@ -72,6 +87,43 @@ class GridMaker:
             }
         self.default_coord_settings = coord_setttings
 
+        self._cover_hr: Optional[Image.Image] = None
+        self._cover_fog: Optional[Image.Image] = None
+
+    @property
+    def cover_hatched(self) -> Image.Image:
+        if self._cover_hr is None:
+            _cov = Image.new("RGBA", (256, 256), color=(0, 0, 0, 0))
+            _drw = ImageDraw.Draw(_cov)
+            ul = 0
+            lr = 255
+            for a in ALPHA_PATTERN:
+                _drw.rectangle((ul, ul, lr, lr), width=1, outline=(255, 255, 255, a))
+                ul += 1
+                lr -= 1
+            for c in range(16, 256, 16):
+                _drw.line([(c - 2, 1), (1, c - 2)], fill=(255, 255, 255, 32), width=3)
+                _drw.line([(c, 1), (1, c)], fill=(255, 255, 255, 32), width=2)
+                _drw.line([(c, 0), (0, c)], fill=(255, 255, 255, 92), width=3)
+            self._cover_hr = _cov
+        return self._cover_hr
+
+    @property
+    def cover_fog(self) -> Image.Image:
+        if self._cover_fog is None:
+            _cov = Image.new("RGBA", (256, 256), color=(0, 0, 0, 0))
+            _drw = ImageDraw.Draw(_cov)
+            ul = 0
+            lr = 255
+            a = 96
+            for a in ALPHA_PATTERN:
+                _drw.rectangle((ul, ul, lr, lr), width=1, outline=(255, 255, 255, a))
+                ul += 1
+                lr -= 1
+            _drw.rectangle((ul, ul, lr, lr), width=0, fill=(255, 255, 255, a))
+            self._cover_fog = _cov
+        return self._cover_fog
+
     def make_grid(
             self,
             areamap: Path,
@@ -81,6 +133,7 @@ class GridMaker:
             no_coords: bool = False,
             regname_settings: TextSettings = None,
             coord_setttings: TextSettings = None,
+            exclusion_method: ExclusionMethod = ExclusionMethod.HIDE,
     ):
         if out_dir is None:
             if self.out_dir is None:
@@ -102,41 +155,48 @@ class GridMaker:
         print("  => ", end="")
         if overwrite or not overlay_p.exists():
             print("#️⃣ ", end="")
-            x1, y1, x2, y2 = KNOWN_AREAS[areaname].bounding_box
+            area = KNOWN_AREAS[areaname]
+            x1, y1, x2, y2 = area.bounding_box
             size_x = (x2 - x1 + 1) * 256
             size_y = (y2 - y1 + 1) * 256
             gridc = Image.new("RGBA", (size_x, size_y), color=(0, 0, 0, 0))
             draw = ImageDraw.Draw(gridc)
             regs = 0
-            for i, xy in enumerate(KNOWN_AREAS[areaname].xy_iterator(), start=1):
+
+            if exclusion_method == ExclusionMethod.HIDE:
+                xy_iterator = area.xy_iterator
+            else:
+                xy_iterator = area.bounding_box.xy_iterator
+
+            for i, xy in enumerate(xy_iterator(), start=1):
                 if xy not in self.validation_set:
                     continue
                 regs += 1
                 x, y = xy
                 cx = (x - x1) * 256
                 cy = (y2 - y) * 256
-                gridc.paste(self._sq, (cx, cy))
-                regname = self.regions_db[xy]["current_name"]
-                # print(regname)
-                ty = cy + 4
-                if not no_names:
-                    draw.text(
-                        (cx + 5, ty),
-                        f"{regname}",
-                        **regname_settings
-                    )
-                    ty += 27
-                if not no_coords:
-                    draw.text(
-                        (cx + 5, ty),
-                        f"{x},{y}",
-                        **coord_setttings
-                    )
+                if xy in area:
+                    gridc.paste(self._sq, (cx, cy))
+                    regname = self.regions_db[xy]["current_name"]
+                    # print(regname)
+                    ty = cy + 4
+                    if not no_names:
+                        draw.text((cx + 5, ty), f"{regname}", **regname_settings)
+                        ty += 27
+                    if not no_coords:
+                        draw.text((cx + 5, ty), f"{x},{y}", **coord_setttings)
+                elif exclusion_method == ExclusionMethod.FOG:
+                    gridc.paste(self.cover_fog, (cx, cy))
+                elif exclusion_method == ExclusionMethod.HATCHED:
+                    gridc.paste(self.cover_hatched, (cx, cy))
+                elif exclusion_method == ExclusionMethod.TRANSP:
+                    gridc.paste(self._sq, (cx, cy))
                 if (i % 10) == 0:
                     print(".", end="", flush=True)
             print(f"[{regs}]", end="", flush=True)
             gridc.save(overlay_p)
         print(f"{overlay_p}\n  => ", end="", flush=True)
+
         composite_p = out_dir / (areaname + ".composited.png")
         if overwrite or not composite_p.exists():
             if gridc is None:

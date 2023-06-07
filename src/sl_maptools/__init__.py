@@ -235,8 +235,11 @@ class AreaDescriptor:
     def to_coords(self) -> set[CoordType]:
         return self.includes.to_coords() - self.excludes.to_coords()
 
-    def xy_iterator(self) -> Generator[CoordType, None, None]:
-        yield from (xy for xy in self.includes.xy_iterator() if xy not in self.excludes)
+    def xy_iterator(self, with_exclusions: bool = True) -> Generator[CoordType, None, None]:
+        if with_exclusions:
+            yield from (xy for xy in self.includes.xy_iterator() if xy not in self.excludes)
+        else:
+            yield from (xy for xy in self.includes.xy_iterator())
 
     def intersect_coords(self, other: AreaDescriptor) -> set[CoordType]:
         my_coords = self.to_coords()

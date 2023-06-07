@@ -14,7 +14,7 @@ from typing import Protocol, cast
 
 from PIL import Image
 
-from cartographer_v4.grid import GridMaker
+from cartographer_v4.grid import ExclusionMethod, GridMaker
 from sl_maptools import AreaBounds, AreaDescriptor, CoordType, RegionsDBRecord3
 from sl_maptools.knowns import KNOWN_AREAS
 from sl_maptools.utils import ConfigReader, Settable, SLMapToolsConfig, handle_sigint
@@ -32,6 +32,7 @@ class CartographerOptions(Protocol):
     outdir: Path
     regionsdb: Path
     overwrite: bool
+    exclusion_method: str
 
 
 class Options(CartographerOptions, Protocol):
@@ -117,6 +118,13 @@ def get_options() -> Options:
         action="store_true",
         help="If specified, overwrite existing hi-res map file.",
     )
+    parser.add_argument(
+        "--exclusion-method",
+        metavar="METHOD",
+        choices=ExclusionMethod.__members__.keys(),
+        default="HIDE",
+        help="One of " + ", ".join(ExclusionMethod.__members__.keys())
+    )
 
     _opts = parser.parse_args()
     if _opts.outdir is None:
@@ -128,14 +136,19 @@ def make_map(
     targ: Path,
     area: AreaDescriptor,
     map_tiles: dict[CoordType, Path],
+    exclusion_method: ExclusionMethod,
 ):
     print(f"{area.bounding_box}", end="", flush=True)
     csize_x = (area.x_eastmost - area.x_westmost + 1) * 256
     csize_y = (area.y_northmost - area.y_southmost + 1) * 256
     canvas = Image.new("RGBA", (csize_x, csize_y))
 
+    if exclusion_method is ExclusionMethod.HIDE:
+        xy_iterator = area.xy_iterator
+    else:
+        xy_iterator = area.bounding_box.xy_iterator
     c = 0
-    for x, y in area.xy_iterator():
+    for x, y in xy_iterator():
         # print(coord)
         if (x, y) not in map_tiles:
             continue
@@ -146,6 +159,8 @@ def make_map(
         canv_y = (area.y_northmost - y) * 256
         with Image.open(map_tiles[x, y]) as img:
             img.load()
+            if exclusion_method is ExclusionMethod.TRANSP:
+                img.putalpha(128)
             canvas.paste(img, (canv_x, canv_y))
 
     # print(targ)
@@ -198,10 +213,10 @@ def main(opts: Options):
                 print(f"Already exists", end="")
             else:
                 print("🌐", end="", flush=True)
-                make_map(targ, area_desc, map_tiles)
+                make_map(targ, area_desc, map_tiles, opts.exclusion_method)
             print(f"\n  => {targ}", flush=True)
             if not opts.no_grid:
-                grid_maker.make_grid(targ, overwrite=opts.overwrite)
+                grid_maker.make_grid(targ, overwrite=opts.overwrite, exclusion_method=opts.exclusion_method)
                 print()
             if AbortRequested.is_set():
                 break
