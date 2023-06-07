@@ -160,8 +160,8 @@ def make_map(
         canv_y = (area.y_northmost - y) * 256
         with Image.open(map_tiles[x, y]) as img:
             img.load()
-            if exclusion_method is ExclusionMethod.TRANSP:
-                img.putalpha(128)
+            if exclusion_method is ExclusionMethod.TRANSP and (x, y) not in area:
+                img.putalpha(63)
             canvas.paste(img, (canv_x, canv_y))
 
     # print(targ)

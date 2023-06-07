@@ -194,7 +194,7 @@ class GridMaker:
                 elif exclusion_method == ExclusionMethod.HATCHED:
                     gridc.paste(self.cover_hatched, (cx, cy))
                 elif exclusion_method == ExclusionMethod.TRANSP:
-                    gridc.paste(self._sq, (cx, cy))
+                    pass
                 if (i % 10) == 0:
                     print(".", end="", flush=True)
             print(f"[{regs}]", end="", flush=True)
