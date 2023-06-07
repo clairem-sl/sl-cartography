@@ -197,10 +197,12 @@ class AreaDescriptor:
         includes: Union[AreaBounds, Iterable[AreaBounds]],
         *,
         excludes: Union[AreaBounds, Iterable[AreaBounds]] = None,
-        description: str = None
+        name: str = None,
+        description: str = None,
     ):
         self.includes = AreaBoundsSet(includes)
         self.excludes = AreaBoundsSet(excludes)
+        self.name = name
         self.description = description
         self._bbox: Optional[AreaBounds] = None
 
