@@ -119,12 +119,11 @@ class GridMaker:
             _drw = ImageDraw.Draw(_cov)
             ul = 0
             lr = 255
-            a = 96
-            for a in ALPHA_PATTERN:
-                _drw.rectangle((ul, ul, lr, lr), width=1, outline=(255, 255, 255, a))
-                ul += 1
-                lr -= 1
-            _drw.rectangle((ul, ul, lr, lr), width=0, fill=(255, 255, 255, a))
+            # for a in ALPHA_PATTERN:
+            #     _drw.rectangle((ul, ul, lr, lr), width=1, outline=(255, 255, 255, a))
+            #     ul += 1
+            #     lr -= 1
+            _drw.rectangle((ul, ul, lr, lr), width=0, fill=(255, 255, 255, 127))
             self._cover_fog = _cov
         return self._cover_fog
 
