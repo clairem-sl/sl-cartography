@@ -101,10 +101,14 @@ class GridMaker:
                 _drw.rectangle((ul, ul, lr, lr), width=1, outline=(255, 255, 255, a))
                 ul += 1
                 lr -= 1
-            for c in range(16, 256, 16):
-                _drw.line([(c - 2, 1), (1, c - 2)], fill=(255, 255, 255, 32), width=3)
-                _drw.line([(c, 1), (1, c)], fill=(255, 255, 255, 32), width=2)
-                _drw.line([(c, 0), (0, c)], fill=(255, 255, 255, 92), width=3)
+            for c in range(31, 256, 32):
+                _drw.line([(c - 4, 2), (2, c - 4)], fill=(255, 255, 255, 32), width=5)
+                _drw.line([(c, 2), (2, c)], fill=(255, 255, 255, 32), width=5)
+                _drw.line([(c, 0), (0, c)], fill=(255, 255, 255, 92), width=5)
+                c = (255 + 32) - c
+                _drw.line([(c + 4, 253), (253, c + 4)], fill=(255, 255, 255, 32), width=5)
+                _drw.line([(c, 253), (253, c)], fill=(255, 255, 255, 32), width=5)
+                _drw.line([(c, 255), (255, c)], fill=(255, 255, 255, 92), width=5)
             self._cover_hr = _cov
         return self._cover_hr
 
