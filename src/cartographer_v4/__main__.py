@@ -33,6 +33,7 @@ class CartographerOptions(Protocol):
     regionsdb: Path
     overwrite: bool
     exclusion_method: ExclusionMethod
+    no_bonnie: bool
 
 
 class Options(CartographerOptions, Protocol):
@@ -126,6 +127,10 @@ def get_options() -> Options:
         default="HIDE",
         help="One of " + ", ".join(ExclusionMethod.__members__.keys())
     )
+    parser.add_argument(
+        "--no-bonnie",
+        action="store_true",
+    )
 
     _opts = parser.parse_args()
     if _opts.outdir is None:
@@ -195,8 +200,9 @@ def main(opts: Options):
         regsdb: dict[CoordType, RegionsDBRecord3] = pickle.load(fin)
     validation_set: set[CoordType] = set()
     validation_set.update(k for k, v in regsdb.items() if v["current_name"])
-    bonnie_coords = get_bonnie_coords(None, True)
-    validation_set.intersection_update(bonnie_coords)
+    if not opts.no_bonnie:
+        bonnie_coords = get_bonnie_coords(None, True)
+        validation_set.intersection_update(bonnie_coords)
     for co in list(map_tiles.keys()):
         if co not in validation_set:
             del map_tiles[co]
