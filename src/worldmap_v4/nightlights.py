@@ -9,7 +9,7 @@ from typing import Final, Protocol, TypedDict, cast
 from PIL import Image, ImageDraw
 
 from sl_maptools import MapCoord, RegionsDBRecord
-from sl_maptools.utils import ConfigReader
+from sl_maptools.utils import ConfigReader, make_backup
 from sl_maptools.validator import get_bonnie_coords, inventorize_maps_all
 
 Config = ConfigReader("config.toml")
@@ -39,7 +39,6 @@ class Options(Protocol):
     no_validate: bool
     bonniedb: Path
     fetchbonnie: bool
-    force: bool
 
 
 class BonnieRegionData(TypedDict):
@@ -59,8 +58,6 @@ def get_opts():
     grp = parser.add_mutually_exclusive_group()
     grp.add_argument("--bonniedb", type=Path, default=None)
     grp.add_argument("--fetchbonnie", action="store_true")
-
-    parser.add_argument("--force", action="store_true")
 
     _opts = parser.parse_args()
 
@@ -308,8 +305,7 @@ def make_map(opts: Options):
         targ = opts.outdir / "worldmap4_nightlights_unvalidated.png"
 
     if targ.exists():
-        if not opts.force:
-            raise FileExistsError(f"{targ} already exists but --force not specified!")
+        make_backup(targ)
         targ.unlink()
 
     print("Creating Nightlights Map ... ", end="", flush=True)
