@@ -3,6 +3,7 @@
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import pickle
+from collections import defaultdict
 from datetime import datetime, timedelta
 from pathlib import Path
 from pprint import pprint
@@ -43,8 +44,21 @@ def main():
     interesting: list[InterestingRegion] = sorted(recent(CUTOFF))
     print(f"{len(interesting)} new regions the past {CUTOFF} days")
     new_areas: dict[str, list[CoordType]] = {}
+    x_s: dict[str, set[int]] = defaultdict(set)
+    y_s: dict[str, set[int]] = defaultdict(set)
+
     for i, (t, name, co) in enumerate(interesting, start=1):
-        print(f"{i:>3}) {t.isoformat(timespec='minutes')} {name} {co}")
+        print(f"{i:>3}) {t.isoformat(timespec='minutes')} {co} {name}")
+        x, y = co
+        if 22 <= i <= 27:
+            x_s["Silks"].add(x)
+            y_s["Silks"].add(y)
+        elif i >= 31:
+            x_s["Azure"].add(x)
+            y_s["Azure"].add(y)
+
+    for k in x_s:
+        print(f"{k}: {min(x_s[k])}-{max(x_s[k])}/{min(y_s[k])}-{max(y_s[k])}")
 
 
 if __name__ == '__main__':
