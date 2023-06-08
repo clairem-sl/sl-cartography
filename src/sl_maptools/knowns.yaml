@@ -326,9 +326,13 @@ SecondNorway:
     - [1149, 1046, 1152, 1047]
     - [1149, 1049, 1149, 1054]
 
-AzureIslands:
+AzureIslands-Old:
   includes:
     - [977, 959, 989, 966]
+
+AzureIslands:
+  includes:
+    - 1143-1155/1065-1072
 
 EdenFruitIslands:
   includes:
