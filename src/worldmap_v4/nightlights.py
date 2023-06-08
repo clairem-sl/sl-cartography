@@ -289,7 +289,7 @@ def make_map(opts: Options):
     print(f"Reading Auditor's DB from {dbpath} ... ", end="", flush=True)
     with dbpath.open("rb") as fin:
         data_raw: dict[tuple[int, int], RegionsDBRecord] = pickle.load(fin)
-    print(flush=True)
+    print(f"{len(data_raw):_} records", flush=True)
 
     targ: Path
     regions: set[tuple[int, int]] = set(k for k, v in data_raw.items() if v["current_name"])
