@@ -294,10 +294,12 @@ def make_map(opts: Options):
     targ: Path
     regions: set[tuple[int, int]] = set(k for k, v in data_raw.items() if v["current_name"])
     if not opts.no_validate:
+        # Get Bonnie data
         bonnie_coords = get_bonnie_coords(bonniedb, opts.fetchbonnie)
         if bonnie_coords:
             regions.intersection_update(bonnie_coords)
             print(flush=True)
+        # Get Maptiles data
         mapfiles = inventorize_maps_all(opts.mapdir)
         regions.intersection_update(mapfiles.keys())
         targ = opts.outdir / "worldmap4_nightlights.png"
