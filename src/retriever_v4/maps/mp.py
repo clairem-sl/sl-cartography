@@ -3,6 +3,7 @@
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 import argparse
 import asyncio
+import contextlib
 import multiprocessing as MP
 import multiprocessing.managers as MPMgr
 import multiprocessing.pool as mp_pool
@@ -258,84 +259,79 @@ class ProgressionDict(TypedDict):
     last: Optional[datetime]
 
 
-def main(opts: MPMapOptions):
-    start = time.monotonic()
+def launch_workers(
+    opts: MPMapOptions, progress: ProgressDict, mgr: MPMgr.SyncManager
+) -> tuple[int, set[CoordType], dict[int, ProgressionDict], list[QResult]]:
+    errs: list[QResult] = []
+    coord_queue: MP.Queue = mgr.Queue()
+    save_queue: MP.Queue = mgr.Queue(maxsize=4000)
+    dispatched_queue: MP.Queue = mgr.Queue()
+    result_queue: MP.Queue = mgr.Queue()
+
+    r_args = (
+        coord_queue,
+        save_queue,
+        dispatched_queue,
+        result_queue,
+        AbortRequested,
+    )
+    s_args = (Path(Config.maps.mp_dir), save_queue, result_queue)
+
+    progression: dict[int, ProgressionDict] = {y: {"start": None, "done": 0, "last": None} for y in range(0, 2101)}
+    outstanding: set[CoordType] = set()
+    total: int = 0
+    count: int = 0
+
+    def flush_dispatched_queue(msg: bool = False):
+        nonlocal count
+        try:
+            if msg:
+                print("Flushing dispatch queue", flush=True)
+            while True:
+                di = dispatched_queue.get_nowait()
+                if isinstance(di, list):
+                    outstanding.update(cast(list[CoordType], di))
+                elif isinstance(di, int):
+                    count += di
+        except queue.Empty:
+            pass
+
+    def flush_result_queue(msg: bool = False):
+        nonlocal total
+        try:
+            if msg:
+                print("Flushing result queue", flush=True)
+            while True:
+                rslt: QResult = result_queue.get_nowait()
+                if rslt.exc is None:
+                    outstanding.discard(rslt.coord)
+                    if rslt.entity.startswith("Saver"):
+                        total += 1
+                    else:
+                        _, y = rslt.coord
+                        _prog = progression[y]
+                        if _prog["start"] is None:
+                            _prog["start"] = datetime.now()
+                        _prog["done"] += 1
+                        _prog["last"] = datetime.now()
+                else:
+                    errs.append(rslt)
+        except queue.Empty:
+            pass
 
     pool_r: mp_pool.Pool
     pool_s: mp_pool.Pool
-
-    progress_file = opts.mapdir / Config.maps.mp_progress
-    if progress_file.exists():
-        with progress_file.open("rb") as fin:
-            progress: ProgressDict = pickle.load(fin)
-        if progress["next_row"] is None:
-            progress["next_row"] = -1
-    else:
-        progress = {
-            "next_row": START_ROW,
-            "backlog": set(),
-        }
-    print(f"Backlog from previous run: {len(progress['backlog']):_}\nNext row after backlog: {progress['next_row']}")
-
-    errs: list[QResult] = []
-    mgr: MPMgr.SyncManager
-    with MP.Manager() as mgr:
-        coord_queue: MP.Queue = mgr.Queue()
-        save_queue: MP.Queue = mgr.Queue(maxsize=4000)
-        dispatched_queue: MP.Queue = mgr.Queue()
-        result_queue: MP.Queue = mgr.Queue()
-
-        r_args = (
-            coord_queue,
-            save_queue,
-            dispatched_queue,
-            result_queue,
-            AbortRequested,
-        )
-        s_args = (Path(Config.maps.mp_dir), save_queue, result_queue)
-
-        progression: dict[int, ProgressionDict] = {y: {"start": None, "done": 0, "last": None} for y in range(0, 2101)}
-        outstanding: set[CoordType] = set()
-        total: int = 0
-        count: int = 0
-
-        def flush_dispatched_queue():
-            nonlocal count
-            try:
-                while True:
-                    di = dispatched_queue.get_nowait()
-                    if isinstance(di, list):
-                        outstanding.update(cast(list[CoordType], di))
-                    elif isinstance(di, int):
-                        count += di
-            except queue.Empty:
-                pass
-
-        def flush_result_queue():
-            nonlocal total
-            try:
-                while True:
-                    rslt: QResult = result_queue.get_nowait()
-                    if rslt.exc is None:
-                        outstanding.discard(rslt.coord)
-                        if rslt.entity.startswith("Saver"):
-                            total += 1
-                        else:
-                            _, y = rslt.coord
-                            _prog = progression[y]
-                            if _prog["start"] is None:
-                                _prog["start"] = datetime.now()
-                            _prog["done"] += 1
-                            _prog["last"] = datetime.now()
-                    else:
-                        errs.append(rslt)
-            except queue.Empty:
-                pass
-
-        with MP.Pool(opts.workers, initializer=retrieve, initargs=r_args) as pool_r, MP.Pool(
-            opts.savers, initializer=saver, initargs=s_args
-        ) as pool_s:
-            with handle_sigint(AbortRequested):
+    try:
+        with handle_sigint(AbortRequested):
+            with (
+                MP.Pool(opts.workers, initializer=retrieve, initargs=r_args) as pool_r,
+                MP.Pool(opts.savers, initializer=saver, initargs=s_args) as pool_s,
+                contextlib.ExitStack() as stack,
+            ):
+                # These will be called in reverse order!
+                stack.callback(flush_result_queue, True)
+                stack.callback(flush_dispatched_queue, True)
+                #
                 backlog = sorted(progress["backlog"], key=lambda i: (i[1], i[0]))
                 if backlog:
                     _chunksize = (len(backlog) // opts.workers) + 1
@@ -344,8 +340,10 @@ def main(opts: MPMapOptions):
                     while _i < len(backlog):
                         coord_queue.put(("set", backlog[_i : (_i + _chunksize)]))
                         _i += _chunksize
+
                 for row in range(progress["next_row"], -1, -1):
                     coord_queue.put(("row", row))
+
                 tm: float = time.monotonic()
                 abort_shown = False
                 while not coord_queue.empty() and not AbortRequested.is_set():
@@ -392,11 +390,38 @@ def main(opts: MPMapOptions):
                 print("Joining saver workers")
                 pool_s.join()
 
-                print("Flushing dispatched_queue")
-                flush_dispatched_queue()
+    finally:
+        return next_row, outstanding, progression, errs
 
-                print("Flushing result_queue")
-                flush_result_queue()
+
+def main(opts: MPMapOptions):
+    start = time.monotonic()
+
+    progress_file = opts.mapdir / Config.maps.mp_progress
+    if progress_file.exists():
+        with progress_file.open("rb") as fin:
+            progress: ProgressDict = pickle.load(fin)
+        if progress["next_row"] is None:
+            progress["next_row"] = -1
+    else:
+        progress = {
+            "next_row": START_ROW,
+            "backlog": set(),
+        }
+    print(f"Backlog from previous run: {len(progress['backlog']):_}\nNext row after backlog: {progress['next_row']}")
+
+    errs: list[QResult]
+    mgr: MPMgr.SyncManager
+    try:
+        with MP.Manager() as mgr:
+            next_row, outstanding, progression, errs = launch_workers(opts, progress, mgr)
+    finally:
+        progress = {
+            "next_row": next_row,
+            "backlog": outstanding,
+        }
+        with progress_file.open("wb") as fout:
+            pickle.dump(progress, fout)
 
     if errs:
         print("During retrieval, the following errors are seen:", flush=True)
@@ -405,13 +430,6 @@ def main(opts: MPMapOptions):
             print(f"    {entity} <{type(exc)}>{exc}", file=sys.stderr)
         time.sleep(1)
         print(f"  A total of {len(errs)} errors")
-
-    progress = {
-        "next_row": next_row,
-        "backlog": outstanding,
-    }
-    with progress_file.open("wb") as fout:
-        pickle.dump(progress, fout)
 
     normalized_time_per_row: dict[int, float] = {}
     for y, prog in progression.items():
