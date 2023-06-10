@@ -140,6 +140,7 @@ async def aretrieve(
     result_queue: MP.Queue,
     abort_flag: Settable,
 ):
+    signal.signal(signal.SIGINT, signal.SIG_IGN)
     _half_cols = COLS_PER_ROW // 2
     _myname = MP.current_process().name
     limits = httpx.Limits(max_connections=CONN_LIMIT, max_keepalive_connections=CONN_LIMIT)
@@ -346,10 +347,14 @@ def main(opts: MPMapOptions):
                 for row in range(progress["next_row"], -1, -1):
                     coord_queue.put(("row", row))
                 tm: float = time.monotonic()
+                abort_shown = False
                 while not coord_queue.empty() and not AbortRequested.is_set():
                     flush_dispatched_queue()
                     flush_result_queue()
                     elapsed = time.monotonic() - tm
+                    if AbortRequested.is_set() and not abort_shown:
+                        print("\n### ABORT REQUESTED! ###\n")
+                        abort_shown = True
                     if elapsed >= INFO_EVERY:
                         rate = count / elapsed
                         print(
