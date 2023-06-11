@@ -332,7 +332,9 @@ AzureIslands-Old:
 
 AzureIslands:
   includes:
-    - 1143-1155/1065-1072
+    - 1143-1155/1064-1072
+  excludes:
+    - 1143-1145/1070-1071
 
 EdenFruitIslands:
   includes:
