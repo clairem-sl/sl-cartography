@@ -254,6 +254,10 @@ MoleIslands:
   includes:
     - [1006, 971, 1011, 976]
 
+MemBuild:
+  includes:
+    - 986-989/979-980
+
 LR-160:
   includes:
     - [1187, 1206, 1190, 1210]
