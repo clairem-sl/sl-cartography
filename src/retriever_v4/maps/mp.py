@@ -345,14 +345,10 @@ def launch_workers(
                     coord_queue.put(("row", row))
 
                 tm: float = time.monotonic()
-                abort_shown = False
-                while not coord_queue.empty() and not AbortRequested.is_set():
+                while not coord_queue.empty():
                     flush_dispatched_queue()
                     flush_result_queue()
                     elapsed = time.monotonic() - tm
-                    if AbortRequested.is_set() and not abort_shown:
-                        print("\n### ABORT REQUESTED! ###\n")
-                        abort_shown = True
                     if elapsed >= INFO_EVERY:
                         rate = count / elapsed
                         print(
@@ -361,11 +357,15 @@ def launch_workers(
                         )
                         count = 0
                         tm = time.monotonic()
-
-                print("Telling retriever workers to end")
-                pool_r.close()
-                for _ in range(opts.workers):
-                    coord_queue.put(None)
+                    if AbortRequested.is_set():
+                        print("\n### ABORT REQUESTED! ###\n")
+                        pool_r.close()
+                        break
+                else:
+                    print("Telling retriever workers to end")
+                    pool_r.close()
+                    for _ in range(opts.workers):
+                        coord_queue.put(None)
                 print("Joining retriever workers")
                 pool_r.join()
 
