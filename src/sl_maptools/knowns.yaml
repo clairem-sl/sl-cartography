@@ -282,6 +282,10 @@ K13-Areas:
   includes:
     - 1135-1162/1300-1319
 
+# endregion
+
+# region # User/Private Continents
+
 Etopia:
   includes:
     - [1136, 1315, 1137, 1317]
@@ -297,10 +301,6 @@ Rockcliffe:
 ScienceCluster:
   includes:
     - [1138, 1296, 1160, 1317]
-
-# endregion
-
-# region # User/Private Continents
 
 BlakeSeaSurrounding:
   includes:
