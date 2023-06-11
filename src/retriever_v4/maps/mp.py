@@ -228,9 +228,10 @@ async def aretrieve(
             try:
                 job = in_queue.get_nowait()
             except queue.Empty:
+                print(f"{MP.current_process().name} idling 💤")
                 time.sleep(1)
 
-    print(f"{MP.current_process().name} done")
+    print(f"{MP.current_process().name} done ⏹")
 
 
 def retrieve(
