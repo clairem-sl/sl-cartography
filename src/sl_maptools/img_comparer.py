@@ -67,7 +67,11 @@ def enhance(method: EnhanceMethod, *i: Image.Image) -> tuple[Image.Image, ...]:
         ])
     elif method == EnhanceMethod.GB_FE_B_FE:
         return tuple([
-            im.filter(ImageFilter.GaussianBlur).filter(ImageFilter.FIND_EDGES).filter(ImageFilter.BLUR).filter(ImageFilter.FIND_EDGES)
+            im
+            .filter(ImageFilter.GaussianBlur)
+            .filter(ImageFilter.FIND_EDGES)
+            .filter(ImageFilter.BLUR)
+            .filter(ImageFilter.FIND_EDGES)
             for im in i
         ])
     elif method == EnhanceMethod.GB_GB_FE:
@@ -165,7 +169,9 @@ def main():
 
                 im1e.close()
                 im2e.close()
+                # noinspection PyUnusedLocal
                 im1e = None
+                # noinspection PyUnusedLocal
                 im2e = None
 
         print()

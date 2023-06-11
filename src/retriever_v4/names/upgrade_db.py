@@ -14,7 +14,9 @@ from sl_maptools.utils import ConfigReader
 Config = ConfigReader("config.toml")
 
 
-def upgrade_history_to_db3(first_seen: datetime, hist_old: dict[str, list[str]]) -> dict[str, list[tuple[datetime, datetime]]]:
+def upgrade_history_to_db3(
+        first_seen: datetime, hist_old: dict[str, list[str]]
+) -> dict[str, list[tuple[datetime, datetime]]]:
     chronology: list[tuple[str, str]] = []
     for aname, timestamps in hist_old.items():
         for ts in timestamps:

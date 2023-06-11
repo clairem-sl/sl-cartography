@@ -4,12 +4,11 @@
 
 import pickle
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
-from pprint import pprint
 from typing import NamedTuple
 
-from sl_maptools import CoordType, RegionsDBRecord3, AreaBounds
+from sl_maptools import CoordType, RegionsDBRecord3
 
 DB_PATH = Path(r"C:\Cache\SL-Carto\RegionsDB3.pkl")
 CUTOFF = 3
@@ -43,7 +42,7 @@ def main():
 
     interesting: list[InterestingRegion] = sorted(recent(CUTOFF))
     print(f"{len(interesting)} new regions the past {CUTOFF} days")
-    new_areas: dict[str, list[CoordType]] = {}
+    # new_areas: dict[str, list[CoordType]] = {}
     x_s: dict[str, set[int]] = defaultdict(set)
     y_s: dict[str, set[int]] = defaultdict(set)
 

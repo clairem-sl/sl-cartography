@@ -3,15 +3,13 @@
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 import pickle
-from datetime import datetime, timedelta
+from datetime import datetime
 from io import StringIO
 from pathlib import Path
-from pprint import pprint
-from typing import NamedTuple
 
 from ruamel.yaml import YAML, RoundTripRepresenter
 
-from sl_maptools import CoordType, RegionsDBRecord3, AreaBounds
+from sl_maptools import CoordType, RegionsDBRecord3
 
 DB_PATH = Path(r"C:\Cache\SL-Carto\RegionsDB3.pkl")
 CUTOFF = 3
