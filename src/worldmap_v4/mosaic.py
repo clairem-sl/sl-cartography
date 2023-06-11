@@ -10,6 +10,7 @@ import pickle
 import re
 import signal
 import time
+from datetime import datetime
 from pathlib import Path
 from typing import Final, Optional, Protocol, TypedDict, cast
 
@@ -218,7 +219,8 @@ def make_mosaic(
                         sy = 0
                         sx += fpx
             _state(f"save_{sz}")
-            canvas.save(outdir / f"worldmap4_mosaic_{sz}x{sz}.png")
+            _ts = datetime.now().strftime("%y%m%d-%H%M")
+            canvas.save(outdir / f"worldmap4_mosaic_{sz}x{sz}_{_ts}.png")
             canvas.close()
             print(f"💾{sz}", end="", flush=True)
         # noinspection PyUnusedLocal

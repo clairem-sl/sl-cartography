@@ -3,6 +3,7 @@
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 import argparse
 import pickle
+from datetime import datetime
 from pathlib import Path
 from typing import Final, Protocol, TypedDict, cast
 
@@ -291,6 +292,7 @@ def make_map(opts: Options):
         data_raw: dict[tuple[int, int], RegionsDBRecord] = pickle.load(fin)
     print(f"{len(data_raw):_} records", flush=True)
 
+    _ts = datetime.now().strftime("%y%m%d")
     targ: Path
     regions: set[tuple[int, int]] = set(k for k, v in data_raw.items() if v["current_name"])
     if not opts.no_validate:
@@ -302,9 +304,9 @@ def make_map(opts: Options):
         # Get Maptiles data
         mapfiles = inventorize_maps_all(opts.mapdir)
         regions.intersection_update(mapfiles.keys())
-        targ = opts.outdir / "worldmap4_nightlights.png"
+        targ = opts.outdir / f"worldmap4_nightlights_{_ts}.png"
     else:
-        targ = opts.outdir / "worldmap4_nightlights_unvalidated.png"
+        targ = opts.outdir / f"worldmap4_nightlights_unvalidated_{_ts}.png"
 
     if targ.exists():
         make_backup(targ)
