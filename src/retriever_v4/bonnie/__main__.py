@@ -246,11 +246,6 @@ def main():
         with BONNIE_DB_PATH.open("wt") as fout:
             yaml.dump(BonnieDB, fout)
         print(f" saved to {BONNIE_DB_PATH}", flush=True)
-    still_need = len(Progress.all_data["regions"]) - len(BonnieDB)
-    if still_need == 0:
-        print("BonnieDB seems to be complete")
-    else:
-        print(f"{still_need} records still need to be retrieved")
 
 
 if __name__ == "__main__":
