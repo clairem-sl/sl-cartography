@@ -15,6 +15,8 @@ from sl_maptools.validator import get_bonnie_coords, inventorize_maps_latest
 
 RGBATuple = tuple[int, int, int, int]
 
+TILE_SZ: Final[int] = 64
+
 Config: SLMapToolsConfig = ConfigReader("config.toml")
 
 MAP_DIR: Final[Path] = Path(Config.maps.dir)
@@ -34,21 +36,25 @@ def main():
     valid_coords = get_bonnie_coords(None, True)
     maptiles = {co: mapp for co, mapp in inventorize_maps_latest(MAP_DIR).items() if co in valid_coords}
 
-    sq = Image.new("RGBA", (640, 640), color=(0, 0, 0, 0))
+    sq_sz = TILE_SZ * 10
+    sq = Image.new("RGBA", (sq_sz, sq_sz), color=(0, 0, 0, 0))
     sq_draw = ImageDraw.Draw(sq)
     ul = 0
-    lr = 639
+    lr = sq_sz - 1
     for a in ALPHA_PATTERN:
         sq_draw.rectangle((ul, ul, lr, lr), width=1, outline=(255, 255, 255, a))
         ul += 1
         lr -= 1
-    gridsec_overlay = Image.new("RGBA", (6400, 6400), color=(0, 0, 0, 0))
-    for cx in range(0, 6400, 640):
-        for cy in range(0, 6400, 640):
+    gridsec_sz = sq_sz * 10
+    gridsec_box = gridsec_sz, gridsec_sz
+    gridsec_overlay = Image.new("RGBA", gridsec_box, color=(0, 0, 0, 0))
+    for cx in range(0, gridsec_sz, sq_sz):
+        for cy in range(0, gridsec_sz, sq_sz):
             gridsec_overlay.paste(sq, (cx, cy))
 
+    tile_box = TILE_SZ, TILE_SZ
     for col, col_letter in enumerate(GRID_COLS):
-        for row in range(0, 22):
+        for row, _ in enumerate(GRID_COLS):
             print(f"{col_letter}{row} ...", end="", flush=True)
             grid_tiles: dict[CoordType, Path] = {}
             for y in range(row * 100, (row + 1) * 100):
@@ -62,13 +68,13 @@ def main():
             print(f" {len(grid_tiles)} ...", end="", flush=True)
             gridsector_mapp = GRID_DIR / f"{col_letter}{row}.png"
             if not gridsector_mapp.exists():
-                grid_canvas = Image.new("RGBA", (6400, 6400), color=(0, 0, 0, 0))
+                grid_canvas = Image.new("RGBA", gridsec_box, color=(0, 0, 0, 0))
                 for co, mapp in grid_tiles.items():
                     x, y = co
-                    cx = (x - (col * 100)) * 64
-                    cy = (99 - (y - (row * 100))) * 64
+                    cx = (x - (col * 100)) * TILE_SZ
+                    cy = (99 - (y - (row * 100))) * TILE_SZ
                     with Image.open(mapp) as immap:
-                        immap.thumbnail((64, 64), resample=Resampling.LANCZOS)
+                        immap.thumbnail(tile_box, resample=Resampling.LANCZOS)
                         grid_canvas.paste(immap, (cx, cy))
                 out = Image.alpha_composite(grid_canvas, gridsec_overlay)
                 out.save(gridsector_mapp)
