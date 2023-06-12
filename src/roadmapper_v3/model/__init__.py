@@ -30,7 +30,7 @@ class Continent:
         if name not in KNOWN_AREAS:
             raise KeyError()
         self.name = name
-        self.bounds = KNOWN_AREAS[name]
+        self.bounds = KNOWN_AREAS[name].bounding_box
         self.west_t, self.south_t, self.east_t, self.north_t = self.bounds
 
         self.westmost: float = 256.0 * self.west_t
