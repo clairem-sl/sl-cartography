@@ -5,6 +5,7 @@
 import argparse
 from itertools import cycle
 from pathlib import Path
+from typing import Protocol, cast
 
 from PIL import Image, ImageDraw
 
@@ -18,15 +19,28 @@ from roadmapper_v3.model import (
 from roadmapper_v3.model.yaml import load_from
 
 
-def options():
-    parser = argparse.ArgumentParser()
+class Options(Protocol):
+    savedir: Path
+    conti: str
+    yaml_file: list[Path]
+
+
+def options() -> Options:
+    parser = argparse.ArgumentParser("roadmapper_v3")
     parser.add_argument("--savedir", "-s", required=True, type=Path, help="Directory to save the road overlays in")
     parser.add_argument("--conti", "-c", default="", help="Comma-separated continents to render (defaults to all)")
     parser.add_argument("yaml_file", nargs="+", type=Path, help="One (or more) YAML files to process & merge")
-    return parser.parse_args()
+
+    _opts = parser.parse_args()
+    return cast(Options, _opts)
 
 
-def main(savedir: Path, conti: str, yaml_file: list[Path]):
+def main(opts: Options):
+    # savedir: Path, conti: str, yaml_file: list[Path]
+    savedir = opts.savedir
+    yaml_file = opts.yaml_file
+    conti = opts.conti
+
     if not savedir.exists():
         raise FileNotFoundError(f"Directory not found: {savedir}")
     if not savedir.is_dir():
@@ -88,5 +102,4 @@ def main(savedir: Path, conti: str, yaml_file: list[Path]):
 
 
 if __name__ == "__main__":
-    opts = options()
-    main(**vars(opts))
+    main(options())

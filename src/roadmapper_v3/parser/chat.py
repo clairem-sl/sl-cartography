@@ -9,7 +9,7 @@ import datetime
 import math
 import re
 from pathlib import Path
-from typing import cast, Final
+from typing import cast, Final, Protocol
 
 from roadmapper_v3.draw.colors import ALL_COLORS
 from roadmapper_v3.model import Continent, Point, Route, Segment, SegmentMode
@@ -26,7 +26,13 @@ RE_POSREC_KV: Final = re.compile(r"(?P<key>[^:\s]+)\s*:\s*(?P<value>.*)")
 RE_SEPARATOR: Final = re.compile(r"[;,\s]+")
 
 
-def options():
+class Options(Protocol):
+    startfrom: str
+    output: Path
+    chat_file: list[Path]
+
+
+def options() -> Options:
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
@@ -50,7 +56,8 @@ def options():
         nargs="+",
         help="Chat transcript file",
     )
-    return parser.parse_args()
+    _opts = parser.parse_args()
+    return cast(Options, _opts)
 
 
 class ChatLine:
@@ -245,7 +252,12 @@ def bake(parsed: list[ChatLine]) -> dict[str, Continent]:
     return all_roads
 
 
-def main(output: Path, chat_file: list[Path], startfrom: str):
+def main(opts: Options):
+    # output: Path, chat_file: list[Path], startfrom: str
+    output = opts.output
+    chat_file = opts.chat_file
+    startfrom = opts.startfrom
+
     targ_dict: dict[str, Continent] = {}
     if output.exists():
         print(f"Output '{output}' exists, reading previous data for merging...")
@@ -281,5 +293,4 @@ def main(output: Path, chat_file: list[Path], startfrom: str):
 
 
 if __name__ == "__main__":
-    opts = options()
-    main(**vars(opts))
+    main(options())
