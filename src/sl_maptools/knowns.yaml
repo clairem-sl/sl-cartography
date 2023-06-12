@@ -586,4 +586,14 @@ LondonCity:
   includes:
     - 850-851/895-897
 
+Sunweaver:
+  includes:
+    - 876-878/987-990
+
+A139:
+  includes:
+    - 841-846/1004-1010
+  excludes:
+    - 841/1004
+
 # endregion
