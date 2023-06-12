@@ -9,7 +9,7 @@ from typing import Final, Protocol, TypedDict, cast
 
 from PIL import Image, ImageDraw
 
-from sl_maptools import MapCoord, RegionsDBRecord
+from sl_maptools import COORD_RANGE, MapCoord, RegionsDBRecord
 from sl_maptools.utils import ConfigReader, make_backup
 from sl_maptools.validator import get_bonnie_coords, inventorize_maps_all
 
@@ -19,11 +19,11 @@ DEFA_DB_PATH: Final[Path] = Path(Config.names.dir) / Config.names.db
 DEFA_MAPDIR: Final[Path] = Path(Config.maps.dir)
 DEFA_OUTDIR: Final[Path] = Path(Config.nightlights.dir)
 
-MIN_X: Final[int] = 0
-MAX_X: Final[int] = 2100
+MIN_X: Final[int] = COORD_RANGE.min_
+MAX_X: Final[int] = COORD_RANGE.max_
 
-MIN_Y: Final[int] = 0
-MAX_Y: Final[int] = 2100
+MIN_Y: Final[int] = COORD_RANGE.min_
+MAX_Y: Final[int] = COORD_RANGE.max_
 
 DEFA_REGION_SZ: Final[int] = 9
 """Size of each region in the Nightlights map, in units of pixels"""

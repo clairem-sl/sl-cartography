@@ -28,7 +28,13 @@ from PIL import Image
 
 CoordType = tuple[int, int]
 
-COORD_RANGE: Final[tuple[int, int]] = (0, 2100)
+
+class IntRange(NamedTuple):
+    min_: int
+    max_: int
+
+
+COORD_RANGE: Final[IntRange] = IntRange(0, 2100)
 """Minimum and maximum coordinates, inclusive"""
 
 RE_MAPFILE: Final[re.Pattern] = re.compile(r"^(?P<x>\d+)-(?P<y>\d+)_(?P<ts>\d{6}-\d{4}).jpe?g")
