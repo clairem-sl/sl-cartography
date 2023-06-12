@@ -9,7 +9,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 from sl_maptools import COORD_RANGE
 
-FONT_NAME = r"C:\Games\Genesis\fonts\Roboto-Bold.ttf"
+FONT_NAME = r"C:\Games\KokuaViewer\fonts\Roboto-Bold.ttf"
 GRID_THICKNESS = 5
 
 GRIDSECTOR_SIZE: Final[int] = 100
