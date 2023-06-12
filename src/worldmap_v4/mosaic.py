@@ -200,7 +200,7 @@ def make_mosaic(
 
         for sz, patches in patches_bysz.items():
             _state(f"make_{sz}_canvas")
-            print(f"🔽{sz}", end="", flush=True)
+            print(f"⏺{sz}", end="", flush=True)
             fpx = FASCIA_PIXELS[sz]
             fbox = fpx, fpx
             tsz = fpx * sz
