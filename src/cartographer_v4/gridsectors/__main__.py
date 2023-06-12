@@ -1,8 +1,10 @@
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
+import argparse
+import re
 from pathlib import Path
-from typing import Final
+from typing import Final, Protocol, cast
 
 from PIL import Image, ImageDraw
 
@@ -13,9 +15,9 @@ from sl_maptools import CoordType
 from sl_maptools.utils import ConfigReader, SLMapToolsConfig
 from sl_maptools.validator import get_bonnie_coords, inventorize_maps_latest
 
+RGBTuple = tuple[int, int, int]
 RGBATuple = tuple[int, int, int, int]
 
-TILE_SZ: Final[int] = 64
 
 Config: SLMapToolsConfig = ConfigReader("config.toml")
 
@@ -30,29 +32,64 @@ GRID_COLS: Final[list[str]] = [
 
 ALPHA_PATTERN: Final[tuple[int, ...]] = (96, 64, 32)
 
+DEFA_TILE_SZ: Final[int] = 64
+DEFA_BG_COLOR: Final[RGBTuple] = 0, 0, 0
+DEFA_GRID_CLR: Final[RGBTuple] = 255, 255, 255
 
-def main():
+
+class Options(Protocol):
+    tile_size: int
+    bg_color: RGBTuple
+    grid_color: RGBTuple
+
+
+class RGBParser(argparse.Action):
+    def __call__(self, parser, namespace, values, option_string=None):
+        if (m := re.match(r"^(?P<r>\d{1,3}),(?P<g>\d{1,3}),(?P<b>\d{1,3})$", values)) is None:
+            parser.error("Please enter color in r,g,b format!")
+        rgb = tuple(map(int, m.groups()))
+        if not all(0 <= i <= 255 for i in rgb):
+            parser.error("Each r,g,b must be 0 <= value <= 255!")
+        setattr(namespace, self.dest, rgb)
+
+
+def get_options() -> Options:
+    parser = argparse.ArgumentParser("cartographer_v4.gridsectors")
+
+    parser.add_argument("--tile-size", type=int, default=DEFA_TILE_SZ)
+    parser.add_argument(
+        "--bg-color", action=RGBParser, default=DEFA_BG_COLOR, help="Background color in r,g,b (no spaces)"
+    )
+    parser.add_argument("--grid-color", action=RGBParser, default=DEFA_GRID_CLR, help="Grid color in r,g,b (no spaces)")
+
+    _opts = parser.parse_args()
+    return cast(Options, _opts)
+
+
+def main(opts: Options):
     GRID_DIR.mkdir(parents=True, exist_ok=True)
     valid_coords = get_bonnie_coords(None, True)
     maptiles = {co: mapp for co, mapp in inventorize_maps_latest(MAP_DIR).items() if co in valid_coords}
+    bk_clr = opts.bg_color + (0,)
 
-    sq_sz = TILE_SZ * 10
-    sq = Image.new("RGBA", (sq_sz, sq_sz), color=(0, 0, 0, 0))
+    sq_sz = opts.tile_size * 10
+    sq = Image.new("RGBA", (sq_sz, sq_sz), color=bk_clr)
     sq_draw = ImageDraw.Draw(sq)
     ul = 0
     lr = sq_sz - 1
     for a in ALPHA_PATTERN:
-        sq_draw.rectangle((ul, ul, lr, lr), width=1, outline=(255, 255, 255, a))
+        sq_draw.rectangle((ul, ul, lr, lr), width=1, outline=opts.grid_color + (a,))
         ul += 1
         lr -= 1
+
     gridsec_sz = sq_sz * 10
     gridsec_box = gridsec_sz, gridsec_sz
-    gridsec_overlay = Image.new("RGBA", gridsec_box, color=(0, 0, 0, 0))
+    gridsec_overlay = Image.new("RGBA", gridsec_box, color=bk_clr)
     for cx in range(0, gridsec_sz, sq_sz):
         for cy in range(0, gridsec_sz, sq_sz):
             gridsec_overlay.paste(sq, (cx, cy))
 
-    tile_box = TILE_SZ, TILE_SZ
+    tile_box = opts.tile_size, opts.tile_size
     for col, col_letter in enumerate(GRID_COLS):
         for row, _ in enumerate(GRID_COLS):
             print(f"{col_letter}{row} ...", end="", flush=True)
@@ -68,11 +105,11 @@ def main():
             print(f" {len(grid_tiles)} ...", end="", flush=True)
             gridsector_mapp = GRID_DIR / f"{col_letter}{row}.png"
             if not gridsector_mapp.exists():
-                grid_canvas = Image.new("RGBA", gridsec_box, color=(0, 0, 0, 0))
+                grid_canvas = Image.new("RGBA", gridsec_box, color=bk_clr)
                 for co, mapp in grid_tiles.items():
                     x, y = co
-                    cx = (x - (col * 100)) * TILE_SZ
-                    cy = (99 - (y - (row * 100))) * TILE_SZ
+                    cx = (x - (col * 100)) * opts.tile_size
+                    cy = (99 - (y - (row * 100))) * opts.tile_size
                     with Image.open(mapp) as immap:
                         immap.thumbnail(tile_box, resample=Resampling.LANCZOS)
                         grid_canvas.paste(immap, (cx, cy))
@@ -83,4 +120,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main(get_options())
