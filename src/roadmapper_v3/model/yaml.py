@@ -3,7 +3,7 @@
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 from pathlib import Path
-from typing import Any
+from typing import Any, TypedDict
 
 import ruamel.yaml as ryaml
 
@@ -69,6 +69,51 @@ def encode(all_routes: dict[str, Continent]) -> dict[str, dict[str, dict[str, An
     }
 
 
+class SegmentData3(TypedDict):
+    mode: SegmentMode
+    desc: str
+    width: int
+    geo_points: list[tuple[int, int]]
+
+
+class RouteData3(TypedDict):
+    color: tuple[int, int, int] | None
+    segments: list[SegmentData3]
+
+
+class ContinentRoadData3(TypedDict):
+    version: int
+    continent: str
+    road_data: dict[str, RouteData3]
+
+
+def encode3(all_routes: dict[str, Continent]):
+    road_data_by_cont: dict[str, ContinentRoadData3] = {}
+    for cont_name, continent in all_routes.items():
+        if cont_name not in road_data_by_cont:
+            road_data_by_cont[cont_name] = {
+                "version": 3,
+                "continent": cont_name,
+                "road_data": {}
+            }
+        road_data_ = road_data_by_cont[cont_name]["road_data"]
+        for rout_name, route in continent.routes.items():
+            rout_data: RouteData3 = {
+                "color": route.color,
+                "segments": (rout_seg_list := []),
+            }
+            road_data_[rout_name] = rout_data
+            for segment in route.segments:
+                seg_data = {
+                    "mode": segment.mode.name,
+                    "desc": segment.desc,
+                    "width": segment.width,
+                    "geo_points": [(p.x, p.y) for p in segment.geopoints],
+                }
+                rout_seg_list.append(seg_data)
+    return road_data_by_cont
+
+
 class RoadRepresenter(ryaml.RoundTripRepresenter):
     def ignore_aliases(self, data):  # type: (Any) -> bool
         return True
@@ -86,3 +131,16 @@ def save_to(yaml_file: Path, all_routes: dict[str, Continent]):
     with yaml_file.open("wt", encoding="utf-8") as fout:
         yml.dump(encode(all_routes), fout)
     print(f"Routes saved to {yaml_file}")
+
+
+def save_to3(outdir: Path, all_routes: dict[str, Continent]):
+    yml = ryaml.YAML()
+    yml.default_flow_style = None
+    yml.Representer = RoadRepresenter
+    to_dump = encode3(all_routes)
+    print("Saving routes:")
+    for cont, data in encode3(all_routes).items():
+        targ = outdir / f"{cont}.yaml"
+        with targ.open("wt", encoding="utf-8") as fout:
+            yml.dump(data, fout)
+        print(f"  {targ}")
