@@ -596,4 +596,8 @@ A139:
   excludes:
     - 841/1004
 
+SecondScotland:
+  includes:
+    - 751-753/1125-1127
+
 # endregion
