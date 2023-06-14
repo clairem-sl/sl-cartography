@@ -6,12 +6,18 @@ import pickle
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
-from typing import NamedTuple
+from typing import Final, NamedTuple
 
 from sl_maptools import CoordType, RegionsDBRecord3
 
 DB_PATH = Path(r"C:\Cache\SL-Carto\RegionsDB3.pkl")
 CUTOFF = 3
+
+# fmt: off
+GRID_COLS: Final[list[str]] = [
+    "AA", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U"
+]
+# fmt: on
 
 _NAO = datetime.now().astimezone()
 
@@ -47,8 +53,12 @@ def main():
     y_s: dict[str, set[int]] = defaultdict(set)
 
     for i, (t, name, co) in enumerate(interesting, start=1):
-        print(f"{i:>3}) {t.isoformat(timespec='minutes')} {co} {name}")
         x, y = co
+        col = x // 100
+        row = y // 100
+        gs = f"[{GRID_COLS[col]}{row}]"
+        sco = f"{co}"
+        print(f"{i:>3}) {t.isoformat(timespec='minutes')} {sco:12} {gs:6} {name}")
         if 22 <= i <= 27:
             x_s["Silks"].add(x)
             y_s["Silks"].add(y)
