@@ -488,7 +488,7 @@ MeisterbastlerKreis:
   includes:
     - 1105-1114/1382-1388
 
-GoreanLands:
+A518:
   includes:
     - [1014, 1175, 1020, 1179]
 
