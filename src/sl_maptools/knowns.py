@@ -3,8 +3,15 @@
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 from __future__ import annotations
 
+import sys
+
 from pathlib import Path
-from typing import Final, Literal
+from typing import Final
+
+if sys.version_info < (3, 11):
+    from typing_extensions import NotRequired, TypedDict
+else:
+    from typing import NotRequired, TypedDict
 
 from ruamel.yaml import YAML
 
@@ -287,7 +294,15 @@ DO_NOT_MAP_AREAS: Final[dict[str, AreaBounds]] = {
 KNOWN_AREAS: Final[dict[str, AreaDescriptor]] = {}
 
 
-AreaDef = dict[Literal["includes"] | Literal["excludes"], list[str | list[int]]]
+CoordBounds = list[str | list[int]]
+
+
+class AreaDef(TypedDict):
+    includes: CoordBounds
+    excludes: NotRequired[CoordBounds]
+    slgi_url: NotRequired[str]
+    alternative_names: NotRequired[list[str]]
+    notes: NotRequired[str]
 
 
 def read_known_areas(yaml_file: Path):
