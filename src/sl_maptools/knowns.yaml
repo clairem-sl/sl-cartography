@@ -156,6 +156,11 @@ Bellisseria-Stiltlands:
     - [1058, 975, 1062, 975]
     - [1060, 976, 1061, 976]
 
+Belliseria-Ranchlands:
+  includes:
+#    - 1051-1056/980-986
+    - 1050-1057/979-987
+
 # endregion
 
 # endregion
@@ -281,6 +286,10 @@ RFL2023:
 SLB2023:
   includes:
     - [386, 359, 403, 377]
+
+ShopNHop2023:
+  includes:
+    - 489-494/1195-1202
 
 K13-Areas:
   includes:
