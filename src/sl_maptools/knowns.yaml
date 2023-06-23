@@ -614,4 +614,8 @@ SecondScotland:
   includes:
     - 751-753/1125-1127
 
+A523:
+  includes:
+    - 1077-1081/1118-1122
+
 # endregion
