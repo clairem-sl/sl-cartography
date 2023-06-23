@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Final, Protocol, cast
 
 import numpy as np
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 from skimage.metrics import mean_squared_error as mse
 from skimage.metrics import structural_similarity as ssim
 
@@ -88,6 +88,9 @@ def do_prune(
                         # Exit immediately once we found a non-similar image
                         flist.append(f2)
                         break
+            except UnidentifiedImageError:
+                if f2.is_file():
+                    f2.unlink()
             except FileNotFoundError:
                 pass
     flist.append(f1)
