@@ -295,6 +295,10 @@ K13-Areas:
   includes:
     - 1135-1162/1300-1319
 
+WelcomeHub:
+  includes:
+    - 1050-1052/973-978
+
 # endregion
 
 # region # User/Private Continents
@@ -499,7 +503,7 @@ MeisterbastlerKreis:
 
 A518:
   includes:
-    - [1014, 1175, 1020, 1179]
+    - [1014, 1175, 1021, 1178]
 
 AngelManor:
   includes:
