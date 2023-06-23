@@ -618,4 +618,8 @@ A523:
   includes:
     - 1077-1081/1118-1122
 
+FirestormGateway:
+  includes:
+    - 651-656/1112-1115
+
 # endregion
