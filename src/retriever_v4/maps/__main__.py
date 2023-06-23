@@ -11,21 +11,22 @@ import multiprocessing.pool as MPPool
 import multiprocessing.shared_memory as MPSharedMem
 import queue
 import signal
+import sys
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Final, Optional, Protocol, cast
+from typing import Final, Protocol, cast
 
 import httpx
 
 from retriever_v4 import (
     DebugLevel,
     RetrieverApplication,
-    RetrieverProgress,
+    RetrieverProgress2,
     dispatch_fetcher,
 )
 from retriever_v4.maps.saver import saver
-from sl_maptools import CoordType, MapCoord
+from sl_maptools import CoordType, MapCoord, AreaBounds
 from sl_maptools.fetchers import RawResult
 from sl_maptools.fetchers.map import BoundedMapFetcher
 from sl_maptools.knowns import KNOWN_AREAS
@@ -53,7 +54,7 @@ Config: SLMapToolsConfig = ConfigReader("config.toml")
 OrigSigINT: signal.Handlers = signal.getsignal(signal.SIGINT)
 SaverQueue: MP.Queue
 SaveSuccessQueue: MP.Queue
-Progress: RetrieverProgress
+Progress: RetrieverProgress2
 
 AbortRequested = asyncio.Event()
 
@@ -61,9 +62,8 @@ AbortRequested = asyncio.Event()
 class RetrieverMapsOptions(Protocol):
     mapdir: Path
     workers: int
-    auto_reset: bool
     debug_level: DebugLevel
-    coordfile: Optional[Path]
+    force: bool
     areas: list[str]
 
 
@@ -82,30 +82,19 @@ def get_options() -> OptionsProtocol:
         default=max(1, MP.cpu_count() - 2),
         help="Launch N saver workers",
     )
-    parser.add_argument(
-        "--auto-reset",
-        action="store_true",
-        help=(
-            f"If specified, retriever will wrap up back to maxrow "
-            f"({RetrieverProgress.DEFA_MAX_COORD[1]}) upon finishing row 0"
-        ),
-    )
     parser.add_argument("--debug_level", type=DebugLevel, default=DebugLevel.NORMAL)
+
+    parser.add_argument("--force", action="store_true")
     parser.add_argument(
-        "--coordfile",
-        metavar="FILE",
-        type=Path,
+        "areas",
+        nargs="*",
         help=(
-            "If specified, fetch coordinates from FILE, in addition to prior progress. "
-            "Contents of the file must by X,Y pairs, one per line."
+            "Space-separated list of areas to retrieve. If not given, then scan the whole world. "
+            "Areas can be specified using name (must match with list of known areas, case-insensitive), or "
+            "using coordinate ranges. Two coordinate range notations are supported: BOX NOTATION 'x1,y1,x2,y2' or "
+            "SLGI NOTATION 'x1-x2/y1-y2'. IMPORTANT: Once specified, the next iterations will continue from prior "
+            "invocation; you will need to delete the progress file to specify new ranges."
         ),
-    )
-    parser.add_argument(
-        "--areas",
-        metavar="AREA_LIST",
-        type=str,
-        nargs="+",
-        help="Space- and/or comma-separated list of areas to retrieve, in addition to prior progress.",
     )
 
     RetrieverApplication.add_options(parser)
@@ -201,36 +190,46 @@ def main(
     global Progress, SaverQueue, SaveSuccessQueue
 
     dur = RetrieverApplication.calc_duration(opts)
+
     progress_file = opts.mapdir / Config.maps.progress
-    Progress = RetrieverProgress(progress_file, auto_reset=opts.auto_reset)
-    if Progress.outstanding_count:
-        print(f"{Progress.outstanding_count} jobs still outstanding from last session")
+    Progress = RetrieverProgress2(progress_file, None)
+
+    want_areas = frozenset(opts.areas)
+    if want_areas != frozenset(Progress.areas):
+        if not opts.force and not Progress.exhausted:
+            print(f"Outstanding jobs still exist in {progress_file}, but the specified areas are different!")
+            print(f"  Previous  => {Progress.areas}")
+            print(f"  Requested => {want_areas}")
+            print("Use --force or delete the progress file to continue.")
+            sys.exit(1)
+
+    if not opts.areas:
+        Progress = RetrieverProgress2(progress_file, None)
+        if Progress.outstanding_count:
+            print(f"{Progress.outstanding_count} jobs still outstanding from last session")
+        else:
+            print("No outstanding jobs from last session.")
     else:
-        print("No outstanding jobs from last session.")
+        Progress = RetrieverProgress2(None, None)
+        known_area_names = {name.casefold(): name for name in KNOWN_AREAS.keys()}
+        for area in opts.areas:
+            areacf = area.casefold()
+            if areacf in known_area_names:
+                for xy in KNOWN_AREAS[known_area_names[areacf]].xy_iterator():
+                    Progress.add(xy)
+                continue
+            try:
+                for xy in AreaBounds.from_(area).xy_iterator():
+                    Progress.add(xy)
+            except ValueError:
+                print(f"'{area}' is not recognized as existing area or area notation!", file=sys.stderr, flush=True)
+                sys.exit(1)
 
-    if opts.coordfile and opts.coordfile.exists():
-        with opts.coordfile.open("rt") as fin:
-            for ln in fin:
-                ln = ln.strip()
-                if not ln:
-                    continue
-                x, y = ln.split(",")
-                Progress.add((int(x), int(y)))
-
-    if opts.areas:
-        cs_anames = {k.casefold(): k for k in KNOWN_AREAS.keys()}
-        want_areas: set[str] = {
-            cs_anames[a1] for area in opts.areas for a1 in map(str.casefold, area.split(",")) if a1 in cs_anames
-        }
-        for aname in want_areas:
-            for coord in KNOWN_AREAS[aname].bounding_box.xy_iterator():
-                Progress.add(coord)
-
-    print(f"Next coordinate: {Progress.next_coordinate}")
-    if Progress.next_coordinate[1] < 0:
+    if Progress.exhausted:
         print("No rows left to process.")
         print(f"Delete the file {progress_file} to reset. (Or specify --auto-reset)")
         return
+    print(f"Next coordinate: {Progress.next_coordinate}")
 
     with MP.Manager() as manager, MPMgr.SharedMemoryManager() as shm_manager:
         print("Starting saver worker...", end="", flush=True)

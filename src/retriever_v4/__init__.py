@@ -15,16 +15,29 @@ import sys
 import time
 from asyncio import Task
 from collections import deque
+from collections.abc import Iterator
 from contextlib import AbstractContextManager, contextmanager
 from datetime import datetime, timedelta, timezone
 from enum import IntEnum
+from itertools import chain
 from pathlib import Path
 from types import TracebackType
-from typing import Any, Callable, Final, Generator, Protocol, Type, TypedDict
+from typing import (
+    Any,
+    Callable,
+    Final,
+    Generator,
+    Generic,
+    Protocol,
+    Type,
+    TypedDict,
+    TypeVar,
+)
 
 import ruamel.yaml as ryaml
 
-from sl_maptools import CoordType
+from sl_maptools import AreaBounds, CoordType
+from sl_maptools.knowns import KNOWN_AREAS
 
 
 class ProgressDict(TypedDict):
@@ -35,8 +48,12 @@ class ProgressDict(TypedDict):
 
 # fmt: off
 class ProgressInterface(Protocol):
-    next_coordinate: CoordType
-    outstanding_count: int
+    @property
+    def exhausted(self) -> bool: return True
+    @property
+    def next_coordinate(self) -> CoordType: return -1, -1
+    @property
+    def outstanding_count(self) -> int: return -1
     def retire(self, item: CoordType) -> None: ...
     def load(self) -> None: ...
     def save(self) -> None: ...
@@ -52,7 +69,48 @@ class Dispatchable(Protocol):
 # fmt: on
 
 
-class RetrieverProgress:
+T = TypeVar("T")
+
+
+class PeekingIterator(Generic[T], Iterator[T]):
+    def __init__(self, inner: Generator[T, Any, Any], deque_len: int = 1):
+        self._iterator = inner
+        self._prevs = deque(maxlen=deque_len)
+        self._current: T = ...
+        try:
+            self._next: T = next(inner)
+            self._ended = False
+        except StopIteration:
+            self._next = None
+            self._ended = True
+
+    @property
+    def last_item(self) -> T:
+        return self._current
+
+    @property
+    def next_item(self) -> T:
+        return self._next
+
+    @property
+    def exhausted(self) -> bool:
+        return self._ended
+
+    def __iter__(self):
+        return self
+
+    def __next__(self) -> T:
+        if self._ended:
+            raise StopIteration
+        self._current = self._next
+        try:
+            self._next = next(self._iterator)
+        except StopIteration:
+            self._ended = True
+        return self._current
+
+
+class RetrieverProgress(ProgressInterface, Dispatchable):
     """
     Tracks progress by generating job batches and recording the last issued job.
     """
@@ -157,6 +215,129 @@ class RetrieverProgress:
                         return
                     self.next_y = self.maxc[1]
                 print(f"ROW:{self.next_y}", flush=True)
+
+
+class ProgressDict2(TypedDict):
+    next_x: int
+    next_y: int
+    outstanding: list[str]
+    areas: list[str]
+
+
+class RetrieverProgress2(ProgressInterface, Dispatchable):
+    """
+    Tracks progress by generating job batches and recording the last issued job.
+    """
+
+    def __init__(
+        self,
+        backing_file: Path | None,
+        areas: list[str] | None,
+        *,
+        load_on_init: bool = True,
+    ):
+        """ """
+        self.backing_file: Path | None = backing_file
+        self.areas = sorted(areas) if areas else []
+
+        self.outstanding: set[CoordType] = set()
+        self.last_dispatch: CoordType = (-1, -1)
+        self._backlog: deque[CoordType] = deque()
+        self._iterator: PeekingIterator[CoordType] | None = None
+        if load_on_init and backing_file and backing_file.exists():
+            self.load()
+
+    @property
+    def next_coordinate(self) -> CoordType:
+        if self._backlog:
+            return self._backlog[0]
+        if not self._iterator.exhausted:
+            return self._iterator.next_item
+        return -1, -1
+
+    @property
+    def exhausted(self) -> bool:
+        x, y = self.next_coordinate
+        return x <= -1 and y <= -1
+
+    @property
+    def outstanding_count(self) -> int:
+        return len(self.outstanding)
+
+    def retire(self, item: CoordType):
+        if item is None:
+            return
+        self.outstanding.discard(item)
+
+    def get_peekable_iterator(self) -> PeekingIterator[CoordType]:
+        if not self.areas:
+            _iterator = AreaBounds(0, 0, 2100, 2100).xy_iterator(reverse_row=True)
+        else:
+            _iterator = chain(*[KNOWN_AREAS[a].xy_iterator(reverse_row=True) for a in self.areas])
+        return PeekingIterator(_iterator)
+
+    def load(self):
+        if self.backing_file is None:
+            raise RuntimeError("load() requested but backing_file is not specified")
+        with self.backing_file.open("rt") as fin:
+            _last_sess: ProgressDict2 = ryaml.safe_load(fin)
+        if _last_sess is None:
+            # noinspection PyTypeChecker
+            _last_sess = {}
+
+        for c in _last_sess.get("outstanding", []):
+            x, y = c.split(",")
+            self.outstanding.add((int(x), int(y)))
+        self._backlog.extend(sorted(self.outstanding, key=lambda t: (t[1], t[0])))
+
+        self.areas = _last_sess.get("areas") or []
+
+        nx = _last_sess.get("next_x", -1)
+        ny = _last_sess.get("next_y", -1)
+        self._iterator = self.get_peekable_iterator()
+        for _ in self._iterator:
+            if self._iterator.next_item == (nx, ny):
+                break
+
+    def save(self):
+        if self.backing_file is None:
+            return
+        nx, ny = self.next_coordinate
+        exported: ProgressDict2 = {
+            "next_x": nx,
+            "next_y": ny,
+            "outstanding": [f"{x},{y}" for x, y in sorted(self.outstanding, key=lambda t: (t[1], t[0]))],
+            "areas": sorted(self.areas),
+        }
+        with self.backing_file.open("wt") as fout:
+            ryaml.dump(exported, fout, default_flow_style=False)
+
+    def add(self, coord: CoordType):
+        self._backlog.append(coord)
+        self.outstanding.add(coord)
+
+    async def abatch(self, batch_size: int) -> Generator[CoordType, None, None]:
+        for one in self.batch(batch_size):
+            yield one
+
+    def batch(self, batch_size: int) -> Generator[CoordType, None, None]:
+        if self._iterator is None:
+            self._iterator = self.get_peekable_iterator()
+
+        c = 0
+        while self._backlog:
+            c += 1
+            yield self._backlog.popleft()
+            if c >= batch_size:
+                return
+
+        while c < batch_size:
+            for job in self._iterator:
+                if job not in self.outstanding:
+                    c += 1
+                    self.outstanding.add(job)
+                    yield job
+                    self.last_dispatch = job
 
 
 class DebugLevel(IntEnum):

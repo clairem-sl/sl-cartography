@@ -49,7 +49,19 @@ RE_SLGI_NOTATION: Final[re.Pattern] = re.compile(
         (-(?P<y2>\d+))?  # Optional second latitude
     )?
     """,
-    re.VERBOSE
+    re.VERBOSE,
+)
+RE_BOX_NOTATION: Final[re.Pattern] = re.compile(
+    r"""
+        (?P<x1>\d+)
+        ,
+        (?P<y1>\d+)
+        [,-]
+        (?P<x2>\d+)
+        ,
+        (?P<y2>\d+)        
+    """,
+    re.VERBOSE,
 )
 
 _REGION_SIZE: Final[int] = 256
@@ -85,18 +97,21 @@ class AreaBounds(NamedTuple):
         """Width of map in Units of Regions"""
         return self.x_eastmost - self.x_westmost + 1
 
-    def y_iterator(self) -> Generator[int, None, None]:
+    def y_iterator(self, reverse: bool = False) -> Generator[int, None, None]:
         min_y = min(self.y_southmost, self.y_northmost)
         max_y = max(self.y_northmost, self.y_southmost)
-        yield from range(min_y, max_y + 1)
+        if reverse:
+            yield from range(max_y, min_y - 1, -1)
+        else:
+            yield from range(min_y, max_y + 1)
 
     def x_iterator(self) -> Generator[int, None, None]:
         min_x = min(self.x_westmost, self.x_eastmost)
         max_x = max(self.x_eastmost, self.x_westmost)
         yield from range(min_x, max_x + 1)
 
-    def xy_iterator(self) -> Generator[CoordType, None, None]:
-        for y in self.y_iterator():
+    def xy_iterator(self, reverse_row: bool = False) -> Generator[CoordType, None, None]:
+        for y in self.y_iterator(reverse_row):
             for x in self.x_iterator():
                 yield x, y
 
@@ -156,6 +171,20 @@ class AreaBounds(NamedTuple):
             raise ValueError(f"Albeit valid, the notation does not describe an area: {notation}")
         return cls(int(x_min), int(y_min), int(x_max), int(y_max))
 
+    @classmethod
+    def from_(cls, data: str) -> AreaBounds:
+        m = RE_BOX_NOTATION.match(data)
+        if m is not None:
+            x_min = m.group("x1")
+            x_max = m.group("x2") or x_min
+            y_min = m.group("y1")
+            y_max = m.group("y2") or y_min
+            return cls(int(x_min), int(y_min), int(x_max), int(y_max))
+        try:
+            return cls.from_slgi(data)
+        except ValueError:
+            raise ValueError(f"Cannot parse: {data}")
+
 
 class AreaBoundsSet(Iterable):
     def __init__(self, areas: Union[AreaBounds, Iterable[AreaBounds]] = None):
@@ -176,11 +205,11 @@ class AreaBoundsSet(Iterable):
     def to_coords(self) -> set[CoordType]:
         return {(x, y) for area in self.areas for x, y in area.xy_iterator()}
 
-    def xy_iterator(self) -> Generator[CoordType, None, None]:
+    def xy_iterator(self, reverse_row: bool = False) -> Generator[CoordType, None, None]:
         _seen = set()
         xy: CoordType
         for area in self.areas:
-            for xy in area.xy_iterator():
+            for xy in area.xy_iterator(reverse_row=reverse_row):
                 if xy not in _seen:
                     _seen.add(xy)
                     yield xy
@@ -243,11 +272,11 @@ class AreaDescriptor:
     def to_coords(self) -> set[CoordType]:
         return self.includes.to_coords() - self.excludes.to_coords()
 
-    def xy_iterator(self, with_exclusions: bool = True) -> Generator[CoordType, None, None]:
+    def xy_iterator(self, with_exclusions: bool = True, reverse_row: bool = False) -> Generator[CoordType, None, None]:
         if with_exclusions:
-            yield from (xy for xy in self.includes.xy_iterator() if xy not in self.excludes)
+            yield from (xy for xy in self.includes.xy_iterator(reverse_row=reverse_row) if xy not in self.excludes)
         else:
-            yield from (xy for xy in self.includes.xy_iterator())
+            yield from (xy for xy in self.includes.xy_iterator(reverse_row=reverse_row))
 
     def intersect_coords(self, other: AreaDescriptor) -> set[CoordType]:
         my_coords = self.to_coords()
@@ -392,8 +421,11 @@ class RegionsDBRecord3(TypedDict):
 
 
 class Settable(Protocol):
-    def set(self): ...
-    def is_set(self) -> bool: ...
+    def set(self):
+        ...
+
+    def is_set(self) -> bool:
+        ...
 
 
 def friendly_db_record(record: RegionsDBRecord3) -> dict:
@@ -403,8 +435,7 @@ def friendly_db_record(record: RegionsDBRecord3) -> dict:
         # noinspection PyTypedDict
         rslt[_field] = isofmin(record.get(_field)).replace("T", " ")
     rslt["name_history3"] = {
-        name: [(isofmin(t1), isofmin(t2)) for t1, t2 in hist]
-        for name, hist in record["name_history3"].items()
+        name: [(isofmin(t1), isofmin(t2)) for t1, t2 in hist] for name, hist in record["name_history3"].items()
     }
     rslt["sources"] = record["sources"]
     return rslt
