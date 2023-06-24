@@ -304,21 +304,69 @@ WelcomeHub:
 
 # region # User/Private Continents
 
-Etopia:
+"1700":
   includes:
-    - [1136, 1315, 1137, 1317]
+    - [940, 1174, 942, 1177]
 
-CoDS:
+A139:
   includes:
-    - [1138, 1311, 1139, 1313]
+    - 841-846/1004-1010
+  excludes:
+    - 841/1004
 
-Rockcliffe:
+A518:
   includes:
-    - 1150-1153/1306-1308
+    - [1014, 1175, 1021, 1178]
 
-ScienceCluster:
+A523:
   includes:
-    - [1138, 1296, 1160, 1317]
+    - 1077-1081/1118-1122
+
+AmazonRiver:
+  includes:
+    - [832, 969, 835, 972]
+
+AMEstate:
+  includes:
+    - [604, 1164, 609, 1169]
+
+AngelManor:
+  includes:
+    - [1054, 1397, 1056, 1400]
+
+AntiquityLand:
+  includes:
+    - [763, 909, 766, 913]
+
+ASLMetaverse:
+  includes:
+    - [763, 915, 765, 917]
+
+AzureIslands-Old:
+  includes:
+    - [977, 959, 989, 966]
+
+AzureIslands:
+  includes:
+    - 1143-1155/1064-1072
+  excludes:
+    - 1143-1145/1070-1071
+
+Babbage:
+  includes:
+    - [630, 1004, 633, 1007]
+
+Bauer:
+  includes:
+    - [899, 1200, 902, 1202]
+
+Baunatal:
+  includes:
+    - [715, 922, 718, 924]
+
+BlackBay:
+  includes:
+    - [615, 1058, 617, 1060]
 
 BlakeSeaSurrounding:
   includes:
@@ -337,158 +385,49 @@ BlakeSeaSurroundingNoSuppress:
   includes:
     - [1131, 1036, 1152, 1061]
 
-SecondNorway:
+CalasGaladhonPark:
   includes:
-    - [1149, 1041, 1165, 1063]
-  excludes:
-    - [1149, 1046, 1152, 1047]
-    - [1149, 1049, 1149, 1054]
-
-AzureIslands-Old:
-  includes:
-    - [977, 959, 989, 966]
-
-AzureIslands:
-  includes:
-    - 1143-1155/1064-1072
-  excludes:
-    - 1143-1145/1070-1071
-
-EdenFruitIslands:
-  includes:
-    - [459, 1700, 481, 1720]
-
-Luxory:
-  includes:
-    - [621, 1033, 632, 1050]
+    - [709, 1110, 713, 1113]
 
 Caledon:
   includes:
     - [905, 1020, 909, 1025]
 
-PlayaIsles:
+Capitol:
   includes:
-    - [824, 1207, 831, 1217]
+    - [641, 995, 645, 998]
 
-Freedom:
+CDS:
   includes:
-    - [750, 1013, 758, 1020]
-
-TuaruaFiji:
-  includes:
-    - [1131, 1064, 1149, 1082]
-
-Uhre:
-  includes:
-    - [860, 984, 865, 989]
-
-FantasyLands:
-  includes:
-    - [841, 1001, 844, 1010]
-
-SeabirdIslands:
-  includes:
-    - [686, 920, 692, 928]
-
-CoralOcean:
-  includes:
-    - [479, 1271, 485, 1280]
-
-Gooseberry:
-  includes:
-    - [669, 1423, 674, 1429]
-
-AllenCommunity:
-  includes:
-    - 902-906/1372-1376
-
-NativeIslands:
-  includes:
-    - [733, 1367, 738, 1371]
-
-MauiIslandEstates:
-  includes:
-    - [548, 1137, 551, 1140]
-
-Rosehaven:
-  includes:
-    - [906, 1029, 909, 1034]
-
-TortugaIslands:
-  includes:
-    - [500, 1010, 504, 1013]
-
-SeductionEstate:
-  includes:
-    - [757, 926, 763, 932]
-
-AntiquityLand:
-  includes:
-    - [763, 909, 766, 913]
-
-NewHaven:
-  includes:
-    - [597, 1181, 603, 1184]
-
-TheGroveEstate:
-  includes:
-    - [1000, 1166, 1008, 1171]
-
-TheWastelands:
-  includes:
-    - [785, 1036, 787, 1039]
+    - [1138, 1311, 1139, 1313]
 
 CedarCreek:
   includes:
     - [849, 1342, 853, 1346]
 
-PlumIslandSoundEstate:
+Coeur:
   includes:
-    - [921, 1168, 923, 1171]
+    - [554, 1117, 559, 1124]
 
-AMEstate:
+CoralOcean:
   includes:
-    - [604, 1164, 609, 1169]
-
-CalasGaladhonPark:
-  includes:
-    - [709, 1110, 713, 1113]
-
-IsleOfWyrms:
-  includes:
-    - [545, 1059, 548, 1063]
-
-AmazonRiver:
-  includes:
-    - [832, 969, 835, 972]
-
-Baunatal:
-  includes:
-    - [715, 922, 718, 924]
+    - [479, 1271, 485, 1280]
 
 CrackDen:
   includes:
     - [742, 1389, 745, 1391]
 
-MadisonCounty:
+EdenFruitIslands:
   includes:
-    - [850, 1320, 852, 1323]
+    - [459, 1700, 481, 1720]
 
-TempletonCove:
+EndOfTime:
   includes:
-    - [1027, 1240, 1030, 1242]
+    - [500, 1027, 503, 1030]
 
-Mythera:
+Etopia:
   includes:
-    - [720, 1324, 722, 1328]
-
-TalunaContinent:
-  includes:
-    - [1097, 949, 1099, 951]
-
-Raglan:
-  includes:
-    - [1083, 1296, 1086, 1299]
+    - [1136, 1315, 1137, 1317]
 
 FairChang:
   includes:
@@ -498,49 +437,136 @@ FairChang:
     - [1109, 1055, 1110, 1056]
     - [1110, 1052, 1110, 1054]
 
+FantasyLands:
+  includes:
+    - [841, 1001, 844, 1010]
+
+FirestormGateway:
+  includes:
+    - 651-656/1112-1115
+
+Freedom:
+  includes:
+    - [750, 1013, 758, 1020]
+
+Gooseberry:
+  includes:
+    - [669, 1423, 674, 1429]
+
+IsleOfWyrms:
+  includes:
+    - [545, 1059, 548, 1063]
+
+LondonCity:
+  includes:
+    - 850-851/895-897
+
+Luxory:
+  includes:
+    - [621, 1033, 632, 1050]
+
+MacedoniaEstate:
+  includes:
+    - [540, 1182, 544, 1185]
+
+MadisonCounty:
+  includes:
+    - [850, 1320, 852, 1323]
+
+MagnoliaEstates:
+  includes:
+    - 902-906/1372-1376
+
+Maple:
+  includes:
+    - [878, 927, 882, 928]
+
+MauiIslandEstates:
+  includes:
+    - [548, 1137, 551, 1140]
+
+MayaLake:
+  includes:
+    - [979, 1198, 981, 1200]
+
 MeisterbastlerKreis:
   includes:
     - 1105-1114/1382-1388
-
-A518:
-  includes:
-    - [1014, 1175, 1021, 1178]
-
-AngelManor:
-  includes:
-    - [1054, 1397, 1056, 1400]
-
-NakedEstates:
-  includes:
-    - [1038, 1161, 1042, 1163]
-
-WildWest:
-  includes:
-    - [963, 1145, 967, 1149]
-
-Babbage:
-  includes:
-    - [630, 1004, 633, 1007]
-
-Capitol:
-  includes:
-    - [641, 995, 645, 998]
-
-SunIslands:
-  includes:
-    - [876, 987, 878, 990]
 
 Mieville:
   includes:
     - [533, 1196, 537, 1202]
 
-Pirates1700:
+Mythera:
   includes:
-    - [940, 1174, 942, 1177]
+    - [720, 1324, 722, 1328]
 
-Coeur:
+NakedEstates:
   includes:
-    - [554, 1117, 559, 1124]
+    - [1038, 1161, 1042, 1163]
+
+NativeIslands:
+  includes:
+    - [733, 1367, 738, 1371]
+
+NewHaven:
+  includes:
+    - [597, 1181, 603, 1184]
+
+Olni:
+  includes:
+    - [655, 1291, 658, 1293]
+
+PlayaIsles:
+  includes:
+    - [824, 1207, 831, 1217]
+
+PlumIslandSoundEstate:
+  includes:
+    - [921, 1168, 923, 1171]
+
+Raglan:
+  includes:
+    - [1083, 1296, 1086, 1299]
+
+Rockcliffe:
+  includes:
+    - 1150-1153/1306-1308
+
+Romanum:
+  includes:
+    - [747, 1079, 749, 1083]
+
+Rosehaven:
+  includes:
+    - [906, 1029, 909, 1034]
+
+Schindleria:
+  includes:
+    - [527, 1027, 529, 1029]
+
+ScienceCluster:
+  includes:
+    - [1138, 1296, 1160, 1317]
+
+SecondNorway:
+  includes:
+    - [1149, 1041, 1165, 1063]
+  excludes:
+    - [1149, 1046, 1152, 1047]
+    - [1149, 1049, 1149, 1054]
+
+SecondScotland:
+  includes:
+    - 751-753/1125-1127
+
+SeductionEstate:
+  includes:
+    - [757, 926, 763, 932]
+
+SeabirdIslands:
+  includes:
+    - [686, 920, 692, 928]
 
 SnugHarbor:
   includes:
@@ -548,78 +574,52 @@ SnugHarbor:
   excludes:
     - [1146, 1056, 1146, 1056]
 
-ASLMetaverse:
+SunIslands:
   includes:
-    - [763, 915, 765, 917]
-
-Yumix:
-  includes:
-    - [653, 1245, 654, 1249]
-
-VWBPE:
-  includes:
-    - [1102, 1312, 1106, 1314]
-
-Maple:
-  includes:
-    - [878, 927, 882, 928]
-
-BlackBay:
-  includes:
-    - [615, 1058, 617, 1060]
-
-Schindleria:
-  includes:
-    - [527, 1027, 529, 1029]
-
-MayaLake:
-  includes:
-    - [979, 1198, 981, 1200]
-
-MacedoniaEstate:
-  includes:
-    - [540, 1182, 544, 1185]
-
-Bauer:
-  includes:
-    - [899, 1200, 902, 1202]
-
-Olni:
-  includes:
-    - [655, 1291, 658, 1293]
-
-Romanum:
-  includes:
-    - [747, 1079, 749, 1083]
-
-EndOfTime:
-  includes:
-    - [500, 1027, 503, 1030]
-
-LondonCity:
-  includes:
-    - 850-851/895-897
+    - [876, 987, 878, 990]
 
 Sunweaver:
   includes:
     - 876-878/987-990
 
-A139:
+TalunaContinent:
   includes:
-    - 841-846/1004-1010
-  excludes:
-    - 841/1004
+    - [1097, 949, 1099, 951]
 
-SecondScotland:
+TempletonCove:
   includes:
-    - 751-753/1125-1127
+    - [1027, 1240, 1030, 1242]
 
-A523:
+TheGroveEstate:
   includes:
-    - 1077-1081/1118-1122
+    - [1000, 1166, 1008, 1171]
 
-FirestormGateway:
+TheWastelands:
   includes:
-    - 651-656/1112-1115
+    - [785, 1036, 787, 1039]
+
+TortugaIslands:
+  includes:
+    - [500, 1010, 504, 1013]
+
+TuaruaFiji:
+  includes:
+    - [1131, 1064, 1149, 1082]
+
+Uhre:
+  includes:
+    - [860, 984, 865, 989]
+
+VWBPE:
+  includes:
+    - [1102, 1312, 1106, 1314]
+
+WildWest:
+  includes:
+    - [963, 1145, 967, 1149]
+
+Yumix:
+  includes:
+    - [653, 1245, 654, 1249]
 
 # endregion
