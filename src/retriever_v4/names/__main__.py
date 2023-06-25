@@ -18,7 +18,7 @@ from retriever_v4.names.xchg import export
 from sl_maptools import CoordType, MapCoord, RegionsDBRecord3
 from sl_maptools.fetchers import CookedResult
 from sl_maptools.fetchers.cap import BoundedNameFetcher
-from sl_maptools.utils import ConfigReader, SLMapToolsConfig, handle_sigint
+from sl_maptools.utils import ConfigReader, SLMapToolsConfig, handle_sigint, make_backup
 
 CONN_LIMIT: Final[int] = 80
 # SEMA_SIZE: Final[int] = 180
@@ -235,6 +235,7 @@ def main(app_context: RetrieverApplication, opts: OptionsProtocol):
     print(f"Next coordinate: {Progress.next_coordinate}")
 
     if opts.dbpath.exists():
+        make_backup(opts.dbpath, 5)
         with opts.dbpath.open("rb") as fin:
             DataBase = pickle.load(fin)
     print(f"DataBase already contains {len(DataBase)} regions.")
