@@ -235,10 +235,12 @@ def main(app_context: RetrieverApplication, opts: OptionsProtocol):
     print(f"Next coordinate: {Progress.next_coordinate}")
 
     if opts.dbpath.exists():
+        print(f"Database {opts.dbpath} found, making backup ...", end="", flush=True)
         make_backup(opts.dbpath, 5)
+        print(" done")
         with opts.dbpath.open("rb") as fin:
             DataBase = pickle.load(fin)
-    print(f"DataBase already contains {len(DataBase)} regions.")
+    print(f"DataBase already contains {len(DataBase)} regions.", flush=True)
 
     start_coord = Progress.next_coordinate
     #
