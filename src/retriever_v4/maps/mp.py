@@ -320,6 +320,16 @@ def launch_workers(
         except queue.Empty:
             pass
 
+    def dispatch_backlog():
+        backlog = sorted(progress["backlog"], key=lambda i: (i[1], i[0]))
+        if backlog:
+            _chunksize = (len(backlog) // opts.workers) + 1
+            _chunksize = min(2000, _chunksize)
+            _i = 0
+            while _i < len(backlog):
+                coord_queue.put(("set", backlog[_i: (_i + _chunksize)]))
+                _i += _chunksize
+
     pool_r: mp_pool.Pool
     pool_s: mp_pool.Pool
     try:
@@ -333,14 +343,7 @@ def launch_workers(
                 stack.callback(flush_result_queue, True)
                 stack.callback(flush_dispatched_queue, True)
                 #
-                backlog = sorted(progress["backlog"], key=lambda i: (i[1], i[0]))
-                if backlog:
-                    _chunksize = (len(backlog) // opts.workers) + 1
-                    _chunksize = min(2000, _chunksize)
-                    _i = 0
-                    while _i < len(backlog):
-                        coord_queue.put(("set", backlog[_i : (_i + _chunksize)]))
-                        _i += _chunksize
+                dispatch_backlog()
 
                 for row in range(progress["next_row"], -1, -1):
                     coord_queue.put(("row", row))
