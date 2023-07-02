@@ -33,6 +33,8 @@ class InterestingRegion(NamedTuple):
 def recent(max_days: int) -> set[InterestingRegion]:
     result: set[InterestingRegion] = set()
     for co, data in DATABASE.items():
+        if not data["current_name"]:
+            continue
         delta = _NAO - data["first_seen"]
         if delta.days <= max_days:
             d = InterestingRegion(data["first_seen"], data["current_name"], co)
