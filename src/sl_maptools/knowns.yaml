@@ -140,6 +140,11 @@ Bellisseria-Fantasseria:
     - 1037/930-939
     - [1038, 930, 1039, 934]
 
+Bellisseria-Ranchlands:
+  includes:
+#    - 1051-1056/980-986
+    - 1045-1057/979-986
+
 Bellisseria-Sakurasseria:
   includes:
     - [1063, 992, 1072, 1000]
@@ -155,11 +160,6 @@ Bellisseria-Stiltlands:
     - [1058, 967, 1063, 974]
     - [1058, 975, 1062, 975]
     - [1060, 976, 1061, 976]
-
-Belliseria-Ranchlands:
-  includes:
-#    - 1051-1056/980-986
-    - 1045-1058/978-987
 
 # endregion
 
