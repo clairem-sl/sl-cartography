@@ -13,7 +13,7 @@ import time
 from pathlib import Path
 from typing import Final, Optional, Protocol, TypedDict, cast
 
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 
 from sl_maptools import CoordType, RegionsDBRecord
 from sl_maptools.image_processing import (
@@ -121,13 +121,18 @@ def calc_domc_init(
 CalcResultType = tuple[CoordType, Path, DomColors]
 
 
-def calc_domc(job: tuple[CoordType, Path]) -> CalcResultType:
-    global PatchesDict
+def calc_domc(job: tuple[CoordType, Path]) -> CalcResultType | None:
     coord, fpath = job
+    if not fpath.exists() or not fpath.is_file():
+        return None
 
-    with Image.open(fpath) as img:
-        img.load()
-        domc: DomColors = {fsz: calculate_dominant_colors(img, fsz) for fsz in FASCIA_SIZES}
+    try:
+        with Image.open(fpath) as img:
+            img.load()
+            domc: DomColors = {fsz: calculate_dominant_colors(img, fsz) for fsz in FASCIA_SIZES}
+    except UnidentifiedImageError:
+        fpath.unlink()
+        return None
 
     rslt = coord, fpath, domc
     CollectorQueue.put(rslt)
@@ -322,6 +327,8 @@ def main(opts: OptionsType):
         ):
             try:
                 for i, rslt in enumerate(pool_calc.imap_unordered(calc_domc, mapfiles, chunksize=10), start=1):
+                    if rslt is None:
+                        continue
                     make_recently_triggered = False
                     coord, fpath, domc = rslt
                     domc_db.setdefault(coord, {})[fpath] = domc
