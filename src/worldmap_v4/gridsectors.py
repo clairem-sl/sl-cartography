@@ -135,6 +135,7 @@ def main(opts: Options):
             gridsector_p = gridsector_dir / f"WorldGridSectors_{opts.tag}_{variant}.png"
         else:
             gridsector_p = gridsector_dir / f"WorldGridSectors_{variant}.png"
+        gridsector_p.unlink(missing_ok=True)
         canvas.save(gridsector_p)
         print(f" {gridsector_p}", flush=True)
 
