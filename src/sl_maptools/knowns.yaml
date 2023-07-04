@@ -393,9 +393,9 @@ Caledon:
   includes:
     - [905, 1020, 909, 1025]
 
-Capitol:
+Genovia:
   includes:
-    - [641, 995, 645, 998]
+    - 641-643/995-996
 
 CDS:
   includes:
