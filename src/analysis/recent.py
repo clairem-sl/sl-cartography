@@ -54,12 +54,14 @@ def main():
     x_s: dict[str, set[int]] = defaultdict(set)
     y_s: dict[str, set[int]] = defaultdict(set)
 
+    by_grid = []
     for i, (t, name, co) in enumerate(interesting, start=1):
         x, y = co
         col = x // 100
         row = y // 100
         gs = f"[{GRID_COLS[col]}{row}]"
         sco = f"{co}"
+        by_grid.append((gs, sco, name))
         print(f"{i:>3}) {t.isoformat(timespec='minutes')} {sco:12} {gs:6} {name}")
         if 22 <= i <= 27:
             x_s["Silks"].add(x)
@@ -70,6 +72,11 @@ def main():
 
     for k in x_s:
         print(f"{k}: {min(x_s[k])}-{max(x_s[k])}/{min(y_s[k])}-{max(y_s[k])}")
+    print()
+
+    print("Sorted by Grid then by Coordinates:")
+    for i, (gs, sco, name) in enumerate(sorted(by_grid), start=1):
+        print(f"{i:>3} {gs:6} {sco:12} {name}")
 
 
 if __name__ == '__main__':
