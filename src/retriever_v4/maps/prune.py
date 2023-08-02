@@ -12,7 +12,6 @@ from multiprocessing.pool import Pool as MPPool
 from pathlib import Path
 from typing import Final, Protocol, cast
 
-import PIL
 import numpy as np
 from PIL import Image, UnidentifiedImageError
 from skimage.metrics import mean_squared_error as mse
@@ -62,42 +61,50 @@ def do_prune(
     f1: Path = flist.pop()
     while flist:
         try:
-            with Image.open(f1) as im1:
-                # noinspection PyTypeChecker
-                f1_arr = np.asarray(im1.convert("L"))
-                f2: Path
-                while flist:
-                    try:
-                        do_delete = False
-                        with Image.open(f2 := flist.pop()) as im2:
-                            # noinspection PyTypeChecker
-                            f2_arr = np.asarray(im2.convert("L"))
-                            # Image similarity test using Mean Squared Error and Structural Similarity Index,
-                            # see https://pyimagesearch.com/2014/09/15/python-compare-two-images/
-                            mse_result = mse(f1_arr, f2_arr)
-                            if mse_result < thresholds.MSE:
-                                do_delete = True
-                            else:
-                                ssim_result = ssim(f1_arr, f2_arr)
-                                if ssim_result > thresholds.SSIM:
-                                    do_delete = True
-                            if do_delete:
-                                if not quiet:
-                                    print("❌", end="", flush=True)
-                                f2.unlink()
-                            else:
-                                # Exit immediately once we found a non-similar image
-                                flist.append(f2)
-                                break
-                    except UnidentifiedImageError:
-                        if f2.is_file():
-                            f2.unlink()
-                    except FileNotFoundError:
-                        pass
+            with Image.open(f1):
+                break
         except UnidentifiedImageError:
             if f1.is_file():
                 f1.unlink()
             f1 = flist.pop()
+    else:
+        # We'll go here if flist is empty. Which happens only in 2 circumstances:
+        # - Either filelist contains just one element, f1; or
+        # - All files are corrupt except the last one. We assume the last one is not corrupt.
+        return [f1]
+
+    with Image.open(f1) as im1:
+        # noinspection PyTypeChecker
+        f1_arr = np.asarray(im1.convert("L"))
+        f2: Path
+        while flist:
+            do_delete = False
+            try:
+                with Image.open(f2 := flist.pop()) as im2:
+                    # noinspection PyTypeChecker
+                    f2_arr = np.asarray(im2.convert("L"))
+                    # Image similarity test using Mean Squared Error and Structural Similarity Index,
+                    # see https://pyimagesearch.com/2014/09/15/python-compare-two-images/
+                    mse_result = mse(f1_arr, f2_arr)
+                    if mse_result < thresholds.MSE:
+                        do_delete = True
+                    else:
+                        ssim_result = ssim(f1_arr, f2_arr)
+                        if ssim_result > thresholds.SSIM:
+                            do_delete = True
+                    if do_delete:
+                        if not quiet:
+                            print("❌", end="", flush=True)
+                        f2.unlink()
+                    else:
+                        # Exit immediately once we found a non-similar image
+                        flist.append(f2)
+                        break
+            except UnidentifiedImageError:
+                if f2.is_file():
+                    f2.unlink()
+            except FileNotFoundError:
+                pass
     flist.append(f1)
     return flist
 
