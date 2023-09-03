@@ -10,6 +10,8 @@ from typing import NamedTuple
 
 from sl_maptools import CoordType, RegionsDBRecord3
 
+GRID_COLS = "AA A B C D E F G H I J K L M N O P Q R S T U V W X Y Z".split()
+
 DB_PATH = Path(r"C:\Cache\SL-Carto\RegionsDB3.pkl")
 CUTOFF = 3
 
@@ -46,6 +48,7 @@ def main():
     x_s: dict[str, set[int]] = defaultdict(set)
     y_s: dict[str, set[int]] = defaultdict(set)
 
+    by_grid = []
     for i, (t, name, co) in enumerate(interesting, start=1):
         print(f"{i:>3}) {t.isoformat(timespec='minutes')} {co} {name}")
         x, y = co
@@ -60,6 +63,13 @@ def main():
 
     for k in x_s:
         print(f"{k}: {min(x_s[k])}-{max(x_s[k])}/{min(y_s[k])}-{max(y_s[k])}")
+
+    print()
+
+    for i, (grid, x, y, name) in enumerate(sorted(by_grid), start=1):
+        cost = f"({x}, {y})"
+        grid = f"[{grid}]"
+        print(f"{grid:6} {cost:12} {name}")
 
 
 if __name__ == '__main__':
