@@ -201,19 +201,19 @@ def main(opts: Options):
 
     with opts.regionsdb.open("rb") as fin:
         regsdb: dict[CoordType, RegionsDBRecord3] = pickle.load(fin)
-    validation_set: set[CoordType] = set()
-    validation_set.update(k for k, v in regsdb.items() if v["current_name"])
+    valid_regions: set[CoordType] = set()
+    valid_regions.update(k for k, v in regsdb.items() if v["current_name"])
     if not opts.no_bonnie:
         bonnie_coords = get_bonnie_coords(None, True)
-        validation_set.intersection_update(bonnie_coords)
+        valid_regions.intersection_update(bonnie_coords)
     for co in list(map_tiles.keys()):
-        if co not in validation_set:
+        if co not in valid_regions:
             del map_tiles[co]
 
     print("\nMaking maps:")
     with handle_sigint(AbortRequested):
         if not opts.no_grid:
-            grid_maker = GridMaker(regions_db=regsdb, validation_set=validation_set)
+            grid_maker = GridMaker(regions_db=regsdb, validation_set=valid_regions)
         for area_name, area_desc in wanted_areas:
             targdir = opts.outdir / area_name
             targdir.mkdir(parents=True, exist_ok=True)
