@@ -49,12 +49,14 @@ def main():
     for i, (t, name, co) in enumerate(interesting, start=1):
         print(f"{i:>3}) {t.isoformat(timespec='minutes')} {co} {name}")
         x, y = co
-        if 22 <= i <= 27:
-            x_s["Silks"].add(x)
-            y_s["Silks"].add(y)
-        elif i >= 31:
-            x_s["Azure"].add(x)
-            y_s["Azure"].add(y)
+        # if 22 <= i <= 27:
+        #     x_s["Silks"].add(x)
+        #     y_s["Silks"].add(y)
+        # elif i >= 31:
+        #     x_s["Azure"].add(x)
+        #     y_s["Azure"].add(y)
+        grid = f"{GRID_COLS[x // 100]}{y//100}"
+        by_grid.append((grid, x, y, name))
 
     for k in x_s:
         print(f"{k}: {min(x_s[k])}-{max(x_s[k])}/{min(y_s[k])}-{max(y_s[k])}")
