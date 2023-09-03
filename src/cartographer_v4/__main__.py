@@ -27,7 +27,9 @@ AbortRequested: Settable = Event()
 class CartographerOptions(Protocol):
     no_grid: bool
     continents: list[str]
+    """Continent names to map"""
     areas: list[AreaBounds]
+    """Areas (in coord pairs) to map"""
     mapdir: Path
     outdir: Path
     regionsdb: Path
@@ -195,6 +197,7 @@ def main(opts: Options):
                     wanted_areas.extend((a, KNOWN_AREAS[a]))
 
     map_tiles = inventorize_maps_latest(opts.mapdir)
+    """A dict of map tiles to use, with coords as key"""
 
     with opts.regionsdb.open("rb") as fin:
         regsdb: dict[CoordType, RegionsDBRecord3] = pickle.load(fin)

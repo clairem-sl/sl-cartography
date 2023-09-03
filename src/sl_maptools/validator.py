@@ -168,6 +168,12 @@ BONNIE_REGDB_URL: Final[str] = "https://www.bonniebots.com/static-api/regions/in
 
 
 def get_bonnie_coords(bonniedb: None | Path, fetchbonnie: bool) -> set[CoordType]:
+    """
+    Returns a set of valid coordinates from BonnieBots DB.
+
+    :param bonniedb: Path to BonnieBots DB file, or None
+    :param fetchbonnie: If True, then fetch from BonnieBots API
+    """
     bdb_data_raw = {}
     if bonniedb:
         print(f"Reading BonnieBots Regions DB from {bonniedb} ... ", end="", flush=True)
@@ -182,6 +188,7 @@ def get_bonnie_coords(bonniedb: None | Path, fetchbonnie: bool) -> set[CoordType
 
 
 def inventorize_maps_latest(mapdir: Path | str) -> dict[CoordType, Path]:
+    """Returns a dict of maptile paths, with the coord as key"""
     mapdir = Path(mapdir)
     rslt: dict[CoordType, Path] = {}
     for fp in sorted(mapdir.glob("*.jp*"), reverse=True):

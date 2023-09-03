@@ -48,6 +48,8 @@ class ExclusionMethod(Enum):
 
 
 class GridMaker:
+    """This class creates gridded maps"""
+
     def __init__(
             self,
             regions_db: dict[CoordType, RegionsDBRecord3],
