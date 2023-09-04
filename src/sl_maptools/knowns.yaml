@@ -17,21 +17,13 @@
 
 # region ## Claire's Belli separation
 
-Bellisseria_CM_South:
+Bellisseria_CM_Annex:
   includes:
-    - [1038, 950, 1063, 977]
-
-Bellisseria_CM_West:
-  includes:
-    - [1023, 940, 1045, 977]
+    - [1037, 930, 1053, 949]
 
 Bellisseria_CM_Atolls:
   includes:
     - [1023, 928, 1032, 940]
-
-Bellisseria_CM_Annex:
-  includes:
-    - [1037, 930, 1053, 949]
 
 Bellisseria_CM_Central:
   includes:
@@ -41,9 +33,24 @@ Bellisseria_CM_North:
   includes:
     - [1078, 987, 1100, 1024]
 
+Bellisseria_CM_South:
+  includes:
+    - [1038, 950, 1063, 977]
+
+Bellisseria_CM_West:
+  includes:
+    - [1023, 940, 1045, 977]
+
 # endregion
 
 # region ## SLGI's Belli separation
+
+Bellisseria_SLGI_East:
+  includes:
+    - [1078, 987, 1100, 1024]
+  excludes:
+    - 1100/1005-1010
+    - [1078, 987, 1080, 989]
 
 Bellisseria_SLGI_Forest:
   includes:
@@ -54,31 +61,6 @@ Bellisseria_SLGI_Forest:
     - [1038, 963, 1044, 963]
     - [1038, 950, 1042, 962]
     - [1043, 955, 1043, 956]
-
-Bellisseria_SLGI_East:
-  includes:
-    - [1078, 987, 1100, 1024]
-  excludes:
-    - 1100/1005-1010
-    - [1078, 987, 1080, 989]
-
-Bellisseria_SLGI_Victorian:
-  includes:
-    - [1024, 941, 1046, 966]
-  excludes:
-    - [1024, 966, 1043, 966]
-    - [1024, 965, 1042, 965]
-    - [1024, 964, 1041, 964]
-    - [1024, 959, 1040, 963]
-    - [1024, 954, 1039, 958]
-    - [1046, 941, 1046, 962]
-    - [1045, 941, 1045, 961]
-    - [1044, 958, 1044, 961]
-    - [1044, 941, 1044, 953]
-    - [1040, 941, 1043, 948]
-    - [1037, 941, 1039, 945]
-    - [1035, 941, 1039, 943]
-    - [1024, 941, 1024, 941]
 
 Bellisseria_SLGI_Jeogeot:
   includes:
@@ -117,6 +99,24 @@ Bellisseria_SLGI_Sakura:
   includes:
     - [1063, 992, 1072, 1000]
 
+Bellisseria_SLGI_Victorian:
+  includes:
+    - [1024, 941, 1046, 966]
+  excludes:
+    - [1024, 966, 1043, 966]
+    - [1024, 965, 1042, 965]
+    - [1024, 964, 1041, 964]
+    - [1024, 959, 1040, 963]
+    - [1024, 954, 1039, 958]
+    - [1046, 941, 1046, 962]
+    - [1045, 941, 1045, 961]
+    - [1044, 958, 1044, 961]
+    - [1044, 941, 1044, 953]
+    - [1040, 941, 1043, 948]
+    - [1037, 941, 1039, 945]
+    - [1035, 941, 1039, 943]
+    - [1024, 941, 1024, 941]
+
 Bellisseria_SLGI_WaterParadise:
   includes:
     - [1058, 967, 1081, 992]
@@ -140,6 +140,12 @@ Bellisseria-Fantasseria:
     - 1037/930-939
     - [1038, 930, 1039, 934]
 
+Bellisseria-Ranchlands:
+  includes:
+    - 1042-1057/978-991
+  excludes:
+    - 1050-1052/978
+
 Bellisseria-Sakurasseria:
   includes:
     - [1063, 992, 1072, 1000]
@@ -155,12 +161,6 @@ Bellisseria-Stiltlands:
     - [1058, 967, 1063, 974]
     - [1058, 975, 1062, 975]
     - [1060, 976, 1061, 976]
-
-Bellisseria-Ranchlands:
-  includes:
-    - 1042-1057/978-991
-  excludes:
-    - 1050-1052/978
 
 # endregion
 
