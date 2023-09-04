@@ -519,10 +519,6 @@ Babbage:
   includes:
     - [630, 1004, 633, 1007]
 
-Capitol:
-  includes:
-    - [641, 995, 645, 998]
-
 SunIslands:
   includes:
     - [876, 987, 878, 990]
