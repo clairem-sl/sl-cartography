@@ -380,7 +380,7 @@ Uhre:
 
 FantasyLands:
   includes:
-    - [841, 1001, 844, 1010]
+    - [841, 1001, 846, 1010]
 
 SeabirdIslands:
   includes:
