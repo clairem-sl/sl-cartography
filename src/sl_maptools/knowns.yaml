@@ -156,7 +156,17 @@ Bellisseria-Stiltlands:
     - [1058, 975, 1062, 975]
     - [1060, 976, 1061, 976]
 
+Bellisseria-Ranchlands:
+  includes:
+    - 1042-1057/978-991
+  excludes:
+    - 1050-1052/978
+
 # endregion
+
+WelcomeHub:
+  includes:
+    - 1050-1052/973-978
 
 # endregion
 
