@@ -196,17 +196,21 @@ def main(opts: Options):
                 for a in aa:
                     wanted_areas.extend((a, KNOWN_AREAS[a]))
 
-    map_tiles = inventorize_maps_latest(opts.mapdir)
-    """A dict of map tiles to use, with coords as key"""
-
     with opts.regionsdb.open("rb") as fin:
         regsdb: dict[CoordType, RegionsDBRecord3] = pickle.load(fin)
     valid_regions: set[CoordType] = set()
+    # Regions are valid only if they have a name
     valid_regions.update(k for k, v in regsdb.items() if v["current_name"])
+
+    # Now crosscheck with Bonnie if not specified otherwise
     if not opts.no_bonnie:
         bonnie_coords = get_bonnie_coords(None, True)
         valid_regions.intersection_update(bonnie_coords)
+
+    map_tiles = inventorize_maps_latest(opts.mapdir)
+    """A dict of map tiles to use, with coords as key"""
     for co in list(map_tiles.keys()):
+        # Delete reference to maptiles that has no valid region
         if co not in valid_regions:
             del map_tiles[co]
 
