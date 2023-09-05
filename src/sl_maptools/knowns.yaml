@@ -545,6 +545,10 @@ ScienceCluster:
   includes:
     - [1138, 1296, 1160, 1317]
 
+SeabirdIslands:
+  includes:
+    - [686, 920, 692, 928]
+
 SecondNorway:
   includes:
     - [1149, 1041, 1165, 1063]
@@ -559,10 +563,6 @@ SecondScotland:
 SeductionEstate:
   includes:
     - [757, 926, 763, 932]
-
-SeabirdIslands:
-  includes:
-    - [686, 920, 692, 928]
 
 SnugHarbor:
   includes:
