@@ -557,10 +557,6 @@ SunIslands:
   includes:
     - [876, 987, 878, 990]
 
-Sunweaver:
-  includes:
-    - 876-878/987-990
-
 TempletonCove:
   includes:
     - [1027, 1240, 1030, 1242]
