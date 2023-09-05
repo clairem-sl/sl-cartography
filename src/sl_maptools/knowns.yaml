@@ -252,17 +252,13 @@ PremiumSouth-South:
 
 # region # Special Linden Areas
 
+K13-Areas:
+  includes:
+    - 1135-1162/1300-1319
+
 LindenEstateServices:
   includes:
     - [1025, 1014, 1031, 1016]
-
-MoleIslands:
-  includes:
-    - [1006, 971, 1011, 976]
-
-MemBuild:
-  includes:
-    - 986-989/979-980
 
 LR-160:
   includes:
@@ -272,30 +268,29 @@ LR-180:
   includes:
     - [1193, 1206, 1196, 1210]
 
-Preflight:
+MemBuild:
   includes:
-    - [1296, 1193, 1299, 1196]
+    - 986-989/979-981
+
+MoleIslands:
+  includes:
+    - [1006, 971, 1011, 976]
 
 PaleoQuest:
   includes:
     - [400, 392, 401, 400]
 
-RFL2023:
+Preflight:
   includes:
-    - [547, 705, 554, 716]
+    - [1296, 1193, 1299, 1196]
 
-SLB2023:
-  includes:
+#RFL2023:
+#  includes:
+#    - [547, 705, 554, 716]
+
+#SLB2023:
+#  includes:
 #    - [386, 359, 403, 377]
-    - [390, 359, 401, 373]
-
-ShopNHop2023:
-  includes:
-    - 489-494/1195-1202
-
-K13-Areas:
-  includes:
-    - 1135-1162/1300-1319
 
 WelcomeHub:
   includes:
