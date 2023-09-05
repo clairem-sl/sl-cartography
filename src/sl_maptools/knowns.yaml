@@ -389,10 +389,6 @@ Caledon:
   includes:
     - [905, 1020, 909, 1025]
 
-Genovia:
-  includes:
-    - 641-643/995-996
-
 CDS:
   includes:
     - [1135, 1311, 1139, 1314]
@@ -444,6 +440,11 @@ FirestormGateway:
 Freedom:
   includes:
     - [750, 1013, 758, 1020]
+
+Genovia:
+  includes:
+    - 641-643/995-996
+
 
 Gooseberry:
   includes:
