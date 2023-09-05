@@ -575,7 +575,23 @@ TortugaIslands:
 
 TuaruaFiji:
   includes:
-    - [1131, 1064, 1149, 1082]
+    - [1133, 1064, 1153, 1083]
+  excludes:
+    # The northern strips, part of Corsica
+    - 1133-1146/1082-1083
+    - 1153/1083
+    # The western boundary, part of Nautilus
+    - 1133-1136/1069-1079
+    - 1137-1138/1073-1076
+    - 1133-1135/1066-1068
+    - 1133-1134/1064-1065
+    # The eastern boundary, Azure Islands
+    - 1143-1145/1069
+    - 1146-1153/1065-1072
+
+#    - 1138/1076
+#    - 1136/1069-1071
+#    - 1135/1066-1068
 
 Uhre:
   includes:
