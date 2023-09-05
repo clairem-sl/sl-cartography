@@ -338,15 +338,15 @@ ASLMetaverse:
   includes:
     - [763, 915, 765, 917]
 
-AzureIslands-Old:
-  includes:
-    - [977, 959, 989, 966]
-
 AzureIslands:
   includes:
     - 1143-1155/1064-1073
   excludes:
     - 1143-1145/1070-1071
+
+AzureIslands-Old:
+  includes:
+    - [977, 959, 989, 966]
 
 Babbage:
   includes:
