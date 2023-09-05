@@ -517,10 +517,6 @@ PlayaIsles:
   includes:
     - [824, 1207, 831, 1217]
 
-PlumIslandSoundEstate:
-  includes:
-    - [921, 1168, 923, 1171]
-
 Raglan:
   includes:
     - [1083, 1296, 1086, 1299]
