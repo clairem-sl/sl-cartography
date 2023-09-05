@@ -173,6 +173,7 @@ class GridMaker:
             else:
                 xy_iterator = area.bounding_box.xy_iterator
 
+            xy: tuple[int, int]
             for i, xy in enumerate(xy_iterator(), start=1):
                 if xy not in self.validation_set:
                     continue
