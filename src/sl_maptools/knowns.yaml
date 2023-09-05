@@ -574,10 +574,6 @@ SunIslands:
   includes:
     - [876, 987, 878, 990]
 
-Sunweaver:
-  includes:
-    - 876-878/987-990
-
 TalunaContinent:
   includes:
     - [1097, 949, 1099, 951]
