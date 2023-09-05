@@ -142,8 +142,9 @@ Bellisseria-Fantasseria:
 
 Bellisseria-Ranchlands:
   includes:
-#    - 1051-1056/980-986
-    - 1045-1057/979-986
+    - 1042-1057/978-991
+  excludes:
+    - 1050-1052/978
 
 Bellisseria-Sakurasseria:
   includes:
