@@ -324,7 +324,7 @@ AmazonRiver:
 
 AMEstate:
   includes:
-    - [604, 1164, 609, 1169]
+    - [604, 1164, 610, 1169]
 
 AngelManor:
   includes:
