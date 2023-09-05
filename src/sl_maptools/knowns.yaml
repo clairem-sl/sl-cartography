@@ -232,19 +232,19 @@ Zindra:
 
 # region # Linden Continents - Premium
 
-EastPremium:
+PremiumEast:
   includes:
     - [1192, 907, 1215, 926]
 
-SouthPremium-North:
-  includes:
-    - [1013, 811, 1028, 828]
-
-SouthPremium-Middle:
+PremiumSouth-Middle:
   includes:
     - [1000, 750, 1022, 768]
 
-SouthPremium-South:
+PremiumSouth-North:
+  includes:
+    - [1013, 811, 1028, 828]
+
+PremiumSouth-South:
   includes:
     - [1000, 500, 1022, 518]
 
