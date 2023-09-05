@@ -407,7 +407,7 @@ Coeur:
 
 CoralOcean:
   includes:
-    - [479, 1271, 485, 1280]
+    - [479, 1270, 485, 1280]
 
 CrackDen:
   includes:
