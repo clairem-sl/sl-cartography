@@ -300,19 +300,11 @@ WelcomeHub:
 
 # region # User/Private Continents
 
-"1700":
-  includes:
-    - [940, 1174, 942, 1177]
-
 A139:
   includes:
     - 841-846/1004-1010
   excludes:
     - 841/1004
-
-A518:
-  includes:
-    - [1014, 1175, 1021, 1178]
 
 A523:
   includes:
@@ -450,6 +442,11 @@ Gooseberry:
   includes:
     - [669, 1423, 674, 1429]
 
+# Originally "A518"
+GoreanLands:
+  includes:
+    - [1014, 1175, 1020, 1179]
+
 IsleOfWyrms:
   includes:
     - [545, 1059, 548, 1063]
@@ -514,6 +511,11 @@ NewHaven:
 Olni:
   includes:
     - [655, 1291, 658, 1293]
+
+# Originally "1700"
+Pirates1700:
+  includes:
+    - [940, 1174, 942, 1177]
 
 PlayaIsles:
   includes:
