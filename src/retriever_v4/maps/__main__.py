@@ -51,10 +51,6 @@ BATCH_WAIT: Final[float] = 5.0
 Config: SLMapToolsConfig = ConfigReader("config.toml")
 
 OrigSigINT: signal.Handlers = signal.getsignal(signal.SIGINT)
-SaverQueue: MP.Queue
-SaveSuccessQueue: MP.Queue
-Progress: RetrieverProgress
-
 AbortRequested = asyncio.Event()
 
 
@@ -65,6 +61,7 @@ class RetrieverMapsOptions(Protocol):
     debug_level: DebugLevel
     coordfile: Optional[Path]
     areas: list[str]
+    duration: int
 
 
 class OptionsProtocol(RetrieverMapsOptions, RetrieverApplication.Options, Protocol):
@@ -110,8 +107,9 @@ def get_options() -> OptionsProtocol:
 
     RetrieverApplication.add_options(parser)
 
-    _opts = parser.parse_args()
-    return cast(OptionsProtocol, _opts)
+    _opts = cast(OptionsProtocol, parser.parse_args())
+    _opts.duration = RetrieverApplication.calc_duration(_opts)
+    return _opts
 
 
 class SharedMemoryAllocator:
@@ -133,12 +131,18 @@ class SharedMemoryAllocator:
 
 
 async def async_main(
-    duration: int,
-    min_batch_size: int,
-    abort_low_rps: int,
+    progress: RetrieverProgress,
+    opts: OptionsProtocol,
     shm_allocator: SharedMemoryAllocator,
-):
-    global AbortRequested
+    saver_queue: MP.Queue,
+    save_success_queue: MP.Queue,
+) -> None:
+    """Perform async retrieval"""
+    global AbortRequested  # noqa: PLW0602
+    duration: int = opts.duration
+    min_batch_size: int = opts.min_batch_size
+    abort_low_rps: int = opts.abort_low_rps
+
     limits = httpx.Limits(max_connections=CONN_LIMIT, max_keepalive_connections=CONN_LIMIT)
     async with httpx.AsyncClient(limits=limits, timeout=10.0, http2=HTTP2) as client:
         fetcher = BoundedMapFetcher(CONN_LIMIT * 3, client, cooked=False, cancel_flag=AbortRequested)
@@ -156,13 +160,13 @@ async def async_main(
             if fut_result is None:
                 return False
             if not fut_result.result:
-                Progress.retire(fut_result.coord)
+                progress.retire(fut_result.coord)
                 return False
             if not shown:
                 shown = True
                 print("🌐", end="")
             print(f"({fut_result.coord.x},{fut_result.coord.y})✔", end=" ", flush=True)
-            SaverQueue.put(
+            saver_queue.put(
                 {
                     "coord": fut_result.coord,
                     "tsf": datetime.strftime(datetime.now(), "%y%m%d-%H%M"),
@@ -176,14 +180,14 @@ async def async_main(
                 print("No maps retrieved", end="")
             try:
                 while True:
-                    coord: MapCoord = SaveSuccessQueue.get_nowait()
-                    Progress.retire(coord)
+                    coord: MapCoord = save_success_queue.get_nowait()
+                    progress.retire(coord)
                     shm_allocator.retire(coord)
             except queue.Empty:
                 pass
 
         await dispatch_fetcher(
-            progress=Progress,
+            progress=progress,
             duration=duration,
             taskmaker=make_task,
             result_handler=process_result,
@@ -195,16 +199,89 @@ async def async_main(
         )
 
 
+def mp_main(
+    opts: OptionsProtocol,
+    progress: RetrieverProgress,
+    manager: MP.Manager,
+    shm_manager: MPMgr.SharedMemoryManager,
+) -> None:
+    """Perform multiprocessing retrieval"""
+    print("Starting saver worker...", end="", flush=True)
+    saver_queue = MP.Queue()
+    save_success_queue = MP.Queue()
+    saved_coords: dict[CoordType, None] = manager.dict()
+    worker_state: dict[str, tuple[str, Path | None]] = manager.dict()
+    possibly_changed: dict[CoordType, None] = manager.dict()
+    shm_allocator = SharedMemoryAllocator(shm_manager)
+
+    saver_args = (
+        opts.mapdir,
+        saver_queue,
+        save_success_queue,
+        saved_coords,
+        worker_state,
+        opts.debug_level,
+    )
+    pool: MPPool.Pool
+    with MP.Pool(opts.workers, initializer=saver, initargs=saver_args) as pool:
+        while sum(1 for v, _ in worker_state.values() if v == "idle") < opts.workers:
+            time.sleep(1)
+
+        print("started.\nDispatching async fetchers!", flush=True)
+        with handle_sigint(AbortRequested):
+            asyncio.run(
+                async_main(
+                    progress,
+                    opts,
+                    shm_allocator,
+                    saver_queue,
+                    save_success_queue,
+                )
+            )
+
+        print(
+            "Closing the pool, preventing new workers from spawning ... ",
+            end="",
+            flush=True,
+        )
+        pool.close()
+        print("closed.\nCurrent worker states:")
+        for n, s in worker_state.items():
+            print(f"  {n}: {s}")
+            if s != "ended":
+                saver_queue.put(None)
+        print("Waiting for workers to join ... ", end="", flush=True)
+        pool.join()
+        print("joined. \nClosing SaverQueue ... ", end="", flush=True)
+        saver_queue.close()
+        saver_queue.join_thread()
+        print("closed")
+        try:
+            print("Flushing SaveSuccess queue ... ", end="", flush=True)
+            while True:
+                coord = save_success_queue.get(timeout=5)
+                progress.retire(coord)
+                shm_allocator.retire(coord)
+        except queue.Empty:
+            pass
+        finally:
+            save_success_queue.close()
+            save_success_queue.join_thread()
+            print("flushed")
+            progress.save()
+        with (opts.mapdir / "PossiblyChanged.txt").open("wt") as fout:
+            for coord in sorted(possibly_changed.keys()):
+                print(coord, file=fout)
+
+
 def main(
     opts: OptionsProtocol,
-):
-    global Progress, SaverQueue, SaveSuccessQueue
-
-    dur = RetrieverApplication.calc_duration(opts)
+) -> None:
+    """The main function"""
     progress_file = opts.mapdir / Config.maps.progress
-    Progress = RetrieverProgress(progress_file, auto_reset=opts.auto_reset)
-    if Progress.outstanding_count:
-        print(f"{Progress.outstanding_count} jobs still outstanding from last session")
+    progress = RetrieverProgress(progress_file, auto_reset=opts.auto_reset)
+    if progress.outstanding_count:
+        print(f"{progress.outstanding_count} jobs still outstanding from last session")
     else:
         print("No outstanding jobs from last session.")
 
@@ -215,7 +292,7 @@ def main(
                 if not ln:
                     continue
                 x, y = ln.split(",")
-                Progress.add((int(x), int(y)))
+                progress.add((int(x), int(y)))
 
     if opts.areas:
         cs_anames = {k.casefold(): k for k in KNOWN_AREAS.keys()}
@@ -224,74 +301,17 @@ def main(
         }
         for aname in want_areas:
             for coord in KNOWN_AREAS[aname].bounding_box.xy_iterator():
-                Progress.add(coord)
+                progress.add(coord)
 
-    print(f"Next coordinate: {Progress.next_coordinate}")
-    if Progress.next_coordinate[1] < 0:
+    print(f"Next coordinate: {progress.next_coordinate}")
+    if progress.next_coordinate[1] < 0:
         print("No rows left to process.")
         print(f"Delete the file {progress_file} to reset. (Or specify --auto-reset)")
         return
 
     with MP.Manager() as manager, MPMgr.SharedMemoryManager() as shm_manager:
-        print("Starting saver worker...", end="", flush=True)
-        SaverQueue = MP.Queue()
-        SaveSuccessQueue = MP.Queue()
-        saved_coords: dict[CoordType, None] = manager.dict()
-        worker_state: dict[str, tuple[str, Path | None]] = manager.dict()
-        possibly_changed: dict[CoordType, None] = manager.dict()
-        shm_allocator = SharedMemoryAllocator(shm_manager)
-
-        saver_args = (
-            opts.mapdir,
-            SaverQueue,
-            SaveSuccessQueue,
-            saved_coords,
-            worker_state,
-            opts.debug_level,
-        )
-        pool: MPPool.Pool
-        with MP.Pool(opts.workers, initializer=saver, initargs=saver_args) as pool:
-            while sum(1 for v, _ in worker_state.values() if v == "idle") < opts.workers:
-                time.sleep(1)
-
-            print("started.\nDispatching async fetchers!", flush=True)
-            with handle_sigint(AbortRequested):
-                asyncio.run(async_main(dur, opts.min_batch_size, opts.abort_low_rps, shm_allocator))
-
-            print(
-                "Closing the pool, preventing new workers from spawning ... ",
-                end="",
-                flush=True,
-            )
-            pool.close()
-            print("closed.\nCurrent worker states:")
-            for n, s in worker_state.items():
-                print(f"  {n}: {s}")
-                if s != "ended":
-                    SaverQueue.put(None)
-            print("Waiting for workers to join ... ", end="", flush=True)
-            pool.join()
-            print("joined. \nClosing SaverQueue ... ", end="", flush=True)
-            SaverQueue.close()
-            SaverQueue.join_thread()
-            print("closed")
-            try:
-                print("Flushing SaveSuccess queue ... ", end="", flush=True)
-                while True:
-                    coord = SaveSuccessQueue.get(timeout=5)
-                    Progress.retire(coord)
-                    shm_allocator.retire(coord)
-            except queue.Empty:
-                pass
-            finally:
-                SaveSuccessQueue.close()
-                SaveSuccessQueue.join_thread()
-                print("flushed")
-                Progress.save()
-            with (opts.mapdir / "PossiblyChanged.txt").open("wt") as fout:
-                for coord in sorted(possibly_changed.keys()):
-                    print(coord, file=fout)
-    print(f"{Progress.outstanding_count:_} outstanding jobs left. Last dispatched coordinate: {Progress.last_dispatch}")
+        mp_main(opts, progress, manager, shm_manager)
+    print(f"{progress.outstanding_count:_} outstanding jobs left. Last dispatched coordinate: {progress.last_dispatch}")
     if AbortRequested.is_set():
         print("\nAborted by user.")
 
