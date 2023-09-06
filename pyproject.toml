@@ -79,3 +79,15 @@ target-version = ['py311']
 addopts = [
     "--import-mode=importlib",
 ]
+
+[tool.ruff]
+select = ["E", "F", "B", "S", "D", "YTT", "ANN", "CPY", "RET", "SLOT", "SIM", "TCH", "ARG", "PTH", "FIX", "PGH", "PL", "TRY", "PERF", "RUF"]
+ignore = [
+    "D105",  # Do not enforce docstring for magic method; they are mostly self-describing
+    "D212",  # Do not force docstring summary at first line, so we don't have the ugly indented summary
+    "D400",  # Do not enforce period at end of 1st line of docstring ...
+    "D415",  # ... or any closing mark for that matter
+    "D401",  # I have no idea what "imperative mood" is; so subjective
+    "E501",  # I disagree with short line lengths
+]
+target-version = "py311"
