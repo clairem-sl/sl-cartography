@@ -313,7 +313,7 @@ def main(
     if opts.coordfile and opts.coordfile.exists():
         with opts.coordfile.open("rt") as fin:
             for ln in fin:
-                ln = ln.strip()
+                ln = ln.strip()  # noqa: PLW2901
                 if not ln:
                     continue
                 x, y = ln.split(",")
