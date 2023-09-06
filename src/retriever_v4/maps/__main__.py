@@ -57,6 +57,8 @@ AbortRequested = asyncio.Event()
 
 
 class RetrieverMapsOptions(Protocol):
+    """Prototype of module-specific options returned by get_options"""
+    
     mapdir: Path
     workers: int
     auto_reset: bool
@@ -67,10 +69,13 @@ class RetrieverMapsOptions(Protocol):
 
 
 class OptionsProtocol(RetrieverMapsOptions, RetrieverApplication.Options, Protocol):
+    """Prototype of options"""
+    
     pass
 
 
 def get_options() -> OptionsProtocol:
+    """Get options from CLI"""
     parser = argparse.ArgumentParser("region_auditor")
 
     parser.add_argument("--mapdir", metavar="DIR", type=Path, default=Path(Config.maps.dir))
@@ -115,17 +120,35 @@ def get_options() -> OptionsProtocol:
 
 
 class SharedMemoryAllocator:
-    def __init__(self, manager: MPMgr.SharedMemoryManager):
+    """A thin wrapper to track shared memory and retire"""
+    
+    def __init__(self, manager: MPMgr.SharedMemoryManager) -> None:
+        """
+        Instatiates a SharedMemoryAllocator
+        
+        :param manager: A SharedMemoryManager from multiprocessing
+        """
         self.mgr = manager
         self.allocations: dict[CoordType, MPSharedMem.SharedMemory] = {}
 
     def new(self, coord: CoordType, data: bytes) -> MPSharedMem.SharedMemory:
+        """
+        Creates a new SharedMemory containing specified data
+
+        :param coord: The coordinate, used as SharedMemory ID
+        :param data: The blob to be put into the SharedMemory
+        """
         shm = self.mgr.SharedMemory(len(data))
         shm.buf[:] = data
         self.allocations[coord] = shm
         return shm
 
     def retire(self, coord: CoordType) -> None:
+        """
+        Retires a SharedMemory
+
+        :param coord: The ID of SharedMemory to retire
+        """
         shm = self.allocations[coord]
         shm.close()
         shm.unlink()
@@ -150,10 +173,10 @@ async def async_main(
         fetcher = BoundedMapFetcher(CONN_LIMIT * 3, client, cooked=False, cancel_flag=AbortRequested)
         shown = False
 
-        def make_task(coord: CoordType):
+        def make_task(coord: CoordType) -> asyncio.Task:
             return asyncio.create_task(fetcher.async_fetch(MapCoord(*coord)), name=str(coord))
 
-        def pre_batch():
+        def pre_batch() -> None:
             nonlocal shown
             shown = False
 
@@ -177,7 +200,7 @@ async def async_main(
             )
             return True
 
-        def post_batch():
+        def post_batch() -> None:
             if not shown:
                 print("No maps retrieved", end="")
             try:
