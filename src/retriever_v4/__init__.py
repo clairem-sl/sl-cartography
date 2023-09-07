@@ -18,13 +18,14 @@ from collections import deque
 from contextlib import AbstractContextManager, contextmanager
 from datetime import datetime, timedelta, timezone
 from enum import IntEnum
-from pathlib import Path
-from types import TracebackType
-from typing import Any, Callable, Final, Generator, Protocol, Type, TypedDict
+from typing import TYPE_CHECKING, Any, Callable, Final, Generator, Protocol, Type, TypedDict
 
 import ruamel.yaml as ryaml
 
-from sl_maptools import CoordType
+if TYPE_CHECKING:
+    from pathlib import Path
+    from types import TracebackType
+    from sl_maptools import CoordType
 
 
 class ProgressDict(TypedDict):
