@@ -367,6 +367,10 @@ BlakeSeaSurroundingNoSuppress:
   includes:
     - [1131, 1036, 1152, 1061]
 
+Burn2:
+  includes:
+    - 1022-1024/1023-1026
+
 CalasGaladhonPark:
   includes:
     - [709, 1110, 713, 1113]
