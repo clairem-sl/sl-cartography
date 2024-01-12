@@ -29,6 +29,8 @@ if TYPE_CHECKING:
 
 
 class ProgressDict(TypedDict):
+    """Tracks progress of retrieval"""
+
     next_x: int
     next_y: int
     outstanding: list[str]
@@ -36,19 +38,50 @@ class ProgressDict(TypedDict):
 
 # fmt: off
 class ProgressInterface(Protocol):
+    """Protocol for progress tracking"""
+
     next_coordinate: CoordType
     outstanding_count: int
-    def retire(self, item: CoordType) -> None: ...
-    def load(self) -> None: ...
-    def save(self) -> None: ...
-    def add(self, coord: CoordType) -> None: ...
-    def abatch(self, batch_size: int) -> collections.AsyncIterable[CoordType]: ...
+
+    def retire(self, item: CoordType) -> None:
+        """Retires a job"""
+        ...
+
+    def load(self) -> None:
+        """Load outstanding jobs from a tracking file"""
+        ...
+
+    def save(self) -> None:
+        """Save outstanding jobs -- and progress so far -- to a tracking file"""
+        ...
+
+    def add(self, coord: CoordType) -> None:
+        """Add a job into outstanding set"""
+        ...
+
+    def abatch(self, batch_size: int) -> collections.AsyncIterable[CoordType]:
+        """
+        Asynchronously process a batch of jobs
+
+        :param batch_size: Number of jobs in a batch
+        """
+        ...
 
 
 class Dispatchable(Protocol):
-    def abatch(self, batch_size: int) -> collections.AsyncIterable[CoordType]: ...
-    def save(self) -> None: ...
-    def retire(self, item: CoordType) -> None: ...
+    """Protocol for Dispatchable Async Worker"""
+
+    def abatch(self, batch_size: int) -> collections.AsyncIterable[CoordType]:
+        """Asynchronously dispatch for a batch"""
+        ...
+
+    def save(self) -> None:
+        """Save job to a backing file"""
+        ...
+
+    def retire(self, item: CoordType) -> None:
+        """Retire a job"""
+        ...
 
 # fmt: on
 
@@ -56,6 +89,11 @@ class Dispatchable(Protocol):
 class RetrieverProgress:
     """
     Tracks progress by generating job batches and recording the last issued job.
+
+    Attributes
+    ----------
+        next_coordinate(int): The next coordinate that will be returned by the job generator
+        outstanding_count(int): The number of jobs in the outstanding queue
     """
 
     DEFA_MIN_COORD: Final[CoordType] = 0, 0
@@ -67,8 +105,10 @@ class RetrieverProgress:
         auto_reset: bool = True,
         min_coord: CoordType = DEFA_MIN_COORD,
         max_coord: CoordType = DEFA_MAX_COORD,
-    ):
+    ) -> None:
         """
+        Create a progress tracker.
+
         :param backing_file: The YAML file where last state of the object wlll be read-from / written-to
         :param auto_reset: If True (default), will wrap Y coordinate to max upon reaching min
         :param min_coord: Minimum values of X (used in row-wrapping) and Y (used to reset/halt)
@@ -88,20 +128,24 @@ class RetrieverProgress:
 
     @property
     def next_coordinate(self) -> CoordType:
+        """Returns the next coordinate that will be returned by the job generator"""
         if self._backlog:
             return self._backlog[0]
         return self.next_x, self.next_y
 
     @property
     def outstanding_count(self) -> int:
+        """How many jobs are still in the outstanding queue (backlog)"""
         return len(self.outstanding)
 
-    def retire(self, item: CoordType):
+    def retire(self, item: CoordType) -> None:
+        """Remove item from set of outstanding jobs"""
         if item is None:
             return
         self.outstanding.discard(item)
 
-    def load(self):
+    def load(self) -> None:
+        """Load progress from backing file"""
         with self.backing_file.open("rt") as fin:
             _last_sess: ProgressDict = ryaml.safe_load(fin)
         if _last_sess is None:
@@ -114,7 +158,8 @@ class RetrieverProgress:
             self.outstanding.add((int(x), int(y)))
         self._backlog.extend(sorted(self.outstanding, key=lambda t: (t[1], t[0])))
 
-    def save(self):
+    def save(self) -> None:
+        """Save progress to backing file"""
         exported: ProgressDict = {
             "next_x": self.next_x,
             "next_y": self.next_y,
@@ -123,15 +168,18 @@ class RetrieverProgress:
         with self.backing_file.open("wt") as fout:
             ryaml.dump(exported, fout, default_flow_style=False)
 
-    def add(self, coord: CoordType):
+    def add(self, coord: CoordType) -> None:
+        """Add item into outstanding set"""
         self._backlog.append(coord)
         self.outstanding.add(coord)
 
     async def abatch(self, batch_size: int) -> Generator[CoordType, None, None]:
+        """Generate jobs for a batch"""
         for one in self.batch(batch_size):
             yield one
 
     def batch(self, batch_size: int) -> Generator[CoordType, None, None]:
+        """Generates a batch of coordinates"""
         c = 0
         while self._backlog:
             c += 1
@@ -161,18 +209,20 @@ class RetrieverProgress:
 
 
 class DebugLevel(IntEnum):
+    """Debug level"""
+
     DISABLED = 0
     NORMAL = 1
     DETAILED = 2
 
 
 @contextmanager
-def handle_sigint(interrupt_flag: asyncio.Event):
+def handle_sigint(interrupt_flag: asyncio.Event) -> None:
     """
     A context manager that provides SIGINT handling, and restore original handler upon exit
     """
 
-    def _handler(_, __):
+    def _handler(_, __) -> None:  # noqa: ANN001
         if interrupt_flag.is_set():
             return
         interrupt_flag.set()
@@ -198,7 +248,8 @@ async def dispatch_fetcher(
     batch_wait: float = 5.0,
     min_batch_size: int = 0,
     abort_low_rps: int = -1,
-):
+) -> None:
+    """Asynchronously dispatch jobs"""
     start = time.monotonic()
     tasks: set[asyncio.Task] = {taskmaker(coord) async for coord in progress.abatch(start_batch_size)}
     if not tasks:
@@ -225,7 +276,7 @@ async def dispatch_fetcher(
 
         # Handle results
         completed_count = exc_count = 0
-        for completed_count, task in enumerate(done, start=1):
+        for completed_count, task in enumerate(done, start=1):  # noqa: B007
             if exc := task.exception():
                 exc_count += 1
                 print(f"\n{task.get_name()} raised Exception: <{type(exc)}> {exc}")
@@ -246,7 +297,7 @@ async def dispatch_fetcher(
                 while pending_tasks:
                     done, pending_tasks = await asyncio.wait(pending_tasks, return_when=asyncio.ALL_COMPLETED)
                     for task in done:
-                        if exc := task.exception():
+                        if exc := task.exception():  # noqa: SIM102
                             if not isinstance(exc, asyncio.CancelledError):
                                 print(f"\n{task.get_name()} raised Exception: <{type(exc)}> {exc}")
                 pending_tasks.clear()
@@ -280,7 +331,18 @@ async def dispatch_fetcher(
 
 
 class RetrieverApplication(AbstractContextManager):
-    def __init__(self, *, lock_file: None | Path, log_file: None | Path, force: bool = False):
+    """
+    Defines an application as a ContextManager that performs retrieval
+    """
+
+    def __init__(self, *, lock_file: None | Path, log_file: None | Path, force: bool = False) -> None:
+        """
+        Instantiates this class
+
+        :param lock_file: Lock file to prevent simultaneous run of application
+        :param log_file: Log file
+        :param force: Force
+        """
         self.lock_file = lock_file
         self.log_file = log_file
         self.force = force
@@ -302,7 +364,7 @@ class RetrieverApplication(AbstractContextManager):
                     "If no other retriever is running, delete the lock file to continue.",
                     file=sys.stderr,
                 )
-                raise RuntimeError("Lock file exists") from e
+                raise RuntimeError("Lock file exists") from e  # noqa: TRY003
         self.started = time.monotonic()
         return self
 
@@ -318,7 +380,10 @@ class RetrieverApplication(AbstractContextManager):
         print(f"\nFinished in {(self.ended - self.started):_.2f} seconds at {nao}")
         return False
 
-    def log(self, log_item: str | dict):
+    def log(self, log_item: str | dict) -> None:
+        """
+        Log a dict. If str, marshal that into a dict.
+        """
         if self.log_file is None:
             return
         (logf := self.log_file).parent.mkdir(exist_ok=True)
@@ -342,14 +407,16 @@ class RetrieverApplication(AbstractContextManager):
         until_utc: tuple[int, int]
 
     class HourMinute(argparse.Action):
-        def __call__(self, parser, namespace, values, option_string=None):
+        """An Action that tries to parse HH:MM arg"""
+
+        def __call__(self, parser, namespace, values, option_string=None):  # noqa: ANN001, ARG002
             m = re.match(r"^(\d{1,2}):(\d{1,2})$", values)
-            if m is None or not (0 <= int(m.group(1)) <= 23) or not (0 <= int(m.group(2)) <= 59):
+            if m is None or not (0 <= int(m.group(1)) <= 23) or not (0 <= int(m.group(2)) <= 59):  # noqa: PLR2004
                 parser.error("Please enter time in 24h HH:MM format!")
             setattr(namespace, self.dest, (int(m.group(1)), int(m.group(2))))
 
     @staticmethod
-    def add_options(parser: argparse.ArgumentParser):
+    def add_options(parser: argparse.ArgumentParser) -> None:
         parser.add_argument("--force", action="store_true", help="Ignore lock file")
         parser.add_argument(
             "--min-batch-size",
