@@ -87,6 +87,7 @@ ignore = [
     "ANN204",  # No need to annotate return values of magic methods
     "D105",  # Do not enforce docstring for magic method; they are mostly self-describing
     "D200",  # Do not force 1-line docstring
+    "D204",  # Do not force blank line after class docstring
     "D212",  # Do not force docstring summary at first line, so we don't have the ugly indented summary
     "D400",  # Do not enforce period at end of 1st line of docstring ...
     "D415",  # ... or any closing mark for that matter
@@ -96,5 +97,6 @@ ignore = [
     "PLR0912",  # "Too many branches (18 > 12)" we shall silent this for now...
     "PLR0913",  # "Too many arguments to function call (12 > 5)" we also shall silent this for now...
     "PLR0915",  # "Too many statements (58 > 50)" ignore as well...
+    "TRY003",  # Don't complain on long exception message
 ]
 target-version = "py311"
