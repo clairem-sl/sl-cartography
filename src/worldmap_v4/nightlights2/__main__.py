@@ -63,7 +63,7 @@ def get_options() -> Options:
         "--no-maptiles", action="store_true", default=False, help="Don't validate against MapTiles collection"
     )
 
-    parser.add_argument("--tiler", default="7x7")
+    parser.add_argument("--tiler", default="8x8")
 
     _opts = parser.parse_args()
 

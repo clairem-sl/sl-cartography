@@ -8,19 +8,19 @@ from worldmap_v4.nightlights2 import TilerBase
 
 
 class Tiler(TilerBase):
-    Size: Final[int] = 7
+    Size: Final[int] = 8
 
     _Adjacent: ClassVar[dict[str, tuple[int, int, int, int]]] = {
-        "N": (3, 0, 5, 2),
-        "S": (3, 6, 5, 8),
-        "W": (0, 3, 2, 5),
-        "E": (6, 3, 8, 5),
+        "N": (3, 0, 4, 1),
+        "S": (3, 6, 4, 7),
+        "W": (0, 3, 1, 4),
+        "E": (6, 3, 7, 4),
     }
     _Diag: ClassVar[dict[str, tuple[int, int, int, int]]] = {
-        "NW": (0, 0, 3, 3),
-        "NE": (5, 0, 8, 3),
-        "SW": (0, 5, 3, 8),
-        "SE": (5, 5, 8, 8),
+        "NW": (0, 0, 2, 2),
+        "NE": (5, 0, 7, 2),
+        "SW": (0, 5, 2, 7),
+        "SE": (5, 5, 7, 7),
     }
     _Rounder: ClassVar[dict[str, tuple[int, int]]] = {
         "NW": (5, 5),
@@ -36,18 +36,17 @@ class Tiler(TilerBase):
         cls = self.__class__
         tile = Image.new("L", (self.Size, self.Size))
         draw = ImageDraw.Draw(tile)
-        color = {"fill": 255, "outline": 255}
-        draw.rectangle((2, 2, 6, 6), **color)
+        draw.rectangle((2, 2, 5, 5), fill=255)
         neighs = self.get_neighbors(coord)
         if not neighs:
             return tile
         for compass, box in cls._Adjacent.items():
             if compass in neighs:
-                draw.rectangle(box, **color)
+                draw.rectangle(box, fill=255)
         for compass, box in cls._Diag.items():
             cs = {compass, compass[0], compass[1]}
             if cs.issubset(neighs):
-                draw.rectangle(box, **color)
+                draw.rectangle(box, fill=255)
             if not self._round:
                 continue
             if cs == neighs:
