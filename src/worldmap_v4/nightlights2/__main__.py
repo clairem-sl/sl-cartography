@@ -16,7 +16,7 @@ from sl_maptools.validator import get_bonnie_coords, inventorize_maps_all
 from worldmap_v4.nightlights2 import TilerBase
 
 
-TilerClass: type|None = None
+TilerClass: type | None = None
 
 Config = ConfigReader("config.toml")
 
@@ -33,6 +33,7 @@ MAX_Y: Final[int] = COORD_RANGE.max_
 
 class Options(Protocol):
     """Options returned from command line"""
+
     dbpath: Path
     mapdir: Path
     outdir: Path
@@ -43,6 +44,7 @@ class Options(Protocol):
 
 class BonnieRegionData(TypedDict):
     """Relevant data extracted from BonnieBots DB"""
+
     region_name: str
     region_x: int
     region_y: int
@@ -57,7 +59,9 @@ def get_options() -> Options:
     parser.add_argument("--outdir", type=Path, default=DEFA_OUTDIR)
 
     parser.add_argument("--no-bonnie", action="store_true", default=False, help="Don't validate against BonnieBots DB")
-    parser.add_argument("--no-maptiles", action="store_true", default=False, help="Don't validate against MapTiles collection")
+    parser.add_argument(
+        "--no-maptiles", action="store_true", default=False, help="Don't validate against MapTiles collection"
+    )
 
     parser.add_argument("--tiler", default="7x7")
 
