@@ -8,7 +8,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Final, Protocol, TypedDict, cast
 
-from PIL import Image, ImageDraw
+from PIL import Image
 
 from sl_maptools import COORD_RANGE, MapCoord, RegionsDBRecord
 from sl_maptools.utils import ConfigReader, make_backup
@@ -29,13 +29,6 @@ MAX_X: Final[int] = COORD_RANGE.max_
 
 MIN_Y: Final[int] = COORD_RANGE.min_
 MAX_Y: Final[int] = COORD_RANGE.max_
-
-DEFA_REGION_SZ: Final[int] = 9
-"""Size of each region in the Nightlights map, in units of pixels"""
-BLACK: Final = 0
-"""Definition of 'black' color. You will need to ensure the data format is suitable for the image type."""
-WHITE: Final = 255
-"""Definition of 'white' color. You will need to ensure the data format is suitable for the image type."""
 
 
 class Options(Protocol):
@@ -89,116 +82,13 @@ def canvas_coord(region_x: int, region_y: int, multiplier: int = 1) -> tuple[int
     return (region_x - MIN_X) * multiplier, (MAX_Y - region_y) * multiplier
 
 
-def make_nightlights(regions: set[MapCoord], *, region_size: int = DEFA_REGION_SZ) -> Image.Image:
-    slab_sz, _rem = divmod(region_size, 3)
-    if _rem:
-        raise ValueError("region_size must be an integer multiple of 3!")
-
-    width = MAX_X - MIN_X + 1
-    height = MAX_Y - MIN_Y + 1
-
-    def box(value: int) -> tuple[int, int]:
-        return value, value
-
-    canvas_box = MapCoord(width, height) * region_size
-    canvas = Image.new("L", canvas_box, color=BLACK)
-    slab_w = Image.new("L", box(slab_sz), color=WHITE)
-
-    def world_has_all_of(*coords: MapCoord) -> bool:
-        return not any(co not in regions for co in coords)
-
-    def world_has_none_of(*coords: MapCoord) -> bool:
-        return not any(co in regions for co in coords)
-
-
-    for coord in regions:
-        # region Compass points coordinates
-        c_n = coord + (0, 1)
-        c_e = coord + (1, 0)
-        c_w = coord - (1, 0)
-        c_s = coord - (0, 1)
-        c_ne = coord + (1, 1)
-        c_nw = coord + (-1, 1)
-        c_se = coord + (1, -1)
-        c_sw = coord + (-1, -1)
-        # endregion
-
-        region_img = Image.new("L", box(region_size), color=BLACK)
-        region_img.paste(slab_w, box(slab_sz))
-        draw = ImageDraw.Draw(region_img)
-
-        # region Vertical & Horizontal connections
-        if world_has_all_of(c_n):
-            region_img.paste(slab_w, (slab_sz, 0))
-        if world_has_all_of(c_e):
-            region_img.paste(slab_w, (slab_sz * 2, slab_sz))
-        if world_has_all_of(c_w):
-            region_img.paste(slab_w, (0, slab_sz))
-        if world_has_all_of(c_s):
-            region_img.paste(slab_w, (slab_sz, slab_sz * 2))
-        # endregion
-
-        # region Diagonals
-
-        # Far all these:
-        # if has_vert_neighbor and has_horiz_neighbor:
-        #   if also has_diag_neighbor_between_vert_and_horiz:
-        #     plop a slab
-        #   else:
-        #     chamfer_inner_corner
-        #   -plus-
-        #   if no_neighbor_on_other_sides:
-        #     chamfer_outer_corner
-
-        if world_has_all_of(c_n, c_e):
-            if world_has_all_of(c_ne):
-                region_img.paste(slab_w, (slab_sz * 2, 0))
-            else:
-                draw.point((slab_sz * 2, slab_sz - 1), fill=WHITE)
-            if world_has_none_of(c_s, c_sw, c_w):
-                draw.point((slab_sz, slab_sz * 2 - 1), fill=BLACK)
-
-        if world_has_all_of(c_n, c_w):
-            if world_has_all_of(c_nw):
-                region_img.paste(slab_w, (0, 0))
-            else:
-                draw.point(box(slab_sz - 1), fill=WHITE)
-            if world_has_none_of(c_s, c_se, c_e):
-                draw.point(box(slab_sz * 2 - 1), fill=BLACK)
-
-        if world_has_all_of(c_s, c_e):
-            if world_has_all_of(c_se):
-                region_img.paste(slab_w, box(slab_sz * 2))
-            else:
-                draw.point(box(slab_sz * 2), fill=WHITE)
-            if world_has_none_of(c_n, c_nw, c_w):
-                draw.point((slab_sz, slab_sz), fill=BLACK)
-
-        if world_has_all_of(c_s, c_w):
-            if world_has_all_of(c_sw):
-                region_img.paste(slab_w, (0, slab_sz * 2))
-            else:
-                draw.point((slab_sz - 1, slab_sz * 2), fill=WHITE)
-            if world_has_none_of(c_n, c_ne, c_e):
-                draw.point((slab_sz * 2 - 1, slab_sz), fill=BLACK)
-
-        # endregion
-
-        canvas.paste(region_img, canvas_coord(*coord, region_size))
-
-    return canvas
-
-
 def make_nightlights2(regions: set[MapCoord], *, tiler_class: type[TilerBase]) -> Image.Image:
     width = MAX_X - MIN_X + 1
     height = MAX_Y - MIN_Y + 1
 
-    def box(value: int) -> tuple[int, int]:
-        return value, value
-
     region_size = tiler_class.Size
     canvas_box = cast(tuple[int, int], MapCoord(width, height) * region_size)
-    canvas = Image.new("L", canvas_box, color=BLACK)
+    canvas = Image.new("L", canvas_box, color=0)
 
     tiler = tiler_class(regions)
     for coord in regions:
