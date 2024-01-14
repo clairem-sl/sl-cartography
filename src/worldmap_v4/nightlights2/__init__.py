@@ -10,7 +10,7 @@ from sl_maptools import MapCoord
 
 
 class TilerBase(metaclass=ABCMeta):
-    """Abstract class for classes that creates region cells"""
+    """Abstract class for classes that creates region tiles"""
 
     Size: int
 
@@ -50,6 +50,9 @@ class TilerBase(metaclass=ABCMeta):
 
 
 class BeadedTilerBase(TilerBase, metaclass=ABCMeta):
+    """
+    Abstract Base Class for tilers that uses the "beaded" drawing strategy
+    """
     Center: ClassVar[tuple[int, int, int, int]] = (0, 0, 0, 0)
     Adjacent: ClassVar[dict[str, tuple[int, int, int, int]]] = {}
     Diag: ClassVar[dict[str, tuple[int, int, int, int]]] = {}
@@ -57,6 +60,9 @@ class BeadedTilerBase(TilerBase, metaclass=ABCMeta):
 
     @property
     def rounders(self):
+        """
+        Returns a dict of where to put 'rounding' pixels given a compass coordinate
+        """
         cls = self.__class__
         if not cls.Rounders:
             x1, y1, x2, y2 = cls.Center
