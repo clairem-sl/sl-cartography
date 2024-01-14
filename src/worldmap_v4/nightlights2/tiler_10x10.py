@@ -7,20 +7,23 @@ from worldmap_v4.nightlights2 import BeadedTilerBase
 
 """
   0123456789
-0 ··········
-1 ··········
-2 ··········
+0 ····||····
+1 ····||····
+2 ····||····
 3 ···■■■■···
-4 ···■■■■···
-5 ···■■■■···
+4 ---■■■■---
+5 ---■■■■---
 6 ···■■■■···
-7 ··········
-8 ··········
-9 ··········
+7 ····||····
+8 ····||····
+9 ····||····
 """
 
 
 class Tiler(BeadedTilerBase):
+    """
+    Creates a Nightlights tile (region) using the Beaded 10x10 strategy
+    """
     Size: Final[int] = 10
     Center: ClassVar[tuple[int, int, int, int]] = (3, 3, 6, 6)
     Adjacent: ClassVar[dict[str, tuple[int, int, int, int]]] = {

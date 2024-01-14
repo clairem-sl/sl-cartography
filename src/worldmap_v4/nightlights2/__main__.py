@@ -87,6 +87,13 @@ def canvas_coord(region_x: int, region_y: int, multiplier: int = 1) -> tuple[int
 
 
 def make_nightlights2(regions: set[MapCoord], *, tiler_class: type[TilerBase]) -> Image.Image:
+    """
+    Actually create the Nightlights map, given a set of coordinates and a tiler class
+
+    :param regions: Set of regions which we will map
+    :param tiler_class: The class to be used to create the actual map
+    :return: A completed map
+    """
     width = MAX_X - MIN_X + 1
     height = MAX_Y - MIN_Y + 1
 

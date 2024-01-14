@@ -6,7 +6,23 @@ from typing import ClassVar, Final
 from worldmap_v4.nightlights2 import BeadedTilerBase
 
 
+"""
+  01234567
+0 ···||···
+1 ···||···
+2 ··■■■■··
+3 --■■■■--
+4 --■■■■--
+5 ··■■■■··
+6 ···||···
+7 ···||···
+"""
+
+
 class Tiler(BeadedTilerBase):
+    """
+    Creates a Nightlights tile (region) using the Beaded 8x8 strategy
+    """
     Size: Final[int] = 8
     Center: ClassVar[tuple[int, int, int, int]] = (2, 2, 5, 5)
     Adjacent: ClassVar[dict[str, tuple[int, int, int, int]]] = {
