@@ -53,6 +53,7 @@ class BeadedTilerBase(TilerBase, metaclass=ABCMeta):
     """
     Abstract Base Class for tilers that uses the "beaded" drawing strategy
     """
+
     Center: ClassVar[tuple[int, int, int, int]] = (0, 0, 0, 0)
     Adjacent: ClassVar[dict[str, tuple[int, int, int, int]]] = {}
     Diag: ClassVar[dict[str, tuple[int, int, int, int]]] = {}

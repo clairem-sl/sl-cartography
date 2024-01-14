@@ -23,6 +23,7 @@ class Tiler(BeadedTilerBase):
     """
     Creates a Nightlights tile (region) using the Beaded 8x8 strategy
     """
+
     Size: Final[int] = 8
     Center: ClassVar[tuple[int, int, int, int]] = (2, 2, 5, 5)
     Adjacent: ClassVar[dict[str, tuple[int, int, int, int]]] = {
