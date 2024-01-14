@@ -2,7 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 from abc import ABCMeta, abstractmethod
-from typing import ClassVar
+from typing import ClassVar, Final
 
 from PIL import Image, ImageDraw
 
@@ -14,7 +14,7 @@ class TilerBase(metaclass=ABCMeta):
 
     Size: int
 
-    _Neighbors: ClassVar[dict[tuple[int, int], str]] = {
+    _Neighbors: Final[ClassVar[dict[tuple[int, int], str]]] = {
         (0, -1): "S",
         (-1, 0): "W",
         (1, 0): "E",
@@ -51,18 +51,8 @@ class TilerBase(metaclass=ABCMeta):
 
 class BeadedTilerBase(TilerBase, metaclass=ABCMeta):
     Center: ClassVar[tuple[int, int, int, int]] = (0, 0, 0, 0)
-    Adjacent: ClassVar[dict[str, tuple[int, int, int, int]]] = {
-        "N": (3, 0, 4, 1),
-        "S": (3, 6, 4, 7),
-        "W": (0, 3, 1, 4),
-        "E": (6, 3, 7, 4),
-    }
-    Diag: ClassVar[dict[str, tuple[int, int, int, int]]] = {
-        "NW": (0, 0, 2, 2),
-        "NE": (5, 0, 7, 2),
-        "SW": (0, 5, 2, 7),
-        "SE": (5, 5, 7, 7),
-    }
+    Adjacent: ClassVar[dict[str, tuple[int, int, int, int]]] = {}
+    Diag: ClassVar[dict[str, tuple[int, int, int, int]]] = {}
     Rounders: ClassVar[dict[str, tuple[int, int]]] = {}
 
     @property
@@ -83,6 +73,9 @@ class BeadedTilerBase(TilerBase, metaclass=ABCMeta):
         Makes a tile of the region at (x, y) considering its neighbors
         """
         cls = self.__class__
+        if not (cls.Adjacent and cls.Diag):
+            raise RuntimeError("BeadedTile.Adjacent and/or BeadedTile.Diag are not initialized!")
+
         x1, y1, x2, y2 = cls.Center
 
         if x1 == y1 == x2 == y2:

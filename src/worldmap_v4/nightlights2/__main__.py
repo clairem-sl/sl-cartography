@@ -117,7 +117,6 @@ def main(opts: Options):
         if bonnie_coords:
             regions.intersection_update(bonnie_coords)
             print(flush=True)
-        bonnie_coords.clear()
         del bonnie_coords
 
     # Filter with Maptiles if not prevented
@@ -125,7 +124,6 @@ def main(opts: Options):
         # Get Maptiles data
         mapfiles = inventorize_maps_all(opts.mapdir)
         regions.intersection_update(mapfiles.keys())
-        mapfiles.clear()
         del mapfiles
 
     _ts = datetime.now().strftime("%y%m%d-%H%M")
