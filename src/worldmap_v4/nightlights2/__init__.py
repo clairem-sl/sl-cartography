@@ -11,6 +11,7 @@ from sl_maptools import MapCoord
 
 class TilerBase(metaclass=ABCMeta):
     """Abstract class for classes that creates region cells"""
+
     Size: int
 
     _Neighbors: ClassVar[dict[tuple[int, int], str]] = {
@@ -38,11 +39,7 @@ class TilerBase(metaclass=ABCMeta):
         :param coord: Geo-coordinate of the region
         :return: A set of compass points representing existing neighbors
         """
-        return {
-            compass
-            for offset, compass in self.__class__._Neighbors.items()
-            if (coord + offset) in self._regs
-        }
+        return {compass for offset, compass in self.__class__._Neighbors.items() if (coord + offset) in self._regs}
 
     @abstractmethod
     def maketile(self, coord: MapCoord) -> Image:
