@@ -5,6 +5,7 @@ from typing import ClassVar, Final
 
 from worldmap_v4.nightlights2 import BeadedTilerBase
 
+
 """
   0123456789
 0 ····||····
