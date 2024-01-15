@@ -31,8 +31,10 @@ MAX_Y: Final[int] = COORD_RANGE.max_
 TILERS: Final[dict[str, dict[str, int]]] = {
     "b42": {"csize": 4, "border": 2, "shrink": 1},
     "b43": {"csize": 4, "border": 3, "shrink": 1},
+    "b52": {"csize": 5, "border": 2, "shrink": 1},
     "b53": {"csize": 5, "border": 3, "shrink": 1},
-    "c33": {"csize": 3, "border": 3, "shrink": 0},
+    "s33": {"csize": 3, "border": 3, "shrink": 0},
+    "s22": {"csize": 2, "border": 2, "shrink": 0},
 }
 
 
