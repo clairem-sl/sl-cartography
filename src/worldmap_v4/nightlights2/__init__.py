@@ -33,6 +33,12 @@ class TilerBase(metaclass=ABCMeta):
         "SW": (0, 3),
         "SE": (2, 3),
     }
+    _ElbowOffset: Final[ClassVar[dict[str, tuple[int, int]]]] = {
+        "NW": (-1, -1),
+        "NE": (1, -1),
+        "SW": (-1, 1),
+        "SE": (1, 1),
+    }
 
     def __init__(self, region_set: set[MapCoord]):
         """
@@ -40,6 +46,7 @@ class TilerBase(metaclass=ABCMeta):
         """
         self._regs = region_set
         self._round = True
+        self._elbows = False
 
     def get_neighbors(self, coord: MapCoord) -> set[str]:
         """
@@ -75,8 +82,14 @@ class TilerBase(metaclass=ABCMeta):
             if compass in neighs:
                 draw.rectangle(box, fill=255)
         corners = cls._Corners
+        elbows_off = cls._ElbowOffset
         for compass, box in cls.Diag.items():
-            cs = {compass, compass[0], compass[1]}
+            cs = {compass[0], compass[1]}
+            if self._elbows and compass not in neighs and cs.issubset(neighs):
+                i1, i2 = corners[compass]
+                point = MapCoord(center[i1], center[i2]) + elbows_off[compass]
+                draw.point(point, fill=255)
+            cs.add(compass)
             if cs.issubset(neighs):
                 draw.rectangle(box, fill=255)
             if self._round and cs == neighs:
