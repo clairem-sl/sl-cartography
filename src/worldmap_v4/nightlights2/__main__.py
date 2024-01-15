@@ -84,7 +84,7 @@ class TileProducer:
         "regions",
         "size",
         "_center",
-        "_corners",
+        "_roundedcorners",
         "_elbows",
         "_bridges",
         "_diagonals",
@@ -128,11 +128,11 @@ class TileProducer:
         x1 = y1 = border
         x2 = y2 = sz1 - border
         self._center = x1, y1, x2, y2
-        self._corners = {
-            "NW": (x1, y1),
-            "NE": (x2, y1),
-            "SW": (x1, y2),
-            "SE": (x2, y2),
+        self._roundedcorners = {
+            "NW": (x2, y2),
+            "NE": (x1, y2),
+            "SW": (x2, y1),
+            "SE": (x1, y1),
         }
         x11 = x1 - 1
         y11 = y1 - 1
@@ -195,7 +195,7 @@ class TileProducer:
             if cs.issubset(neighs):
                 draw.rectangle(box, fill=255)
             if self._round and cs == neighs:
-                point = self._corners[compass]
+                point = self._roundedcorners[compass]
                 draw.point(point, fill=0)
         return tile
 
