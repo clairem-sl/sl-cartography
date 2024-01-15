@@ -27,7 +27,12 @@ class TilerBase(metaclass=ABCMeta):
         (1, -1): "SE",
         (-1, 1): "NW",
     }
-    _Rounders: ClassVar[dict[str, tuple[int, int]]] = {}
+    _Corners: Final[ClassVar[dict[str, tuple[int, int]]]] = {
+        "NW": (0, 1),
+        "NE": (2, 1),
+        "SW": (0, 3),
+        "SE": (2, 3),
+    }
 
     def __init__(self, region_set: set[MapCoord]):
         """
@@ -35,14 +40,6 @@ class TilerBase(metaclass=ABCMeta):
         """
         self._regs = region_set
         self._round = True
-        if not (rounders := self.__class__._Rounders):
-            x1, y1, x2, y2 = self.__class__.Center
-            rounders.update({
-                "NW": (x2, y2),
-                "NE": (x1, y2),
-                "SW": (x2, y1),
-                "SE": (x1, y1),
-            })
 
     def get_neighbors(self, coord: MapCoord) -> set[str]:
         """
@@ -64,27 +61,27 @@ class TilerBase(metaclass=ABCMeta):
         if not (cls.Adjacent and cls.Diag):
             raise RuntimeError("BeadedTile.Adjacent and/or BeadedTile.Diag are not initialized!")
 
-        x1, y1, x2, y2 = cls.Center
-
+        x1, y1, x2, y2 = center = cls.Center
         if x1 == y1 == x2 == y2:
             raise RuntimeError("BeadedTile.Center is not initialized!")
 
         tile = Image.new("L", (self.Size, self.Size))
         draw = ImageDraw.Draw(tile)
-        draw.rectangle(cls.Center, fill=255)
+        draw.rectangle(center, fill=255)
         if not (neighs := self.get_neighbors(coord)):
             return tile
 
         for compass, box in cls.Adjacent.items():
             if compass in neighs:
                 draw.rectangle(box, fill=255)
-        rounders = cls._Rounders
+        corners = cls._Corners
         for compass, box in cls.Diag.items():
             cs = {compass, compass[0], compass[1]}
             if cs.issubset(neighs):
                 draw.rectangle(box, fill=255)
-            if not self._round:
-                continue
-            if cs == neighs:
-                draw.point(rounders[compass], fill=0)
+            if self._round and cs == neighs:
+                i1, i2 = corners[compass]
+                point = center[i1], center[i2]
+                draw.point(point, fill=0)
+
         return tile
