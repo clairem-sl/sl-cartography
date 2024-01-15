@@ -2,19 +2,16 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 import argparse
-import importlib
 import pickle
 from datetime import datetime
 from pathlib import Path
-from typing import Final, Protocol, TypedDict, cast
+from typing import Final, Protocol, TypedDict, cast, ClassVar
 
-from PIL import Image
+from PIL import Image, ImageDraw
 
 from sl_maptools import COORD_RANGE, MapCoord, RegionsDBRecord
 from sl_maptools.utils import ConfigReader, make_backup
 from sl_maptools.validator import get_bonnie_coords, inventorize_maps_all
-from worldmap_v4.nightlights2 import TilerBase
-
 
 TilerClass: type | None = None
 
@@ -29,6 +26,14 @@ MAX_X: Final[int] = COORD_RANGE.max_
 
 MIN_Y: Final[int] = COORD_RANGE.min_
 MAX_Y: Final[int] = COORD_RANGE.max_
+
+
+TILERS: Final[dict[str, dict[str, int]]] = {
+    "b42": {"csize": 4, "border": 2, "shrink": 1},
+    "b43": {"csize": 4, "border": 3, "shrink": 1},
+    "b53": {"csize": 5, "border": 3, "shrink": 1},
+    "c33": {"csize": 3, "border": 3, "shrink": 0},
+}
 
 
 class Options(Protocol):
@@ -63,11 +68,136 @@ def get_options() -> Options:
         "--no-maptiles", action="store_true", default=False, help="Don't validate against MapTiles collection"
     )
 
-    parser.add_argument("--tiler", default="8x8")
+    parser.add_argument("--tiler", default="8x8", choices=TILERS.keys())
 
     _opts = parser.parse_args()
 
     return cast(Options, _opts)
+
+
+class TileProducer:
+    """
+    Draws a tile parametrically
+    """
+
+    __slots__ = (
+        "regions",
+        "size",
+        "_center",
+        "_corners",
+        "_elbows",
+        "_bridges",
+        "_diagonals",
+        "_round",
+        "_elbow",
+    )
+
+    _Neighbors: Final[ClassVar[dict[tuple[int, int], str]]] = {
+        (0, -1): "S",
+        (-1, 0): "W",
+        (1, 0): "E",
+        (0, 1): "N",
+        (1, 1): "NE",
+        (-1, -1): "SW",
+        (1, -1): "SE",
+        (-1, 1): "NW",
+    }
+
+    def __init__(self, regions: set[MapCoord], *, csize: int, border: int, shrink: int):
+        """
+        aaa
+
+        :param regions: Set of MapCoord's to make a Nightlights Map from
+        :param csize: Center (bead) size
+        :param border: Border between edge of tile to center
+        :param shrink: How much narrower bridges are compared to center
+        """
+        if not regions:
+            raise ValueError("Empty regionset")
+        if csize < 1:
+            raise ValueError("csize must be at least 1")
+        if border < 1:
+            raise ValueError("border must be at least 1")
+        if shrink < 0:
+            raise ValueError("shrink must be at least 0")
+        if csize <= shrink * 2:
+            raise ValueError("shrink too large")
+        self.regions = regions
+        self.size = csize + border * 2
+        sz1 = self.size - 1
+        x1 = y1 = border
+        x2 = y2 = sz1 - border
+        self._center = x1, y1, x2, y2
+        self._corners = {
+            "NW": (x1, y1),
+            "NE": (x2, y1),
+            "SW": (x1, y2),
+            "SE": (x2, y2),
+        }
+        x11 = x1 - 1
+        y11 = y1 - 1
+        x21 = x2 + 1
+        y21 = y2 + 1
+        self._elbows = {
+            "NW": (x11, y11),
+            "NE": (x21, y11),
+            "SW": (x11, y21),
+            "SE": (x21, y21),
+        }
+        self._bridges = {
+            "N": (x1 + shrink, 0, x2 - shrink, y11),
+            "S": (x1 + shrink, y2, x2 - shrink, sz1),
+            "W": (0, y1 + shrink, x11, y2 - shrink),
+            "E": (x21, y1 + shrink, sz1, y2 - shrink),
+        }
+        ax1 = x11 + shrink
+        ay1 = y11 + shrink
+        ax2 = x21 - shrink
+        ay2 = y21 - shrink
+        self._diagonals = {
+            "NW": (0, 0, ax1, ay1),
+            "NE": (ax2, 0, sz1, ay1),
+            "SW": (0, ay2, ax1, sz1),
+            "SE": (ax2, ay2, sz1, sz1),
+        }
+        self._round = True
+        self._elbow = False
+
+    def get_neighbors(self, coord: MapCoord) -> set[str]:
+        """
+        Get existing neighbors of a region at (x, y)
+
+        :param coord: Geo-coordinate of the region
+        :return: A set of compass points representing existing neighbors
+        """
+        return {compass for offset, compass in self.__class__._Neighbors.items() if (coord + offset) in self.regions}
+
+    def maketile(self, coord: MapCoord) -> Image:
+        """
+        Makes a tile of the region at (x, y) considering its neighbors
+        """
+        tile = Image.new("L", (self.size, self.size))
+        draw = ImageDraw.Draw(tile)
+        draw.rectangle(self._center, fill=255)
+
+        if not (neighs := self.get_neighbors(coord)):
+            return tile
+
+        for compass, box in self._bridges.items():
+            if compass in neighs:
+                draw.rectangle(box, fill=255)
+        for compass, box in self._diagonals.items():
+            cs = set(compass)
+            if self._elbow and compass not in neighs and cs.issubset(neighs):
+                point = self._elbows[compass]
+                draw.point(point, fill=255)
+            cs.add(compass)
+            if cs.issubset(neighs):
+                draw.rectangle(box, fill=255)
+            if self._round and cs == neighs:
+                point = self._corners[compass]
+                draw.point(point, fill=0)
+        return tile
 
 
 def canvas_coord(region_x: int, region_y: int, multiplier: int = 1) -> tuple[int, int]:
@@ -86,32 +216,31 @@ def canvas_coord(region_x: int, region_y: int, multiplier: int = 1) -> tuple[int
     return (region_x - MIN_X) * multiplier, (MAX_Y - region_y) * multiplier
 
 
-def make_nightlights2(regions: set[MapCoord], *, tiler_class: type[TilerBase]) -> Image.Image:
+def make_nightlights2(regions: set[MapCoord], *, tiler: str) -> Image.Image:
     """
     Actually create the Nightlights map, given a set of coordinates and a tiler class
 
     :param regions: Set of regions which we will map
-    :param tiler_class: The class to be used to create the actual map
+    :param tiler: The class to be used to create the actual map
     :return: A completed map
     """
     width = MAX_X - MIN_X + 1
     height = MAX_Y - MIN_Y + 1
 
-    region_size = tiler_class.Size
+    producer = TileProducer(regions, **TILERS[tiler])
+
+    region_size = producer.size
     canvas_box = cast(tuple[int, int], MapCoord(width, height) * region_size)
     canvas = Image.new("L", canvas_box, color=0)
 
-    tiler = tiler_class(regions)
     for coord in regions:
-        region_img = tiler.maketile(coord)
+        region_img = producer.maketile(coord)
         canvas.paste(region_img, canvas_coord(*coord, region_size))
 
     return canvas
 
 
-def main(opts: Options):
-    tiler_module = importlib.import_module(f"worldmap_v4.nightlights2.tiler_{opts.tiler}")
-
+def main(opts: Options) -> None:  # noqa: D103
     # Read Regions from DB
     with opts.dbpath.open("rb") as fin:
         data_raw: dict[tuple[int, int], RegionsDBRecord] = pickle.load(fin)  # noqa: S301
@@ -140,7 +269,7 @@ def main(opts: Options):
         targ.unlink()
 
     print("Creating Nightlights Map ... ", end="", flush=True)
-    canvas = make_nightlights2({MapCoord(x, y) for x, y in regions}, tiler_class=tiler_module.Tiler)
+    canvas = make_nightlights2({MapCoord(x, y) for x, y in regions}, tiler=opts.tiler)
 
     print("\nSaving nightlights mosaic ... ", end="", flush=True)
     targ.parent.mkdir(parents=True, exist_ok=True)
