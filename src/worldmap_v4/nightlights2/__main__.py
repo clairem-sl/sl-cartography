@@ -92,7 +92,7 @@ class TileProducer:
         "_elbow",
     )
 
-    _Neighbors: Final[ClassVar[dict[tuple[int, int], str]]] = {
+    _Neighbors: Final[dict[tuple[int, int], str]] = {
         (0, -1): "S",
         (-1, 0): "W",
         (1, 0): "E",
