@@ -62,6 +62,7 @@ class OptionsType(Protocol):
     calc_workers: int
     make_workers: int
     pip_every: int
+    stats_every_min: int
     save_every: int
     mapdir: Path
     outdir: Path
@@ -80,6 +81,7 @@ def get_opts() -> OptionsType:
     parser.add_argument("--make-workers", metavar="N", type=int, default=DEFA_MAKE_WORKERS)
     parser.add_argument("--pip-every", metavar="N", type=int, default=100)
     parser.add_argument("--save-every", metavar="N", type=int, default=2000)
+    parser.add_argument("--stats-every-min", metavar="N", type=int, default=15)
     parser.add_argument("--final-only", action="store_true")
     parser.add_argument("--mapdir", metavar="DIR", type=Path, default=DEFA_MAPDIR)
     parser.add_argument("--outdir", metavar="DIR", type=Path, default=DEFA_OUTDIR)
@@ -298,7 +300,9 @@ def main(opts: OptionsType):
         if targ.exists():
             make_backup(targ)
 
-    start = time.monotonic()
+    last_stat = start = time.monotonic()
+    last_fin = 0
+    stats_every_sec = opts.stats_every_min * 60
     manager: MPMgrs.SyncManager
     with MP.Manager() as manager:
         patches_coll = manager.dict({(co, sz): vals for co, domc in latest_domc.items() for sz, vals in domc.items()})
@@ -335,6 +339,11 @@ def main(opts: OptionsType):
                     domc_db.setdefault(coord, {})[fpath] = domc
                     if (i % opts.pip_every) == 0:
                         print(".", end="", flush=True)
+                    if (stat_passed := (time.monotonic() - last_stat)) >= stats_every_sec:
+                        stat_rate = (i - last_fin) / stat_passed
+                        print(f"\n {i:_}/{len(mapfiles):_} processed so far ({stat_rate:_.2f} per second)", flush=True)
+                        last_fin = i
+                        last_stat = time.monotonic()
                     if not opts.final_only:
                         if (i % opts.save_every) == 0:
                             if any(state == "idle" for state in maker_states.values()):
