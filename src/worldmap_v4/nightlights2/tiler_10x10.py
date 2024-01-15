@@ -3,7 +3,7 @@
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 from typing import ClassVar, Final
 
-from worldmap_v4.nightlights2 import BeadedTilerBase
+from worldmap_v4.nightlights2 import TilerBase
 
 
 """
@@ -21,7 +21,7 @@ from worldmap_v4.nightlights2 import BeadedTilerBase
 """
 
 
-class Tiler(BeadedTilerBase):
+class Tiler(TilerBase):
     """
     Creates a Nightlights tile (region) using the Beaded 10x10 strategy
     """

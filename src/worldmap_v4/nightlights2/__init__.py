@@ -1,7 +1,7 @@
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta
 from typing import ClassVar, Final
 
 from PIL import Image, ImageDraw
@@ -13,6 +13,9 @@ class TilerBase(metaclass=ABCMeta):
     """Abstract class for classes that creates region tiles"""
 
     Size: int
+    Center: ClassVar[tuple[int, int, int, int]] = (0, 0, 0, 0)
+    Adjacent: ClassVar[dict[str, tuple[int, int, int, int]]] = {}
+    Diag: ClassVar[dict[str, tuple[int, int, int, int]]] = {}
 
     _Neighbors: Final[ClassVar[dict[tuple[int, int], str]]] = {
         (0, -1): "S",
@@ -24,6 +27,7 @@ class TilerBase(metaclass=ABCMeta):
         (1, -1): "SE",
         (-1, 1): "NW",
     }
+    _Rounders: ClassVar[dict[str, tuple[int, int]]] = {}
 
     def __init__(self, region_set: set[MapCoord]):
         """
@@ -41,26 +45,8 @@ class TilerBase(metaclass=ABCMeta):
         """
         return {compass for offset, compass in self.__class__._Neighbors.items() if (coord + offset) in self._regs}
 
-    @abstractmethod
-    def maketile(self, coord: MapCoord) -> Image:
-        """
-        Makes a tile of the region at (x, y) considering its neighbors
-        """
-        ...
-
-
-class BeadedTilerBase(TilerBase, metaclass=ABCMeta):
-    """
-    Abstract Base Class for tilers that uses the "beaded" drawing strategy
-    """
-
-    Center: ClassVar[tuple[int, int, int, int]] = (0, 0, 0, 0)
-    Adjacent: ClassVar[dict[str, tuple[int, int, int, int]]] = {}
-    Diag: ClassVar[dict[str, tuple[int, int, int, int]]] = {}
-    _Rounders: ClassVar[dict[str, tuple[int, int]]] = {}
-
     @property
-    def rounders(self):
+    def rounders(self) -> dict[str, tuple[int, int]]:
         """
         Returns a dict of where to put 'rounding' pixels given a compass coordinate
         """
@@ -76,6 +62,9 @@ class BeadedTilerBase(TilerBase, metaclass=ABCMeta):
         return cls._Rounders
 
     def maketile(self, coord: MapCoord) -> Image:
+        """
+        Makes a tile of the region at (x, y) considering its neighbors
+        """
         """
         Makes a tile of the region at (x, y) considering its neighbors
         """
