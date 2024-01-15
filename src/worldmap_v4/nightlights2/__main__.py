@@ -5,7 +5,7 @@ import argparse
 import pickle
 from datetime import datetime
 from pathlib import Path
-from typing import Final, Protocol, TypedDict, cast, ClassVar
+from typing import Final, Protocol, TypedDict, cast
 
 from PIL import Image, ImageDraw
 
