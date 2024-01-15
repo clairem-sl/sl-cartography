@@ -263,7 +263,7 @@ def main(opts: Options) -> None:  # noqa: D103
         del mapfiles
 
     _ts = datetime.now().strftime("%y%m%d-%H%M")
-    targ = opts.outdir / f"worldmap4_nightlights_{_ts}.png"
+    targ = opts.outdir / f"worldmap4_nightlights_{opts.tiler}_{_ts}.png"
     if targ.exists():
         make_backup(targ)
         targ.unlink()
