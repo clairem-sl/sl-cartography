@@ -246,7 +246,7 @@ def main(opts: OptionsType):
                 domc_db.update(pickle.load(fin))
         except EOFError:
             pass
-    print(f"Cached Dominant Colors = {len(domc_db)}")
+    print(f"Cached Dominant Colors = {len(domc_db):_} coords ({sum(map(len, domc_db.values())):_} files)")
 
     mapfiles_d: dict[CoordType, list[Path]] = inventorize_maps_all(opts.mapdir)
     #
@@ -279,8 +279,9 @@ def main(opts: OptionsType):
     # then by Filepath[1] ascending
     mapfiles.sort(key=lambda c: (-c[0][1], c[0][0], c[1]))
     print(
-        f"\n{len(mapfiles)} files to analyze, {len(mapfiles_d)} regions to mosaicize."
-        f"\nStarting up Mosaic-Making Engine ({opts.calc_workers}, {opts.make_workers})"
+        f"\n{len(mapfiles):_} files to analyze, {len(mapfiles_d):_} regions to mosaicize."
+        f"\nStarting up Mosaic-Making Engine ({opts.calc_workers} calc, {opts.make_workers} make),"
+        f"\nOne dot '.' represents {opts.pip_every} regions processed."
     )
 
     latest_domc: dict[CoordType, DomColors] = {
@@ -358,7 +359,11 @@ def main(opts: OptionsType):
                 print("\nUser request abort...", flush=True)
             finally:
                 orig_sigint = signal.signal(signal.SIGINT, signal.SIG_IGN)
-                print(f"\nCached Dominant Colors is now {len(domc_db)}, ", end="")
+                print(
+                    f"\nCached Dominant Colors is now "
+                    f"{len(domc_db)} coords ({sum(map(len, domc_db.values()))} files), ",
+                    end=""
+                )
                 make_backup(domc_db_path)
                 # Sort so it's right and nice order
                 sorted_cache = {}
