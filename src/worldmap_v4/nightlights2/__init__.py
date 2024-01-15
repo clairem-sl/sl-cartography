@@ -35,6 +35,14 @@ class TilerBase(metaclass=ABCMeta):
         """
         self._regs = region_set
         self._round = True
+        if not (rounders := self.__class__._Rounders):
+            x1, y1, x2, y2 = self.__class__.Center
+            rounders.update({
+                "NW": (x2, y2),
+                "NE": (x1, y2),
+                "SW": (x2, y1),
+                "SE": (x1, y1),
+            })
 
     def get_neighbors(self, coord: MapCoord) -> set[str]:
         """
@@ -44,22 +52,6 @@ class TilerBase(metaclass=ABCMeta):
         :return: A set of compass points representing existing neighbors
         """
         return {compass for offset, compass in self.__class__._Neighbors.items() if (coord + offset) in self._regs}
-
-    @property
-    def rounders(self) -> dict[str, tuple[int, int]]:
-        """
-        Returns a dict of where to put 'rounding' pixels given a compass coordinate
-        """
-        cls = self.__class__
-        if not cls._Rounders:
-            x1, y1, x2, y2 = cls.Center
-            cls._Rounders = {
-                "NW": (x2, y2),
-                "NE": (x1, y2),
-                "SW": (x2, y1),
-                "SE": (x1, y1),
-            }
-        return cls._Rounders
 
     def maketile(self, coord: MapCoord) -> Image:
         """
@@ -86,7 +78,7 @@ class TilerBase(metaclass=ABCMeta):
         for compass, box in cls.Adjacent.items():
             if compass in neighs:
                 draw.rectangle(box, fill=255)
-        rounders = self.rounders
+        rounders = cls._Rounders
         for compass, box in cls.Diag.items():
             cs = {compass, compass[0], compass[1]}
             if cs.issubset(neighs):
