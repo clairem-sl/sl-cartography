@@ -57,7 +57,7 @@ class BeadedTilerBase(TilerBase, metaclass=ABCMeta):
     Center: ClassVar[tuple[int, int, int, int]] = (0, 0, 0, 0)
     Adjacent: ClassVar[dict[str, tuple[int, int, int, int]]] = {}
     Diag: ClassVar[dict[str, tuple[int, int, int, int]]] = {}
-    Rounders: ClassVar[dict[str, tuple[int, int]]] = {}
+    _Rounders: ClassVar[dict[str, tuple[int, int]]] = {}
 
     @property
     def rounders(self):
@@ -65,15 +65,15 @@ class BeadedTilerBase(TilerBase, metaclass=ABCMeta):
         Returns a dict of where to put 'rounding' pixels given a compass coordinate
         """
         cls = self.__class__
-        if not cls.Rounders:
+        if not cls._Rounders:
             x1, y1, x2, y2 = cls.Center
-            cls.Rounders = {
+            cls._Rounders = {
                 "NW": (x2, y2),
                 "NE": (x1, y2),
                 "SW": (x2, y1),
                 "SE": (x1, y1),
             }
-        return cls.Rounders
+        return cls._Rounders
 
     def maketile(self, coord: MapCoord) -> Image:
         """
