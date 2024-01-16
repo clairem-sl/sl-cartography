@@ -10,7 +10,7 @@ from datetime import datetime
 from itertools import chain
 from multiprocessing import Event
 from pathlib import Path
-from typing import Protocol, cast
+from typing import Final, Protocol, cast
 
 from PIL import Image
 
@@ -46,13 +46,13 @@ class Options(CartographerOptions, Protocol):
     pass
 
 
-RE_AREA = re.compile(r"(?P<x1>\d+)[,:-](?P<y1>\d+)[,:-](?P<x2>\d+)[,:-](?P<y2>\d+)")
-
-
 class AreaParser(argparse.Action):
     """
     Parses area notation
     """
+
+    RE_AREA: Final[re.Pattern] = re.compile(r"(?P<x1>\d+)[,:-](?P<y1>\d+)[,:-](?P<x2>\d+)[,:-](?P<y2>\d+)")
+
     def __call__(self, parser, namespace, values, option_string=None):  # noqa: ANN001, ARG002
         """
         Perform parsing of area notation
@@ -62,10 +62,11 @@ class AreaParser(argparse.Action):
         :param values: An iterable containing values to parse
         :param option_string: Options
         """
+        re_area = self.RE_AREA
         rslt = []
         for value in values:
             try:
-                m = RE_AREA.match(value)
+                m = re_area.match(value)
                 x1 = int(m.group("x1"))
                 y1 = int(m.group("y1"))
                 x2 = int(m.group("x2"))
@@ -217,18 +218,19 @@ def main(opts: Options) -> None:  # noqa: D103
                 for a in aa:
                     wanted_areas.extend((a, KNOWN_AREAS[a]))
 
-    map_tiles = inventorize_maps_latest(opts.mapdir)
-
     with opts.regionsdb.open("rb") as fin:
         regsdb: dict[CoordType, RegionsDBRecord3] = pickle.load(fin)  # noqa: S301
-    validation_set: set[CoordType] = set()
-    validation_set.update(k for k, v in regsdb.items() if v["current_name"])
+    validation_set: set[CoordType] = {
+        k for k, v in regsdb.items() if v["current_name"]
+    }
+
     if not opts.no_bonnie:
         bonnie_coords = get_bonnie_coords(None, True)
         validation_set.intersection_update(bonnie_coords)
-    for co in list(map_tiles.keys()):
-        if co not in validation_set:
-            del map_tiles[co]
+
+    map_tiles = inventorize_maps_latest(opts.mapdir)
+    for k in [co for co in map_tiles if co not in validation_set]:
+        del map_tiles[k]
 
     print("\nMaking maps:")
     with handle_sigint(AbortRequested):
