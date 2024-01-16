@@ -25,6 +25,9 @@ AbortRequested: Settable = Event()
 
 
 class CartographerOptions(Protocol):
+    """
+    Options unique for this module
+    """
     no_grid: bool
     continents: list[str]
     areas: list[AreaBounds]
@@ -37,6 +40,9 @@ class CartographerOptions(Protocol):
 
 
 class Options(CartographerOptions, Protocol):
+    """
+    Options combined from this module and common ones
+    """
     pass
 
 
@@ -44,7 +50,18 @@ RE_AREA = re.compile(r"(?P<x1>\d+)[,:-](?P<y1>\d+)[,:-](?P<x2>\d+)[,:-](?P<y2>\d
 
 
 class AreaParser(argparse.Action):
-    def __call__(self, parser, namespace, values, option_string=None):
+    """
+    Parses area notation
+    """
+    def __call__(self, parser, namespace, values, option_string=None):  # noqa: ANN001, ARG002
+        """
+        Perform parsing of area notation
+
+        :param parser: ArgumentParser object
+        :param namespace: ArgumentParser's parse-result namespace
+        :param values: An iterable containing values to parse
+        :param option_string: Options
+        """
         rslt = []
         for value in values:
             try:
@@ -67,6 +84,9 @@ class AreaParser(argparse.Action):
 
 
 def get_options() -> Options:
+    """
+    Get options from CLI
+    """
     parser = argparse.ArgumentParser("cartographer_v4")
 
     parser.add_argument("--no-grid", action="store_true", help="Skip creation of grid overlay")
@@ -143,7 +163,10 @@ def make_map(
     area: AreaDescriptor,
     map_tiles: dict[CoordType, Path],
     exclusion_method: ExclusionMethod,
-):
+) -> None:
+    """
+    Actually create the map file
+    """
     print(f"{area.bounding_box}", end="", flush=True)
     csize_x = (area.x_eastmost - area.x_westmost + 1) * 256
     csize_y = (area.y_northmost - area.y_southmost + 1) * 256
@@ -173,7 +196,7 @@ def make_map(
     canvas.save(targ)
 
 
-def main(opts: Options):
+def main(opts: Options) -> None:  # noqa: D103
     start = time.monotonic()
 
     ts = datetime.now().strftime("%Y%m%d-%H%M")
@@ -197,7 +220,7 @@ def main(opts: Options):
     map_tiles = inventorize_maps_latest(opts.mapdir)
 
     with opts.regionsdb.open("rb") as fin:
-        regsdb: dict[CoordType, RegionsDBRecord3] = pickle.load(fin)
+        regsdb: dict[CoordType, RegionsDBRecord3] = pickle.load(fin)  # noqa: S301
     validation_set: set[CoordType] = set()
     validation_set.update(k for k, v in regsdb.items() if v["current_name"])
     if not opts.no_bonnie:
@@ -217,7 +240,7 @@ def main(opts: Options):
             print(f"{area_name}: ", end="", flush=True)
             targ = targdir / (area_name + ".png")
             if not opts.overwrite and targ.exists():
-                print(f"Already exists", end="")
+                print("Already exists", end="")
             else:
                 print("🌐", end="", flush=True)
                 make_map(targ, area_desc, map_tiles, opts.exclusion_method)
