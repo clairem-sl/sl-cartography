@@ -90,7 +90,7 @@ class ValueTree:
         return rslt
 
     def __repr__(self):
-        return f"{self.__class__.__name__}({repr(self.__data)}"
+        return f"{self.__class__.__name__}({self.__data!r}"
 
 
 class NamesConfig(Protocol):
@@ -155,7 +155,7 @@ class ConfigReader(SLMapToolsConfig):
         return self._cfg_tree[item]
 
     def __repr__(self):
-        return f"{self.__class__.__name__}({repr(self._cfg_file)})"
+        return f"{self.__class__.__name__}({self._cfg_file!r})"
 
 
 @contextmanager
