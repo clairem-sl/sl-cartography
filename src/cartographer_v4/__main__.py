@@ -233,6 +233,7 @@ def main(opts: Options) -> None:  # noqa: D103
         del map_tiles[k]
 
     print("\nMaking maps:")
+    new_count = 0
     with handle_sigint(AbortRequested):
         if not opts.no_grid:
             grid_maker = GridMaker(regions_db=regsdb, validation_set=validation_set)
@@ -246,6 +247,7 @@ def main(opts: Options) -> None:  # noqa: D103
             else:
                 print("🌐", end="", flush=True)
                 make_map(targ, area_desc, map_tiles, opts.exclusion_method)
+                new_count += 1
             print(f"\n  => {targ}", flush=True)
             if not opts.no_grid:
                 grid_maker.make_grid(targ, overwrite=opts.overwrite, exclusion_method=opts.exclusion_method)
@@ -255,6 +257,7 @@ def main(opts: Options) -> None:  # noqa: D103
 
     finish = time.monotonic()
     print("=" * 40)
+    print(f"{len(wanted_areas)} areas processed, {new_count} new")
     print(f"Finished in {finish - start:_.2f} seconds.")
 
 
