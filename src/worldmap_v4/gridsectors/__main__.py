@@ -115,7 +115,7 @@ def main(opts: Options):
                         grid_canvas.paste(immap, (cx, cy))
                 out = Image.alpha_composite(grid_canvas, gridsec_overlay)
                 out.save(gridsector_mapp)
-                print(f" 💾 ", end="", flush=True)
+                print(" 💾 ", end="", flush=True)
             print(f"{gridsector_mapp}")
 
 
