@@ -342,6 +342,13 @@ LostZindra:
     # Parts of Horizons
     - 1807-1810/1201-1202
 
+LostWorld:
+  meta:
+    automatic: False
+    validate: False
+  includes:
+    - 484-528/1586-1631
+
 # endregion
 
 # region # User/Private Continents
