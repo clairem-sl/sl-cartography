@@ -95,7 +95,7 @@ def get_options() -> Options:
     parser.add_argument(
         "--continents",
         type=str,
-        nargs="*",
+        nargs="+",
         help=(
             "Comma- or Space-separated list of area names to generate the maps for. "
             "If not specified and no 'areas' specified, then will generate all known areas/continents. "
