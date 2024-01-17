@@ -210,6 +210,15 @@ DEFAULT_ADMETA: AreaDescriptorMeta = {
 
 
 class AreaDescriptor:
+    __slots__ = (
+        "includes",
+        "excludes",
+        "name",
+        "description",
+        "meta",
+        "_bbox",
+    )
+
     def __init__(
         self,
         includes: Union[AreaBounds, Iterable[AreaBounds]],
