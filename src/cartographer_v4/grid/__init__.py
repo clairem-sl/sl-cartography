@@ -199,7 +199,7 @@ class GridMaker:
                     pass
                 if (i % 10) == 0:
                     print(".", end="", flush=True)
-            print(f"[{regs}]", end="", flush=True)
+            print(f"[{regs}] ", end="", flush=True)
             gridc.save(overlay_p)
         print(f"{overlay_p}\n  => ", end="", flush=True)
 
