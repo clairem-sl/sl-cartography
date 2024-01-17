@@ -204,7 +204,9 @@ def main(opts: Options) -> None:  # noqa: D103
     wanted_areas: list[tuple[str, AreaDescriptor]] = []
     if not opts.areas:
         if not opts.continents:
-            wanted_areas.extend((name, area) for name, area in KNOWN_AREAS.items())
+            wanted_areas.extend(
+                (name, area_desc) for name, area_desc in KNOWN_AREAS.items() if area_desc.automatic
+            )
         else:
             for aa in chain(map(lambda s: s.split(","), opts.continents)):
                 for a in aa:

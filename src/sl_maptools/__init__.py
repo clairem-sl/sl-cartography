@@ -18,6 +18,7 @@ from typing import (
     Iterable,
     Iterator,
     NamedTuple,
+    NotRequired,
     Optional,
     Protocol,
     TypedDict,
@@ -197,6 +198,15 @@ class AreaBoundsSet(Iterable):
         return AreaBounds(x_min, y_min, x_max, y_max)
 
 
+class AreaDescriptorMeta(TypedDict):
+    automatic: NotRequired[bool]
+
+
+DEFAULT_ADMETA: AreaDescriptorMeta = {
+    "automatic": False,
+}
+
+
 class AreaDescriptor:
     def __init__(
         self,
@@ -205,11 +215,14 @@ class AreaDescriptor:
         excludes: Union[AreaBounds, Iterable[AreaBounds]] = None,
         name: str = None,
         description: str = None,
+        meta: AreaDescriptorMeta = None,
     ):
         self.includes = AreaBoundsSet(includes)
         self.excludes = AreaBoundsSet(excludes)
         self.name = name
         self.description = description
+        meta = meta or DEFAULT_ADMETA
+        self.automatic = meta["automatic"]
         self._bbox: Optional[AreaBounds] = None
 
     def __contains__(self, item: CoordType):

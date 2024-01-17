@@ -7,6 +7,7 @@
 #   excludes:   # This part is optional
 #     - <area bounds>
 #     - ...
+#   meta:  # Also optional, see AreaDescriptorMeta in sl_maptools.__init__
 #
 # Valid syntax for <area bounds>:
 #   - [x1, y1, x2, y2]   ## The corners notation: A list of 4 elements
