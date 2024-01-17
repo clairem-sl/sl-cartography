@@ -428,12 +428,12 @@ def main(opts: MPMapOptions):
             pickle.dump(progress, fout)
 
     if errs:
-        print("During retrieval, the following errors are seen:", flush=True)
+        print("During retrieval, the following errors are seen:", file=sys.stderr)
         time.sleep(1)
         for entity, coord, exc in errs:
             print(f"    {entity} <{type(exc)}>{exc}", file=sys.stderr)
         time.sleep(1)
-        print(f"  A total of {len(errs)} errors")
+        print(f"  A total of {len(errs)} errors", file=sys.stderr)
 
     normalized_time_per_row: dict[int, float] = {}
     for y, prog in progression.items():
