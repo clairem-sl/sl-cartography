@@ -29,6 +29,7 @@ class CartographerOptions(Protocol):
     """
     Options unique for this module
     """
+
     no_grid: bool
     continents: list[str]
     areas: list[AreaBounds]
@@ -44,6 +45,7 @@ class Options(CartographerOptions, Protocol):
     """
     Options combined from this module and common ones
     """
+
     pass
 
 
@@ -150,13 +152,13 @@ def get_options() -> Options:
         type=ExclusionMethod.__members__.get,
         choices=ExclusionMethod.__members__.values(),
         default="HIDE",
-        help="One of " + ", ".join(ExclusionMethod.__members__.keys())
+        help="One of " + ", ".join(ExclusionMethod.__members__.keys()),
     )
     parser.add_argument(
         "--no-bonnie",
         action="store_true",
         default=False,
-        help="If specified, do not perform validation against BonnieBots database"
+        help="If specified, do not perform validation against BonnieBots database",
     )
 
     _opts = parser.parse_args()
@@ -217,9 +219,7 @@ def main(opts: Options) -> None:  # noqa: D103
 
     if not opts.areas:
         if not opts.continents:
-            wanted_areas.extend(
-                (name, area_desc) for name, area_desc in KNOWN_AREAS.items() if area_desc.automatic
-            )
+            wanted_areas.extend((name, area_desc) for name, area_desc in KNOWN_AREAS.items() if area_desc.automatic)
     else:
         for a in opts.areas:
             aname = f"{a.x_westmost}-{a.y_southmost}-{a.x_eastmost}-{a.y_northmost}-{ts}"
@@ -232,18 +232,12 @@ def main(opts: Options) -> None:  # noqa: D103
             if kn := known_folded.get(want := want.casefold()):
                 wanted_areas.append((kn, KNOWN_AREAS[kn]))
             else:
-                wanted_areas.extend(
-                    (kn, KNOWN_AREAS[kn])
-                    for knf, kn in known_folded.items()
-                    if fnmatch(knf, want)
-                )
+                wanted_areas.extend((kn, KNOWN_AREAS[kn]) for knf, kn in known_folded.items() if fnmatch(knf, want))
         del known_folded
 
     with opts.regionsdb.open("rb") as fin:
         regsdb: dict[CoordType, RegionsDBRecord3] = pickle.load(fin)  # noqa: S301
-    validation_set: set[CoordType] = {
-        k for k, v in regsdb.items() if v["current_name"]
-    }
+    validation_set: set[CoordType] = {k for k, v in regsdb.items() if v["current_name"]}
 
     if not opts.no_bonnie:
         bonnie_coords = get_bonnie_coords(None, True)
