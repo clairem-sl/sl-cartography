@@ -151,6 +151,8 @@ def get_options() -> Options:
     parser.add_argument(
         "--no-bonnie",
         action="store_true",
+        default=False,
+        help="If specified, do not perform validation against BonnieBots database"
     )
 
     _opts = parser.parse_args()
