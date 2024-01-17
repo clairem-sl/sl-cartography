@@ -4,7 +4,7 @@
 import argparse
 import pickle
 from pathlib import Path
-from typing import Final, Protocol, cast
+from typing import Final, Protocol, TYPE_CHECKING, cast
 
 from PIL import Image, ImageFont
 
@@ -15,7 +15,9 @@ from cartographer_v4.grid import (
     GridMaker,
     TextSettings,
 )
-from sl_maptools import CoordType, RegionsDBRecord3
+
+if TYPE_CHECKING:
+    from sl_maptools import CoordType, RegionsDBRecord3
 from sl_maptools.knowns import KNOWN_AREAS
 from sl_maptools.utils import ConfigReader, SLMapToolsConfig
 from sl_maptools.validator import get_bonnie_coords
@@ -27,12 +29,15 @@ AREAMAPS_DIR: Final[Path] = Path(Config.areas.dir)
 
 
 class GridOptions(Protocol):
+    """Options extracted from the CLI"""
+
     no_names: bool
     no_coords: bool
     areas: list[str]
 
 
 def get_options() -> GridOptions:
+    """Get options from CLI"""
     parser = argparse.ArgumentParser("cartographer_v4.grid")
 
     parser.add_argument("--no-names", action="store_true", help="Don't add region names to the grid")
@@ -52,7 +57,7 @@ def get_options() -> GridOptions:
     return cast(GridOptions, _opts)
 
 
-def main(opts: GridOptions):
+def main(opts: GridOptions) -> None:  # noqa: D103
     # Disable DecompressionBombWarning
     Image.MAX_IMAGE_PIXELS = None
 
@@ -69,14 +74,15 @@ def main(opts: GridOptions):
 
     validation_set: set[CoordType] = set()
     with DB_PATH.open("rb") as fin:
-        regsdb: dict[CoordType, RegionsDBRecord3] = pickle.load(fin)
+        regsdb: dict[CoordType, RegionsDBRecord3] = pickle.load(fin)  # noqa: S301
     validation_set.update(k for k, v in regsdb.items() if v["current_name"])
     bonnie_coords = get_bonnie_coords(None, True)
     validation_set.intersection_update(bonnie_coords)
 
     want_areas: set[Path]
     if opts.areas:
-        cs_anames = {k.casefold(): k for k in KNOWN_AREAS.keys()}
+        cs_anames = {k.casefold(): k for k in KNOWN_AREAS}
+        # noinspection PyTypeChecker
         want_areas = {
             (areamaps_dir / cs_anames[a1]).with_suffix(".png")
             for area in opts.areas
