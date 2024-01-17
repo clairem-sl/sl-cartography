@@ -37,6 +37,8 @@ OVERLAY_VARIANTS = {
 
 
 class Options(Protocol):
+    """Options extracted from CLI"""
+
     worldmapfile: Optional[Path]
     source_type: Literal["mos", "nl"]
     source_dir: Optional[Path]
@@ -49,6 +51,7 @@ _TYPE_CHOICES = {
 
 
 def get_options() -> Options:
+    """Parse CLI arguments to get the options"""
     parser = argparse.ArgumentParser("worldmap_v4.grids")
 
     _type_choices = set(chain.from_iterable(_TYPE_CHOICES))
@@ -66,7 +69,7 @@ def get_options() -> Options:
     return _opts
 
 
-def main(opts: Options):
+def main(opts: Options) -> None:  # noqa: D103
     # worldmap_dir = Path(r"C:\Cache\SL-Carto\WorldMaps")
     # worldmap_p = worldmap_dir / "worldmap4_mosaic_5x5.png"
     worldmap_p = opts.worldmapfile
@@ -86,7 +89,6 @@ def main(opts: Options):
     worldmap_m = datetime.fromtimestamp(worldmap_p.stat().st_mtime)
 
     Image.MAX_IMAGE_PIXELS = None
-
     min_co, max_co = COORD_RANGE
 
     print(f"Loading worldmap {worldmap_p} (m = {worldmap_m})")
@@ -140,7 +142,7 @@ def main(opts: Options):
                 gridsec_overlay.paste(sq, (cx, cy))
         print()
 
-        print(f"  Making canvas")
+        print("  Making canvas")
         canvas = Image.new("RGBA", (canvas_sz, canvas_sz), color=back_color)
         canvas.paste(Image.alpha_composite(padded_map, gridsec_overlay), (sect_sz, sect_sz))
         # noinspection PyUnusedLocal
