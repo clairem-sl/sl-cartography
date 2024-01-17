@@ -323,6 +323,17 @@ WelcomeHub:
 
 # endregion
 
+# region # 'Lost' Continents
+
+LostGaeta:
+  meta:
+    automatic: False
+    validate: False
+  includes:
+    - [1140, 1112, 1215, 1130]
+
+# endregion
+
 # region # User/Private Continents
 
 A523:
