@@ -169,8 +169,9 @@ def make_map(
     targ: Path,
     area: AreaDescriptor,
     map_tiles: dict[CoordType, Path],
+    validation_set: set[CoordType],
     exclusion_method: ExclusionMethod,
-) -> None:
+) -> int:
     """
     Actually create the map file
     """
@@ -183,10 +184,14 @@ def make_map(
         xy_iterator = area.xy_iterator
     else:
         xy_iterator = area.bounding_box.xy_iterator
+
     c = 0
+    validate = area.validate
     for x, y in xy_iterator():
         # print(coord)
         if (x, y) not in map_tiles:
+            continue
+        if validate and (x, y) not in validation_set:
             continue
         c += 1
         if (c % 10) == 0:
@@ -201,6 +206,7 @@ def make_map(
 
     # print(targ)
     canvas.save(targ)
+    return c
 
 
 def main(opts: Options) -> None:  # noqa: D103
@@ -244,11 +250,9 @@ def main(opts: Options) -> None:  # noqa: D103
         validation_set.intersection_update(bonnie_coords)
 
     map_tiles = inventorize_maps_latest(opts.mapdir)
-    for k in [co for co in map_tiles if co not in validation_set]:
-        del map_tiles[k]
 
     print("\nMaking maps:")
-    new_count = 0
+    new_count = tiles = 0
     with handle_sigint(AbortRequested):
         if not opts.no_grid:
             grid_maker = GridMaker(regions_db=regsdb, validation_set=validation_set)
@@ -261,9 +265,9 @@ def main(opts: Options) -> None:  # noqa: D103
                 print("Already exists", end="")
             else:
                 print("🌐", end="", flush=True)
-                make_map(targ, area_desc, map_tiles, opts.exclusion_method)
+                tiles = make_map(targ, area_desc, map_tiles, validation_set, opts.exclusion_method)
                 new_count += 1
-            print(f"\n  => {targ}", flush=True)
+            print(f"\n  => [{tiles}] {targ}", flush=True)
             if not opts.no_grid:
                 grid_maker.make_grid(targ, overwrite=opts.overwrite, exclusion_method=opts.exclusion_method)
                 print()
