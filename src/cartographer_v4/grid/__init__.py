@@ -138,6 +138,7 @@ class GridMaker:
             regname_settings: TextSettings = None,
             coord_setttings: TextSettings = None,
             exclusion_method: ExclusionMethod = ExclusionMethod.HIDE,
+            save_names: bool = True,
     ):
         if out_dir is None:
             if self.out_dir is None:
@@ -156,6 +157,7 @@ class GridMaker:
 
         overlay_p = out_dir / (areaname + ".grid-overlay.png")
         gridc = None
+        gridded_regions = []
         print("  => ", end="")
         if overwrite or not overlay_p.exists():
             print("#️⃣ ", end="")
@@ -184,6 +186,7 @@ class GridMaker:
                 if xy in area:
                     gridc.paste(self._sq, (cx, cy))
                     regname = self.regions_db[xy]["current_name"]
+                    gridded_regions.append((regname, xy))
                     # print(regname)
                     ty = cy + 4
                     if not no_names:
@@ -202,6 +205,13 @@ class GridMaker:
             print(f"[{regs}] ", end="", flush=True)
             gridc.save(overlay_p)
         print(f"{overlay_p}\n  => ", end="", flush=True)
+
+        if save_names:
+            gridded_regions.sort()
+            regnames = out_dir / (areaname + ".regions.txt")
+            with regnames.open("wt") as fout:
+                for name, (x, y) in gridded_regions:
+                    print(f"({x:4}, {y:4}) {name}", file=fout)
 
         composite_p = out_dir / (areaname + ".composited.png")
         if overwrite or not composite_p.exists():
