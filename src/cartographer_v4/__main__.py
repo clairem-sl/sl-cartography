@@ -257,12 +257,12 @@ def main(opts: Options) -> None:  # noqa: D103
             print(f"{area_name}: ", end="", flush=True)
             targ = targdir / (area_name + ".png")
             if not opts.overwrite and targ.exists():
-                print("Already exists", end="")
+                print(f"Already exists\n  => {targ}")
             else:
                 print("🌐", end="", flush=True)
                 tiles = make_map(targ, area_desc, map_tiles, validation_set, opts.exclusion_method)
                 new_count += 1
-            print(f"\n  => [{tiles}] {targ}", flush=True)
+                print(f"\n  => [{tiles}] {targ}", flush=True)
             if not opts.no_lattice:
                 maker.make_lattice(
                     targ, validate=area_desc.validate, overwrite=opts.overwrite, exclusion_method=opts.exclusion_method
