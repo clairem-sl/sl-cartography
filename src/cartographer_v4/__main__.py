@@ -254,6 +254,7 @@ def main(opts: Options) -> None:  # noqa: D103
     print("\nMaking maps:")
     new_count = tiles = 0
     with handle_sigint(AbortRequested):
+        Image.MAX_IMAGE_PIXELS = None
         if not opts.no_grid:
             grid_maker = GridMaker(regions_db=regsdb, validation_set=validation_set)
         for area_name, area_desc in wanted_areas:
