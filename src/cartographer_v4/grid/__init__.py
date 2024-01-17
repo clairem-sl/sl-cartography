@@ -28,6 +28,7 @@ Config: SLMapToolsConfig = ConfigReader("config.toml")
 
 class TextSettings(TypedDict):
     """Defines kwargs for PIL textdrawing"""
+
     font: FreeTypeFont
     fill: RGBATuple
     stroke_width: int
@@ -39,6 +40,7 @@ class ExclusionMethod(Enum):
     """
     Supported exclusion methods for post-processing regions not part of an area
     """
+
     NONE = auto()
     """Do not hide regions excluded from areas (they will still not be labeled/gridded)"""
     HIDE = auto()
@@ -55,12 +57,12 @@ class GridMaker:
     """Creates the region grids for the high-res area maps"""
 
     def __init__(
-            self,
-            regions_db: dict[CoordType, RegionsDBRecord3],
-            validation_set: set[CoordType],
-            out_dir: Optional[Path] = None,
-            regname_settings: Optional[TextSettings] = None,
-            coord_setttings: Optional[TextSettings] = None,
+        self,
+        regions_db: dict[CoordType, RegionsDBRecord3],
+        validation_set: set[CoordType],
+        out_dir: Optional[Path] = None,
+        regname_settings: Optional[TextSettings] = None,
+        coord_setttings: Optional[TextSettings] = None,
     ):
         """
         :param regions_db: Database of existing regions
@@ -143,17 +145,17 @@ class GridMaker:
         return self._cover_fog
 
     def make_grid(
-            self,
-            areamap: Path,
-            validate: bool = True,
-            overwrite: bool = False,
-            out_dir: Optional[Path] = None,
-            no_names: bool = False,
-            no_coords: bool = False,
-            regname_settings: TextSettings = None,
-            coord_setttings: TextSettings = None,
-            exclusion_method: ExclusionMethod = ExclusionMethod.HIDE,
-            save_names: bool = True,
+        self,
+        areamap: Path,
+        validate: bool = True,
+        overwrite: bool = False,
+        out_dir: Optional[Path] = None,
+        no_names: bool = False,
+        no_coords: bool = False,
+        regname_settings: TextSettings = None,
+        coord_setttings: TextSettings = None,
+        exclusion_method: ExclusionMethod = ExclusionMethod.HIDE,
+        save_names: bool = True,
     ) -> None:
         """
         Actually create the region grid on top of provided area map
