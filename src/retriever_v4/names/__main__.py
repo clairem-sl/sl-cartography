@@ -39,6 +39,8 @@ DataBase: dict[CoordType, RegionsDBRecord3] = {}
 
 
 class ChangeStatsDict(TypedDict):
+    """Define the fields of ChangeStats"""
+
     new: int
     changed: int
     gone: int
@@ -59,16 +61,21 @@ RE_HHMM = re.compile(r"^(\d{1,2}):(\d{1,2})$")
 
 
 class RetrieverNamesOptions(Protocol):
+    """Additional CLI options specified by this module"""
+
     dbpath: Path
     export: Union[Path, Ellipsis]
     auto_reset: bool
 
 
 class OptionsProtocol(RetrieverNamesOptions, RetrieverApplication.Options, Protocol):
+    """CLI Options to extract"""
+
     pass
 
 
 def get_options() -> OptionsProtocol:
+    """Extract options from CLI"""
     parser = argparse.ArgumentParser("retriever_v4.names")
 
     parser.add_argument("--dbpath", type=Path, default=DEFA_DB, help="Path to Regions Database file")
@@ -100,8 +107,6 @@ def get_options() -> OptionsProtocol:
 
 
 def process(tile: CookedResult) -> bool:
-    global DataBase
-
     ts = datetime.now().astimezone()
     xy = tile.coord.x, tile.coord.y
     dbxy: RegionsDBRecord3 = DataBase.get(xy)
@@ -217,8 +222,8 @@ async def amain(db_path: Path, duration: int, min_batch_size: int, abort_low_rps
         )
 
 
-def main(app_context: RetrieverApplication, opts: OptionsProtocol):
-    global DataBase, Progress
+def main(app_context: RetrieverApplication, opts: OptionsProtocol) -> None:
+    global DataBase, Progress  # noqa: PLW0603
 
     dur = RetrieverApplication.calc_duration(opts)
 
@@ -239,7 +244,7 @@ def main(app_context: RetrieverApplication, opts: OptionsProtocol):
         make_backup(opts.dbpath, 5)
         print(" done")
         with opts.dbpath.open("rb") as fin:
-            DataBase = pickle.load(fin)
+            DataBase = pickle.load(fin)  # noqa: S301
     print(f"DataBase already contains {len(DataBase)} regions.", flush=True)
 
     start_coord = Progress.next_coordinate

@@ -25,7 +25,7 @@ import ruamel.yaml as ryaml
 if TYPE_CHECKING:
     from pathlib import Path
     from types import TracebackType
-    from sl_maptools import CoordType
+    from sl_maptools import CoordType, MapCoord
 
 
 class ProgressDict(TypedDict):
@@ -138,7 +138,7 @@ class RetrieverProgress:
         """How many jobs are still in the outstanding queue (backlog)"""
         return len(self.outstanding)
 
-    def retire(self, item: CoordType) -> None:
+    def retire(self, item: CoordType | MapCoord) -> None:
         """Remove item from set of outstanding jobs"""
         if item is None:
             return
@@ -364,7 +364,7 @@ class RetrieverApplication(AbstractContextManager):
                     "If no other retriever is running, delete the lock file to continue.",
                     file=sys.stderr,
                 )
-                raise RuntimeError("Lock file exists") from e  # noqa: TRY003
+                raise RuntimeError("Lock file exists") from e
         self.started = time.monotonic()
         return self
 
