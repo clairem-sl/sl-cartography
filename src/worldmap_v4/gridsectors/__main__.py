@@ -60,7 +60,7 @@ def get_options() -> Options:
     parser.add_argument(
         "--bg-color", action=RGBParser, default=DEFA_BG_COLOR, help="Background color in r,g,b (no spaces)"
     )
-    parser.add_argument("--grid-color", action=RGBParser, default=DEFA_GRID_CLR, help="Grid color in r,g,b (no spaces)")
+    parser.add_argument("--lattice-color", action=RGBParser, default=DEFA_GRID_CLR, help="Grid color in r,g,b (no spaces)")
 
     _opts = parser.parse_args()
     return cast(Options, _opts)

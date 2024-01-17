@@ -42,7 +42,7 @@ class ExclusionMethod(Enum):
     """
 
     NONE = auto()
-    """Do not hide regions excluded from areas (they will still not be labeled/gridded)"""
+    """Do not hide regions excluded from areas (they will still not be labeled/latticed)"""
     HIDE = auto()
     """Hide regions excluded from areas"""
     TRANSP = auto()
@@ -53,8 +53,8 @@ class ExclusionMethod(Enum):
     """Excluded areas are covered by a fog square (solid but half-transparent fill)"""
 
 
-class GridMaker:
-    """Creates the region grids for the high-res area maps"""
+class LatticeMaker:
+    """Creates the region lattice for the high-res area maps"""
 
     def __init__(
         self,
@@ -86,7 +86,7 @@ class GridMaker:
 
         if regname_settings is None:
             regname_settings = {
-                "font": ImageFont.truetype(Config.grids.font_name, Config.grids.size_name),
+                "font": ImageFont.truetype(Config.lattice.font_name, Config.lattice.size_name),
                 "fill": TEXT_RGBA,
                 "stroke_width": STROKE_WIDTH_NAME,
                 "stroke_fill": STROKE_RGBA,
@@ -95,7 +95,7 @@ class GridMaker:
 
         if coord_setttings is None:
             coord_setttings = {
-                "font": ImageFont.truetype(Config.grids.font_coord, Config.grids.size_coord),
+                "font": ImageFont.truetype(Config.lattice.font_coord, Config.lattice.size_coord),
                 "fill": TEXT_RGBA,
                 "stroke_width": STROKE_WIDTH_NAME,
                 "stroke_fill": STROKE_RGBA,
@@ -144,7 +144,7 @@ class GridMaker:
             self._cover_fog = _cov
         return self._cover_fog
 
-    def make_grid(
+    def make_lattice(
         self,
         areamap: Path,
         validate: bool = True,
@@ -158,9 +158,9 @@ class GridMaker:
         save_names: bool = True,
     ) -> None:
         """
-        Actually create the region grid on top of provided area map
+        Actually create the region lattice on top of provided area map
 
-        :param areamap: The area map file to be gridded
+        :param areamap: The area map file to create a lattice upon
         :param validate: Whether to actually validate every coordinate against the validation_set
         :param overwrite: If True, overwrites existing file
         :param out_dir: Where to save the resulting files. Defaults to the out_dir parameter set during instantiation
@@ -169,7 +169,7 @@ class GridMaker:
         :param regname_settings: Overrides the regname_settings parameter set during instantiation
         :param coord_setttings: Overrides the coord_settings parameter set during instantiation
         :param exclusion_method: The exclusion method to use for post-processing regions not part of the area
-        :param save_names: If True, save a list of gridded regions into a text file
+        :param save_names: If True, save a list of regions in the lattice into a text file
         """
         if out_dir is None:
             out_dir = self.out_dir or areamap.parent
@@ -183,9 +183,9 @@ class GridMaker:
             print("  🈲 DOES NOT EXIST IN KNOWN_AREAS !!")
             return
 
-        overlay_p = out_dir / (areaname + ".grid-overlay.png")
-        gridc = None
-        gridded_regions = []
+        overlay_p = out_dir / (areaname + ".lattice-overlay.png")
+        lattice = None
+        lattice_regions = []
         print("  => ", end="")
         if overwrite or not overlay_p.exists():
             print("#️⃣ ", end="")
@@ -193,8 +193,8 @@ class GridMaker:
             x1, y1, x2, y2 = area.bounding_box
             size_x = (x2 - x1 + 1) * 256
             size_y = (y2 - y1 + 1) * 256
-            gridc = Image.new("RGBA", (size_x, size_y), color=(0, 0, 0, 0))
-            draw = ImageDraw.Draw(gridc)
+            lattice = Image.new("RGBA", (size_x, size_y), color=(0, 0, 0, 0))
+            draw = ImageDraw.Draw(lattice)
             regs = 0
 
             if exclusion_method == ExclusionMethod.HIDE:
@@ -212,9 +212,9 @@ class GridMaker:
                 cx = (x - x1) * 256
                 cy = (y2 - y) * 256
                 if xy in area:
-                    gridc.paste(self._sq, (cx, cy))
+                    lattice.paste(self._sq, (cx, cy))
                     regname = self.regions_db[xy]["current_name"]
-                    gridded_regions.append((regname, xy))
+                    lattice_regions.append((regname, xy))
                     # print(regname)
                     ty = cy + 4
                     if not no_names:
@@ -223,32 +223,32 @@ class GridMaker:
                     if not no_coords:
                         draw.text((cx + 5, ty), f"{x},{y}", **coord_setttings)
                 elif exclusion_method == ExclusionMethod.FOG:
-                    gridc.paste(self.cover_fog, (cx, cy))
+                    lattice.paste(self.cover_fog, (cx, cy))
                 elif exclusion_method == ExclusionMethod.HATCHED:
-                    gridc.paste(self.cover_hatched, (cx, cy))
+                    lattice.paste(self.cover_hatched, (cx, cy))
                 elif exclusion_method == ExclusionMethod.TRANSP:
                     pass
                 if (i % 10) == 0:
                     print(".", end="", flush=True)
             print(f"[{regs}] ", end="", flush=True)
-            gridc.save(overlay_p)
+            lattice.save(overlay_p)
         print(f"{overlay_p}\n  => ", end="", flush=True)
 
         if save_names:
-            gridded_regions.sort()
+            lattice_regions.sort()
             regnames = out_dir / (areaname + ".regions.txt")
             with regnames.open("wt") as fout:
-                for name, (x, y) in gridded_regions:
+                for name, (x, y) in lattice_regions:
                     print(f"({x:4}, {y:4}) {name}", file=fout)
 
         composite_p = out_dir / (areaname + ".composited.png")
         if overwrite or not composite_p.exists():
-            if gridc is None:
+            if lattice is None:
                 with overlay_p.open("rb") as fin:
-                    gridc = Image.open(fin)
-                    gridc.load()
+                    lattice = Image.open(fin)
+                    lattice.load()
             print("💠 ", end="")
             with Image.open(areamap) as img:
-                out = Image.alpha_composite(img, gridc)
+                out = Image.alpha_composite(img, lattice)
                 out.save(composite_p)
         print(f"{composite_p}", end="", flush=True)

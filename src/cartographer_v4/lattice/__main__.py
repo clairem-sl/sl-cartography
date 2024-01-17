@@ -8,11 +8,11 @@ from typing import Final, Protocol, TYPE_CHECKING, cast
 
 from PIL import Image, ImageFont
 
-from cartographer_v4.grid import (
+from cartographer_v4.lattice import (
     STROKE_RGBA,
     STROKE_WIDTH_NAME,
     TEXT_RGBA,
-    GridMaker,
+    LatticeMaker,
     TextSettings,
 )
 
@@ -28,7 +28,7 @@ DB_PATH: Final[Path] = Path(Config.names.dir) / Config.names.db
 AREAMAPS_DIR: Final[Path] = Path(Config.areas.dir)
 
 
-class GridOptions(Protocol):
+class LatticeOptions(Protocol):
     """Options extracted from the CLI"""
 
     no_names: bool
@@ -36,12 +36,12 @@ class GridOptions(Protocol):
     areas: list[str]
 
 
-def get_options() -> GridOptions:
+def get_options() -> LatticeOptions:
     """Get options from CLI"""
-    parser = argparse.ArgumentParser("cartographer_v4.grid")
+    parser = argparse.ArgumentParser("cartographer_v4.lattice")
 
-    parser.add_argument("--no-names", action="store_true", help="Don't add region names to the grid")
-    parser.add_argument("--no-coords", action="store_true", help="Don't add coordinates to the grid")
+    parser.add_argument("--no-names", action="store_true", help="Don't add region names to the lattice")
+    parser.add_argument("--no-coords", action="store_true", help="Don't add coordinates to the lattice")
     parser.add_argument(
         "--areas",
         metavar="AREA_LIST",
@@ -49,28 +49,28 @@ def get_options() -> GridOptions:
         nargs="+",
         help=(
             "Space- and/or comma-separated list of areas to retrieve, in addition to prior progress. "
-            "If this option is specified, then make grid for listed areas ONLY."
+            "If this option is specified, then make lattice for listed areas ONLY."
         ),
     )
 
     _opts = parser.parse_args()
-    return cast(GridOptions, _opts)
+    return cast(LatticeOptions, _opts)
 
 
-def main(opts: GridOptions) -> None:  # noqa: D103
+def main(opts: LatticeOptions) -> None:  # noqa: D103
     # Disable DecompressionBombWarning
     Image.MAX_IMAGE_PIXELS = None
 
     areamaps_dir = Path(Config.areas.dir)
-    grid_composite_dir = Path(Config.grids.dir_composite)
-    grid_composite_dir.mkdir(exist_ok=True)
-    grid_overlay_dir = Path(Config.grids.dir_overlay)
-    grid_overlay_dir.mkdir(exist_ok=True)
+    composite_dir = Path(Config.lattice.dir_composite)
+    composite_dir.mkdir(exist_ok=True)
+    overlay_dir = Path(Config.lattice.dir_overlay)
+    overlay_dir.mkdir(exist_ok=True)
 
-    font_text = ImageFont.truetype(Config.grids.font_name, Config.grids.size_name)
+    font_text = ImageFont.truetype(Config.lattice.font_name, Config.lattice.size_name)
     # w, h = font.getsize("M", stroke_width=STROKE_WIDTH)
     # h_offs = 256 - 3 - h
-    font_coord = ImageFont.truetype(Config.grids.font_coord, Config.grids.size_coord)
+    font_coord = ImageFont.truetype(Config.lattice.font_coord, Config.lattice.size_coord)
 
     validation_set: set[CoordType] = set()
     with DB_PATH.open("rb") as fin:
@@ -105,10 +105,10 @@ def main(opts: GridOptions) -> None:  # noqa: D103
         "stroke_fill": STROKE_RGBA,
     }
 
-    maker = GridMaker(
+    maker = LatticeMaker(
         regions_db=regsdb,
         validation_set=validation_set,
-        out_dir=grid_overlay_dir,
+        out_dir=overlay_dir,
         regname_settings=regname_settings,
         coord_setttings=coord_settings,
     )
@@ -116,7 +116,7 @@ def main(opts: GridOptions) -> None:  # noqa: D103
     tot = len(want_areas)
     for num, areamap in enumerate(want_areas, start=1):
         print(f"\n({num}/{tot}) {areamap.stem}", flush=True)
-        maker.make_grid(areamap)
+        maker.make_lattice(areamap)
     print()
 
 

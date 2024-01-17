@@ -15,7 +15,7 @@ from typing import Final, Protocol, cast
 
 from PIL import Image
 
-from cartographer_v4.grid import ExclusionMethod, GridMaker
+from cartographer_v4.lattice import ExclusionMethod, LatticeMaker
 from sl_maptools import AreaBounds, AreaDescriptor, CoordType, RegionsDBRecord3
 from sl_maptools.knowns import KNOWN_AREAS
 from sl_maptools.utils import ConfigReader, Settable, SLMapToolsConfig, handle_sigint
@@ -30,7 +30,7 @@ class CartographerOptions(Protocol):
     Options unique for this module
     """
 
-    no_grid: bool
+    no_lattice: bool
     continents: list[str]
     areas: list[AreaBounds]
     mapdir: Path
@@ -93,7 +93,7 @@ def get_options() -> Options:
     """
     parser = argparse.ArgumentParser("cartographer_v4")
 
-    parser.add_argument("--no-grid", action="store_true", help="Skip creation of grid overlay")
+    parser.add_argument("--no-lattice", action="store_true", help="Skip creation of lattice overlay")
 
     parser.add_argument(
         "--continents",
@@ -249,8 +249,8 @@ def main(opts: Options) -> None:  # noqa: D103
     new_count = tiles = 0
     with handle_sigint(AbortRequested):
         Image.MAX_IMAGE_PIXELS = None
-        if not opts.no_grid:
-            grid_maker = GridMaker(regions_db=regsdb, validation_set=validation_set)
+        if not opts.no_lattice:
+            maker = LatticeMaker(regions_db=regsdb, validation_set=validation_set)
         for area_name, area_desc in wanted_areas:
             targdir = opts.outdir / area_name
             targdir.mkdir(parents=True, exist_ok=True)
@@ -263,8 +263,8 @@ def main(opts: Options) -> None:  # noqa: D103
                 tiles = make_map(targ, area_desc, map_tiles, validation_set, opts.exclusion_method)
                 new_count += 1
             print(f"\n  => [{tiles}] {targ}", flush=True)
-            if not opts.no_grid:
-                grid_maker.make_grid(
+            if not opts.no_lattice:
+                maker.make_lattice(
                     targ, validate=area_desc.validate, overwrite=opts.overwrite, exclusion_method=opts.exclusion_method
                 )
                 print()

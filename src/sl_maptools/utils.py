@@ -123,7 +123,7 @@ class AreasConfig(Protocol):
     dir: str
 
 
-class GridsConfig(Protocol):
+class LatticeConfig(Protocol):
     dir_composite: str
     dir_overlay: str
     font_name: str
@@ -138,7 +138,7 @@ class SLMapToolsConfig(Protocol):
     mosaic: MosaicConfig
     nightlights: NightlightsConfig
     areas: AreasConfig
-    grids: GridsConfig
+    lattice: LatticeConfig
 
 
 class ConfigReader(SLMapToolsConfig):
