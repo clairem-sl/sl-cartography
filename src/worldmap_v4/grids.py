@@ -2,8 +2,10 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 import argparse
+from datetime import datetime
+from itertools import chain
 from pathlib import Path
-from typing import Final, Protocol, cast
+from typing import Final, Literal, Optional, Protocol, cast
 
 from PIL import Image, ImageDraw, ImageFont
 
@@ -35,30 +37,59 @@ OVERLAY_VARIANTS = {
 
 
 class Options(Protocol):
-    worldmapfile: Path
-    tag: str
+    worldmapfile: Optional[Path]
+    source_type: Literal["mos", "nl"]
+    source_dir: Optional[Path]
+
+
+_TYPE_CHOICES = {
+    frozenset(["nl", "nightlights"]): "nl",
+    frozenset(["mos", "mosaic"]): "mos",
+}
 
 
 def get_options() -> Options:
-    parser = argparse.ArgumentParser("cartographer_v4.gridsectors.world")
+    parser = argparse.ArgumentParser("worldmap_v4.grids")
 
-    parser.add_argument("--tag", type=str, default="")
+    _type_choices = set(chain.from_iterable(_TYPE_CHOICES))
+    parser.add_argument("--source-type", type=str, choices=_type_choices, required=True)
+    parser.add_argument("--source-dir", type=Path, default=None)
 
-    parser.add_argument("worldmapfile", type=Path)
+    parser.add_argument("worldmapfile", type=Path, default=None, nargs="?")
 
-    _opts = parser.parse_args()
-    return cast(Options, _opts)
+    _opts = cast(Options, parser.parse_args())
+    for k, v in _TYPE_CHOICES:
+        if _opts.source_type in k:
+            _opts.source_type = v
+            break
+
+    return _opts
 
 
 def main(opts: Options):
     # worldmap_dir = Path(r"C:\Cache\SL-Carto\WorldMaps")
     # worldmap_p = worldmap_dir / "worldmap4_mosaic_5x5.png"
     worldmap_p = opts.worldmapfile
+    if worldmap_p is None:
+        src_dir = opts.source_dir
+        if not src_dir.exists() or not src_dir.is_dir():
+            raise RuntimeError(f"Not a directory: {src_dir}")
+        if opts.source_type == "nl":
+            patt = "worldmap4_nightlights_*"
+        else:
+            patt = "worldmap4_mosaic_*"
+        files = [f for f in src_dir.glob(patt)]
+        if not files:
+            raise FileNotFoundError(f"Cannot find '{patt}' in {src_dir}")
+        files.sort(key=lambda f: f.stat().st_mtime)
+        worldmap_p = files[-1].expanduser().absolute()
+    worldmap_m = datetime.fromtimestamp(worldmap_p.stat().st_mtime)
+
     Image.MAX_IMAGE_PIXELS = None
 
     min_co, max_co = COORD_RANGE
 
-    print("Loading worldmap")
+    print(f"Loading worldmap {worldmap_p} (m = {worldmap_m})")
     with worldmap_p.open("rb") as fin:
         worldmap = Image.open(fin)
         worldmap.load()
@@ -81,7 +112,7 @@ def main(opts: Options):
     }
 
     for variant, parms in OVERLAY_VARIANTS.items():
-        print(f"Making GridSectors - {variant}")
+        print(f"Making Grids - {variant}")
         back_color = parms["back_color"] + (0,)
 
         print("  Padding worldmap")
@@ -131,13 +162,10 @@ def main(opts: Options):
             draw.text((canvas_sz - cx, cy), str(y), **common_kwargs)
 
         print("  Saving ...", end="", flush=True)
-        if opts.tag:
-            gridsector_p = gridsector_dir / f"WorldGridSectors_{opts.tag}_{variant}.png"
-        else:
-            gridsector_p = gridsector_dir / f"WorldGridSectors_{variant}.png"
-        gridsector_p.unlink(missing_ok=True)
-        canvas.save(gridsector_p)
-        print(f" {gridsector_p}", flush=True)
+        targ_p = gridsector_dir / f"WorldGridSectors_{opts.source_type}_{variant}.png"
+        targ_p.unlink(missing_ok=True)
+        canvas.save(targ_p)
+        print(f" {targ_p}", flush=True)
 
 
 if __name__ == "__main__":
