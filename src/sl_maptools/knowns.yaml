@@ -332,6 +332,16 @@ LostGaeta:
   includes:
     - [1140, 1112, 1215, 1130]
 
+LostZindra:
+  meta:
+    automatic: False
+    validate: False
+  includes:
+    - [1797, 1179, 1821, 1202]
+  excludes:
+    # Parts of Horizons
+    - 1807-1810/1201-1202
+
 # endregion
 
 # region # User/Private Continents
