@@ -88,6 +88,7 @@ ignore = [
     "D105",  # Do not enforce docstring for magic method; they are mostly self-describing
     "D200",  # Do not force 1-line docstring
     "D204",  # Do not force blank line after class docstring
+    "D205",  # Do not demand "1 blank line after docstring summary"
     "D212",  # Do not force docstring summary at first line, so we don't have the ugly indented summary
     "D400",  # Do not enforce period at end of 1st line of docstring ...
     "D415",  # ... or any closing mark for that matter
