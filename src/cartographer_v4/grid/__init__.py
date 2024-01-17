@@ -27,6 +27,7 @@ Config: SLMapToolsConfig = ConfigReader("config.toml")
 
 
 class TextSettings(TypedDict):
+    """Defines kwargs for PIL textdrawing"""
     font: FreeTypeFont
     fill: RGBATuple
     stroke_width: int
@@ -35,6 +36,9 @@ class TextSettings(TypedDict):
 
 @unique
 class ExclusionMethod(Enum):
+    """
+    Supported exclusion methods for post-processing regions not part of an area
+    """
     NONE = auto()
     """Do not hide regions excluded from areas (they will still not be labeled/gridded)"""
     HIDE = auto()
@@ -48,6 +52,8 @@ class ExclusionMethod(Enum):
 
 
 class GridMaker:
+    """Creates the region grids for the high-res area maps"""
+
     def __init__(
             self,
             regions_db: dict[CoordType, RegionsDBRecord3],
@@ -56,6 +62,13 @@ class GridMaker:
             regname_settings: Optional[TextSettings] = None,
             coord_setttings: Optional[TextSettings] = None,
     ):
+        """
+        :param regions_db: Database of existing regions
+        :param validation_set: A set of coordinates for which we will draw a region tile
+        :param out_dir: Directory to put the overlay & composited files
+        :param regname_settings: Settings (font, size, etc.) for drawing the region names
+        :param coord_setttings: Settings (font, size, etc.) for drawing the region coords
+        """
         self.regions_db = regions_db
         self.validation_set = validation_set
         self.out_dir = out_dir
@@ -92,6 +105,7 @@ class GridMaker:
 
     @property
     def cover_hatched(self) -> Image.Image:
+        """Image of hatched cover -- for regions not part of the area"""
         if self._cover_hr is None:
             _cov = Image.new("RGBA", (256, 256), color=(0, 0, 0, 0))
             _drw = ImageDraw.Draw(_cov)
@@ -105,7 +119,7 @@ class GridMaker:
                 _drw.line([(c - 4, 2), (2, c - 4)], fill=(255, 255, 255, 32), width=5)
                 _drw.line([(c, 2), (2, c)], fill=(255, 255, 255, 32), width=5)
                 _drw.line([(c, 0), (0, c)], fill=(255, 255, 255, 92), width=5)
-                c = (255 + 32) - c
+                c = (255 + 32) - c  # noqa: PLW2901
                 _drw.line([(c + 4, 253), (253, c + 4)], fill=(255, 255, 255, 32), width=5)
                 _drw.line([(c, 253), (253, c)], fill=(255, 255, 255, 32), width=5)
                 _drw.line([(c, 255), (255, c)], fill=(255, 255, 255, 92), width=5)
@@ -114,6 +128,7 @@ class GridMaker:
 
     @property
     def cover_fog(self) -> Image.Image:
+        """Image of fog cover -- for regions not part of the area"""
         if self._cover_fog is None:
             _cov = Image.new("RGBA", (256, 256), color=(0, 0, 0, 0))
             _drw = ImageDraw.Draw(_cov)
@@ -132,19 +147,30 @@ class GridMaker:
             areamap: Path,
             validate: bool = True,
             overwrite: bool = False,
-            out_dir: Path = None,
+            out_dir: Optional[Path] = None,
             no_names: bool = False,
             no_coords: bool = False,
             regname_settings: TextSettings = None,
             coord_setttings: TextSettings = None,
             exclusion_method: ExclusionMethod = ExclusionMethod.HIDE,
             save_names: bool = True,
-    ):
+    ) -> None:
+        """
+        Actually create the region grid on top of provided area map
+
+        :param areamap: The area map file to be gridded
+        :param validate: Whether to actually validate every coordinate against the validation_set
+        :param overwrite: If True, overwrites existing file
+        :param out_dir: Where to save the resulting files. Defaults to the out_dir parameter set during instantiation
+        :param no_names: If True, does not draw the region names
+        :param no_coords: If True, does not draw the coordinates
+        :param regname_settings: Overrides the regname_settings parameter set during instantiation
+        :param coord_setttings: Overrides the coord_settings parameter set during instantiation
+        :param exclusion_method: The exclusion method to use for post-processing regions not part of the area
+        :param save_names: If True, save a list of gridded regions into a text file
+        """
         if out_dir is None:
-            if self.out_dir is None:
-                out_dir = areamap.parent
-            else:
-                out_dir = self.out_dir
+            out_dir = self.out_dir or areamap.parent
         if regname_settings is None:
             regname_settings = self.default_regname_settings
         if coord_setttings is None:
@@ -219,7 +245,7 @@ class GridMaker:
                 with overlay_p.open("rb") as fin:
                     gridc = Image.open(fin)
                     gridc.load()
-            print(f"💠 ", end="")
+            print("💠 ", end="")
             with Image.open(areamap) as img:
                 out = Image.alpha_composite(img, gridc)
                 out.save(composite_p)
