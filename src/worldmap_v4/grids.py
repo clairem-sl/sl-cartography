@@ -145,10 +145,8 @@ def main(opts: Options) -> None:  # noqa: D103
         print("  Making canvas")
         canvas = Image.new("RGBA", (canvas_sz, canvas_sz), color=back_color)
         canvas.paste(Image.alpha_composite(padded_map, gridsec_overlay), (sect_sz, sect_sz))
-        # noinspection PyUnusedLocal
-        padded_map = None
-        # noinspection PyUnusedLocal
-        gridsec_overlay = None
+        del padded_map
+        del gridsec_overlay
 
         draw = ImageDraw.Draw(canvas)
         print("  Drawing labels")
