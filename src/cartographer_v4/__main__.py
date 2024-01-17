@@ -7,6 +7,7 @@ import pickle
 import re
 import time
 from datetime import datetime
+from fnmatch import fnmatch
 from itertools import chain
 from multiprocessing import Event
 from pathlib import Path
@@ -94,12 +95,15 @@ def get_options() -> Options:
 
     parser.add_argument(
         "--continents",
+        metavar="CONTINENT",
         type=str,
         nargs="+",
         help=(
             "Comma- or Space-separated list of area names to generate the maps for. "
-            "If not specified and no 'areas' specified, then will generate all known areas/continents. "
-            "If 'areas' are specified, then this will generate area maps in addition to the specified areas."
+            "If specified but 'areas' are not specified, then will generate maps only for the requested continents. "
+            "If 'areas' are specified, then this will generate area maps IN ADDITION TO the specified areas. "
+            "The names can use glob characters, so 'Bell*' will match any area starting with 'Bell', for instance. "
+            "MATCHING IS CASE-INSENSITIVE"
         ),
     )
     parser.add_argument(
@@ -107,10 +111,10 @@ def get_options() -> Options:
         action=AreaParser,
         nargs="*",
         help=(
-            "Optional area(s) to generate the map(s) for. Must be in the syntax x1,y1-x2,y2 "
+            "Optional area coordinate(s) to generate the map(s) for. Must be in the syntax x1,y1-x2,y2 "
             "where the x1, y1, x2, y2, are all integers. NOTE: If specified, will NOT generate "
             "other areas' maps, unless specified additionally with the --continents option. "
-            "Conversely, if not specified, will generate maps of all known areas. "
+            "Conversely, if not specified, will generate maps of all known areas if --continents is not specified. "
             "Resulting map names will be 'x1-y1-x2-y2-timestamp.png'"
         ),
     )
@@ -204,23 +208,30 @@ def main(opts: Options) -> None:  # noqa: D103
 
     ts = datetime.now().strftime("%Y%m%d-%H%M")
     wanted_areas: list[tuple[str, AreaDescriptor]] = []
+
     if not opts.areas:
         if not opts.continents:
             wanted_areas.extend(
                 (name, area_desc) for name, area_desc in KNOWN_AREAS.items() if area_desc.automatic
             )
-        else:
-            for aa in chain(map(lambda s: s.split(","), opts.continents)):
-                for a in aa:
-                    wanted_areas.extend((a, KNOWN_AREAS[a]))
     else:
         for a in opts.areas:
             aname = f"{a.x_westmost}-{a.y_southmost}-{a.x_eastmost}-{a.y_northmost}-{ts}"
             wanted_areas.append((aname, AreaDescriptor(includes=a)))
-        if opts.continents:
-            for aa in chain(map(lambda s: s.split(","), opts.continents)):
-                for a in aa:
-                    wanted_areas.extend((a, KNOWN_AREAS[a]))
+
+    if opts.continents:
+        known_folded = {a.casefold(): a for a in KNOWN_AREAS}
+        want: str
+        for want in chain.from_iterable(map(lambda s: s.split(","), opts.continents)):
+            if kn := known_folded.get(want := want.casefold()):
+                wanted_areas.append((kn, KNOWN_AREAS[kn]))
+            else:
+                wanted_areas.extend(
+                    (kn, KNOWN_AREAS[kn])
+                    for knf, kn in known_folded.items()
+                    if fnmatch(knf, want)
+                )
+        del known_folded
 
     with opts.regionsdb.open("rb") as fin:
         regsdb: dict[CoordType, RegionsDBRecord3] = pickle.load(fin)  # noqa: S301
