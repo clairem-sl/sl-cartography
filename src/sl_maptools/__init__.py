@@ -200,10 +200,12 @@ class AreaBoundsSet(Iterable):
 
 class AreaDescriptorMeta(TypedDict):
     automatic: NotRequired[bool]
+    validate: NotRequired[bool]
 
 
 DEFAULT_ADMETA: AreaDescriptorMeta = {
-    "automatic": False,
+    "automatic": True,
+    "validate": True,
 }
 
 
@@ -221,8 +223,7 @@ class AreaDescriptor:
         self.excludes = AreaBoundsSet(excludes)
         self.name = name
         self.description = description
-        meta = meta or DEFAULT_ADMETA
-        self.automatic = meta["automatic"]
+        self.meta = DEFAULT_ADMETA | (meta or {})
         self._bbox: Optional[AreaBounds] = None
 
     def __contains__(self, item: CoordType):
@@ -230,6 +231,14 @@ class AreaDescriptor:
 
     def __eq__(self, other: AreaDescriptor):
         return self.includes == other.includes and self.excludes == other.excludes
+
+    @property
+    def automatic(self) -> bool:
+        return self.meta["automatic"]
+
+    @property
+    def validate(self) -> bool:
+        return self.meta["validate"]
 
     @property
     def bounding_box(self) -> AreaBounds:
