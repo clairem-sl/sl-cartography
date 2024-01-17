@@ -59,7 +59,9 @@ Bellisseria_SLGI_Forest:
   includes:
     - [1043, 950, 1063, 977]
   excludes:
+    # Bellisseria_SLGI_WaterParadise
     - [1063, 977, 1063, 977]
+    # Bellisseria Primordial / Victorian
     - [1038, 964, 1045, 977]
     - [1038, 963, 1044, 963]
     - [1038, 950, 1042, 962]
@@ -170,10 +172,13 @@ Bellisseria-Stiltlands:
   includes:
     - [1058, 967, 1081, 992]
   excludes:
+    # Sakurasseria
     - [1063, 992, 1072, 992]
+    # Newbrooke
     - [1079, 991, 1081, 992]
     - [1080, 990, 1081, 990]
     - [1081, 989, 1081, 989]
+    # Loglands
     - [1058, 967, 1063, 974]
     - [1058, 975, 1062, 975]
     - [1060, 976, 1061, 976]
@@ -375,11 +380,15 @@ BlakeSeaSurrounding:
   includes:
     - [1131, 1036, 1152, 1061]
   excludes:
+    # Second Norway
     - [1149, 1055, 1152, 1061]
     - [1150, 1049, 1152, 1054]
+    # Satori
     - [1131, 1039, 1134, 1046]
     - [1133, 1047, 1134, 1047]
+    # Nautilus City / Citadel
     - [1131, 1048, 1131, 1061]
+    # Nautilus Continent
     - [1132, 1052, 1132, 1061]
     - [1133, 1055, 1134, 1061]
     - [1134, 1054, 1134, 1054]
