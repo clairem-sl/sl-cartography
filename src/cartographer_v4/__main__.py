@@ -269,7 +269,9 @@ def main(opts: Options) -> None:  # noqa: D103
                 new_count += 1
             print(f"\n  => [{tiles}] {targ}", flush=True)
             if not opts.no_grid:
-                grid_maker.make_grid(targ, overwrite=opts.overwrite, exclusion_method=opts.exclusion_method)
+                grid_maker.make_grid(
+                    targ, validate=area_desc.validate, overwrite=opts.overwrite, exclusion_method=opts.exclusion_method
+                )
                 print()
             if AbortRequested.is_set():
                 break

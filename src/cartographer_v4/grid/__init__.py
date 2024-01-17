@@ -130,6 +130,7 @@ class GridMaker:
     def make_grid(
             self,
             areamap: Path,
+            validate: bool = True,
             overwrite: bool = False,
             out_dir: Path = None,
             no_names: bool = False,
@@ -172,7 +173,9 @@ class GridMaker:
                 xy_iterator = area.bounding_box.xy_iterator
 
             for i, xy in enumerate(xy_iterator(), start=1):
-                if xy not in self.validation_set:
+                if validate and xy not in self.validation_set:
+                    continue
+                if xy not in self.regions_db:
                     continue
                 regs += 1
                 x, y = xy
