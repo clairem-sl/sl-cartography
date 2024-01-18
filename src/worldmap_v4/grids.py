@@ -45,8 +45,8 @@ class Options(Protocol):
 
 
 _TYPE_CHOICES = {
-    frozenset(["nl", "nightlights"]): "nl",
-    frozenset(["mos", "mosaic"]): "mos",
+    frozenset(["n", "nl", "nightlights"]): "nl",
+    frozenset(["m", "mos", "mosaic"]): "mos",
 }
 
 
