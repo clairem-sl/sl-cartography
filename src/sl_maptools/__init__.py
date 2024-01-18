@@ -337,7 +337,7 @@ class AreaDescriptor:
         return my_coords - theirs
 
 
-class MapCoord(NamedTuple, CoordType):
+class MapCoord(NamedTuple):
     """Representation of Geo Coordinates. Behaves similarly to tuple[int, int]"""
 
     x: int
