@@ -6,12 +6,25 @@ from __future__ import annotations
 import asyncio
 import io
 import time
-from typing import Any, Callable, Dict, Final, FrozenSet, Optional, Protocol, Set, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Dict,
+    Final,
+    FrozenSet,
+    Optional,
+    Protocol,
+    Set,
+    Union,
+)
 
-import httpx
+if TYPE_CHECKING:
+    import httpx
+
 from PIL import Image
 
-from sl_maptools import MapCoord, MapRegion, Settable
+from sl_maptools import MapCoord, MapRegion, SupportsSet
 from sl_maptools.fetchers import Fetcher, FetcherConnectionError, RawResult
 from sl_maptools.utils import QuietablePrint
 
@@ -248,7 +261,7 @@ class BoundedMapFetcher(MapFetcher):
         async_session: httpx.AsyncClient,
         retries: int = 3,
         cooked: bool = False,
-        cancel_flag: Settable = None,
+        cancel_flag: SupportsSet = None,
     ):
         """
 
@@ -266,13 +279,11 @@ class BoundedMapFetcher(MapFetcher):
         """Perform async fetch, but won't actually start fetching if semaphore is depleted."""
         try:
             async with self.sema:
-                if self.cancel_flag is not None:
-                    if self.cancel_flag.is_set():
-                        return None
+                if self.cancel_flag is not None and self.cancel_flag.is_set():
+                    return None
                 if self.cooked:
                     return await self.async_get_region(coord, quiet=True, retries=self.retries)
-                else:
-                    return await self.async_get_region_raw(coord, quiet=True, retries=self.retries)
+                return await self.async_get_region_raw(coord, quiet=True, retries=self.retries)
         except asyncio.CancelledError:
             print(f"{coord} cancelled")
             raise

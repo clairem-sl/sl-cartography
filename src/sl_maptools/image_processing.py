@@ -2,7 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 from dataclasses import dataclass, field
-from typing import Final, TypedDict, cast
+from typing import Final, Self, TypedDict, cast
 
 import numpy as np
 from PIL import Image, ImageFilter
@@ -79,6 +79,14 @@ FASCIA_SIZES = sorted(FASCIA_COORDS.keys())
 def calculate_dominant_colors(
     region: Image.Image, fascia_per_side: int, kmeans: int = 3
 ) -> list[RGBTuple]:
+    """
+    Given a region's image, calculate the dominant color per-fascia
+
+    :param region: A 256x256 RGB(A) image representing a region
+    :param fascia_per_side: How many fascias (per side) the image will be reduced to
+    :param kmeans: The threshold for the K-Means quantization algorithm. Higher = slower, but more accurately
+    reflecting the visual quantization.
+    """
     if fascia_per_side not in FASCIA_COORDS:
         raise KeyError(
             f"Valid fascia_per_side values: {', '.join(map(str, FASCIA_SIZES))}"
@@ -95,6 +103,7 @@ def calculate_dominant_colors(
 
 
 class SimilarityThresholds(TypedDict):
+    """Definition of Similarity Threshold fields"""
     mse: float
     ssim: float
     ssim_enh: float
@@ -113,6 +122,8 @@ DEFA_SIMILAR_THRESHOLDS: Final[SimilarityThresholds] = {
 
 @dataclass
 class SimilarityResult:
+    """Records the result of similarity test, with a string that contains the justification"""
+
     similar: bool = False
     reason: str = ""
     values: list[float] = field(default_factory=list)
@@ -120,15 +131,18 @@ class SimilarityResult:
     def __bool__(self):
         return self.similar
 
-    def append(self, val: float):
+    def append(self, val: float) -> None:
+        """Append new value to the internal list"""
         self.values.append(val)
 
-    def success(self, reason: str):
+    def success(self, reason: str) -> Self:
+        """Records a success (images considered similar)"""
         self.similar = True
         self.reason = reason
         return self
 
-    def fail(self):
+    def fail(self) -> Self:
+        """Records a failure (images considered dissimilar)"""
         self.similar = False
         return self
 
@@ -136,6 +150,13 @@ class SimilarityResult:
 def are_similar(
     image1: Image.Image, image2: Image.Image, thresholds: SimilarityThresholds = None
 ) -> SimilarityResult:
+    """
+    Perform image similarity tests using mse, ssim, nrmse, and ssim with K values tuned by Wang et al
+
+    :param image1: First image
+    :param image2: Second image
+    :param thresholds: Similarity thresholds
+    """
     if thresholds is None:
         thresholds = DEFA_SIMILAR_THRESHOLDS
     result = SimilarityResult()

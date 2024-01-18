@@ -30,7 +30,7 @@ import httpx
 from ruamel.yaml import YAML, RoundTripRepresenter
 
 from retriever_v4.maps.prune import prune
-from sl_maptools import CoordType, MapCoord, Settable
+from sl_maptools import CoordType, MapCoord, SupportsSet
 from sl_maptools.fetchers.map import BoundedMapFetcher
 from sl_maptools.utils import ConfigReader, handle_sigint, make_backup
 from sl_maptools.validator import inventorize_maps_all
@@ -50,7 +50,7 @@ START_ROW: Final[int] = 2100
 COLS_PER_ROW: Final[int] = 2100
 
 Config = ConfigReader("config.toml")
-AbortRequested: Settable = MP.Event()
+AbortRequested: SupportsSet = MP.Event()
 
 
 class MPMapOptions(Protocol):
@@ -139,7 +139,7 @@ async def aretrieve(
     out_queue: MP.Queue,
     disp_queue: MP.Queue,
     result_queue: MP.Queue,
-    abort_flag: Settable,
+    abort_flag: SupportsSet,
 ):
     signal.signal(signal.SIGINT, signal.SIG_IGN)
     _half_cols = COLS_PER_ROW // 2
@@ -239,7 +239,7 @@ def retrieve(
     out_queue: MP.Queue,
     disp_queue: MP.Queue,
     retire_queue: MP.Queue,
-    abort_flag: Settable,
+    abort_flag: SupportsSet,
 ):
     signal.signal(signal.SIGINT, signal.SIG_IGN)
     curname = MP.current_process().name
@@ -327,7 +327,7 @@ def launch_workers(
             _chunksize = min(2000, _chunksize)
             _i = 0
             while _i < len(backlog):
-                coord_queue.put(("set", backlog[_i: (_i + _chunksize)]))
+                coord_queue.put(("set", backlog[_i : (_i + _chunksize)]))
                 _i += _chunksize
 
     pool_r: mp_pool.Pool

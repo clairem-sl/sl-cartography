@@ -4,7 +4,7 @@
 import abc
 import asyncio
 import random
-from typing import NamedTuple
+from typing import NamedTuple, Optional
 
 import httpx
 
@@ -13,8 +13,15 @@ from sl_maptools.utils import QuietablePrint
 
 
 class FetcherConnectionError(ConnectionError):
-    def __init__(self, *args, internal_errors: list[Exception] = None, coord: MapCoord = None):
-        super(FetcherConnectionError, self).__init__(*args)
+    """Exception raised if Fetcher classes experienced a connection error."""
+
+    def __init__(
+        self, *args, internal_errors: Optional[list[Exception]] = None, coord: MapCoord = None  # noqa: ANN002
+    ):
+        """
+        :param internal_errors: A list of internal errors
+        """
+        super().__init__(*args)
         self.internal_errors = internal_errors or []
         self.coord = coord
 
@@ -52,9 +59,8 @@ class Fetcher(metaclass=abc.ABCMeta):
         quiet: bool = False,
         retries: int = 6,
         raise_err: bool = True,
-        acceptable_codes: set[int] = None,
-    ) -> RawResult:
-        """ """
+        acceptable_codes: Optional[set[int]] = None,
+    ) -> RawResult | None:
         qprint = QuietablePrint(quiet, flush=True)
         qprint(".", end="")
         if acceptable_codes is None:
@@ -64,7 +70,7 @@ class Fetcher(metaclass=abc.ABCMeta):
         multiplier = 0.25
         for _ in range(0, retries):
             multiplier *= 2.0
-            await asyncio.sleep(random.random() * multiplier)
+            await asyncio.sleep(random.random() * multiplier)  # noqa: S311
             try:
                 response = await self.a_session.get(url)
             except self.RETRYABLE_EX as e1:
@@ -88,3 +94,5 @@ class Fetcher(metaclass=abc.ABCMeta):
         print(f"ERR({coord})", end="", flush=True)
         if raise_err:
             raise FetcherConnectionError(internal_errors=internal_errors, coord=coord)
+
+        return None

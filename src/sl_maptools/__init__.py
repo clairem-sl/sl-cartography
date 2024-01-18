@@ -6,13 +6,8 @@ from __future__ import annotations
 import io
 import math
 import re
-from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from functools import partial
-from operator import methodcaller
-from pathlib import Path
 from typing import (
-    Callable,
+    TYPE_CHECKING,
     Final,
     Generator,
     Iterable,
@@ -25,12 +20,21 @@ from typing import (
     Union,
 )
 
+if TYPE_CHECKING:
+    from datetime import datetime
+    from pathlib import Path
+
 from PIL import Image
 
 CoordType = tuple[int, int]
+ColorType = (
+    int | tuple[int] | tuple[int, int] | tuple[int, int, int] | tuple[int, int, int, int] | str | float | tuple[float]
+)
 
 
 class IntRange(NamedTuple):
+    """Represents a range of integer, used for limits"""
+
     min_: int
     max_: int
 
@@ -50,7 +54,7 @@ RE_SLGI_NOTATION: Final[re.Pattern] = re.compile(
         (-(?P<y2>\d+))?  # Optional second latitude
     )?
     """,
-    re.VERBOSE
+    re.VERBOSE,
 )
 
 _REGION_SIZE: Final[int] = 256
@@ -77,31 +81,35 @@ class AreaBounds(NamedTuple):
         return (self.x_westmost <= x <= self.x_eastmost) and (self.y_southmost <= y <= self.y_northmost)
 
     @property
-    def height(self):
+    def height(self) -> int:
         """Height of map in Units of Regions"""
         return self.y_northmost - self.y_southmost + 1
 
     @property
-    def width(self):
+    def width(self) -> int:
         """Width of map in Units of Regions"""
         return self.x_eastmost - self.x_westmost + 1
 
     def y_iterator(self) -> Generator[int, None, None]:
+        """Returns an iterator of the Y coordinate"""
         min_y = min(self.y_southmost, self.y_northmost)
         max_y = max(self.y_northmost, self.y_southmost)
         yield from range(min_y, max_y + 1)
 
     def x_iterator(self) -> Generator[int, None, None]:
+        """Returns an iterator of the X coordinate"""
         min_x = min(self.x_westmost, self.x_eastmost)
         max_x = max(self.x_eastmost, self.x_westmost)
         yield from range(min_x, max_x + 1)
 
     def xy_iterator(self) -> Generator[CoordType, None, None]:
+        """Returns an iterator of the (x, y) coordinate, with x increasing first"""
         for y in self.y_iterator():
             for x in self.x_iterator():
                 yield x, y
 
     def intersection(self, other: AreaBounds) -> Union[AreaBounds, None]:
+        """Returns an AreaBounds containing intersecting coordinates, or None if no intersection"""
         oth_x1, oth_y1, oth_x2, oth_y2 = other
         my = set(range(self.x_westmost, self.x_eastmost + 1))
         their = set(range(oth_x1, oth_x2 + 1))
@@ -123,6 +131,7 @@ class AreaBounds(NamedTuple):
         return self.intersection(other)
 
     def to_slgi(self) -> str:
+        """Returns area coordinates in SLGI notation"""
         rslt = [str(self.x_westmost)]
         if self.x_eastmost != self.x_westmost:
             rslt.append(f"-{self.x_eastmost}")
@@ -132,7 +141,8 @@ class AreaBounds(NamedTuple):
         return "".join(rslt)
 
     @classmethod
-    def from_corners(cls, corner1: tuple[int, int], corner2: tuple[int, int]):
+    def from_corners(cls, corner1: tuple[int, int], corner2: tuple[int, int]) -> AreaBounds:
+        """Returns an AreaBound provided 2 opposing corners of the area"""
         x1, y1 = corner1
         x2, y2 = corner2
         x_min, x_max = (x1, x2) if x1 <= x2 else (x2, x1)
@@ -140,13 +150,15 @@ class AreaBounds(NamedTuple):
         return cls(x_min, y_min, x_max, y_max)
 
     @classmethod
-    def from_coordset(cls, coords: Iterable[CoordType]):
+    def from_coordset(cls, coords: Iterable[CoordType]) -> AreaBounds:
+        """Returns an AreaBound that exactly contains all coordinates"""
         x_min, y_min = tuple(map(min, *coords))
         x_max, y_max = tuple(map(max, *coords))
         return cls(x_min, y_min, x_max, y_max)
 
     @classmethod
     def from_slgi(cls, notation: str) -> AreaBounds:
+        """Returns an AreaBound from parsing SLGI notation"""
         if (m := RE_SLGI_NOTATION.match(notation)) is None:
             raise ValueError(f"Not an SLGI notation: {notation}")
         x_min = m.group("x1")
@@ -159,7 +171,12 @@ class AreaBounds(NamedTuple):
 
 
 class AreaBoundsSet(Iterable):
+    """A wrapper around a frozenset of AreaBounds"""
+
     def __init__(self, areas: Union[AreaBounds, Iterable[AreaBounds]] = None):
+        """
+        :param areas: One or more AreaBounds to contain
+        """
         if areas is None:
             self.areas = frozenset()
         else:
@@ -175,9 +192,14 @@ class AreaBoundsSet(Iterable):
         return self.areas == other.areas
 
     def to_coords(self) -> set[CoordType]:
+        """Returns a set of coordinates contained in all AreaBounds in the set"""
         return {(x, y) for area in self.areas for x, y in area.xy_iterator()}
 
     def xy_iterator(self) -> Generator[CoordType, None, None]:
+        """
+        Returns an iterator of the (x, y) coordinate, x increasing first, running over all AreaBounds in the set.
+        The coordinates are guaranteed to not be duplicated.
+        """
         _seen = set()
         xy: CoordType
         for area in self.areas:
@@ -187,6 +209,7 @@ class AreaBoundsSet(Iterable):
                     yield xy
 
     def bounding_box(self) -> AreaBounds:
+        """Returns an AreaBounds that exactly contains all areas in the set"""
         x_min = y_min = math.inf
         x_max = y_max = -math.inf
         for area in self.areas:
@@ -199,6 +222,8 @@ class AreaBoundsSet(Iterable):
 
 
 class AreaDescriptorMeta(TypedDict):
+    """Describes the (optional) metadata of an AreaDescriptor"""
+
     automatic: NotRequired[bool]
     validate: NotRequired[bool]
 
@@ -210,6 +235,8 @@ DEFAULT_ADMETA: AreaDescriptorMeta = {
 
 
 class AreaDescriptor:
+    """Describes an area for purposes of mapping"""
+
     __slots__ = (
         "includes",
         "excludes",
@@ -224,10 +251,17 @@ class AreaDescriptor:
         includes: Union[AreaBounds, Iterable[AreaBounds]],
         *,
         excludes: Union[AreaBounds, Iterable[AreaBounds]] = None,
-        name: str = None,
-        description: str = None,
+        name: Optional[str] = None,
+        description: Optional[str] = None,
         meta: AreaDescriptorMeta = None,
     ):
+        """
+        :param includes: One or more AreaBound objects that describe the area
+        :param excludes: One or more AreaBound objects that need to be excluded
+        :param name: Name of the area
+        :param description: Description of the area
+        :param meta: Metadata of the area
+        """
         self.includes = AreaBoundsSet(includes)
         self.excludes = AreaBoundsSet(excludes)
         self.name = name
@@ -236,57 +270,76 @@ class AreaDescriptor:
         self._bbox: Optional[AreaBounds] = None
 
     def __contains__(self, item: CoordType):
-        return (item in self.includes) and not (item in self.excludes)
+        return (item in self.includes) and item not in self.excludes
 
     def __eq__(self, other: AreaDescriptor):
         return self.includes == other.includes and self.excludes == other.excludes
 
     @property
     def automatic(self) -> bool:
+        """Whether the area will automatically be drawn if not specified explicitly"""
         return self.meta["automatic"]
 
     @property
     def validate(self) -> bool:
+        """Whether the area will obey coordinate validation"""
         return self.meta["validate"]
 
     @property
     def bounding_box(self) -> AreaBounds:
+        """Returns an AreaBounds that exactly contains all AreaBounds of the area"""
         if self._bbox is None:
             self._bbox = self.includes.bounding_box()
         return self._bbox
 
     @property
-    def x_westmost(self):
+    def x_westmost(self) -> int:
+        """Returns westmost X geo-coordinate of the area"""
         return self.bounding_box.x_westmost
 
     @property
-    def x_eastmost(self):
+    def x_eastmost(self) -> int:
+        """Returns eastmost X geo-coordinate of the area"""
         return self.bounding_box.x_eastmost
 
     @property
-    def y_southmost(self):
+    def y_southmost(self) -> int:
+        """Returns southmost Y geo-coordinate of the area"""
         return self.bounding_box.y_southmost
 
     @property
-    def y_northmost(self):
+    def y_northmost(self) -> int:
+        """Returns northmost Y geo-coordinate of the area"""
         return self.bounding_box.y_northmost
 
     def to_coords(self) -> set[CoordType]:
+        """
+        Returns a set of coordinates in the area excluding those not actually part of the area.
+        NO VALIDATION.
+        """
         return self.includes.to_coords() - self.excludes.to_coords()
 
     def xy_iterator(self, with_exclusions: bool = True) -> Generator[CoordType, None, None]:
+        """
+        Returns an iterator of (x, y) coordinates of an area.
+
+        :param with_exclusions: If True, will not return coordinates part of the excludes
+        """
         if with_exclusions:
             yield from (xy for xy in self.includes.xy_iterator() if xy not in self.excludes)
         else:
             yield from (xy for xy in self.includes.xy_iterator())
 
     def intersect_coords(self, other: AreaDescriptor) -> set[CoordType]:
+        """Returns a set of coordinates from intersection with another AreaDescriptor"""
         my_coords = self.to_coords()
         theirs = other.includes.to_coords() - other.excludes.to_coords()
         return my_coords - theirs
 
 
-class MapCoord(NamedTuple):
+class MapCoord(NamedTuple, CoordType):
+    """Representation of Geo Coordinates. Behaves similarly to tuple[int, int]"""
+
     x: int
     y: int
 
@@ -296,7 +349,7 @@ class MapCoord(NamedTuple):
     def __sub__(self, other: tuple):
         return MapCoord(self.x - other[0], self.y - other[1])
 
-    def __mul__(self, other) -> MapCoord:
+    def __mul__(self, other: int | tuple) -> MapCoord:
         if isinstance(other, int):
             return MapCoord(self.x * other, self.y * other)
         if isinstance(other, tuple):
@@ -304,10 +357,15 @@ class MapCoord(NamedTuple):
         raise NotImplementedError
 
     def encode(self) -> tuple[int, int]:
+        """Returns a 'pure' tuple[int, int]"""
         return self.x, self.y
 
 
 class MapRegion(object):
+    """
+    A Map Tile (image of a region) with its global geo-coordinates
+    """
+
     def __init__(
         self,
         coord: MapCoord,
@@ -332,23 +390,18 @@ class MapRegion(object):
 
     @property
     def width(self) -> int:
+        """Width of the map tile"""
         return self.image.width
 
     @property
-    def height(self):
+    def height(self) -> int:
+        """Height of the map tile"""
         return self.image.height
 
     @property
-    def is_void(self):
+    def is_void(self) -> bool:
+        """True if map tile is a void (no image)"""
         return self.image is None
-
-
-@dataclass(frozen=True)
-class MapStats:
-    name: str
-    regions: int
-    voids: int
-    timestamp: datetime = field(repr=False, compare=False, default_factory=partial(datetime.now, tz=timezone.utc))
 
 
 class MapCanvas(object):
@@ -363,7 +416,7 @@ class MapCanvas(object):
         height: int,
         *,
         void_image: Image.Image = None,
-        initial_tiles=None,
+        initial_tiles_color: ColorType = None,
     ):
         """
         Creates a MapCanvas object.
@@ -374,7 +427,7 @@ class MapCanvas(object):
         """
         canv_w = width * _REGION_SIZE
         canv_h = height * _REGION_SIZE
-        self.canvas = Image.new("RGBA", (canv_w, canv_h), color=initial_tiles)
+        self.canvas = Image.new("RGBA", (canv_w, canv_h), color=initial_tiles_color)
         self.void_image = void_image
         self.south_west = south_west
         self.width = width
@@ -382,7 +435,8 @@ class MapCanvas(object):
         self._min_x = self.south_west.x
         self._max_y = self.south_west.y + self.height - 1
 
-    def add_region(self, region: MapRegion):
+    def add_region(self, region: MapRegion) -> None:
+        """Add (paste) a MapRegion onto the canvas"""
         if region.is_void and self.void_image is None:
             return
         tile_x, tile_y = region.coord
@@ -390,21 +444,32 @@ class MapCanvas(object):
         canv_y = (self._max_y - tile_y) * _REGION_SIZE
         self.canvas.paste(region.image, (canv_x, canv_y))
 
-    def save_to(self, dest: Union[Path | io.IOBase], image_format: str = None, optimize: bool = True):
-        if isinstance(dest, io.IOBase):
-            if not image_format:
-                raise ValueError("image_format must be specified if dest is a stream")
+    def save_to(self, dest: Union[Path | io.IOBase], image_format: Optional[str] = None, optimize: bool = True) -> None:
+        """
+        Save the canvas at the current state into a file or file-like object or stream
+
+        :param dest: Destination file / file-like / stream
+        :param image_format: Image format, if the destination does not have a name
+        :param optimize: Perform optimization on saving
+        """
+        if isinstance(dest, io.IOBase) and not image_format:
+            raise ValueError("image_format must be specified if dest is a stream")
         if dest.suffix == ".png" or (image_format and image_format.casefold() == "png"):
             self.canvas.save(dest, format=image_format, optimize=optimize)
         else:
             self.canvas.save(dest, format=image_format)
 
     @property
-    def size(self):
+    def size(self) -> tuple[int, int]:
+        """Return the size (dimensions) of the canvas"""
         return self.canvas.size
 
 
 class RegionsDBRecord(TypedDict):
+    """
+    Version 1 of RegionsDB record
+    """
+
     first_seen: str
     last_seen: str
     last_check: str
@@ -414,28 +479,21 @@ class RegionsDBRecord(TypedDict):
 
 
 class RegionsDBRecord3(TypedDict):
+    """
+    Version 3 of RegionsDB record
+    """
+
     first_seen: datetime
-    last_seen: Union[datetime, None]
-    last_check: Union[datetime, None]
+    last_seen: datetime | None
+    last_check: datetime | None
     current_name: str
     name_history3: dict[str, list[tuple[datetime, datetime]]]
     sources: set[str]
 
 
-class Settable(Protocol):
-    def set(self): ...
-    def is_set(self) -> bool: ...
+class SupportsSet(Protocol):  # noqa: D101
+    def set(self) -> None:  # noqa: D102
+        ...
 
-
-def friendly_db_record(record: RegionsDBRecord3) -> dict:
-    isofmin: Callable[[datetime], str] = methodcaller("isoformat", timespec="minutes")
-    rslt = {"current_name": record["current_name"]}
-    for _field in ("last_seen", "last_check", "first_seen"):
-        # noinspection PyTypedDict
-        rslt[_field] = isofmin(record.get(_field)).replace("T", " ")
-    rslt["name_history3"] = {
-        name: [(isofmin(t1), isofmin(t2)) for t1, t2 in hist]
-        for name, hist in record["name_history3"].items()
-    }
-    rslt["sources"] = record["sources"]
-    return rslt
+    def is_set(self) -> bool:  # noqa: D102
+        ...
