@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import sys
-
 from pathlib import Path
 from typing import Final
 
@@ -33,6 +32,8 @@ CoordBounds = list[str | list[int]]
 
 
 class AreaDef(TypedDict):
+    """Semantics of the YAML file to read"""
+
     includes: CoordBounds
     excludes: NotRequired[CoordBounds]
     meta: NotRequired[AreaDescriptorMeta]
@@ -41,16 +42,17 @@ class AreaDef(TypedDict):
     notes: NotRequired[str]
 
 
-def read_known_areas(yaml_file: Path):
+def read_known_areas(yaml_file: Path) -> None:
+    """Read a YAML file and put the contents in KNOWN_AREAS"""
     KNOWN_AREAS.clear()
     _data: dict[str, AreaDef]
     with yaml_file.open("rt") as fin:
         _data = YAML(typ="safe").load(fin)
 
-    def _to_abounds(item) -> AreaBounds:
+    def _to_abounds(item: str | list[int]) -> AreaBounds:
         if isinstance(item, str):
             return AreaBounds.from_slgi(item)
-        if isinstance(item, list) and len(item) == 4:
+        if isinstance(item, list) and len(item) == 4:  # noqa: PLR2004
             return AreaBounds(*item)
         raise ValueError(f"Don't understand this item: {item}")
 

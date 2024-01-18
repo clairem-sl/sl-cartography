@@ -7,11 +7,10 @@ import shutil
 import signal
 import time
 from contextlib import contextmanager
+from typing import IO, TYPE_CHECKING, Optional
 
-from sl_maptools import Settable
-
-from typing import IO, Optional
-
+if TYPE_CHECKING:
+    from sl_maptools import SupportsSet
 
 try:
     # noinspection PyCompatibility
@@ -25,7 +24,13 @@ from pathlib import Path
 from typing import Protocol
 
 
-def make_backup(the_file: Path, levels: int = 2):
+def make_backup(the_file: Path, levels: int = 2) -> None:
+    """
+    Make a backup of a file if exists. The original will be kept.
+
+    :param the_file: Path of the file to backup
+    :param levels: Maximum backup level. Older backups will be removed.
+    """
     if not the_file.exists():
         return
     suff = the_file.suffix
@@ -39,7 +44,13 @@ def make_backup(the_file: Path, levels: int = 2):
 
 
 class QuietablePrint:
-    def __init__(self, quiet: bool = False, flush: Optional[bool] = ...):
+    """Wrapper around print() function that allows quick quieting + different defaults"""
+
+    def __init__(self, quiet: bool = False, flush: bool = False):
+        """
+        :param quiet: If True, then don't actually print anything
+        :param flush: Default value of `flush` kwarg
+        """
         self.quiet = quiet
         self.flush = flush
 
@@ -51,6 +62,7 @@ class QuietablePrint:
         file: Optional[IO] = ...,
         flush: Optional[bool] = ...,
     ) -> None:
+        """Emulates call to the print() function"""
         if flush is Ellipsis:
             flush = self.flush
         if not self.quiet:
@@ -58,10 +70,15 @@ class QuietablePrint:
 
 
 class ValueTree:
+    """Wraps around a dict to provide access to dict values via object attributes"""
+
     def __init__(self, data: dict):
+        """
+        :param data: The dict to be wrapped
+        """
         self.__data = data
 
-    def __getattr__(self, item):
+    def __getattr__(self, item: str):
         if item not in self.__data:
             raise KeyError(f"Not Found: {item}")
         value = self.__data[item]
@@ -71,14 +88,13 @@ class ValueTree:
             return ValueTree(value)
         if isinstance(value, Sequence):
             return ValueTree.__process_seq(value)
-        else:
-            return value
+        return value
 
-    def __getitem__(self, item):
+    def __getitem__(self, item: str):
         return self.__getattr__(item)
 
     @staticmethod
-    def __process_seq(seq: Sequence):
+    def __process_seq(seq: Sequence) -> list:
         rslt = []
         for thing in seq:
             if not isinstance(thing, str) and isinstance(thing, Sequence):
@@ -94,6 +110,8 @@ class ValueTree:
 
 
 class NamesConfig(Protocol):
+    """Attributes for the [names] section of config.toml"""
+
     dir: str
     db: str
     lock: str
@@ -102,6 +120,8 @@ class NamesConfig(Protocol):
 
 
 class MapsConfig(Protocol):
+    """Attributes for the [maps] section of config.toml"""
+
     dir: str
     lock: str
     log: str
@@ -111,19 +131,26 @@ class MapsConfig(Protocol):
 
 
 class MosaicConfig(Protocol):
+    """Attributes for the [mosaic] section of config.toml"""
+
     dir: str
     domc_db: str
 
 
 class NightlightsConfig(Protocol):
+    """Attributes for the [nightlights] section of config.toml"""
+
     dir: str
 
 
 class AreasConfig(Protocol):
+    """Attributes for the [areas] section of config.toml"""
+
     dir: str
 
 
 class LatticeConfig(Protocol):
+    """Attributes for the [grids] section of config.toml"""
     dir_composite: str
     dir_overlay: str
     font_name: str
@@ -133,6 +160,8 @@ class LatticeConfig(Protocol):
 
 
 class SLMapToolsConfig(Protocol):
+    """Representation of configuration in config.toml"""
+
     names: NamesConfig
     maps: MapsConfig
     mosaic: MosaicConfig
@@ -142,16 +171,21 @@ class SLMapToolsConfig(Protocol):
 
 
 class ConfigReader(SLMapToolsConfig):
+    """Reads configuration from config.toml"""
+
     def __init__(self, config_file: str | Path):
+        """
+        :param config_file: Configuration file
+        """
         self._cfg_file = Path(config_file)
         with self._cfg_file.open("rb") as fin:
             self._cfg_dict = tomllib.load(fin)
         self._cfg_tree = ValueTree(self._cfg_dict)
 
-    def __getattr__(self, item):
+    def __getattr__(self, item: str):
         return getattr(self._cfg_tree, item)
 
-    def __getitem__(self, item):
+    def __getitem__(self, item: str):
         return self._cfg_tree[item]
 
     def __repr__(self):
@@ -159,12 +193,12 @@ class ConfigReader(SLMapToolsConfig):
 
 
 @contextmanager
-def handle_sigint(interrupt_flag: Settable):
+def handle_sigint(interrupt_flag: SupportsSet) -> None:
     """
     A context manager that provides SIGINT handling, and restore original handler upon exit
     """
 
-    def _handler(_, __):
+    def _handler(_, __) -> None:  # noqa: ANN001
         if interrupt_flag.is_set():
             return
         interrupt_flag.set()

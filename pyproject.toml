@@ -84,6 +84,7 @@ addopts = [
 select = ["E", "F", "B", "S", "D", "YTT", "ANN", "CPY", "RET", "SLOT", "SIM", "TCH", "ARG", "PTH", "FIX", "PGH", "PL", "TRY", "PERF", "RUF"]
 ignore = [
     "ANN101",  # No need to annotate 'self'
+    "ANN102",  # No need to annotate 'cls' (in @classmethod)
     "ANN204",  # No need to annotate return values of magic methods
     "D105",  # Do not enforce docstring for magic method; they are mostly self-describing
     "D200",  # Do not force 1-line docstring
