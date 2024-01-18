@@ -246,7 +246,7 @@ def main(opts: Options) -> None:  # noqa: D103
     map_tiles = inventorize_maps_latest(opts.mapdir)
 
     print("\nMaking maps:")
-    new_count = tiles = 0
+    new_count = 0
     with handle_sigint(AbortRequested):
         Image.MAX_IMAGE_PIXELS = None
         if not opts.no_lattice:
