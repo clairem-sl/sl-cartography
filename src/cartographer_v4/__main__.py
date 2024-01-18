@@ -196,7 +196,7 @@ def make_map(
         if validate and (x, y) not in validation_set:
             continue
         c += 1
-        if (c % 10) == 0:
+        if (c % 40) == 0:
             print(".", end="", flush=True)
         canv_x = (x - area.x_westmost) * 256
         canv_y = (area.y_northmost - y) * 256

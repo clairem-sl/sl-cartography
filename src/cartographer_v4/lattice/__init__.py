@@ -228,7 +228,7 @@ class LatticeMaker:
                     lattice.paste(self.cover_hatched, (cx, cy))
                 elif exclusion_method == ExclusionMethod.TRANSP:
                     pass
-                if (i % 10) == 0:
+                if (i % 50) == 0:
                     print(".", end="", flush=True)
             print(f"[{regs}] ", end="", flush=True)
             lattice.save(overlay_p)
