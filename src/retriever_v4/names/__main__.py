@@ -107,16 +107,16 @@ def get_options() -> OptionsProtocol:
     return cast(OptionsProtocol, _opts)
 
 
-def process(tile: CookedResult) -> bool:
+def process(region: CookedResult) -> bool:
     """Process the unicode-decoded region data"""
     ts = datetime.now().astimezone()
-    xy = tile.coord.x, tile.coord.y
+    xy = region.coord.x, region.coord.y
     dbxy: RegionsDBRecord3 = DataBase.get(xy)
 
     def record_history() -> None:
         """Record the history of the region"""
         nonlocal dbxy
-        seen_name = "" if tile.result is None else tile.result
+        seen_name = "" if region.result is None else region.result
         prev_name = dbxy["current_name"]
         dbxy["current_name"] = seen_name
         dbxy["last_check"] = ts
@@ -142,17 +142,17 @@ def process(tile: CookedResult) -> bool:
             sts, _ = history[seen_name][-1]
             history[seen_name][-1] = (sts, ts)
 
-    if tile.result is None:
+    if region.result is None:
         if dbxy is None:
             return False
         assert isinstance(dbxy, dict)
         record_history()
     else:
         try:
-            assert isinstance(tile.result, str)
+            assert isinstance(region.result, str)
         except AssertionError:
-            print(f"{tile.result=} ({type(tile.result)})")
-            print(f"{tile=}")
+            print(f"{region.result=} ({type(region.result)})")
+            print(f"{region=}")
             raise
         if dbxy is None:
             dbxy: RegionsDBRecord3 = {
