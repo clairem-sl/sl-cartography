@@ -512,9 +512,10 @@ Freedom:
   includes:
     - [750, 1013, 758, 1020]
 
-Gooseberry:
-  includes:
-    - [669, 1423, 674, 1429]
+# Gone in January 2024
+#Gooseberry:
+#  includes:
+#    - [669, 1423, 674, 1429]
 
 # Originally "A518"
 GoreanLands:
