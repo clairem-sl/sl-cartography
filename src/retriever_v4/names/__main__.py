@@ -6,6 +6,7 @@ import argparse
 import asyncio
 import pickle
 import re
+from asyncio import Task
 from datetime import datetime
 from pathlib import Path
 from pprint import pprint
@@ -107,11 +108,13 @@ def get_options() -> OptionsProtocol:
 
 
 def process(tile: CookedResult) -> bool:
+    """Process the unicode-decoded region data"""
     ts = datetime.now().astimezone()
     xy = tile.coord.x, tile.coord.y
     dbxy: RegionsDBRecord3 = DataBase.get(xy)
 
-    def record_history():
+    def record_history() -> None:
+        """Record the history of the region"""
         nonlocal dbxy
         seen_name = "" if tile.result is None else tile.result
         prev_name = dbxy["current_name"]
@@ -170,16 +173,17 @@ def process(tile: CookedResult) -> bool:
     return True
 
 
-async def amain(db_path: Path, duration: int, min_batch_size: int, abort_low_rps: int):
+async def amain(db_path: Path, duration: int, min_batch_size: int, abort_low_rps: int) -> None:
+    """Asynchronous main()"""
     limits = httpx.Limits(max_connections=CONN_LIMIT, max_keepalive_connections=CONN_LIMIT)
     async with httpx.AsyncClient(limits=limits, timeout=10.0, http2=HTTP2) as client:
         fetcher = BoundedNameFetcher(CONN_LIMIT * 3, client, cooked=True, cancel_flag=AbortRequested)
         shown = False
 
-        def make_task(coord: CoordType):
+        def make_task(coord: CoordType) -> Task:
             return asyncio.create_task(fetcher.async_fetch(MapCoord(*coord)), name=str(coord))
 
-        def pre_batch():
+        def pre_batch() -> None:
             nonlocal shown
             shown = False
 
@@ -202,7 +206,7 @@ async def amain(db_path: Path, duration: int, min_batch_size: int, abort_low_rps
             Progress.retire(fut_result.coord)
             return process(fut_result)
 
-        def post_batch():
+        def post_batch() -> None:
             if not shown:
                 print("Nothing retrieved", end="")
                 return
@@ -222,7 +226,7 @@ async def amain(db_path: Path, duration: int, min_batch_size: int, abort_low_rps
         )
 
 
-def main(app_context: RetrieverApplication, opts: OptionsProtocol) -> None:
+def main(app_context: RetrieverApplication, opts: OptionsProtocol) -> None:  # noqa: D103
     global DataBase, Progress  # noqa: PLW0603
 
     dur = RetrieverApplication.calc_duration(opts)

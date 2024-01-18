@@ -30,18 +30,24 @@ class FetcherConnectionError(ConnectionError):
 
 
 class RawResult(NamedTuple):
+    """Undecoded (bytes) result from HTTP"""
+
     coord: MapCoord
     result: bytes | None
     status_code: int = 0
 
 
 class CookedResult(NamedTuple):
+    """Unicode-decoded result from HTTP"""
+
     coord: MapCoord
     result: str | None
     status_code: int = 0
 
 
 class Fetcher(metaclass=abc.ABCMeta):
+    """Perform name-fetching asynchronously"""
+
     URL_TEMPLATE: str = ""
     RETRYABLE_EX: tuple[Exception, ...] = (httpx.ConnectTimeout, httpx.ReadTimeout, httpx.ReadError)
 
@@ -61,6 +67,7 @@ class Fetcher(metaclass=abc.ABCMeta):
         raise_err: bool = True,
         acceptable_codes: Optional[set[int]] = None,
     ) -> RawResult | None:
+        """Get raw region data asynchronously"""
         qprint = QuietablePrint(quiet, flush=True)
         qprint(".", end="")
         if acceptable_codes is None:
