@@ -16,9 +16,9 @@ from typing import Final, Protocol, cast
 from PIL import Image
 
 from cartographer_v4.lattice import ExclusionMethod, LatticeMaker
-from sl_maptools import AreaBounds, AreaDescriptor, CoordType, RegionsDBRecord3
+from sl_maptools import AreaBounds, AreaDescriptor, CoordType, RegionsDBRecord3, SupportsSet    
 from sl_maptools.knowns import KNOWN_AREAS
-from sl_maptools.utils import ConfigReader, SLMapToolsConfig, SupportsSet, handle_sigint
+from sl_maptools.utils import ConfigReader, SLMapToolsConfig, handle_sigint
 from sl_maptools.validator import get_bonnie_coords, inventorize_maps_latest
 
 Config: SLMapToolsConfig = ConfigReader("config.toml")
