@@ -69,11 +69,68 @@ def get_options() -> Options:
     return _opts
 
 
+def make_grid(worldmap: Image, variant: str, text_settings: dict) -> Image:
+    """Make an image of the grids overlaid on specified worldmap"""
+    sx, sy = worldmap.size
+    reg_sz = sx // (COORD_RANGE[1] + 1)
+    sect_sz = reg_sz * GRIDSECTOR_SIZE
+    padded_sz = ((sx + sect_sz - 1) // sect_sz) * sect_sz
+    canvas_sz = padded_sz + 2 * sect_sz
+
+    print(f"Making Grids - {variant}")
+    parms = OVERLAY_VARIANTS[variant]
+    back_color = parms["back_color"] + (0,)
+
+    print("  Padding worldmap")
+    padded_map = Image.new("RGBA", (padded_sz, padded_sz), color=back_color)
+    padded_map.paste(worldmap, (0, (padded_sz - sx)))
+
+    print("  Making grids", end="", flush=True)
+    sq = Image.new("RGBA", (sect_sz, sect_sz), color=back_color)
+    draw = ImageDraw.Draw(sq)
+    ul = 0
+    lr = sect_sz - 1
+    for a in ALPHA_PATTERN:
+        colr = parms["rect_color"] + (a,)
+        for _ in range(GRID_THICKNESS):
+            draw.rectangle((ul, ul, lr, lr), width=1, outline=colr)
+            ul += 1
+            lr -= 1
+    gridsec_overlay = Image.new("RGBA", (padded_sz, padded_sz), color=back_color)
+    i = 0
+    for cx in range(0, padded_sz, sect_sz):
+        for cy in range(0, padded_sz, sect_sz):
+            i += 1
+            if (i % 10) == 0:
+                print(".", end="", flush=True)
+            gridsec_overlay.paste(sq, (cx, cy))
+    print()
+
+    print("  Making canvas")
+    canvas = Image.new("RGBA", (canvas_sz, canvas_sz), color=back_color)
+    canvas.paste(Image.alpha_composite(padded_map, gridsec_overlay), (sect_sz, sect_sz))
+    del padded_map
+    del gridsec_overlay
+
+    draw = ImageDraw.Draw(canvas)
+    print("  Drawing labels")
+    cy = sect_sz // 2
+    for x, label in enumerate(GRID_COLS):
+        cx = sect_sz // 2 + (x + 1) * sect_sz
+        draw.text((cx, cy), label, **text_settings)
+        draw.text((cx, canvas_sz - cy), label, **text_settings)
+    cx = sect_sz // 2
+    for y in range(0, 22):
+        cy = canvas_sz - (sect_sz // 2 + (y + 1) * sect_sz)
+        draw.text((cx, cy), str(y), **text_settings)
+        draw.text((canvas_sz - cx, cy), str(y), **text_settings)
+
+    return canvas
+
+
 def main(opts: Options) -> None:  # noqa: D103
-    # worldmap_dir = Path(r"C:\Cache\SL-Carto\WorldMaps")
-    # worldmap_p = worldmap_dir / "worldmap4_mosaic_5x5.png"
     worldmap_p = opts.worldmapfile
-    if worldmap_p is None:
+    if not worldmap_p:
         src_dir = opts.source_dir
         if not src_dir.exists() or not src_dir.is_dir():
             raise RuntimeError(f"Not a directory: {src_dir}")
@@ -91,6 +148,7 @@ def main(opts: Options) -> None:  # noqa: D103
     Image.MAX_IMAGE_PIXELS = None
     min_co, max_co = COORD_RANGE
 
+    # return
     print(f"Loading worldmap {worldmap_p} (m = {worldmap_m})")
     with worldmap_p.open("rb") as fin:
         worldmap = Image.open(fin)
@@ -99,13 +157,10 @@ def main(opts: Options) -> None:  # noqa: D103
     reg_sz, rem = divmod(sx, max_co + 1)
     if sx != sy or rem != 0:
         raise RuntimeError(f"File size funky: {sx}, {sy}")
-    sect_sz = reg_sz * GRIDSECTOR_SIZE
-    padded_sz = ((sx + sect_sz - 1) // sect_sz) * sect_sz
-    canvas_sz = padded_sz + 2 * sect_sz
 
     gridsector_dir = worldmap_p.parent / "GridSectors"
     gridsector_dir.mkdir(exist_ok=True)
-    common_kwargs = {
+    text_settings = {
         "font": ImageFont.truetype(str(FONT_NAME), 480),
         "fill": (255, 255, 255, 255),
         "anchor": "mm",
@@ -113,54 +168,8 @@ def main(opts: Options) -> None:  # noqa: D103
         "stroke_fill": (0, 0, 0, 255),
     }
 
-    for variant, parms in OVERLAY_VARIANTS.items():
-        print(f"Making Grids - {variant}")
-        back_color = parms["back_color"] + (0,)
-
-        print("  Padding worldmap")
-        padded_map = Image.new("RGBA", (padded_sz, padded_sz), color=back_color)
-        padded_map.paste(worldmap, (0, (padded_sz - sx)))
-
-        print("  Making grids", end="", flush=True)
-        sq = Image.new("RGBA", (sect_sz, sect_sz), color=back_color)
-        draw = ImageDraw.Draw(sq)
-        ul = 0
-        lr = sect_sz - 1
-        for a in ALPHA_PATTERN:
-            colr = parms["rect_color"] + (a,)
-            for _ in range(GRID_THICKNESS):
-                draw.rectangle((ul, ul, lr, lr), width=1, outline=colr)
-                ul += 1
-                lr -= 1
-        gridsec_overlay = Image.new("RGBA", (padded_sz, padded_sz), color=back_color)
-        i = 0
-        for cx in range(0, padded_sz, sect_sz):
-            for cy in range(0, padded_sz, sect_sz):
-                i += 1
-                if (i % 10) == 0:
-                    print(".", end="", flush=True)
-                gridsec_overlay.paste(sq, (cx, cy))
-        print()
-
-        print("  Making canvas")
-        canvas = Image.new("RGBA", (canvas_sz, canvas_sz), color=back_color)
-        canvas.paste(Image.alpha_composite(padded_map, gridsec_overlay), (sect_sz, sect_sz))
-        del padded_map
-        del gridsec_overlay
-
-        draw = ImageDraw.Draw(canvas)
-        print("  Drawing labels")
-        cy = sect_sz // 2
-        for x, label in enumerate(GRID_COLS):
-            cx = sect_sz // 2 + (x + 1) * sect_sz
-            draw.text((cx, cy), label, **common_kwargs)
-            draw.text((cx, canvas_sz - cy), label, **common_kwargs)
-        cx = sect_sz // 2
-        for y in range(0, 22):
-            cy = canvas_sz - (sect_sz // 2 + (y + 1) * sect_sz)
-            draw.text((cx, cy), str(y), **common_kwargs)
-            draw.text((canvas_sz - cx, cy), str(y), **common_kwargs)
-
+    for variant in OVERLAY_VARIANTS:
+        canvas = make_grid(worldmap, variant, text_settings)
         print("  Saving ...", end="", flush=True)
         targ_p = gridsector_dir / f"WorldGridSectors_{opts.source_type}_{variant}.png"
         targ_p.unlink(missing_ok=True)
