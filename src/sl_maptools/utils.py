@@ -57,9 +57,9 @@ class QuietablePrint:
     def __call__(
         self,
         *values: object,
-        sep: Optional[str] = ...,
-        end: Optional[str] = ...,
-        file: Optional[IO] = ...,
+        sep: Optional[str] = "",
+        end: Optional[str] = "\n",
+        file: Optional[IO] = None,
         flush: Optional[bool] = ...,
     ) -> None:
         """Emulates call to the print() function"""
