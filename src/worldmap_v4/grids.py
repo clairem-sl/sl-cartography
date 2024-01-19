@@ -61,7 +61,7 @@ def get_options() -> Options:
     parser.add_argument("worldmapfile", type=Path, default=None, nargs="?")
 
     _opts = cast(Options, parser.parse_args())
-    for k, v in _TYPE_CHOICES:
+    for k, v in _TYPE_CHOICES.items():
         if _opts.source_type in k:
             _opts.source_type = v
             break
