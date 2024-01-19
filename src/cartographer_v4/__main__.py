@@ -133,7 +133,11 @@ def get_options() -> Options:
     parser.add_argument(
         "--outdir",
         type=Path,
-        help="Directory to put the resulting hi-res maps in. Defaults to the same as --mapdir",
+        default=Config.areas.dir,
+        help=(
+            "Directory to put the resulting hi-res maps in. "
+            "Defaults to as specified in config.toml"
+        ),
     )
     parser.add_argument(
         "--regionsdb",
