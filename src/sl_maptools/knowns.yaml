@@ -585,7 +585,7 @@ NativeIslands:
 
 NewHaven:
   includes:
-    - [597, 1181, 603, 1184]
+    - [597, 1181, 603, 1186]
 
 Olni:
   includes:
