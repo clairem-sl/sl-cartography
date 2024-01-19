@@ -433,7 +433,8 @@ BlakeSeaSurrounding:
   excludes:
     # Second Norway
     - [1149, 1055, 1152, 1061]
-    - [1150, 1049, 1152, 1054]
+    - [1151, 1049, 1152, 1054]
+    - 1150/1051-1054
     # Satori
     - [1131, 1039, 1134, 1046]
     - [1133, 1047, 1134, 1047]
@@ -447,6 +448,10 @@ BlakeSeaSurrounding:
 BlakeSeaSurroundingNoSuppress:
   includes:
     - [1131, 1036, 1152, 1061]
+
+Boystown:
+  includes:
+    - 505-506/1396-1400
 
 Burn2:
   includes:
@@ -606,7 +611,7 @@ Raglan:
 
 Rockcliffe:
   includes:
-    - 1150-1153/1306-1308
+    - 1151-1153/1307-1308
 
 Romanum:
   includes:
@@ -614,7 +619,7 @@ Romanum:
 
 Rosehaven:
   includes:
-    - [906, 1029, 909, 1034]
+    - [906, 1029, 908, 1034]
 
 Schindleria:
   includes:
@@ -634,6 +639,7 @@ SecondNorway:
   excludes:
     - [1149, 1046, 1152, 1047]
     - [1149, 1049, 1149, 1054]
+    - 1150/1050
 
 SecondScotland:
   includes:
@@ -668,6 +674,10 @@ TheGroveEstate:
 TheWastelands:
   includes:
     - [785, 1036, 787, 1039]
+
+ToorEstate:
+  includes:
+    - 549-551/1358-1360
 
 TortugaIslands:
   includes:
@@ -710,6 +720,6 @@ WildWest:
 
 Yumix:
   includes:
-    - [653, 1245, 654, 1249]
+    - 653-658/1244-1250
 
 # endregion
