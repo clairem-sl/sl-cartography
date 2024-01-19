@@ -8,18 +8,21 @@ import multiprocessing as MP
 import re
 import time
 from dataclasses import dataclass
-from multiprocessing.pool import Pool as MPPool
 from pathlib import Path
-from typing import Final, Protocol, cast
+from typing import TYPE_CHECKING, Final, Protocol, cast
 
 import numpy as np
 from PIL import Image, UnidentifiedImageError
 from skimage.metrics import mean_squared_error as mse
 from skimage.metrics import structural_similarity as ssim
 
-from sl_maptools import CoordType
 from sl_maptools.utils import ConfigReader
 from sl_maptools.validator import inventorize_maps_all
+
+if TYPE_CHECKING:
+    from multiprocessing.pool import Pool as MPPool
+
+    from sl_maptools import CoordType
 
 RE_MAPTILE_FILE = re.compile(r"^(?P<x>\d+)-(?P<y>\d+)_(?P<ts>[^.]+)\.jpe?g$")
 
@@ -30,10 +33,13 @@ Config = ConfigReader("config.toml")
 
 
 class PruneOptions(Protocol):
+    """Represents the options extracted from CLI"""
+
     mapdir: Path
 
 
 def get_options() -> PruneOptions:
+    """Get options from CLI"""
     parser = argparse.ArgumentParser("retriever_v4.maps.prune")
     parser.add_argument("mapdir", type=Path, nargs="?", default=Path(Config.maps.dir))
     _opts = parser.parse_args()
@@ -42,6 +48,8 @@ def get_options() -> PruneOptions:
 
 @dataclass
 class Thresholds:
+    """Represents thresholds to determine similarity"""
+
     MSE: float
     SSIM: float
 
@@ -109,14 +117,15 @@ def do_prune(
     return flist
 
 
-def prune_job(job: tuple):
-    if len(job) == 2:
+def prune_job(job: tuple) -> list[Path]:
+    """Unmarshal a job tuple into proper params for do_prune"""
+    if len(job) == 2:  # noqa: PLR2004
         return do_prune(job[0], thresholds=job[1])
-    else:
-        return do_prune(job[0], thresholds=job[1], quiet=job[2])
+    return do_prune(job[0], thresholds=job[1], quiet=job[2])
 
 
-def prune(mapfiles_bycoord: dict[CoordType, list[Path]], quiet: bool = False):
+def prune(mapfiles_bycoord: dict[CoordType, list[Path]], quiet: bool = False) -> tuple[int, int]:
+    """Perform pruning of map files"""
     thresholds = Thresholds(MSE=MSE_THRESHOLD, SSIM=SSIM_THRESHOLD)
 
     total = 0
@@ -132,7 +141,7 @@ def prune(mapfiles_bycoord: dict[CoordType, list[Path]], quiet: bool = False):
     with MP.Pool() as pool:
         for i, rslt in enumerate(pool.imap_unordered(prune_job, jobs, chunksize=10), start=1):
             if (i % 100) == 0:
-                print(f".", end="", flush=True)
+                print(".", end="", flush=True)
             count += len(rslt)
         pool.close()
         print("\nWaiting for workers to join ... ", end="", flush=True)
@@ -142,7 +151,7 @@ def prune(mapfiles_bycoord: dict[CoordType, list[Path]], quiet: bool = False):
     return total, count
 
 
-def main(opts: PruneOptions):
+def main(opts: PruneOptions) -> None:  # noqa: D103
     print(f"Pruning {opts.mapdir}")
     start = time.monotonic()
     total, count = prune(inventorize_maps_all(opts.mapdir))

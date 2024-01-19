@@ -17,10 +17,7 @@ Config = ConfigReader("config.toml")
 def upgrade_history_to_db3(
         first_seen: datetime, hist_old: dict[str, list[str]]
 ) -> dict[str, list[tuple[datetime, datetime]]]:
-    chronology: list[tuple[str, str]] = []
-    for aname, timestamps in hist_old.items():
-        for ts in timestamps:
-            chronology.append((ts, aname))
+    chronology: list[tuple[str, str]] = [(ts, aname) for aname, timestamps in hist_old.items() for ts in timestamps]
     chronology.sort(reverse=True)
 
     name_hist3: dict[str, list[tuple[datetime, datetime]]] = {}

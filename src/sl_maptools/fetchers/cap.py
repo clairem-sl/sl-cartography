@@ -5,29 +5,35 @@ from __future__ import annotations
 
 import asyncio
 import re
-from typing import Any, Dict, Final, Optional, Protocol, Set
+from typing import TYPE_CHECKING, Any, ClassVar, Final, Optional, Protocol
 
 import httpx
 
-from sl_maptools import MapCoord
 from sl_maptools.fetchers import CookedResult, Fetcher, RawResult
+
+if TYPE_CHECKING:
+    from sl_maptools import MapCoord
 
 RE_REGION_NAME: Final[re.Pattern] = re.compile(r"\s*var\s*region\s*=\s*(['\"])([^'\"]+)\1")
 
 
 class MapProgressProtocol(Protocol):
-    regions: Dict[MapCoord, Any] = {}
-    seen: Set[MapCoord] = set()
-    last_fail_rows: Set[int] = set()
+    """Represents progress data"""
+
+    regions: ClassVar[dict[MapCoord, Any]] = {}
+    seen: ClassVar[set[MapCoord]] = set()
+    last_fail_rows: ClassVar[set[int]] = set()
 
 
 _RETRYABLE_EX: Final[tuple] = (httpx.ConnectTimeout, httpx.ReadTimeout, httpx.ReadError)
 
 
 class NameFetcher(Fetcher):
-    URL_TEMPLATE: Final[str] = (
-        "https://cap.secondlife.com/cap/0/b713fe80-283b-4585-af4d-a3b7d9a32492?" "var=region&grid_x={x}&grid_y={y}"
-    )
+    """Fetches region data from SL Cap server"""
+
+    URL_TEMPLATE: Final[
+        str
+    ] = "https://cap.secondlife.com/cap/0/b713fe80-283b-4585-af4d-a3b7d9a32492?var=region&grid_x={x}&grid_y={y}"
 
     async def async_get_name_raw(
         self,
@@ -36,7 +42,7 @@ class NameFetcher(Fetcher):
         retries: int = 6,
         raise_err: bool = True,
     ) -> RawResult:
-        """ """
+        """Asynchronously return raw data from Cap server."""
         return await self.async_get_raw(coord, quiet, retries, raise_err, {200, 403})
 
     async def async_get_name(
@@ -46,6 +52,7 @@ class NameFetcher(Fetcher):
         retries: int = 6,
         raise_err: bool = True,
     ) -> CookedResult:
+        """Asynchronously get data from Cap server, and decodes it"""
         raw_result = await self.async_get_name_raw(coord, quiet, retries, raise_err)
         if raw_result.result is None:
             return CookedResult(coord, None)
@@ -77,7 +84,7 @@ class BoundedNameFetcher(NameFetcher):
         async_session: httpx.AsyncClient,
         retries: int = 3,
         cooked: bool = False,
-        cancel_flag: asyncio.Event = None,
+        cancel_flag: Optional[asyncio.Event] = None,
     ):
         """
 
@@ -95,13 +102,11 @@ class BoundedNameFetcher(NameFetcher):
         """Perform async fetch, but won't actually start fetching if semaphore is depleted."""
         try:
             async with self.sema:
-                if self.cancel_flag is not None:
-                    if self.cancel_flag.is_set():
-                        return None
+                if self.cancel_flag is not None and self.cancel_flag.is_set():
+                    return None
                 if self.cooked:
                     return await self.async_get_name(coord, quiet=True, retries=self.retries)
-                else:
-                    return await self.async_get_name_raw(coord, quiet=True, retries=self.retries)
+                return await self.async_get_name_raw(coord, quiet=True, retries=self.retries)
         except asyncio.CancelledError:
             print(f"{coord} cancelled")
             raise

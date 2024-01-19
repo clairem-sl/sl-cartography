@@ -8,16 +8,22 @@ import multiprocessing as MP
 import signal
 import time
 from multiprocessing import shared_memory as MPSharedMem
-from pathlib import Path
-from typing import TypedDict, cast
-
-from PIL import Image
+from typing import TYPE_CHECKING, TypedDict, cast
 
 from retriever_v4 import DebugLevel
-from sl_maptools import CoordType, MapCoord
+from sl_maptools import CoordType
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from PIL import Image
+
+    from sl_maptools import MapCoord
 
 
 class QJob(TypedDict):
+    """Represents a queued job"""
+
     coord: MapCoord
     tsf: str
     shm: MPSharedMem.SharedMemory
@@ -30,7 +36,8 @@ def saver(
     saved_coords: dict[CoordType, None],
     worker_state: dict[str, tuple[str, str | None]],
     debug_level: DebugLevel,
-):
+) -> None:
+    """A worker that saves map tile to file"""
     signal.signal(signal.SIGINT, signal.SIG_IGN)
     mapdir.mkdir(parents=True, exist_ok=True)
     curname = MP.current_process().name
@@ -40,13 +47,13 @@ def saver(
     targf: Path | None = None
     counter: int = 0
 
-    def _setstate(state: str, with_targ: bool = True):
+    def _setstate(state: str, with_targ: bool = True) -> None:
         if with_targ and targf:
             worker_state[myname] = state, targf.name
         else:
             worker_state[myname] = state, None
 
-    def _pip(char: str):
+    def _pip(char: str) -> None:
         if debug_level > DebugLevel.DISABLED:
             print(char, end="", flush=True)
             if debug_level >= DebugLevel.DETAILED:
@@ -73,16 +80,13 @@ def saver(
             continue
         blob = cast(bytes, shm.buf)
         try:
-            try:
-                tsf = regmap["tsf"]
-                targf = mapdir / f"{coord.x}-{coord.y}_{tsf}.jpg"
-                _setstate("saving")
-                with targf.open("wb") as fout:
-                    fout.write(blob)
-            except Exception:
-                raise
+            tsf = regmap["tsf"]
+            targf = mapdir / f"{coord.x}-{coord.y}_{tsf}.jpg"
+            _setstate("saving")
+            with targf.open("wb") as fout:
+                fout.write(blob)
 
-            saved_coords[coord] = None
+            saved_coords[cast(CoordType, coord)] = None
             counter = len(saved_coords)
             _pip("💾")
             success_queue.put(coord)

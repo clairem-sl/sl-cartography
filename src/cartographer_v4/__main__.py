@@ -1,7 +1,6 @@
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
-
 import argparse
 import pickle
 import re
@@ -16,7 +15,13 @@ from typing import Final, Protocol, cast
 from PIL import Image
 
 from cartographer_v4.lattice import ExclusionMethod, LatticeMaker
-from sl_maptools import AreaBounds, AreaDescriptor, CoordType, RegionsDBRecord3, SupportsSet    
+from sl_maptools import (
+    AreaBounds,
+    AreaDescriptor,
+    CoordType,
+    RegionsDBRecord3,
+    SupportsSet,
+)
 from sl_maptools.knowns import KNOWN_AREAS
 from sl_maptools.utils import ConfigReader, SLMapToolsConfig, handle_sigint
 from sl_maptools.validator import get_bonnie_coords, inventorize_maps_latest
@@ -134,10 +139,7 @@ def get_options() -> Options:
         "--outdir",
         type=Path,
         default=Config.areas.dir,
-        help=(
-            "Directory to put the resulting hi-res maps in. "
-            "Defaults to as specified in config.toml"
-        ),
+        help=("Directory to put the resulting hi-res maps in. " "Defaults to as specified in config.toml"),
     )
     parser.add_argument(
         "--regionsdb",

@@ -54,6 +54,8 @@ AbortRequested: SupportsSet = MP.Event()
 
 
 class MPMapOptions(Protocol):
+    """Represents the options parsed from CLI"""
+
     mapdir: Path
     workers: int
     savers: int
@@ -62,6 +64,7 @@ class MPMapOptions(Protocol):
 
 
 def get_options() -> MPMapOptions:
+    """Get options from CLI"""
     parser = argparse.ArgumentParser("retriever.maps.mp")
 
     parser.add_argument("--mapdir", type=Path, default=Path(Config.maps.mp_dir))
@@ -81,12 +84,16 @@ def get_options() -> MPMapOptions:
 
 
 class QSaveJob(TypedDict):
+    """Represents a Save job"""
+
     coord: MapCoord
     tsf: str
     shm: MPSharedMem.SharedMemory
 
 
 class QResult(NamedTuple):
+    """Represents a Result job"""
+
     entity: str
     coord: MapCoord
     exc: Optional[Exception]
@@ -96,7 +103,8 @@ def saver(
     mapdir: Path,
     incoming_queue: MP.Queue,
     result_queue: MP.Queue,
-):
+) -> None:
+    """A worker function that saves received map tiles"""
     signal.signal(signal.SIGINT, signal.SIG_IGN)
     mapdir.mkdir(parents=True, exist_ok=True)
     curname = MP.current_process().name
@@ -140,7 +148,8 @@ async def aretrieve(
     disp_queue: MP.Queue,
     result_queue: MP.Queue,
     abort_flag: SupportsSet,
-):
+) -> None:
+    """Performs asynchronous retrieval of map tiles"""
     signal.signal(signal.SIGINT, signal.SIG_IGN)
     _half_cols = COLS_PER_ROW // 2
     _myname = MP.current_process().name
@@ -148,7 +157,7 @@ async def aretrieve(
     async with httpx.AsyncClient(limits=limits, timeout=10.0, http2=HTTP2) as client:
         fetcher = BoundedMapFetcher(CONN_LIMIT * 3, client, cooked=False, cancel_flag=abort_flag)
 
-        def make_task(coord: CoordType):
+        def make_task(coord: CoordType) -> asyncio.Task:
             return asyncio.create_task(fetcher.async_fetch(MapCoord(*coord)), name=str(coord))
 
         tasks: set[asyncio.Task] = set()
@@ -240,7 +249,8 @@ def retrieve(
     disp_queue: MP.Queue,
     retire_queue: MP.Queue,
     abort_flag: SupportsSet,
-):
+) -> None:
+    """A worker that triggers the async retrieval of map tiles"""
     signal.signal(signal.SIGINT, signal.SIG_IGN)
     curname = MP.current_process().name
     _, num = curname.split("-")
@@ -250,11 +260,15 @@ def retrieve(
 
 
 class ProgressDict(TypedDict):
+    """Represents the progress of map retrieval"""
+
     next_row: Optional[int]
     backlog: set[CoordType]
 
 
 class ProgressionDict(TypedDict):
+    """Represents per-row progression of map retrieval"""
+
     start: Optional[datetime]
     done: int
     last: Optional[datetime]
@@ -263,6 +277,7 @@ class ProgressionDict(TypedDict):
 def launch_workers(
     opts: MPMapOptions, progress: ProgressDict, mgr: MPMgr.SyncManager
 ) -> tuple[int, set[CoordType], dict[int, ProgressionDict], list[QResult]]:
+    """Launches MP workers"""
     errs: list[QResult] = []
     coord_queue: MP.Queue = mgr.Queue()
     save_queue: MP.Queue = mgr.Queue(maxsize=4000)
@@ -283,7 +298,7 @@ def launch_workers(
     total: int = 0
     count: int = 0
 
-    def flush_dispatched_queue(msg: bool = False):
+    def flush_dispatched_queue(msg: bool = False) -> None:
         nonlocal count
         try:
             if msg:
@@ -297,7 +312,7 @@ def launch_workers(
         except queue.Empty:
             pass
 
-    def flush_result_queue(msg: bool = False):
+    def flush_result_queue(msg: bool = False) -> None:
         nonlocal total
         try:
             if msg:
@@ -305,7 +320,7 @@ def launch_workers(
             while True:
                 rslt: QResult = result_queue.get_nowait()
                 if rslt.exc is None:
-                    outstanding.discard(rslt.coord)
+                    outstanding.discard(cast(CoordType, rslt.coord))
                     if rslt.entity.startswith("Saver"):
                         total += 1
                     else:
@@ -320,7 +335,7 @@ def launch_workers(
         except queue.Empty:
             pass
 
-    def dispatch_backlog():
+    def dispatch_backlog() -> None:
         backlog = sorted(progress["backlog"], key=lambda i: (i[1], i[0]))
         if backlog:
             _chunksize = (len(backlog) // opts.workers) + 1
@@ -333,78 +348,78 @@ def launch_workers(
     pool_r: mp_pool.Pool
     pool_s: mp_pool.Pool
     try:
-        with handle_sigint(AbortRequested):
-            with (
-                MP.Pool(opts.workers, initializer=retrieve, initargs=r_args) as pool_r,
-                MP.Pool(opts.savers, initializer=saver, initargs=s_args) as pool_s,
-                contextlib.ExitStack() as stack,
-            ):
-                # These will be called in reverse order!
-                stack.callback(flush_result_queue, True)
-                stack.callback(flush_dispatched_queue, True)
-                #
-                dispatch_backlog()
+        with (
+            handle_sigint(AbortRequested),
+            MP.Pool(opts.workers, initializer=retrieve, initargs=r_args) as pool_r,
+            MP.Pool(opts.savers, initializer=saver, initargs=s_args) as pool_s,
+            contextlib.ExitStack() as stack,
+        ):
+            # These will be called in reverse order!
+            stack.callback(flush_result_queue, True)
+            stack.callback(flush_dispatched_queue, True)
+            #
+            dispatch_backlog()
 
-                for row in range(progress["next_row"], -1, -1):
-                    coord_queue.put(("row", row))
+            for row in range(progress["next_row"], -1, -1):
+                coord_queue.put(("row", row))
 
-                tm: float = time.monotonic()
-                while not coord_queue.empty():
-                    flush_dispatched_queue()
-                    flush_result_queue()
-                    elapsed = time.monotonic() - tm
-                    if elapsed >= INFO_EVERY:
-                        rate = count / elapsed
-                        print(
-                            f"{count:_} coords checked, at {rate:_.2f}rps, {total:_} retrieved",
-                            flush=True,
-                        )
-                        count = 0
-                        tm = time.monotonic()
-                    if AbortRequested.is_set():
-                        print("\n### ABORT REQUESTED! ###\n")
-                        pool_r.close()
-                        break
-                else:
-                    print("Telling retriever workers to end")
+            tm: float = time.monotonic()
+            while not coord_queue.empty():
+                flush_dispatched_queue()
+                flush_result_queue()
+                elapsed = time.monotonic() - tm
+                if elapsed >= INFO_EVERY:
+                    rate = count / elapsed
+                    print(
+                        f"{count:_} coords checked, at {rate:_.2f}rps, {total:_} retrieved",
+                        flush=True,
+                    )
+                    count = 0
+                    tm = time.monotonic()
+                if AbortRequested.is_set():
+                    print("\n### ABORT REQUESTED! ###\n")
                     pool_r.close()
-                    for _ in range(opts.workers):
-                        coord_queue.put(None)
-                print("Joining retriever workers")
-                pool_r.join()
+                    break
+            else:
+                print("Telling retriever workers to end")
+                pool_r.close()
+                for _ in range(opts.workers):
+                    coord_queue.put(None)
+            print("Joining retriever workers")
+            pool_r.join()
 
-                print("Flushing coord_queue")
-                next_row = None
-                try:
-                    cmd, det = coord_queue.get_nowait()
-                    if cmd == "row":
-                        if next_row is None:
-                            next_row = det
-                    elif cmd == "single":
-                        outstanding.add(det)
-                    elif cmd == "set":
-                        outstanding.update(det)
-                except queue.Empty:
-                    pass
+            print("Flushing coord_queue")
+            next_row = None
+            try:
+                cmd, det = coord_queue.get_nowait()
+                if cmd == "row":
+                    if next_row is None:
+                        next_row = det
+                elif cmd == "single":
+                    outstanding.add(det)
+                elif cmd == "set":
+                    outstanding.update(det)
+            except queue.Empty:
+                pass
 
-                print("Telling saver workers to end")
-                pool_s.close()
-                for _ in range(opts.savers):
-                    save_queue.put(None)
-                print("Joining saver workers")
-                pool_s.join()
+            print("Telling saver workers to end")
+            pool_s.close()
+            for _ in range(opts.savers):
+                save_queue.put(None)
+            print("Joining saver workers")
+            pool_s.join()
 
     finally:
-        return next_row, outstanding, progression, errs
+        return next_row, outstanding, progression, errs  # noqa: B012
 
 
-def main(opts: MPMapOptions):
+def main(opts: MPMapOptions) -> None:  # noqa: D103
     start = time.monotonic()
 
     progress_file = opts.mapdir / Config.maps.mp_progress
     if progress_file.exists():
         with progress_file.open("rb") as fin:
-            progress: ProgressDict = pickle.load(fin)
+            progress: ProgressDict = pickle.load(fin)  # noqa: S301
         if progress["next_row"] is None:
             progress["next_row"] = -1
     else:
@@ -430,7 +445,7 @@ def main(opts: MPMapOptions):
     if errs:
         print("During retrieval, the following errors are seen:", file=sys.stderr)
         time.sleep(1)
-        for entity, coord, exc in errs:
+        for entity, _coord, exc in errs:
             print(f"    {entity} <{type(exc)}>{exc}", file=sys.stderr)
         time.sleep(1)
         print(f"  A total of {len(errs)} errors", file=sys.stderr)
@@ -443,7 +458,7 @@ def main(opts: MPMapOptions):
         if prog["start"] is None or prog["last"] is None:
             continue
         delta = prog["last"] - prog["start"]
-        if delta.seconds < 0.1:
+        if delta.seconds < 0.1:  # noqa: PLR2004
             continue
         normalized_time_per_row[y] = 2100 * delta.seconds / n
     yaml = YAML(typ="safe")

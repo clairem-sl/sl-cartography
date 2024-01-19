@@ -4,7 +4,7 @@
 import argparse
 import pickle
 from pathlib import Path
-from typing import Final, Protocol, TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Final, Protocol, cast
 
 from PIL import Image, ImageFont
 
@@ -18,6 +18,7 @@ from cartographer_v4.lattice import (
 
 if TYPE_CHECKING:
     from sl_maptools import CoordType, RegionsDBRecord3
+
 from sl_maptools.knowns import KNOWN_AREAS
 from sl_maptools.utils import ConfigReader, SLMapToolsConfig
 from sl_maptools.validator import get_bonnie_coords

@@ -3,11 +3,12 @@
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 import pickle
 from pathlib import Path
-from typing import Final
+from typing import TYPE_CHECKING, Final
 
 from ruamel.yaml import YAML, RoundTripRepresenter
 
-from sl_maptools import CoordType, RegionsDBRecord3
+if TYPE_CHECKING:
+    from sl_maptools import CoordType, RegionsDBRecord3
 from sl_maptools.knowns import KNOWN_AREAS
 from sl_maptools.utils import ConfigReader, SLMapToolsConfig
 
@@ -17,7 +18,7 @@ DB_PATH: Final[Path] = Path(Config.names.dir) / Config.names.db
 LIST_PATH: Final[Path] = Path(Config.areas.dir)
 
 
-def main():
+def main() -> None:  # noqa: D103
     with DB_PATH.open("rb") as fin:
         regsdb: dict[CoordType, RegionsDBRecord3] = pickle.load(fin)  # noqa: S301
 

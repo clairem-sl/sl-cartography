@@ -3,15 +3,14 @@
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 from enum import Enum, auto, unique
 from pathlib import Path
-from typing import Optional, TypedDict, Final
+from typing import Final, Optional, TypedDict
 
 from PIL import Image, ImageDraw, ImageFont
 from PIL.ImageFont import FreeTypeFont
 
 from sl_maptools import CoordType, RegionsDBRecord3
 from sl_maptools.knowns import KNOWN_AREAS
-from sl_maptools.utils import SLMapToolsConfig, ConfigReader
-
+from sl_maptools.utils import ConfigReader, SLMapToolsConfig
 
 RGBATuple = tuple[int, int, int, int]
 

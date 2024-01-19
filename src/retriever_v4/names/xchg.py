@@ -9,14 +9,16 @@ import re
 from datetime import datetime
 from operator import methodcaller
 from pathlib import Path
-from typing import Any, Final, Optional, Protocol, TypedDict, cast
+from typing import TYPE_CHECKING, Any, Final, Optional, Protocol, TypedDict, cast
 
 import packaging.version as versioning
 from ruamel.yaml import YAML, RoundTripRepresenter
 
 from retriever_v4.names.upgrade_db import upgrade_history_to_db3
-from sl_maptools import CoordType, RegionsDBRecord3
 from sl_maptools.utils import ConfigReader, make_backup
+
+if TYPE_CHECKING:
+    from sl_maptools import CoordType, RegionsDBRecord3
 
 RE_COORD = re.compile(r"\D*(?P<x>\d+)\D*(?P<y>\d+)")
 
@@ -28,10 +30,14 @@ SUPPORTED_SCHEMA_VERS: Final[set[int]] = {1, 3}
 
 
 class InvalidSourceError(RuntimeError):
+    """Raised if the Source is invalid"""
+
     pass
 
 
 class OptionsType(Protocol):
+    """Represents options extracted from CLI"""
+
     command: str
     db: Path
     to_yaml: Optional[Path]
@@ -39,6 +45,7 @@ class OptionsType(Protocol):
 
 
 def get_options() -> OptionsType:
+    """Get options from CLI"""
     parser = argparse.ArgumentParser("retriever_v4.names.xchg", epilog="For more details, do COMMAND --help")
     subparsers = parser.add_subparsers(title="COMMANDS", dest="command", required=True)
     parser.add_argument(
@@ -69,6 +76,8 @@ def get_options() -> OptionsType:
 
 
 class RegionsDBRecord3ForSerialization(TypedDict):
+    """Represents a DB Record v3 that can be serialized easily"""
+
     first_seen: str
     last_seen: str
     last_check: str
@@ -78,15 +87,17 @@ class RegionsDBRecord3ForSerialization(TypedDict):
 
 
 def export(db: Path, targ: Path, quiet: bool = False) -> Path:
+    """Perform export of DB"""
     if targ is None:
         targ = DEFA_DB.with_suffix(f".{datetime.now().strftime('%Y%m%d-%H%M')}.yaml")
     with db.open("rb") as fin:
-        data: dict[CoordType, RegionsDBRecord3] = pickle.load(fin)
+        data: dict[CoordType, RegionsDBRecord3] = pickle.load(fin)  # noqa: S301
     if not quiet:
         print(f"Retrieved {len(data)} records. Transforming...", end="", flush=True)
 
     iso_ts = methodcaller("isoformat", timespec="minutes")
 
+    # noinspection PyTypeChecker
     result: dict[str, RegionsDBRecord3ForSerialization] = {}
     for x, y in sorted(data, key=lambda co: (co[1], co[0])):
         info = data[x, y]
@@ -139,15 +150,13 @@ def export(db: Path, targ: Path, quiet: bool = False) -> Path:
 
 
 def import_1(regs_data: dict[str, Any]) -> dict[CoordType, RegionsDBRecord3]:
+    """Performs import of v1 database"""
     result: dict[CoordType, RegionsDBRecord3] = {}
     for scoord, data in regs_data.items():
         m = RE_COORD.match(scoord)
         coord: CoordType = int(m.group("x")), int(m.group("y"))
 
-        ser_hist: dict[str, list[str]] = data["name_history"]
-        hist_old: dict[str, list[str]] = {
-            name: [datetime.fromisoformat(ts) for ts in tstamps_s] for name, tstamps_s in ser_hist.items()
-        }
+        hist_old: dict[str, list[str]] = data["name_history"].copy()
         first_seen = datetime.fromisoformat(data["first_seen"])
         hist3 = upgrade_history_to_db3(first_seen, hist_old)
 
@@ -163,6 +172,7 @@ def import_1(regs_data: dict[str, Any]) -> dict[CoordType, RegionsDBRecord3]:
 
 
 def import_3(regs_data: dict[str, Any]) -> dict[CoordType, RegionsDBRecord3]:
+    """Performs import of v3 database"""
     result: dict[CoordType, RegionsDBRecord3] = {}
     for scoord, data in regs_data.items():
         m = RE_COORD.match(scoord)
@@ -186,10 +196,11 @@ def import_3(regs_data: dict[str, Any]) -> dict[CoordType, RegionsDBRecord3]:
     return result
 
 
-def import_(src: Path, db: Path, quiet: bool = False):
-    print(f"Reading {src} ...", end="", flush=True)
+def import_(yaml_src: Path, db: Path, quiet: bool = False) -> None:
+    """Performs import of specified YAML file"""
+    print(f"Reading {yaml_src} ...", end="", flush=True)
     yaml = YAML(typ="safe")
-    with src.open("rt") as fin:
+    with yaml_src.open("rt") as fin:
         data = yaml.load(fin)
     print("done.", flush=True)
 
@@ -207,7 +218,7 @@ def import_(src: Path, db: Path, quiet: bool = False):
         if _metadata:
             print(f"YAML file was created on {_metadata.get('created')}")
         else:
-            print(f"YAML file does not have creation data.")
+            print("YAML file does not have creation data.")
 
     regs_data: dict[str, dict[str, Any]]
     if (regs_data := data.get("data")) is None:
@@ -230,7 +241,7 @@ def import_(src: Path, db: Path, quiet: bool = False):
         print(f"\nImported to {db}")
 
 
-def main(opts: OptionsType):
+def main(opts: OptionsType) -> None:  # noqa: D103
     if opts.command == "export":
         export(opts.db, opts.to_yaml)
     elif opts.command == "import":

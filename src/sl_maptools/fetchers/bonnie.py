@@ -5,21 +5,27 @@ from __future__ import annotations
 
 import asyncio
 import json
-from typing import NamedTuple, Optional
+from typing import TYPE_CHECKING, NamedTuple, Optional
 
 import httpx
 
-from sl_maptools import MapCoord
 from sl_maptools.fetchers import Fetcher
+
+if TYPE_CHECKING:
+    from sl_maptools import MapCoord
 
 
 class CookedBonnieResult(NamedTuple):
+    """Represents BonnieBots region retrieval result, decoded from JSON"""
+
     coord: MapCoord
     result: Optional[dict]
     status_code: int = 0
 
 
 class BonnieFetcher(Fetcher):
+    """Fetch region data from BonnieBots"""
+
     URL_TEMPLATE = "https://www.bonniebots.com/static-api/regions/{x}/{y}/index.json"
 
     async def async_get_data(
@@ -29,7 +35,7 @@ class BonnieFetcher(Fetcher):
         retries: int = 6,
         raise_err: bool = True,
     ) -> CookedBonnieResult:
-        """ """
+        """Asynchronously retrieves and decodes region data from BonnieBots"""
         blob: bytes
         status_code: int
         _, blob, status_code = await self.async_get_raw(coord, quiet, retries, raise_err)
@@ -38,7 +44,7 @@ class BonnieFetcher(Fetcher):
 
 class BoundedBonnieFetcher(BonnieFetcher):
     """
-    Wraps MapFetcher in a way to limit in-flight fetches.
+    Wraps BonnieFetcher in a way to limit in-flight fetches.
 
     It does this by implementing a semaphore of a certain size, and only launches an actual fetcher job when it can
     acquire a semaphore.
@@ -67,13 +73,12 @@ class BoundedBonnieFetcher(BonnieFetcher):
         self.cancel_flag = cancel_flag
         self.timeout = timeout
 
-    async def async_fetch(self, coord: MapCoord) -> Optional[CookedBonnieResult]:
+    async def async_fetch(self, coord: MapCoord) -> None | CookedBonnieResult:
         """Perform async fetch, but won't actually start fetching if semaphore is depleted."""
         try:
             async with self.sema:
-                if self.cancel_flag is not None:
-                    if self.cancel_flag.is_set():
-                        return None
+                if self.cancel_flag is not None and self.cancel_flag.is_set():
+                    return None
                 return await asyncio.wait_for(
                     self.async_get_data(coord, quiet=True, retries=self.retries),
                     self.timeout,

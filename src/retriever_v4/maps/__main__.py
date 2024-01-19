@@ -58,7 +58,7 @@ AbortRequested = asyncio.Event()
 
 class RetrieverMapsOptions(Protocol):
     """Prototype of module-specific options returned by get_options"""
-    
+
     mapdir: Path
     workers: int
     auto_reset: bool
@@ -70,7 +70,7 @@ class RetrieverMapsOptions(Protocol):
 
 class OptionsProtocol(RetrieverMapsOptions, RetrieverApplication.Options, Protocol):
     """Prototype of options"""
-    
+
     pass
 
 
@@ -121,11 +121,11 @@ def get_options() -> OptionsProtocol:
 
 class SharedMemoryAllocator:
     """A thin wrapper to track shared memory and retire"""
-    
+
     def __init__(self, manager: MPMgr.SharedMemoryManager) -> None:
         """
         Instatiates a SharedMemoryAllocator
-        
+
         :param manager: A SharedMemoryManager from multiprocessing
         """
         self.mgr = manager
@@ -195,7 +195,7 @@ async def async_main(
                 {
                     "coord": fut_result.coord,
                     "tsf": datetime.strftime(datetime.now(), "%y%m%d-%H%M"),
-                    "shm": shm_allocator.new(fut_result.coord, fut_result.result),
+                    "shm": shm_allocator.new(cast(CoordType, fut_result.coord), fut_result.result),
                 }
             )
             return True
@@ -207,7 +207,7 @@ async def async_main(
                 while True:
                     coord: MapCoord = save_success_queue.get_nowait()
                     progress.retire(coord)
-                    shm_allocator.retire(coord)
+                    shm_allocator.retire(cast(CoordType, coord))
             except queue.Empty:
                 pass
 
@@ -320,7 +320,8 @@ def main(
                 progress.add((int(x), int(y)))
 
     if opts.areas:
-        cs_anames = {k.casefold(): k for k in KNOWN_AREAS.keys()}
+        cs_anames = {k.casefold(): k for k in KNOWN_AREAS}
+        # noinspection PyTypeChecker
         want_areas: set[str] = {
             cs_anames[a1] for area in opts.areas for a1 in map(str.casefold, area.split(",")) if a1 in cs_anames
         }

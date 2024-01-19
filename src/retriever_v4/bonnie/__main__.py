@@ -3,10 +3,11 @@
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 import asyncio
 import time
+from asyncio import Task
 from collections import deque
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Final, Optional, TypedDict
+from typing import Any, Final, Generator, NoReturn, Optional, TypedDict
 
 import httpx
 from ruamel.yaml import YAML, RoundTripRepresenter
@@ -32,12 +33,16 @@ AbortRequested = asyncio.Event()
 
 
 class BonnieRegionPointers(TypedDict):
+    """Represents data extracted from BonnieBots DB"""
+
     region_name: str
     region_x: int
     region_y: int
 
 
 class BonnieRegionDetails(TypedDict):
+    """Represents detailed data extracted from BonnieBots DB"""
+
     region_name: str
     region_map_image: str
     region_x: int
@@ -60,11 +65,15 @@ class BonnieRegionDetails(TypedDict):
 
 
 class BonnieRegionsAll(TypedDict):
+    """Represents complete dump of BonnieBots DB"""
+
     updated: int
     regions: list[BonnieRegionPointers]
 
 
 class BonnieMeta(TypedDict):
+    """Represents metadata about BonnieBots DB"""
+
     current: dict[str, Any]
     last_update: datetime
     diff: dict[datetime, dict[str, Any]]
@@ -74,12 +83,15 @@ BonnieDB: dict[CoordType, BonnieMeta] = {}
 
 
 class BonnieProgress:
+    """Tracks progress of BonnieBots retrieval"""
+
     def __init__(
         self,
         bonnie_regions_url: str = "https://www.bonniebots.com/static-api/regions/index.json",
     ):
-        global BonnieDB
-
+        """
+        :param bonnie_regions_url: URL of BonnieBots DB (in JSON format)
+        """
         with httpx.Client() as client:
             resp_all = client.get(bonnie_regions_url)
             self._all_data: BonnieRegionsAll = resp_all.json()
@@ -102,21 +114,26 @@ class BonnieProgress:
 
     @property
     def all_data(self) -> BonnieRegionsAll:
+        """The whole BonnieBots DB"""
         return self._all_data
 
     @property
     def next_coordinate(self) -> CoordType:
+        """The next coordinate to fetch, without actually moving forward the iterator"""
         return self._to_fetch[0]
 
     @property
     def outstanding_count(self) -> int:
+        """The number of retrieval jobs still outstanding"""
         return len(self._outstanding)
 
     @property
-    def total_to_fetch(self):
+    def total_to_fetch(self) -> int:
+        """The number of retrieval jobs in total"""
         return len(self._to_fetch)
 
-    async def abatch(self, batch_size: int):
+    async def abatch(self, batch_size: int) -> Generator[CoordType, None, None]:
+        """Asynchronous generator of a batch"""
         for _ in range(batch_size):
             if not self._to_fetch:
                 return
@@ -124,25 +141,30 @@ class BonnieProgress:
             self._outstanding.add(coord)
             yield coord
 
-    def retire(self, item: CoordType):
+    def retire(self, item: CoordType) -> None:
+        """Retires a retrieval job (remove it from list of outstanding jobs)"""
         self._outstanding.discard(item)
 
-    def save(self):
-        pass
+    def save(self) -> NoReturn:
+        """Save progress to file -- NOT IMPLEMENTED"""
+        raise NotImplementedError("This method is not implemented")
 
 
 Progress: ProgressInterface
 
 
-def update_bonniedata(result: CookedBonnieResult):
-    global BonnieDB
+def update_bonniedata(result: CookedBonnieResult) -> bool | None:
+    """
+    Perfom update on the local copy of BonnieBots DB
 
+    :return: True if there are changes, False otherwise
+    """
     (x, y), curdata, _ = result
     _co = x, y
     _nao = datetime.now().astimezone()
     if _co not in BonnieDB:
         BonnieDB[_co] = {"current": curdata, "last_update": _nao, "diff": {}}
-        return
+        return None
     prev = BonnieDB[_co]["current"]
     BonnieDB[_co]["current"] = curdata
     BonnieDB[_co]["last_update"] = _nao
@@ -160,16 +182,16 @@ def update_bonniedata(result: CookedBonnieResult):
     return False
 
 
-async def amain(duration: int, min_batch_size: int, abort_low_rps: int):
+async def amain(duration: int, min_batch_size: int, abort_low_rps: int) -> None:  # noqa: D103
     limits = httpx.Limits(max_connections=CONN_LIMIT, max_keepalive_connections=CONN_LIMIT)
     async with httpx.AsyncClient(limits=limits, timeout=10.0, http2=HTTP2) as client:
         fetcher = BoundedBonnieFetcher(CONN_LIMIT * 3, client, cancel_flag=AbortRequested)
         shown = False
 
-        def make_task(coord: CoordType):
+        def make_task(coord: CoordType) -> Task:
             return asyncio.create_task(fetcher.async_fetch(MapCoord(*coord)), name=str(coord))
 
-        def pre_batch():
+        def pre_batch() -> None:
             nonlocal shown
             shown = False
 
@@ -179,10 +201,9 @@ async def amain(duration: int, min_batch_size: int, abort_low_rps: int):
                 return False
             if fut_result.status_code not in ACCEPTABLE_STATUSCODES:
                 return False
-            if fut_result.result:
-                if not shown:
-                    shown = True
-                    print("🌐", end="")
+            if fut_result.result and not shown:
+                shown = True
+                print("🌐", end="")
                 # print(
                 #     f'({fut_result.coord.x},{fut_result.coord.y})',
                 #     end="",
@@ -190,7 +211,7 @@ async def amain(duration: int, min_batch_size: int, abort_low_rps: int):
                 # )
             return update_bonniedata(fut_result)
 
-        def post_batch():
+        def post_batch() -> None:
             if not shown:
                 print("Nothing retrieved", end="")
                 return
@@ -212,8 +233,8 @@ async def amain(duration: int, min_batch_size: int, abort_low_rps: int):
         )
 
 
-def main():
-    global BonnieDB, Progress
+def main() -> None:  # noqa: D103
+    global BonnieDB, Progress  # noqa: PLW0603
     yaml = YAML(typ="safe")
     yaml.Representer = RoundTripRepresenter
 

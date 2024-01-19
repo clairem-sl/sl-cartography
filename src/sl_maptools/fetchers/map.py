@@ -10,12 +10,10 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
-    Dict,
+    ClassVar,
     Final,
-    FrozenSet,
     Optional,
     Protocol,
-    Set,
     Union,
 )
 
@@ -30,17 +28,21 @@ from sl_maptools.utils import QuietablePrint
 
 
 class MapProgressProtocol(Protocol):
-    regions: Dict[MapCoord, Any] = {}
-    seen: Set[MapCoord] = set()
-    last_fail_rows: Set[int] = set()
+    """Represents the progress of map retrieval"""
+
+    regions: ClassVar[dict[MapCoord, Any]] = {}
+    seen: ClassVar[set[MapCoord]] = set()
+    last_fail_rows: ClassVar[set[int]] = set()
 
 
 class MapFetcher(Fetcher):
+    """Fetches map tiles from the Map server on Akamai"""
+
     URL_TEMPLATE: Final[str] = "https://secondlife-maps-cdn.akamaized.net/map-1-{x}-{y}-objects.jpg"
 
     def __init__(
         self,
-        skip_tiles: Set[MapCoord] = None,
+        skip_tiles: Optional[set[MapCoord]] = None,
         a_session: httpx.AsyncClient = None,
     ):
         """
@@ -50,7 +52,7 @@ class MapFetcher(Fetcher):
         :param a_session: An Async client session
         """
         super().__init__(a_session=a_session)
-        self.skip_tiles: Set[MapCoord] = set() if skip_tiles is None else skip_tiles
+        self.skip_tiles: set[MapCoord] = set() if skip_tiles is None else skip_tiles
         self.seen_http_vers: set[str] = set()
 
     async def async_get_region_raw(
@@ -72,13 +74,13 @@ class MapFetcher(Fetcher):
         qprint = QuietablePrint(quiet=quiet, flush=True)
         result: RawResult = await self.async_get_raw(coord, quiet, retries, raise_err)
 
-        if result.status_code == 403:
+        if result.status_code == 403:  # noqa: PLR2004
             # "403 Forbidden" means the tile is a void
             qprint("-", end="", flush=True)
             # return MapTile(coord, None)
             return RawResult(coord, None, result.status_code)
 
-        if result.status_code == 200:
+        if result.status_code == 200:  # noqa: PLR2004
             qprint("+", end="", flush=True)
             # with io.BytesIO(response.content) as bio:
             #     grabbed = Image.open(bio)
@@ -96,6 +98,7 @@ class MapFetcher(Fetcher):
         retries: int = 2,
         raise_err: bool = True,
     ) -> MapRegion:
+        """Asynchronously get a region's map tile"""
         raw_rslt: RawResult = await self.async_get_region_raw(coord, quiet, retries, raise_err)
         if raw_rslt.result is None:
             return MapRegion(coord, None)
@@ -113,11 +116,11 @@ class MapFetcher(Fetcher):
         tile_callback: Callable[[Union[MapRegion, str]], None],
         save_every: int = 451,
         stats_every: int = 20,
-        force_rows: Optional[FrozenSet[int]] = None,
+        force_rows: Optional[frozenset[int]] = None,
         progress: MapProgressProtocol = None,
-        err_callback: Callable[[str], None] = None,
+        err_callback: Optional[Callable[[str], None]] = None,
         quiet: bool = False,
-    ):
+    ) -> None:
         """
         Asynchronously get an area from corner1 to corner2 inclusive.
 
@@ -236,9 +239,8 @@ class MapFetcher(Fetcher):
                         qprint(f", with {aborted_count} row aborts.")
                     else:
                         qprint()
-            else:
-                if skipping:
-                    qprint(y, flush=True)
+            if skipping:
+                qprint(y, flush=True)
             qprint(f"All requested rows have been fetched, a total of {rows_processed} new rows.")
         except (KeyboardInterrupt, RuntimeError):
             progress.last_fail_rows.add(y)
