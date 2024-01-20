@@ -168,10 +168,11 @@ def main(opts: Options) -> None:  # noqa: D103
         "stroke_fill": (0, 0, 0, 255),
     }
 
+    ts = datetime.now().strftime("%y%m%d-%H%M")
     for variant in OVERLAY_VARIANTS:
         canvas = make_grid(worldmap, variant, text_settings)
         print("  Saving ...", end="", flush=True)
-        targ_p = gridsector_dir / f"WorldGridSectors_{opts.source_type}_{variant}.png"
+        targ_p = gridsector_dir / f"WorldGridSectors_{opts.source_type}_{variant}_{ts}.png"
         targ_p.unlink(missing_ok=True)
         canvas.save(targ_p)
         print(f" {targ_p}", flush=True)
