@@ -4,9 +4,10 @@
 
 import pickle
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Final, NamedTuple
+from typing import Final, NamedTuple, cast
+from zoneinfo import ZoneInfo
 
 from sl_maptools import CoordType, RegionsDBRecord3
 
@@ -61,7 +62,9 @@ def main():
         row = y // 100
         gs = f"[{GRID_COLS[col]}{row}]"
         sco = f"{co}"
-        by_grid.append((gs, sco, name))
+        age = (cast(timedelta, datetime.now(tz=ZoneInfo("Asia/Jakarta")) - t) + timedelta(hours=24)).days
+        # age = 0
+        by_grid.append((gs, sco, name, age))
         print(f"{i:>3}) {t.isoformat(timespec='minutes')} {sco:12} {gs:6} {name}")
         if 22 <= i <= 27:
             x_s["Silks"].add(x)
@@ -75,8 +78,8 @@ def main():
     print()
 
     print("Sorted by Grid then by Coordinates:")
-    for i, (gs, sco, name) in enumerate(sorted(by_grid), start=1):
-        print(f"{i:>3} {gs:6} {sco:12} {name}")
+    for i, (gs, sco, name, age) in enumerate(sorted(by_grid), start=1):
+        print(f"{i:>3} {gs:6} {sco:12} [{age}d] {name}")
 
 
 if __name__ == '__main__':
