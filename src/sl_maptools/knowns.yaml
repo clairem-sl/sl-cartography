@@ -16,6 +16,33 @@
 
 # region # Linden Continents - Bellisseria
 
+Bellisseria_ALL:
+  meta:
+    automatic: False
+  includes:
+    - 1023-1100/928-1023
+  excludes:
+    # Sansara
+    - 1023-1034/978-1023
+    - 1035-1038/982-986
+    - 1035-1038/1008-1009
+    # Satori
+    - 1100/1007-1010
+    # Jeogeot
+    - 1028-1038/928
+    - 1030-1038/929
+    - 1031-1039/930
+    - 1032-1039/931
+    - 1033-1039/932
+    - 1034-1039/933-934
+    - 1029-1037/935-937
+    - 1032-1037/938-939
+    # Unattached sims on southeast
+    - 1061-1100/928-965
+    - 1081-1100/928-986
+    # Unattached sims on the north
+    - 1040-1079/1001-1023
+
 # region ## Claire's Belli separation
 
 Bellisseria_CM_Annex:
