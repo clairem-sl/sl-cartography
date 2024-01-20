@@ -55,7 +55,9 @@ async def aretrieve(opts: Options, wants: dict[str, list[tuple[int, int, int, in
                     for xy in product(range(x1, x2 + 1), range(y1, y2 + 1))
                     if xy not in seen
                 ]
-            for fut in asyncio.as_completed(tasks):
+            totlen = len(str(tot := len(tasks)))
+            reg_c = 0
+            for c, fut in enumerate(asyncio.as_completed(tasks), start=1):
                 mr: RawResult = await fut
                 if mr.result is None:
                     continue
@@ -64,8 +66,10 @@ async def aretrieve(opts: Options, wants: dict[str, list[tuple[int, int, int, in
                 targ = opts.out_dir / f"{x}-{y}_{ts}.jpg"
                 with targ.open("wb") as fout:
                     fout.write(mr.result)
-                print(f"  {targ}")
+                print(f"  ({c:{totlen}}/{tot}) {targ}")
+                reg_c += 1
                 seen.add((x, y))
+            print(f"  = {reg_c} actual regions")
 
 
 def main(opts: Options) -> None:  # noqa: D103
