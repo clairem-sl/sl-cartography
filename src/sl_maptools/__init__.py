@@ -221,11 +221,14 @@ class AreaBoundsSet(Iterable):
         return AreaBounds(x_min, y_min, x_max, y_max)
 
 
-class AreaDescriptorMeta(TypedDict):
-    """Describes the (optional) metadata of an AreaDescriptor"""
-
-    automatic: NotRequired[bool]
-    validate: NotRequired[bool]
+AreaDescriptorMeta = TypedDict(
+    "AreaDescriptorMeta",
+    {
+        "automatic": NotRequired[bool],
+        "validate": NotRequired[bool],
+        "target-dir": NotRequired[bool],
+    }
+)
 
 
 DEFAULT_ADMETA: AreaDescriptorMeta = {
@@ -284,6 +287,11 @@ class AreaDescriptor:
     def validate(self) -> bool:
         """Whether the area will obey coordinate validation"""
         return self.meta["validate"]
+
+    @property
+    def target_dir(self) -> bool | None:
+        """Preferred target directory, if any"""
+        return self.meta.get("target-dir")
 
     @property
     def bounding_box(self) -> AreaBounds:

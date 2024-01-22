@@ -258,7 +258,7 @@ def main(opts: Options) -> None:  # noqa: D103
         if not opts.no_lattice:
             maker = LatticeMaker(regions_db=regsdb, validation_set=validation_set)
         for area_name, area_desc in wanted_areas:
-            targdir = opts.outdir / area_name
+            targdir = opts.outdir / (area_desc.target_dir or area_name)
             targdir.mkdir(parents=True, exist_ok=True)
             print(f"{area_name}: ", end="", flush=True)
             targ = targdir / (area_name + ".png")
