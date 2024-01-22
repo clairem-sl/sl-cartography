@@ -60,7 +60,7 @@ class MPMapOptions(Protocol):
     workers: int
     savers: int
     prune_on_abort: bool
-    no_prune: bool
+    prune: bool
 
 
 def get_options() -> MPMapOptions:
@@ -75,9 +75,9 @@ def get_options() -> MPMapOptions:
     grp_prune.add_argument(
         "--prune-on-abort",
         action="store_true",
-        help="Prune on abort as well (default: prune on finish)",
+        help="Prune on abort as well",
     )
-    grp_prune.add_argument("--no-prune", action="store_true", help="Do not prune at all")
+    grp_prune.add_argument("--prune", action="store_true", default=False, help="Prune after finish")
 
     _opts = parser.parse_args()
     return cast(MPMapOptions, _opts)
@@ -478,7 +478,7 @@ def main(opts: MPMapOptions) -> None:  # noqa: D103
     finish = time.monotonic()
     print(f"Finished in {finish - start:_.2f}s on {datetime.now().isoformat(timespec='minutes')}")
 
-    if opts.no_prune:
+    if not opts.prune:
         return
 
     if AbortRequested.is_set() and not opts.prune_on_abort:
