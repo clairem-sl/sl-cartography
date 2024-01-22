@@ -62,7 +62,7 @@ def main():
         row = y // 100
         gs = f"[{GRID_COLS[col]}{row}]"
         sco = f"{co}"
-        age = (cast(timedelta, datetime.now(tz=ZoneInfo("Asia/Jakarta")) - t) + timedelta(hours=24)).days
+        age = (cast(timedelta, datetime.now(tz=ZoneInfo("Asia/Jakarta")) - t)).days
         # age = 0
         by_grid.append((gs, sco, name, age))
         print(f"{i:>3}) {t.isoformat(timespec='minutes')} {sco:12} {gs:6} {name}")
