@@ -46,6 +46,7 @@ Fantasseria:
 
 
 class Options(NamedTuple):
+    overwrite: bool
     mapdir: Path
     outdir: Path
 
@@ -53,6 +54,7 @@ class Options(NamedTuple):
 def get_options() -> Options:
     parser = argparse.ArgumentParser()
 
+    parser.add_argument("--overwrite", action="store_true", default=False)
     parser.add_argument("--mapdir", type=Path, default=Path(r"C:\Cache\SL-Carto\MapTilesMP"))
     parser.add_argument("--outdir", type=Path, default=Path(r"C:\Cache\SL-Carto\AreaMaps\Belli_for_SLGI"))
 
@@ -93,6 +95,10 @@ def main(opts: Options):
     westmost = belli_all.x_westmost
     nordmost = belli_all.y_northmost
     for mapname, excludes in data.items():
+        targ: Path = opts.outdir / f"{mapname}.png"
+        if not opts.overwrite and targ.exists():
+            print(f"Skipping {mapname}")
+            continue
         print(f"Generating {mapname} ... ", end="", flush=True)
         exc = AreaBoundsSet(AreaBounds.from_slgi(e) for e in excludes)
         canvas = canvas_base.copy()
@@ -106,7 +112,6 @@ def main(opts: Options):
             canv_y = (nordmost - xy[1]) * 256
             canvas.paste(img_tiles[xy], (canv_x, canv_y))
 
-        targ: Path = opts.outdir / f"{mapname}.png"
         print(f"saving {targ} ... ", end="", flush=True)
         canvas.save(targ)
         print("done.", flush=True)
