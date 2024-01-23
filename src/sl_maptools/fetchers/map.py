@@ -7,7 +7,6 @@ import asyncio
 import io
 import time
 from typing import (
-    TYPE_CHECKING,
     Any,
     Callable,
     ClassVar,
@@ -17,13 +16,15 @@ from typing import (
     Union,
 )
 
-if TYPE_CHECKING:
-    import httpx
-
 from PIL import Image
 
-from sl_maptools import MapCoord, MapRegion, SupportsSet
-from sl_maptools.fetchers import Fetcher, FetcherConnectionError, RawResult
+from sl_maptools import MapCoord, MapRegion
+from sl_maptools.fetchers import (
+    BoundedFetcher,
+    Fetcher,
+    FetcherConnectionError,
+    RawResult,
+)
 from sl_maptools.utils import QuietablePrint
 
 
@@ -40,27 +41,25 @@ class MapFetcher(Fetcher):
 
     URL_TEMPLATE: Final[str] = "https://secondlife-maps-cdn.akamaized.net/map-1-{x}-{y}-objects.jpg"
 
-    def __init__(
-        self,
-        skip_tiles: Optional[set[MapCoord]] = None,
-        a_session: httpx.AsyncClient = None,
-    ):
+    def __init__(self, *args, skip_tiles: Optional[set[MapCoord]] = None, **kwargs):  # noqa: ANN002, ANN003
         """
         Creates a Map Tile Getter with logic to retrieve map tiles
 
         :param skip_tiles: A Set of coordinates to skip from being fetched
-        :param a_session: An Async client session
+        :param args: See Fetcher.__init__
+        :param kwargs: See Fetcher.__init__
         """
-        super().__init__(a_session=a_session)
+        super().__init__(*args, **kwargs)
         self.skip_tiles: set[MapCoord] = set() if skip_tiles is None else skip_tiles
         self.seen_http_vers: set[str] = set()
 
-    async def async_get_region_raw(
+    async def async_get_raw(
         self,
         coord: MapCoord,
         quiet: bool = False,
         retries: int = 2,
         raise_err: bool = True,
+        acceptable_codes: Optional[set[int]] = None,
     ) -> RawResult:
         """
         Asynchronously fetch a map tile from a given coordinate
@@ -69,10 +68,12 @@ class MapFetcher(Fetcher):
         :param quiet: If False (default), will emit progress indicator
         :param retries: How many times to retry if fetching attempt results in error (default = 3)
         :param raise_err: If True (default), will (re-)raise error
+        :param acceptable_codes: Ignored
         :return: An instance of MapTile fetched from (X, Y)
         """
+        del acceptable_codes
         qprint = QuietablePrint(quiet=quiet, flush=True)
-        result: RawResult = await self.async_get_raw(coord, quiet, retries, raise_err)
+        result: RawResult = await super().async_get_raw(coord, quiet, retries, raise_err)
 
         if result.status_code == 403:  # noqa: PLR2004
             # "403 Forbidden" means the tile is a void
@@ -91,15 +92,17 @@ class MapFetcher(Fetcher):
 
         raise RuntimeError(f"Unexpected result: {result}")
 
-    async def async_get_region(
+    async def async_get_cooked(
         self,
         coord: MapCoord,
         quiet: bool = False,
         retries: int = 2,
         raise_err: bool = True,
+        acceptable_codes: Optional[set[int]] = None,
     ) -> MapRegion:
         """Asynchronously get a region's map tile"""
-        raw_rslt: RawResult = await self.async_get_region_raw(coord, quiet, retries, raise_err)
+        del acceptable_codes
+        raw_rslt: RawResult = await self.async_get_raw(coord, quiet, retries, raise_err)
         if raw_rslt.result is None:
             return MapRegion(coord, None)
 
@@ -167,7 +170,7 @@ class MapFetcher(Fetcher):
                     coord = MapCoord(x, y)
                     if coord in progress.seen and y not in force_rows:
                         continue
-                    tasks.append(self.async_get_region(coord, quiet=True))
+                    tasks.append(self.async_get_cooked(coord, quiet=True))
 
                 if not tasks:
                     if not skipping:
@@ -246,7 +249,7 @@ class MapFetcher(Fetcher):
             progress.last_fail_rows.add(y)
 
 
-class BoundedMapFetcher(MapFetcher):
+class BoundedMapFetcher(MapFetcher, BoundedFetcher):
     """
     Wraps MapFetcher in a way to limit in-flight fetches.
 
@@ -256,36 +259,3 @@ class BoundedMapFetcher(MapFetcher):
     This is done to limit the concurrent hit against the SL Maps CDN, because empirical experience seems to indicate
     that if there are too many in-flight requests, we get throttled.
     """
-
-    def __init__(
-        self,
-        sema_size: int,
-        async_session: httpx.AsyncClient,
-        retries: int = 3,
-        cooked: bool = False,
-        cancel_flag: SupportsSet = None,
-    ):
-        """
-
-        :param sema_size: Size of semaphore, which limits the number of in-flight requests
-        :param async_session: The asynchronous httpx session to be used (connection pool, etc)
-        :param retries: How many times to retry if request completes but we get an unexpected HTTP Status Code
-        """
-        super().__init__(a_session=async_session)
-        self.sema = asyncio.Semaphore(sema_size)
-        self.retries = retries
-        self.cooked = cooked
-        self.cancel_flag = cancel_flag
-
-    async def async_fetch(self, coord: MapCoord) -> Optional[MapRegion | RawResult]:
-        """Perform async fetch, but won't actually start fetching if semaphore is depleted."""
-        try:
-            async with self.sema:
-                if self.cancel_flag is not None and self.cancel_flag.is_set():
-                    return None
-                if self.cooked:
-                    return await self.async_get_region(coord, quiet=True, retries=self.retries)
-                return await self.async_get_region_raw(coord, quiet=True, retries=self.retries)
-        except asyncio.CancelledError:
-            print(f"{coord} cancelled")
-            raise

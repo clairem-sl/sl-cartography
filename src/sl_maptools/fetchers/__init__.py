@@ -3,9 +3,9 @@
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 from __future__ import annotations
 
-import abc
 import asyncio
 import random
+from abc import ABCMeta, abstractmethod
 from typing import TYPE_CHECKING, NamedTuple, Optional
 
 import httpx
@@ -49,7 +49,7 @@ class CookedResult(NamedTuple):
     status_code: int = 0
 
 
-class Fetcher(metaclass=abc.ABCMeta):
+class Fetcher(metaclass=ABCMeta):
     """Perform name-fetching asynchronously"""
 
     URL_TEMPLATE: str = ""
@@ -71,7 +71,7 @@ class Fetcher(metaclass=abc.ABCMeta):
         raise_err: bool = True,
         acceptable_codes: Optional[set[int]] = None,
     ) -> RawResult | None:
-        """Get raw region data asynchronously"""
+        """Get raw data for a coordinate asynchronously"""
         qprint = QuietablePrint(quiet, flush=True)
         qprint(".", end="")
         if acceptable_codes is None:
@@ -107,3 +107,71 @@ class Fetcher(metaclass=abc.ABCMeta):
             raise FetcherConnectionError(internal_errors=internal_errors, coord=coord)
 
         return None
+
+    @abstractmethod
+    async def async_get_cooked(
+        self,
+        coord: MapCoord,
+        quiet: bool = False,
+        retries: int = 6,
+        raise_err: bool = True,
+        acceptable_codes: Optional[set[int]] = None,
+    ) -> CookedResult | None:
+        """Get cooked (decoded) data for a coordinate asynchronously"""
+        raise NotImplementedError()
+
+
+class BoundedFetcher(Fetcher, metaclass=ABCMeta):
+    """
+    Wraps Fetcher in a way to limit in-flight fetches.
+
+    It does this by implementing a semaphore of a certain size, and only launches an actual fetcher job when it can
+    acquire a semaphore.
+
+    This is to prevent throttling if we hit the maximum rps limit of the source server.
+    """
+
+    def __init__(
+        self,
+        sema_size: int,
+        async_session: httpx.AsyncClient,
+        *,
+        retries: int = 3,
+        timeout: Optional[int] = None,
+        cooked: bool = False,
+        cancel_flag: Optional[asyncio.Event] = None,
+        suppress_cancelled_message: bool = True,
+    ):
+        """
+
+        :param sema_size: Size of semaphore, which limits the number of in-flight requests
+        :param async_session: The asynchronous httpx session to be used (connection pool, etc)
+        :param retries: How many times to retry if request completes but we get an unexpected HTTP Status Code
+        """
+        super().__init__(a_session=async_session)
+        self.sema = asyncio.Semaphore(sema_size)
+        self.retries = retries
+        self.timeout = timeout
+        self.cooked = cooked
+        self.cancel_flag = cancel_flag
+        self.suppress_cancelled_message = suppress_cancelled_message
+
+    async def async_fetch(self, coord: MapCoord) -> Optional[RawResult | CookedResult]:
+        """Perform async fetch, but won't actually start fetching if semaphore is depleted."""
+        try:
+            async with self.sema:
+                if self.cancel_flag is not None and self.cancel_flag.is_set():
+                    return None
+                waitable = (
+                    self.async_get_cooked(coord, quiet=True, retries=self.retries)
+                    if self.cooked
+                    else self.async_get_raw(coord, quiet=True, retries=self.retries)
+                )
+                return await asyncio.wait_for(waitable, self.timeout)
+        except asyncio.CancelledError:
+            if not self.suppress_cancelled_message:
+                print(f"{coord} cancelled")
+            raise
+        except (asyncio.TimeoutError, httpx.PoolTimeout):
+            print(f"{coord} Timeout!")
+            raise

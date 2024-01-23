@@ -187,7 +187,7 @@ def update_bonniedata(result: CookedBonnieResult) -> bool | None:
 async def amain(duration: int, min_batch_size: int, abort_low_rps: int) -> None:  # noqa: D103
     limits = httpx.Limits(max_connections=CONN_LIMIT, max_keepalive_connections=CONN_LIMIT)
     async with httpx.AsyncClient(limits=limits, timeout=10.0, http2=HTTP2) as client:
-        fetcher = BoundedBonnieFetcher(CONN_LIMIT * 3, client, cancel_flag=AbortRequested)
+        fetcher = BoundedBonnieFetcher(CONN_LIMIT * 3, client, cancel_flag=AbortRequested, cooked=True)
         shown = False
 
         def make_task(coord: CoordType) -> Task:

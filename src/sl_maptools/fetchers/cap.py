@@ -3,13 +3,12 @@
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 from __future__ import annotations
 
-import asyncio
 import re
 from typing import TYPE_CHECKING, Any, ClassVar, Final, Optional, Protocol
 
 import httpx
 
-from sl_maptools.fetchers import CookedResult, Fetcher, RawResult
+from sl_maptools.fetchers import BoundedFetcher, CookedResult, Fetcher, RawResult
 
 if TYPE_CHECKING:
     from sl_maptools import MapCoord
@@ -35,25 +34,29 @@ class NameFetcher(Fetcher):
         str
     ] = "https://cap.secondlife.com/cap/0/b713fe80-283b-4585-af4d-a3b7d9a32492?var=region&grid_x={x}&grid_y={y}"
 
-    async def async_get_name_raw(
+    async def async_get_raw(
         self,
         coord: MapCoord,
         quiet: bool = False,
         retries: int = 6,
         raise_err: bool = True,
+        acceptable_codes: Optional[set[int]] = None,
     ) -> RawResult:
         """Asynchronously return raw data from Cap server."""
-        return await self.async_get_raw(coord, quiet, retries, raise_err, {200, 403})
+        del acceptable_codes
+        return await super().async_get_raw(coord, quiet, retries, raise_err, {200, 403})
 
-    async def async_get_name(
+    async def async_get_cooked(
         self,
         coord: MapCoord,
         quiet: bool = False,
         retries: int = 6,
         raise_err: bool = True,
+        acceptable_codes: Optional[set[int]] = None,
     ) -> CookedResult:
         """Asynchronously get data from Cap server, and decodes it"""
-        raw_result = await self.async_get_name_raw(coord, quiet, retries, raise_err)
+        del acceptable_codes
+        raw_result = await self.async_get_raw(coord, quiet, retries, raise_err)
         if raw_result.result is None:
             return CookedResult(coord, None)
         rsltb: bytes = raw_result.result
@@ -67,7 +70,7 @@ class NameFetcher(Fetcher):
         return CookedResult(coord, matches.group(2), raw_result.status_code)
 
 
-class BoundedNameFetcher(NameFetcher):
+class BoundedNameFetcher(NameFetcher, BoundedFetcher):
     """
     Wraps MapFetcher in a way to limit in-flight fetches.
 
@@ -77,36 +80,3 @@ class BoundedNameFetcher(NameFetcher):
     This is done to limit the concurrent hit against the SL Maps CDN, because empirical experience seems to indicate
     that if there are too many in-flight requests, we get throttled.
     """
-
-    def __init__(
-        self,
-        sema_size: int,
-        async_session: httpx.AsyncClient,
-        retries: int = 3,
-        cooked: bool = False,
-        cancel_flag: Optional[asyncio.Event] = None,
-    ):
-        """
-
-        :param sema_size: Size of semaphore, which limits the number of in-flight requests
-        :param async_session: The asynchronous httpx session to be used (connection pool, etc)
-        :param retries: How many times to retry if request completes but we get an unexpected HTTP Status Code
-        """
-        super().__init__(a_session=async_session)
-        self.sema = asyncio.Semaphore(sema_size)
-        self.retries = retries
-        self.cooked = cooked
-        self.cancel_flag = cancel_flag
-
-    async def async_fetch(self, coord: MapCoord) -> Optional[RawResult | CookedResult]:
-        """Perform async fetch, but won't actually start fetching if semaphore is depleted."""
-        try:
-            async with self.sema:
-                if self.cancel_flag is not None and self.cancel_flag.is_set():
-                    return None
-                if self.cooked:
-                    return await self.async_get_name(coord, quiet=True, retries=self.retries)
-                return await self.async_get_name_raw(coord, quiet=True, retries=self.retries)
-        except asyncio.CancelledError:
-            print(f"{coord} cancelled")
-            raise
