@@ -264,7 +264,7 @@ def main(opts: OptionsType):
             elif regions_db[k]["current_name"] == "":
                 del mapfiles_d[k]
     #
-    bonnie_coords = get_bonnie_coords(opts.bonniedb, opts.fetchbonnie)
+    bonnie_coords = get_bonnie_coords(Config.bonnie)
     if bonnie_coords:
         for k in list(mapfiles_d.keys()):
             if k not in bonnie_coords:

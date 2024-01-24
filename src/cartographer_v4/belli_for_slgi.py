@@ -13,7 +13,11 @@ from ruamel.yaml import YAML
 
 from sl_maptools import AreaBounds, AreaBoundsSet, CoordType
 from sl_maptools.knowns import KNOWN_AREAS
+from sl_maptools.utils import ConfigReader
 from sl_maptools.validator import get_bonnie_coords, inventorize_maps_latest
+
+
+Config = ConfigReader("config.toml")
 
 # language=yaml
 BELLI_EXCLUSIONS_YAML = """
@@ -142,7 +146,7 @@ def main(opts: Options) -> None:  # noqa: D103
     belli_height = belli_all.bounding_box.height * 256
     belli_coords: set[CoordType] = set(xy for xy in belli_all.xy_iterator())
 
-    bonnie_coords = get_bonnie_coords(None, True)
+    bonnie_coords = get_bonnie_coords(Config.bonnie)
     map_tiles = inventorize_maps_latest(opts.mapdir)
 
     with StringIO(BELLI_EXCLUSIONS_YAML) as fin:

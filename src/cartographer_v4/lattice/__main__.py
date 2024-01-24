@@ -79,7 +79,7 @@ def main(opts: LatticeOptions) -> None:  # noqa: D103
     with DB_PATH.open("rb") as fin:
         regsdb: dict[CoordType, RegionsDBRecord3] = pickle.load(fin)  # noqa: S301
     validation_set.update(k for k, v in regsdb.items() if v["current_name"])
-    bonnie_coords = get_bonnie_coords(None, True)
+    bonnie_coords = get_bonnie_coords(Config.bonnie)
     validation_set.intersection_update(bonnie_coords)
 
     want_areas: set[Path]

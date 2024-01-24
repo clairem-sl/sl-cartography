@@ -4,21 +4,24 @@
 from __future__ import annotations
 
 import asyncio
-import datetime
 import random
 import re
 import urllib.parse
 import uuid
 from dataclasses import dataclass
+from datetime import datetime, timedelta
 from itertools import islice
 from pathlib import Path
-from typing import Dict, Final, Tuple, Union
+from typing import TYPE_CHECKING, Dict, Final, Tuple, Union
 
 import httpx
 import msgpack
 from ruamel import yaml as ryaml
 
 from sl_maptools import CoordType, MapCoord, MapRegion, RE_MAPFILE
+
+if TYPE_CHECKING:
+    from sl_maptools.utils import BonnieConfig
 
 # This source file uses data & API provided by Tyche Shepherd & gridsurvey.com
 
@@ -36,12 +39,12 @@ class GridSurveyDatum(object):
     y: int
     access: str
     estate: str
-    firstseen: datetime.date
-    lastseen: datetime.date
+    firstseen: datetime
+    lastseen: datetime
     objects_uuid: uuid.UUID
     terrain_uuid: uuid.UUID
     incidents: int
-    updated: datetime.date
+    updated: datetime
     region_uuid: uuid.UUID
     name: str
 
@@ -52,7 +55,7 @@ class GridSurveyDatum(object):
         kvp["x"] = int(kvp["x"])
         kvp["y"] = int(kvp["y"])
         for dk in ("firstseen", "lastseen", "updated"):
-            kvp[dk] = datetime.datetime.strptime(kvp[dk], "%Y-%m-%d").date()
+            kvp[dk] = datetime.strptime(kvp[dk], "%Y-%m-%d").date()
         for uk in ("objects_uuid", "terrain_uuid", "region_uuid"):
             kvp[uk] = uuid.UUID(kvp[uk])
         return cls(**kvp)
@@ -167,18 +170,30 @@ class MapValidator(object):
 BONNIE_REGDB_URL: Final[str] = "https://www.bonniebots.com/static-api/regions/index.json"
 
 
-def get_bonnie_coords(bonniedb: None | Path, fetchbonnie: bool) -> set[CoordType]:
+def get_bonnie_coords(config_bonnie: BonnieConfig, *, maxage: timedelta | int = 1) -> set[CoordType]:
+    if not isinstance(maxage, timedelta):
+        maxage = timedelta(days=maxage)
     bdb_data_raw = {}
-    if bonniedb:
-        print(f"Reading BonnieBots Regions DB from {bonniedb} ... ", end="", flush=True)
-        with bonniedb.open("rb") as fin:
-            bdb_data_raw = ryaml.safe_load(fin)
-    elif fetchbonnie:
-        print(f"Fetching BonnieBots Regions DB ... ", end="", flush=True)
+    bonniedb: Path = Path(config_bonnie.dir) / config_bonnie.db
+    if bonniedb.exists():
+        age = datetime.now() - datetime.fromtimestamp(bonniedb.stat().st_mtime)
+        if age < maxage:
+            with bonniedb.open("rt") as fin:
+                bdb_data_raw = ryaml.safe_load(fin)
+            print(f"BonnieBots DB read from {bonniedb} ...", end="", flush=True)
+    if not bdb_data_raw:
+        print("Fetching BonnieBots Regions DB ... ", end="", flush=True)
         with httpx.Client(timeout=10) as client:
             resp = client.get(BONNIE_REGDB_URL)
             bdb_data_raw = resp.json()
-    return {(int(record["region_x"]), int(record["region_y"])) for record in bdb_data_raw["regions"]}
+        with bonniedb.open("wt") as fout:
+            ryaml.dump(bdb_data_raw, fout)
+    result = {
+        (int(record["region_x"]), int(record["region_y"]))
+        for record in bdb_data_raw["regions"]
+    }
+    print(f"{len(result)} records")
+    return result
 
 
 def inventorize_maps_latest(mapdir: Path | str) -> dict[CoordType, Path]:

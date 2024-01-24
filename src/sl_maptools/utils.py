@@ -159,6 +159,12 @@ class LatticeConfig(Protocol):
     size_coord: int
 
 
+class BonnieConfig(Protocol):
+    """Attribues for the [bonnie] section of config.toml"""
+    dir: str
+    db: str
+
+
 class SLMapToolsConfig(Protocol):
     """Representation of configuration in config.toml"""
 
@@ -168,6 +174,7 @@ class SLMapToolsConfig(Protocol):
     nightlights: NightlightsConfig
     areas: AreasConfig
     lattice: LatticeConfig
+    bonnie: BonnieConfig
 
 
 class ConfigReader(SLMapToolsConfig):

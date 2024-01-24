@@ -248,7 +248,7 @@ def main(opts: Options) -> None:  # noqa: D103
     validation_set: set[CoordType] = {k for k, v in regsdb.items() if v["current_name"]}
 
     if not opts.no_bonnie:
-        bonnie_coords = get_bonnie_coords(None, True)
+        bonnie_coords = get_bonnie_coords(Config.bonnie)
         validation_set.intersection_update(bonnie_coords)
 
     map_tiles = inventorize_maps_latest(opts.mapdir)

@@ -73,7 +73,7 @@ def get_options() -> Options:
 
 def main(opts: Options):
     GRID_DIR.mkdir(parents=True, exist_ok=True)
-    valid_coords = get_bonnie_coords(None, True)
+    valid_coords = get_bonnie_coords(Config.bonnie)
     maptiles = {co: mapp for co, mapp in inventorize_maps_latest(MAP_DIR).items() if co in valid_coords}
     bk_clr = opts.bg_color + (0,)
 

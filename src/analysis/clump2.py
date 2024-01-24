@@ -38,7 +38,7 @@ def main(opts: ClumpOptions):
     with regionsdb.open("rb") as fin:
         regsdb: dict[CoordType, RegionsDBRecord] = pickle.load(fin)
     validation_set.update(k for k, v in regsdb.items() if v["current_name"])
-    bonnie_coords = get_bonnie_coords(None, True)
+    bonnie_coords = get_bonnie_coords(Config.bonnie)
     print()
     # print(bonnie_coords)
     validation_set.intersection_update(bonnie_coords)

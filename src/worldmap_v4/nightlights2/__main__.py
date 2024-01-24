@@ -253,7 +253,7 @@ def main(opts: Options) -> None:  # noqa: D103
     # Filter with Bonnie if not prevented
     if not opts.no_bonnie:
         # Get Bonnie data
-        bonnie_coords = get_bonnie_coords(None, True)
+        bonnie_coords = get_bonnie_coords(Config.bonnie)
         if bonnie_coords:
             regions.intersection_update(bonnie_coords)
             print(flush=True)
