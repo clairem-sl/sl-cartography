@@ -1,7 +1,6 @@
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
-
 from __future__ import annotations
 
 import argparse
@@ -18,13 +17,23 @@ from collections import deque
 from contextlib import AbstractContextManager, contextmanager
 from datetime import datetime, timedelta, timezone
 from enum import IntEnum
-from typing import TYPE_CHECKING, Any, Callable, Final, Generator, Protocol, Type, TypedDict
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Final,
+    Generator,
+    Protocol,
+    Type,
+    TypedDict,
+)
 
 import ruamel.yaml as ryaml
 
 if TYPE_CHECKING:
     from pathlib import Path
     from types import TracebackType
+
     from sl_maptools import CoordType, MapCoord
 
 
@@ -399,6 +408,8 @@ class RetrieverApplication(AbstractContextManager):
             ryaml.dump(log_data, finout)
 
     class Options(Protocol):
+        """Common options for Retriever_v4 modules"""
+
         force: bool
         min_batch_size: int
         abort_low_rps: int
@@ -410,6 +421,7 @@ class RetrieverApplication(AbstractContextManager):
         """An Action that tries to parse HH:MM arg"""
 
         def __call__(self, parser, namespace, values, option_string=None):  # noqa: ANN001, ARG002
+            """Will be called by argument parser to parse detected options"""
             m = re.match(r"^(\d{1,2}):(\d{1,2})$", values)
             if m is None or not (0 <= int(m.group(1)) <= 23) or not (0 <= int(m.group(2)) <= 59):  # noqa: PLR2004
                 parser.error("Please enter time in 24h HH:MM format!")
@@ -417,6 +429,7 @@ class RetrieverApplication(AbstractContextManager):
 
     @staticmethod
     def add_options(parser: argparse.ArgumentParser) -> None:
+        """Adds options to the app's ArgumentParser"""
         parser.add_argument("--force", action="store_true", help="Ignore lock file")
         parser.add_argument(
             "--min-batch-size",
@@ -460,6 +473,7 @@ class RetrieverApplication(AbstractContextManager):
 
     @staticmethod
     def calc_duration(opts: RetrieverApplication.Options) -> int:
+        """Calculate duration in seconds given a certain options set"""
         nao = datetime.now()
         if opts.duration > 0:
             dur = opts.duration
