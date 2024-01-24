@@ -68,8 +68,7 @@ class OptionsType(Protocol):
     mapdir: Path
     outdir: Path
     regionsdb: Path
-    fetchbonnie: bool
-    bonniedb: Path
+    no_bonnie: bool
     final_only: bool
 
 
@@ -90,8 +89,9 @@ def get_opts() -> OptionsType:
     parser.add_argument("--regionsdb", metavar="DB", type=Path, default=DEFA_REGIONSDB)
 
     bonnie_grp = parser.add_mutually_exclusive_group()
-    bonnie_grp.add_argument("--fetchbonnie", action="store_true")
-    bonnie_grp.add_argument("--bonniedb", metavar="JSON", type=Path)
+    bonnie_grp.add_argument(
+        "--no-bonnie", action="store_true", default=False, help="Do not validate against BonnieBots DB"
+    )
 
     _opts = parser.parse_args()
     return cast(OptionsType, _opts)
@@ -264,8 +264,8 @@ def main(opts: OptionsType):
             elif regions_db[k]["current_name"] == "":
                 del mapfiles_d[k]
     #
-    bonnie_coords = get_bonnie_coords(Config.bonnie)
-    if bonnie_coords:
+    if not opts.no_bonnie:
+        bonnie_coords = get_bonnie_coords(Config.bonnie)
         for k in list(mapfiles_d.keys()):
             if k not in bonnie_coords:
                 del mapfiles_d[k]
@@ -372,7 +372,7 @@ def main(opts: OptionsType):
                 print(
                     f"\nCached Dominant Colors is now "
                     f"{len(domc_db)} coords ({sum(map(len, domc_db.values()))} files), ",
-                    end=""
+                    end="",
                 )
                 make_backup(domc_db_path)
                 # Sort so it's right and nice order
