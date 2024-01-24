@@ -3,18 +3,22 @@
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 # This source file uses data & API provided by Tyche Shepherd & gridsurvey.com
+from __future__ import annotations
 
 import re
 import time
 from pathlib import Path
-from typing import Generator, List, Set
+from typing import TYPE_CHECKING, Generator, List, Set
 
 import httpx
 import msgpack
-from bs4 import BeautifulSoup
 
 from gridsurvey import STATE_DIR, GridSurveyWeb, GridSurveyWebDatum
 from sl_maptools.utils import make_backup
+
+if TYPE_CHECKING:
+    from bs4 import BeautifulSoup
+
 
 RE_PAGEOF = re.compile(r"Showing page \d+ of (\d+) pages")
 GS_DATA = STATE_DIR / Path("gridsurvey_webdata.msgp")

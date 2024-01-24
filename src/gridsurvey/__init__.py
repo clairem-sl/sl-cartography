@@ -3,6 +3,7 @@
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 # This source file uses data & API provided by Tyche Shepherd & gridsurvey.com
+from __future__ import annotations
 
 import datetime
 import pickle

@@ -1,6 +1,7 @@
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
+from __future__ import annotations
 
 import argparse
 import asyncio
@@ -10,16 +11,19 @@ from asyncio import Task
 from datetime import datetime
 from pathlib import Path
 from pprint import pprint
-from typing import Final, Optional, Protocol, TypedDict, Union, cast
+from typing import TYPE_CHECKING, Final, Optional, Protocol, TypedDict, Union, cast
 
 import httpx
 
 from retriever_v4 import RetrieverApplication, RetrieverProgress, dispatch_fetcher
 from retriever_v4.names.xchg import export
 from sl_maptools import CoordType, MapCoord, RegionsDBRecord3
-from sl_maptools.fetchers import CookedResult
 from sl_maptools.fetchers.cap import BoundedNameFetcher
 from sl_maptools.utils import ConfigReader, SLMapToolsConfig, handle_sigint, make_backup
+
+if TYPE_CHECKING:
+    from sl_maptools.fetchers import CookedResult
+
 
 CONN_LIMIT: Final[int] = 80
 # SEMA_SIZE: Final[int] = 180

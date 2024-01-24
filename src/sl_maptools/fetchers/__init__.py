@@ -1,15 +1,19 @@
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
+from __future__ import annotations
+
 import abc
 import asyncio
 import random
-from typing import NamedTuple, Optional
+from typing import TYPE_CHECKING, NamedTuple, Optional
 
 import httpx
 
-from sl_maptools import MapCoord
 from sl_maptools.utils import QuietablePrint
+
+if TYPE_CHECKING:
+    from sl_maptools import MapCoord
 
 
 class FetcherConnectionError(ConnectionError):

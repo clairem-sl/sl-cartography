@@ -1,19 +1,24 @@
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
+from __future__ import annotations
+
 import argparse
 import re
 from pathlib import Path
-from typing import Final, Protocol, cast
+from typing import TYPE_CHECKING, Final, Protocol, cast
 
 from PIL import Image, ImageDraw
 
 # noinspection PyUnresolvedReferences
 from PIL.Image import Resampling
 
-from sl_maptools import CoordType
 from sl_maptools.utils import ConfigReader, SLMapToolsConfig
 from sl_maptools.validator import get_bonnie_coords, inventorize_maps_latest
+
+if TYPE_CHECKING:
+    from sl_maptools import CoordType
+
 
 RGBTuple = tuple[int, int, int]
 RGBATuple = tuple[int, int, int, int]

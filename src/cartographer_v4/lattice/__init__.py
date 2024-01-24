@@ -1,16 +1,23 @@
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
+from __future__ import annotations
+
 from enum import Enum, auto, unique
-from pathlib import Path
-from typing import Final, Optional, TypedDict
+from typing import TYPE_CHECKING, Final, Optional, TypedDict
 
 from PIL import Image, ImageDraw, ImageFont
-from PIL.ImageFont import FreeTypeFont
 
-from sl_maptools import CoordType, RegionsDBRecord3
 from sl_maptools.knowns import KNOWN_AREAS
 from sl_maptools.utils import ConfigReader, SLMapToolsConfig
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from PIL.ImageFont import FreeTypeFont
+
+    from sl_maptools import CoordType, RegionsDBRecord3
+
 
 RGBATuple = tuple[int, int, int, int]
 
