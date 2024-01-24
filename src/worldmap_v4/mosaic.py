@@ -59,6 +59,8 @@ FASCIA_PIXELS: Final[dict[int, int]] = {
 
 
 class OptionsType(Protocol):
+    """Represents options extracted from CLI"""
+
     domc_db_path: Path
     calc_workers: int
     make_workers: int
@@ -73,6 +75,7 @@ class OptionsType(Protocol):
 
 
 def get_opts() -> OptionsType:
+    """Get options from CLI"""
     parser = argparse.ArgumentParser("worldmap_v4.mosaic")
 
     parser.add_argument("--domc-db", dest="domc_db_path", type=Path, default=DEFA_DOMC_DBP)
@@ -103,6 +106,8 @@ def get_opts() -> OptionsType:
 
 
 class CalcJob(TypedDict):
+    """Represents a job containing coordinates and a map tile"""
+
     coord: CoordType
     fpath: Path
 
@@ -114,8 +119,9 @@ CollectorQueue: MP.Queue
 def calc_domc_init(
     patches_dict: dict[tuple[CoordType, int], list[RGBTuple]],
     coll_queue: MP.Queue,
-):
-    global PatchesDict, CollectorQueue
+) -> None:
+    """Initializer for domc calculator workers"""
+    global PatchesDict, CollectorQueue  # noqa: PLW0603
     signal.signal(signal.SIGINT, signal.SIG_IGN)
     PatchesDict = patches_dict
     CollectorQueue = coll_queue
@@ -125,6 +131,7 @@ CalcResultType = tuple[CoordType, Path, DomColors]
 
 
 def calc_domc(job: tuple[CoordType, Path]) -> CalcResultType | None:
+    """A worker that calculates dominant color for a job"""
     coord, fpath = job
     if not fpath.exists() or not fpath.is_file():
         return None
@@ -151,7 +158,8 @@ def collector(
     coll_queue: MP.Queue,
     patches_coll: dict[tuple[CoordType, int], list[RGBTuple]],
     coll_lock: MP.RLock,
-):
+) -> None:
+    """Gather results of domc calculation into a collection"""
     signal.signal(signal.SIGINT, signal.SIG_IGN)
     while True:
         item = coll_queue.get()
@@ -177,10 +185,13 @@ def make_mosaic(
     patches_coll: dict[tuple[CoordType, int], list[RGBTuple]],
     coll_lock: MP.RLock,
     outdir: Path,
-):
+) -> None:
+    """
+    Creates mosaic map
+    """
     signal.signal(signal.SIGINT, signal.SIG_IGN)
 
-    def _state(state: str):
+    def _state(state: str) -> None:
         worker_state["maker"] = state
 
     while True:
@@ -240,13 +251,13 @@ def make_mosaic(
 # endregion
 
 
-def main(opts: OptionsType):
+def main(opts: OptionsType) -> None:  # noqa: D103
     domc_db: dict[CoordType, dict[Path, DomColors]] = {}
     domc_db_path = opts.domc_db_path
     if domc_db_path.exists():
         try:
             with domc_db_path.open("rb") as fin:
-                domc_db.update(pickle.load(fin))
+                domc_db.update(pickle.load(fin))  # noqa: S301
         except EOFError:
             pass
     print(f"Cached Dominant Colors = {len(domc_db):_} coords ({sum(map(len, domc_db.values())):_} files)")
@@ -256,12 +267,10 @@ def main(opts: OptionsType):
     regions_db: dict[CoordType, RegionsDBRecord] = {}
     if opts.regionsdb.exists():
         with opts.regionsdb.open("rb") as fin:
-            regions_db = pickle.load(fin)
+            regions_db = pickle.load(fin)  # noqa: S301
     if regions_db:
         for k in list(mapfiles_d.keys()):
-            if k not in regions_db:
-                del mapfiles_d[k]
-            elif regions_db[k]["current_name"] == "":
+            if k not in regions_db or regions_db[k]["current_name"] == "":
                 del mapfiles_d[k]
     #
     if not opts.no_bonnie:
@@ -271,11 +280,9 @@ def main(opts: OptionsType):
                 del mapfiles_d[k]
 
     # Grab only files that are not yet analyzed
-    mapfiles: list[tuple[CoordType, Path]] = []
-    for co, mapfl in mapfiles_d.items():
-        for mapf in mapfl:
-            if mapf not in domc_db.get(co, {}):
-                mapfiles.append((co, mapf))
+    mapfiles: list[tuple[CoordType, Path]] = [
+        (co, mapf) for co, mapfl in mapfiles_d.items() for mapf in mapfl if mapf not in domc_db.get(co, {})
+    ]
 
     # Sort by CoordType[0] row[1] descending (-)
     # then by CoordType[0] col[0] ascending
@@ -345,13 +352,15 @@ def main(opts: OptionsType):
                         print(f"\n {i:_}/{len(mapfiles):_} processed so far ({stat_rate:_.2f} per second)", flush=True)
                         last_fin = i
                         last_stat = time.monotonic()
-                    if not opts.final_only:
-                        if (i % opts.save_every) == 0:
-                            if any(state == "idle" for state in maker_states.values()):
-                                maker_queue.put(tuple(FASCIA_SIZES))
-                                print("🏀", end="", flush=True)
-                                make_recently_triggered = True
-                    if (i % opts.save_every) == 2:
+                    if (
+                        not opts.final_only
+                        and (i % opts.save_every) == 0
+                        and any(state == "idle" for state in maker_states.values())
+                    ):
+                        maker_queue.put(tuple(FASCIA_SIZES))
+                        print("🏀", end="", flush=True)
+                        make_recently_triggered = True
+                    if (i % opts.save_every) == 2:  # noqa: PLR2004
                         print(f"q={coll_queue.qsize()}", end="", flush=True)
                 while not all(s == "idle" for s in maker_states.values()):
                     print("-", end="", flush=True)
@@ -394,7 +403,7 @@ def main(opts: OptionsType):
             pool_calc.terminate()
             pool_calc.join()
             print(
-                f"joined.\nEnjoining pool_coll ... ",
+                "joined.\nEnjoining pool_coll ... ",
                 end="",
                 flush=True,
             )
@@ -402,7 +411,7 @@ def main(opts: OptionsType):
             coll_queue.put(None)
             pool_coll.join()
             print(
-                f"joined.\nEnjoining pool_maker ... ",
+                "joined.\nEnjoining pool_maker ... ",
                 end="",
                 flush=True,
             )
