@@ -276,7 +276,9 @@ async def dispatch_fetcher(
         # Dispatch
         print(f"{len(tasks)} async jobs =>", end=" ")
         start_batch = time.monotonic()
+        
         done, pending_tasks = await asyncio.wait(tasks, timeout=batch_wait)
+        
         if not abort_event.is_set():
             elapsed_last10.append(time.monotonic() - start_batch)
             done_last10.append(len(done))
@@ -473,7 +475,7 @@ class RetrieverApplication(AbstractContextManager):
 
     @staticmethod
     def calc_duration(opts: RetrieverApplication.Options) -> int:
-        """Calculate duration in seconds given a certain options set"""
+        """Calculate duration (in seconds) given a particular combination of CLI options"""
         nao = datetime.now()
         if opts.duration > 0:
             dur = opts.duration
