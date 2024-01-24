@@ -1,14 +1,14 @@
 import argparse
 from io import StringIO
 from pathlib import Path
-from typing import cast, NamedTuple
+from typing import NamedTuple, cast
 
 from PIL import Image
 from ruamel.yaml import YAML
 
-from sl_maptools import CoordType, AreaBounds, AreaBoundsSet
+from sl_maptools import AreaBounds, AreaBoundsSet, CoordType
 from sl_maptools.knowns import KNOWN_AREAS
-from sl_maptools.validator import inventorize_maps_latest, get_bonnie_coords
+from sl_maptools.validator import get_bonnie_coords, inventorize_maps_latest
 
 # language=yaml
 BELLI_EXCLUSIONS_YAML = """
@@ -111,12 +111,15 @@ NewIslands:
 
 
 class Options(NamedTuple):
+    """Represents options extracted from CLI"""
+
     overwrite: bool
     mapdir: Path
     outdir: Path
 
 
 def get_options() -> Options:
+    """Get options from CLI"""
     parser = argparse.ArgumentParser()
 
     parser.add_argument("--overwrite", action="store_true", default=False)
@@ -128,7 +131,7 @@ def get_options() -> Options:
     return cast(Options, _opts)
 
 
-def main(opts: Options):
+def main(opts: Options) -> None:  # noqa: D103
     belli_all = KNOWN_AREAS["Bellisseria_ALL"]
     belli_width = belli_all.bounding_box.width * 256
     belli_height = belli_all.bounding_box.height * 256
@@ -136,7 +139,7 @@ def main(opts: Options):
 
     bonnie_coords = get_bonnie_coords(None, True)
     map_tiles = inventorize_maps_latest(opts.mapdir)
-    
+
     with StringIO(BELLI_EXCLUSIONS_YAML) as fin:
         data: dict[str, list[str]] = YAML(typ="safe").load(fin)
 
