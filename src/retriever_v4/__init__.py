@@ -305,12 +305,10 @@ async def dispatch_fetcher(
                 print("Cancelling the rest of the tasks...")
                 for t in pending_tasks:
                     t.cancel()
-                while pending_tasks:
-                    done, pending_tasks = await asyncio.wait(pending_tasks, return_when=asyncio.ALL_COMPLETED)
-                    for task in done:
-                        if exc := task.exception():  # noqa: SIM102
-                            if not isinstance(exc, asyncio.CancelledError):
-                                print(f"\n{task.get_name()} raised Exception: <{type(exc)}> {exc}")
+                done, _ = await asyncio.wait(pending_tasks, return_when=asyncio.ALL_COMPLETED)
+                for t in done:
+                    if not isinstance((exc := t.exception()), asyncio.CancelledError):
+                        print(f"\n{t.get_name()} raised Exception: <{type(exc)}> {exc}")
                 pending_tasks.clear()
                 break
 
