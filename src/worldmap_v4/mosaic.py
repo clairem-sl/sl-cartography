@@ -12,7 +12,7 @@ import re
 import signal
 import time
 from pathlib import Path
-from typing import Final, Optional, Protocol, TypedDict, cast
+from typing import Final, NamedTuple, Optional, Protocol, TypedDict, cast
 
 from PIL import Image, UnidentifiedImageError
 
@@ -179,24 +179,28 @@ def collector(
 # region ##### Worker: Mosaic Maker
 
 
-def make_mosaic(
-    worker_state: dict[str, str],
-    queue: MP.Queue,
-    patches_coll: dict[tuple[CoordType, int], list[RGBTuple]],
-    coll_lock: MP.RLock,
-    outdir: Path,
-) -> None:
+class MakerParams(NamedTuple):
+    """Parameters passed to the make_mosaic worker"""
+    worker_state: dict[str, str]
+    queue: MP.Queue
+    patches_coll: dict[tuple[CoordType, int], list[RGBTuple]]
+    coll_lock: MP.RLock
+    outdir: Path
+
+
+def make_mosaic(params: MakerParams) -> None:
     """
-    Creates mosaic map
+    Gather dominant colors and create the mosaic maps.
+    You shouldn't launch too many of this worker, since this worker is not the bottleneck.
     """
     signal.signal(signal.SIGINT, signal.SIG_IGN)
 
     def _state(state: str) -> None:
-        worker_state["maker"] = state
+        params.worker_state["maker"] = state
 
     while True:
         _state("idle")
-        item = queue.get()
+        item = params.queue.get()
         if item is None:
             break
         if item is Ellipsis:
@@ -208,9 +212,9 @@ def make_mosaic(
         _state("got_job")
         assert isinstance(item, tuple)
         patches_bysz: Optional[dict[int, dict[CoordType, list[RGBTuple]]]] = {sz: {} for sz in item}
-        with coll_lock:
+        with params.coll_lock:
             _state("transform")
-            for k, v in dict(patches_coll).items():
+            for k, v in dict(params.patches_coll).items():
                 coord, sz = k
                 if sz not in patches_bysz:
                     continue
@@ -237,7 +241,7 @@ def make_mosaic(
                         sy = 0
                         sx += fpx
             _state(f"save_{sz}")
-            canvas.save(outdir / f"worldmap4_mosaic_{sz}x{sz}.png")
+            canvas.save(params.outdir / f"worldmap4_mosaic_{sz}x{sz}.png")
             canvas.close()
             print(f"💾{sz}", end="", flush=True)
         # noinspection PyUnusedLocal
@@ -279,10 +283,15 @@ def main(opts: OptionsType) -> None:  # noqa: D103
             if k not in bonnie_coords:
                 del mapfiles_d[k]
 
+    # fmt: off
     # Grab only files that are not yet analyzed
     mapfiles: list[tuple[CoordType, Path]] = [
-        (co, mapf) for co, mapfl in mapfiles_d.items() for mapf in mapfl if mapf not in domc_db.get(co, {})
+        (co, mapf)
+        for co, mapfl in mapfiles_d.items()
+        for mapf in mapfl
+        if mapf not in domc_db.get(co, {})
     ]
+    # fmt: on
 
     # Sort by CoordType[0] row[1] descending (-)
     # then by CoordType[0] col[0] ascending
@@ -319,7 +328,14 @@ def main(opts: OptionsType) -> None:  # noqa: D103
         maker_workers = opts.make_workers
         maker_states = manager.dict()
         maker_queue = manager.Queue()
-        make_args = (maker_states, maker_queue, patches_coll, coll_lock, opts.outdir)
+        # make_args = (maker_states, maker_queue, patches_coll, coll_lock, opts.outdir)
+        make_args = MakerParams(
+            worker_state=cast(dict, maker_states),
+            queue=maker_queue,
+            patches_coll=cast(dict, patches_coll),
+            coll_lock=coll_lock,
+            outdir=opts.outdir,
+        )
 
         coll_queue = manager.Queue(maxsize=(opts.save_every * 2))
         coll_args = (coll_queue, patches_coll, coll_lock)
@@ -336,7 +352,7 @@ def main(opts: OptionsType) -> None:  # noqa: D103
         with (
             MP.Pool(calc_workers, initializer=calc_domc_init, initargs=calc_domc_args) as pool_calc,
             MP.Pool(1, initializer=collector, initargs=coll_args) as pool_coll,
-            MP.Pool(maker_workers, initializer=make_mosaic, initargs=make_args) as pool_maker,
+            MP.Pool(maker_workers, initializer=make_mosaic, initargs=(make_args,)) as pool_maker,
         ):
             try:
                 for i, rslt in enumerate(pool_calc.imap_unordered(calc_domc, mapfiles, chunksize=10), start=1):
