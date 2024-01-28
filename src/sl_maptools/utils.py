@@ -7,7 +7,7 @@ import shutil
 import signal
 import time
 from contextlib import contextmanager
-from typing import IO, TYPE_CHECKING, Optional
+from typing import IO, TYPE_CHECKING, Any, Literal, Optional
 
 if TYPE_CHECKING:
     from sl_maptools import SupportsSet
@@ -69,44 +69,67 @@ class QuietablePrint:
             print(*values, sep=sep, end=end, file=file, flush=flush)
 
 
+ValueTreeOnNotFound = Literal["raise"] | Literal["..."] | Literal["ellipsis"] | Literal["none"]
+
+
 class ValueTree:
     """Wraps around a dict to provide access to dict values via object attributes"""
 
-    def __init__(self, data: dict):
+    def __init__(self, data: dict, *, on_not_found: ValueTreeOnNotFound = "raise"):
         """
         :param data: The dict to be wrapped
+        :param on_not_found: What to do if attribute is not found. One of "raise" (raises KeyError), "..."/"ellipsis"
+        (returns Ellipsis), or "none" (returns None). Default is "raise"
         """
+        if on_not_found not in {"raise", "...", "ellipsis", "none"}:
+            raise ValueError("on_not_found must be one of raise/.../ellipsis/none")
         self.__data = data
+        self.__notfound: ValueTreeOnNotFound = on_not_found
 
     def __getattr__(self, item: str):
         if item not in self.__data:
-            raise KeyError(f"Not Found: {item}")
+            if self.__notfound == "raise":
+                raise KeyError(f"Not Found: {item}")
+            if self.__notfound == "none":
+                return None
+            return Ellipsis
         value = self.__data[item]
         if isinstance(value, str):
             return value
         if isinstance(value, dict):
-            return ValueTree(value)
+            return ValueTree(value, on_not_found=self.__notfound)
         if isinstance(value, Sequence):
-            return ValueTree.__process_seq(value)
+            return self.__process_seq(value)
         return value
 
     def __getitem__(self, item: str):
         return self.__getattr__(item)
 
-    @staticmethod
-    def __process_seq(seq: Sequence) -> list:
+    def __process_seq(self, seq: Sequence) -> list:
         rslt = []
         for thing in seq:
             if not isinstance(thing, str) and isinstance(thing, Sequence):
-                rslt.append(ValueTree.__process_seq(thing))
+                rslt.append(self.__process_seq(thing))
             elif isinstance(thing, dict):
-                rslt.append(ValueTree(thing))
+                rslt.append(ValueTree(thing, on_not_found=self.__notfound))
             else:
                 rslt.append(thing)
         return rslt
 
     def __repr__(self):
-        return f"{self.__class__.__name__}({self.__data!r}"
+        return f"{self.__class__.__name__}({self.__data!r})"
+
+    def get(self, key: str, default: Any = None) -> Any:  # noqa: ANN401
+        """Get a value given a key, returning default if key not found"""
+        _prev_nf = self.__notfound
+        self.__notfound = "raise"
+        try:
+            value = self.__getattr__(key)
+        except KeyError:
+            value = default
+        finally:
+            self.__notfound = _prev_nf
+        return value
 
 
 class NamesConfig(Protocol):
@@ -187,7 +210,7 @@ class ConfigReader(SLMapToolsConfig):
         self._cfg_file = Path(config_file)
         with self._cfg_file.open("rb") as fin:
             self._cfg_dict = tomllib.load(fin)
-        self._cfg_tree = ValueTree(self._cfg_dict)
+        self._cfg_tree = ValueTree(self._cfg_dict, on_not_found="none")
 
     def __getattr__(self, item: str):
         return getattr(self._cfg_tree, item)
