@@ -10,13 +10,13 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from itertools import islice
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, Final, Tuple, Union
+from typing import TYPE_CHECKING, Dict, Final, Optional, Self, Tuple, Union
 
 import httpx
 import msgpack
 from ruamel import yaml as ryaml
 
-from sl_maptools import CoordType, MapCoord, MapRegion, RE_MAPFILE
+from sl_maptools import RE_MAPFILE, CoordType, MapCoord, MapRegion
 
 if TYPE_CHECKING:
     from sl_maptools.utils import BonnieConfig
@@ -32,6 +32,8 @@ incidents 0 updated 2022-11-06 region_uuid 4126bd1e-964a-590a-d55f-e160475fde4b 
 
 @dataclass(frozen=True)
 class GridSurveyDatum(object):
+    """A decoded datum from GridSurvey"""
+
     status: str
     x: int
     y: int
@@ -47,9 +49,10 @@ class GridSurveyDatum(object):
     name: str
 
     @classmethod
-    def from_str(cls, string):
+    def from_str(cls, string: str) -> Self:
+        """Instantiates a datum from a raw string acquired from GridSurvey"""
         elems = string.split()
-        kvp = {k: v for k, v in zip(islice(elems, 0, None, 2), islice(elems, 1, None, 2))}
+        kvp = {k: v for k, v in zip(islice(elems, 0, None, 2), islice(elems, 1, None, 2), strict=True)}
         kvp["x"] = int(kvp["x"])
         kvp["y"] = int(kvp["y"])
         for dk in ("firstseen", "lastseen", "updated"):
@@ -59,6 +62,7 @@ class GridSurveyDatum(object):
         return cls(**kvp)
 
     def encode(self) -> str:
+        """Encodes this datum into a string similar to the one acquired from GridSurvey"""
         return (
             f"status {self.status} x {self.x} y {self.y} access {self.access} "
             f"estate {self.estate} firstseen {self.firstseen.strftime('%Y-%m-%d')} "
@@ -71,6 +75,8 @@ class GridSurveyDatum(object):
 
 
 class GridSurveyError(object):
+    """Raised when an error happens retrieving/processing GridSurvey data"""
+
     pass
 
 
@@ -78,9 +84,15 @@ GridSurvey_NotRegion = GridSurveyError()
 
 
 class MapValidatorGridSurvey(object):
+    """Validates whether a coordinate exists in GridSurvey database"""
+
     GRIDSURVEY_API = "http://api.gridsurvey.com/simquery.php?xy={x},{y}"
 
-    def __init__(self, a_session: httpx.AsyncClient, cache_file: Path = None):
+    def __init__(self, a_session: httpx.AsyncClient, cache_file: Optional[Path] = None):
+        """
+        :param a_session: An async httpx session to be used
+        :param cache_file: Optional file where the GridSurvey data is cached
+        """
         self.session = a_session
         self.cache_file = cache_file
         if cache_file is None or not cache_file.exists():
@@ -93,13 +105,14 @@ class MapValidatorGridSurvey(object):
     async def fetch_gs_data(
         self, coord: MapCoord, use_cache: bool = True
     ) -> Tuple[MapCoord, Union[GridSurveyDatum, GridSurveyError]]:
+        """Fetch the datum of a coordinate from GridSurvey database"""
         if use_cache and (datum := self.cache.get(coord)):
             return coord, datum
         url = self.GRIDSURVEY_API.format(x=coord.x, y=coord.y)
         response = await self.session.get(url)
         status_code = response.status_code
 
-        if status_code != 200:
+        if status_code != 200:  # noqa: PLR2004
             raise RuntimeError(f"Got error {status_code} for {coord}")
 
         text = response.text
@@ -117,6 +130,7 @@ class MapValidatorGridSurvey(object):
         return coord, datum
 
     async def validate_tile(self, tile: MapRegion) -> bool:
+        """Asynchronously validate if a map tile object is an actual region and not a void"""
         _, gs_datum = await self.fetch_gs_data(tile.coord)
         if tile.is_void and gs_datum is GridSurvey_NotRegion:
             return True
@@ -125,6 +139,7 @@ class MapValidatorGridSurvey(object):
         return False
 
     async def coord_is_region(self, coord: MapCoord) -> bool:
+        """Asynchronously validate that a coordinate is in GridSurvey database"""
         gs_datum = await self.fetch_gs_data(coord)
         return gs_datum is not GridSurvey_NotRegion
 
@@ -138,6 +153,7 @@ BONNIE_REGDB_URL: Final[str] = "https://www.bonniebots.com/static-api/regions/in
 
 
 def get_bonnie_coords(config_bonnie: BonnieConfig, *, maxage: timedelta | int = 1) -> set[CoordType]:
+    """Get a set of coordinates from BonnieBots, using local database if not older than maxage"""
     if not isinstance(maxage, timedelta):
         maxage = timedelta(days=maxage)
     bdb_data_raw = {}
@@ -166,6 +182,7 @@ def get_bonnie_coords(config_bonnie: BonnieConfig, *, maxage: timedelta | int = 
 
 
 def inventorize_maps_latest(mapdir: Path | str) -> dict[CoordType, Path]:
+    """Makes a dict of all available map tiles, by region coords"""
     mapdir = Path(mapdir)
     rslt: dict[CoordType, Path] = {}
     for fp in sorted(mapdir.glob("*.jp*"), reverse=True):

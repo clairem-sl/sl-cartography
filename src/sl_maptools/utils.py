@@ -194,6 +194,7 @@ class LatticeConfig(Protocol):
 
 class BonnieConfig(Protocol):
     """Attribues for the [bonnie] section of config.toml"""
+
     dir: str
     db: str
 
