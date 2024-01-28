@@ -2,30 +2,59 @@
 # (Especially important in Windows)
 
 [names]
-dir = 'C:\Cache\SL-Carto'
-db = 'RegionsDB2.pkl'
-lock = 'RegionsDB2.lock'
-log = 'RegionsDB2.log.yaml'
-progress = 'RegionsDB2Progress.yaml'
+# Configuration for the Retriever.Names module
+# Note that some information, notably 'dir' and 'db', will be used by other modules
+dir = '\path\to\directory\to\save\results'
+db = 'NameOfDatabaseFile.pkl'
+lock = 'NameOfLockFile.lock'
+log = 'NameOfLogFile.log.yaml'
+progress = 'NameOfFileToStoreRetrievalProgress.yaml'
 
 [maps]
-dir = 'C:\Cache\SL-Carto\MapsTiles'
-lock = 'Maps.lock'
-log = 'Maps.log.yaml'
-progress = 'MapsProgress.yaml'
+# Configuration for the Retriever.Maps module
+# Note that some information, notably 'dir', will be used by other modules
+dir = '\path\to\directory\to\save\results'
+lock = 'NameOfLockFile.lock'
+log = 'NameOfLogFile.log.yaml'
+progress = 'NameOfFileToStoreRetrievalProgress.yaml'
 
 [mosaic]
-dir = 'C:\Cache\SL-Carto\WorldMaps'
-domc_cache = 'CachedDominantColors.pkl'
+# Configuration for the Worldmap.Mosaic module
+dir = '\path\to\directory\to\save\results'
+domc_db = 'NameOfDominantColorDatabase.pkl'
 
 [nightlights]
-dir = 'C:\Cache\SL-Carto\WorldMaps'
+# Configuration for the Worldmap.nightlights module
+dir = '\path\to\directory\to\save\results'
 
 [areas]
+# Configuration for the Cartographer module
 dir = 'C:\Cache\SL-Carto\AreaMaps'
 
-[grids]
-dir_composite = 'C:\Cache\SL-Carto\AreaMaps\Grids'
-dir_overlay = 'C:\Cache\SL-Carto\AreaMaps\Grids'
-font_name = 'C:\Windows\Fonts\comic.ttf'
-font_size = 16
+[lattice]
+# Configuration for the Cartographer.Lattice module
+
+# Font configuration for the Region Name label
+name.font = '\path\to\TrueType\font\file1.ttf'
+name.size = 16
+# If the font is not a 'variable font', do NOT set this value; just comment it out
+# Use PIL's FreeTypeFont.get_variation_names() method to see valid variants per font file
+name.variant = 'VariantName ForVariableFontsOnly'
+# If true, then perform overdraw (redraw text without stroke/edge over the text with stroke/edge)
+name.overdraw = false
+
+# Font configuration for the Coordinates label
+coord.font = '\path\to\TrueType\font\file1.ttf'
+coord.size = 13
+# If the font is not a 'variable font', do NOT set this value; just comment it out
+# Use PIL's FreeTypeFont.get_variation_names() method to see valid variants per font file
+coord.variant = 'VariantName ForVariableFontsOnly'
+# If true, then perform overdraw (redraw text without stroke/edge over the text with stroke/edge)
+coord.overdraw = false
+
+[bonnie]
+# Configuration for the BonnieBots validator
+dir = '\path\to\directory\to\save\cache'
+db = 'BonnieDBCacheName.yaml'
+# The next is already correct; usually you don't have to change this
+url = 'https://www.bonniebots.com/static-api/regions/index.json'
