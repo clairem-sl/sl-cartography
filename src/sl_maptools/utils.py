@@ -195,6 +195,7 @@ class BonnieConfig(Protocol):
 
     dir: str
     db: str
+    url: str
 
 
 class SLMapToolsConfig(Protocol):

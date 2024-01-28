@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from itertools import islice
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, Final, Optional, Self, Tuple, Union
+from typing import TYPE_CHECKING, Dict, Optional, Self, Tuple, Union
 
 import httpx
 import msgpack
@@ -149,15 +149,12 @@ RE_ERROR = re.compile(r"=\s*\{\s*'error'\s+:\s+true\s*}")
 """var slRegionName='Da Boom';"""
 
 
-BONNIE_REGDB_URL: Final[str] = "https://www.bonniebots.com/static-api/regions/index.json"
-
-
-def get_bonnie_coords(config_bonnie: BonnieConfig, *, maxage: timedelta | int = 1) -> set[CoordType]:
+def get_bonnie_coords(config: BonnieConfig, *, maxage: timedelta | int = 1) -> set[CoordType]:
     """Get a set of coordinates from BonnieBots, using local database if not older than maxage"""
     if not isinstance(maxage, timedelta):
         maxage = timedelta(days=maxage)
     bdb_data_raw = {}
-    bonniedb: Path = Path(config_bonnie.dir) / config_bonnie.db
+    bonniedb: Path = Path(config.dir) / config.db
     yml = ryaml.YAML(typ="safe", pure=True)
     if bonniedb.exists():
         print(f"BonnieBots DB exists: {bonniedb}, checking ... ", end="", flush=True)
@@ -171,7 +168,7 @@ def get_bonnie_coords(config_bonnie: BonnieConfig, *, maxage: timedelta | int = 
     if not bdb_data_raw:
         print("Fetching BonnieBots Regions DB ... ", end="", flush=True)
         with httpx.Client(timeout=10) as client:
-            resp = client.get(BONNIE_REGDB_URL)
+            resp = client.get(config.url)
             bdb_data_raw = resp.json()
         with bonniedb.open("wt") as fout:
             yml.dump(bdb_data_raw, fout)
