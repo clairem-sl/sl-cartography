@@ -172,14 +172,24 @@ class AreasConfig(Protocol):
     dir: str
 
 
+class FontSpec(Protocol):
+    """Attributes to define a font. Analogous to PIL.ImageFont attributes"""
+
+    font: str
+    size: int
+    index: int
+    encoding: str
+    variant: str
+    overdraw: bool
+
+
 class LatticeConfig(Protocol):
     """Attributes for the [grids] section of config.toml"""
+
     dir_composite: str
     dir_overlay: str
-    font_name: str
-    size_name: int
-    font_coord: str
-    size_coord: int
+    name: FontSpec
+    coord: FontSpec
 
 
 class BonnieConfig(Protocol):

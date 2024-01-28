@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Final, Optional, TypedDict
 from PIL import Image, ImageDraw, ImageFont
 
 from sl_maptools.knowns import KNOWN_AREAS
-from sl_maptools.utils import ConfigReader, SLMapToolsConfig
+from sl_maptools.utils import ConfigReader, FontSpec, SLMapToolsConfig
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -25,9 +25,11 @@ RGBATuple = tuple[int, int, int, int]
 TEXT_RGBA: Final[RGBATuple] = (255, 255, 255, 191)
 STROKE_WIDTH_NAME: Final[int] = 2
 STROKE_WIDTH_COORD: Final[int] = 2
-STROKE_RGBA: Final[RGBATuple] = (0, 0, 0, 191)
+# STROKE_RGBA: Final[RGBATuple] = (0, 0, 0, 191)
+STROKE_RGBA: Final[RGBATuple] = (0, 0, 0, 159)
 ALPHA_PATTERN: Final[tuple[int, ...]] = (96, 32)
 
+COORD_SHIFT_RATIO: float = 1.05
 
 Config: SLMapToolsConfig = ConfigReader("config.toml")
 
@@ -39,6 +41,7 @@ class TextSettings(TypedDict):
     fill: RGBATuple
     stroke_width: int
     stroke_fill: RGBATuple
+    overdraw: bool
 
 
 @unique
@@ -59,6 +62,13 @@ class ExclusionMethod(Enum):
     """Excluded areas are covered by a fog square (solid but half-transparent fill)"""
 
 
+def _getfont(settings: FontSpec) -> FreeTypeFont:
+    _font = ImageFont.truetype(settings.font, settings.size)
+    if settings.variant is not None:
+        _font.set_variation_by_name(settings.variant)
+    return _font
+
+
 class LatticeMaker:
     """Creates the region lattice for the high-res area maps"""
 
@@ -67,15 +77,11 @@ class LatticeMaker:
         regions_db: dict[CoordType, RegionsDBRecord3],
         validation_set: set[CoordType],
         out_dir: Optional[Path] = None,
-        regname_settings: Optional[TextSettings] = None,
-        coord_setttings: Optional[TextSettings] = None,
     ):
         """
         :param regions_db: Database of existing regions
         :param validation_set: A set of coordinates for which we will draw a region tile
         :param out_dir: Directory to put the overlay & composited files
-        :param regname_settings: Settings (font, size, etc.) for drawing the region names
-        :param coord_setttings: Settings (font, size, etc.) for drawing the region coords
         """
         self.regions_db = regions_db
         self.validation_set = validation_set
@@ -90,23 +96,20 @@ class LatticeMaker:
             ul += 1
             lr -= 1
 
-        if regname_settings is None:
-            regname_settings = {
-                "font": ImageFont.truetype(Config.lattice.font_name, Config.lattice.size_name),
-                "fill": TEXT_RGBA,
-                "stroke_width": STROKE_WIDTH_NAME,
-                "stroke_fill": STROKE_RGBA,
-            }
-        self.default_regname_settings = regname_settings
-
-        if coord_setttings is None:
-            coord_setttings = {
-                "font": ImageFont.truetype(Config.lattice.font_coord, Config.lattice.size_coord),
-                "fill": TEXT_RGBA,
-                "stroke_width": STROKE_WIDTH_NAME,
-                "stroke_fill": STROKE_RGBA,
-            }
-        self.default_coord_settings = coord_setttings
+        self.default_regname_settings: TextSettings = {
+            "font": _getfont(Config.lattice.name),
+            "fill": TEXT_RGBA,
+            "stroke_width": STROKE_WIDTH_NAME,
+            "stroke_fill": STROKE_RGBA,
+            "overdraw": Config.lattice.name.overdraw,
+        }
+        self.default_coord_settings: TextSettings = {
+            "font": _getfont(Config.lattice.coord),
+            "fill": TEXT_RGBA,
+            "stroke_width": STROKE_WIDTH_COORD,
+            "stroke_fill": STROKE_RGBA,
+            "overdraw": Config.lattice.coord.overdraw,
+        }
 
         self._cover_hr: Optional[Image.Image] = None
         self._cover_fog: Optional[Image.Image] = None
@@ -208,6 +211,18 @@ class LatticeMaker:
             else:
                 xy_iterator = area.bounding_box.xy_iterator
 
+            def draw_text(_x: int, _y: int, text: str, text_settings: TextSettings) -> None:
+                _settings: dict = text_settings.copy()
+                overdraw = _settings["overdraw"]
+                del _settings["overdraw"]
+                _co = _x, _y
+                draw.text(_co, text, **text_settings)
+                if overdraw:
+                    del _settings["stroke_width"]
+                    del _settings["stroke_fill"]
+                    draw.text(_co, text, **_settings)
+
+            coord_shift: int = round((regname_settings["font"].getbbox("My")[-1] + 1) * COORD_SHIFT_RATIO)
             for i, xy in enumerate(xy_iterator(), start=1):
                 if validate and xy not in self.validation_set:
                     continue
@@ -224,10 +239,10 @@ class LatticeMaker:
                     # print(regname)
                     ty = cy + 4
                     if not no_names:
-                        draw.text((cx + 5, ty), f"{regname}", **regname_settings)
-                        ty += 27
+                        draw_text(cx + 5, ty, regname, regname_settings)
+                        ty += coord_shift
                     if not no_coords:
-                        draw.text((cx + 5, ty), f"{x},{y}", **coord_setttings)
+                        draw_text(cx + 5, ty, f"{x},{y}", coord_setttings)
                 elif exclusion_method == ExclusionMethod.FOG:
                     lattice.paste(self.cover_fog, (cx, cy))
                 elif exclusion_method == ExclusionMethod.HATCHED:

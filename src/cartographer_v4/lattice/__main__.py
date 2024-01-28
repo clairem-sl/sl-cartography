@@ -8,15 +8,9 @@ import pickle
 from pathlib import Path
 from typing import TYPE_CHECKING, Final, Protocol, cast
 
-from PIL import Image, ImageFont
+from PIL import Image
 
-from cartographer_v4.lattice import (
-    STROKE_RGBA,
-    STROKE_WIDTH_NAME,
-    TEXT_RGBA,
-    LatticeMaker,
-    TextSettings,
-)
+from cartographer_v4.lattice import LatticeMaker
 
 if TYPE_CHECKING:
     from sl_maptools import CoordType, RegionsDBRecord3
@@ -70,11 +64,6 @@ def main(opts: LatticeOptions) -> None:  # noqa: D103
     overlay_dir = Path(Config.lattice.dir_overlay)
     overlay_dir.mkdir(exist_ok=True)
 
-    font_text = ImageFont.truetype(Config.lattice.font_name, Config.lattice.size_name)
-    # w, h = font.getsize("M", stroke_width=STROKE_WIDTH)
-    # h_offs = 256 - 3 - h
-    font_coord = ImageFont.truetype(Config.lattice.font_coord, Config.lattice.size_coord)
-
     validation_set: set[CoordType] = set()
     with DB_PATH.open("rb") as fin:
         regsdb: dict[CoordType, RegionsDBRecord3] = pickle.load(fin)  # noqa: S301
@@ -95,25 +84,10 @@ def main(opts: LatticeOptions) -> None:  # noqa: D103
     else:
         want_areas = {areamap for areamap in areamaps_dir.glob("*.png")}
 
-    regname_settings: TextSettings = {
-        "font": font_text,
-        "fill": TEXT_RGBA,
-        "stroke_width": STROKE_WIDTH_NAME,
-        "stroke_fill": STROKE_RGBA,
-    }
-    coord_settings: TextSettings = {
-        "font": font_coord,
-        "fill": TEXT_RGBA,
-        "stroke_width": STROKE_WIDTH_NAME,
-        "stroke_fill": STROKE_RGBA,
-    }
-
     maker = LatticeMaker(
         regions_db=regsdb,
         validation_set=validation_set,
         out_dir=overlay_dir,
-        regname_settings=regname_settings,
-        coord_setttings=coord_settings,
     )
 
     tot = len(want_areas)
