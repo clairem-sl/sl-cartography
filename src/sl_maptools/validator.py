@@ -175,24 +175,26 @@ def get_bonnie_coords(config_bonnie: BonnieConfig, *, maxage: timedelta | int = 
         maxage = timedelta(days=maxage)
     bdb_data_raw = {}
     bonniedb: Path = Path(config_bonnie.dir) / config_bonnie.db
+    yml = ryaml.YAML(typ="safe", pure=True)
     if bonniedb.exists():
+        print(f"BonnieBots DB exists: {bonniedb}, checking ... ", end="", flush=True)
         age = datetime.now() - datetime.fromtimestamp(bonniedb.stat().st_mtime)
         if age < maxage:
+            print("loading ... ", end="", flush=True)
             with bonniedb.open("rt") as fin:
-                bdb_data_raw = ryaml.safe_load(fin)
-            print(f"BonnieBots DB read from {bonniedb} ...", end="", flush=True)
+                bdb_data_raw = yml.load(fin)
+        else:
+            print("older than maxage.")
     if not bdb_data_raw:
         print("Fetching BonnieBots Regions DB ... ", end="", flush=True)
         with httpx.Client(timeout=10) as client:
             resp = client.get(BONNIE_REGDB_URL)
             bdb_data_raw = resp.json()
         with bonniedb.open("wt") as fout:
-            ryaml.dump(bdb_data_raw, fout)
-    result = {
-        (int(record["region_x"]), int(record["region_y"]))
-        for record in bdb_data_raw["regions"]
-    }
-    print(f"{len(result)} records")
+            yml.dump(bdb_data_raw, fout)
+    print("parsing ... ", end="", flush=True)
+    result = {(int(record["region_x"]), int(record["region_y"])) for record in bdb_data_raw["regions"]}
+    print(f"{len(result)} records", flush=True)
     return result
 
 
