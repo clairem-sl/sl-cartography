@@ -3,8 +3,6 @@
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 from __future__ import annotations
 
-import asyncio
-import random
 import re
 import urllib.parse
 import uuid
@@ -134,37 +132,6 @@ class MapValidatorGridSurvey(object):
 """var slRegionName = {'error' : true };"""
 RE_ERROR = re.compile(r"=\s*\{\s*'error'\s+:\s+true\s*}")
 """var slRegionName='Da Boom';"""
-
-
-class MapValidator(object):
-    UUID = "b713fe80-283b-4585-af4d-a3b7d9a32492"
-    URL = "https://cap.secondlife.com/cap/0/{uuid}?var=slRegionName&grid_x={x}&grid_y={y}"
-
-    def __init__(self, a_session: httpx.AsyncClient, retries: int = 5):
-        self.a_session = a_session
-        self.retries = retries
-
-    async def is_region(self, coord: MapCoord) -> Tuple[MapCoord, bool]:
-        delay = 0.5
-        url = self.URL.format(uuid=self.UUID, x=coord.x, y=coord.y)
-        for _ in range(self.retries):
-            await asyncio.sleep(random.random() * 2.0)
-            # noinspection PyBroadException
-            try:
-                resp = await self.a_session.get(url)
-            except Exception:
-                await asyncio.sleep(delay)
-                delay *= 2
-            else:
-                if resp.status_code == 200:
-                    return coord, not RE_ERROR.search(resp.text)
-        raise ConnectionError()
-
-    async def validate_tile(self, tile: MapRegion) -> Tuple[MapRegion, bool]:
-        _, is_reg = await self.is_region(tile.coord)
-        is_void: bool = tile.is_void
-        # Both are bool so we can use bitwise-xor
-        return tile, is_reg ^ is_void
 
 
 BONNIE_REGDB_URL: Final[str] = "https://www.bonniebots.com/static-api/regions/index.json"
