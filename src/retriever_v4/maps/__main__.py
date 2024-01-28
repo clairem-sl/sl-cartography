@@ -69,7 +69,7 @@ def get_options() -> MPMapOptions:
     """Get options from CLI"""
     parser = argparse.ArgumentParser("retriever.maps.mp")
 
-    parser.add_argument("--mapdir", type=Path, default=Path(Config.maps.mp_dir))
+    parser.add_argument("--mapdir", type=Path, default=Path(Config.maps.dir))
     parser.add_argument("--workers", type=int, default=RETR_WORKERS)
     parser.add_argument("--savers", type=int, default=SAVE_WORKERS)
 
@@ -293,7 +293,7 @@ def launch_workers(
         result_queue,
         AbortRequested,
     )
-    s_args = (Path(Config.maps.mp_dir), save_queue, result_queue)
+    s_args = (Path(Config.maps.dir), save_queue, result_queue)
 
     progression: dict[int, ProgressionDict] = {y: {"start": None, "done": 0, "last": None} for y in range(0, 2101)}
     outstanding: set[CoordType] = set()
@@ -418,7 +418,7 @@ def launch_workers(
 def main(opts: MPMapOptions) -> None:  # noqa: D103
     start = time.monotonic()
 
-    progress_file = opts.mapdir / Config.maps.mp_progress
+    progress_file = opts.mapdir / Config.maps.progress
     if progress_file.exists():
         with progress_file.open("rb") as fin:
             progress: ProgressDict = pickle.load(fin)  # noqa: S301

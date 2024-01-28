@@ -149,8 +149,6 @@ class MapsConfig(Protocol):
     lock: str
     log: str
     progress: str
-    mp_dir: str
-    mp_progress: str
 
 
 class MosaicConfig(Protocol):
