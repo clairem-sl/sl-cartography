@@ -59,10 +59,6 @@ def main(opts: LatticeOptions) -> None:  # noqa: D103
     Image.MAX_IMAGE_PIXELS = None
 
     areamaps_dir = Path(Config.areas.dir)
-    composite_dir = Path(Config.lattice.dir_composite)
-    composite_dir.mkdir(exist_ok=True)
-    overlay_dir = Path(Config.lattice.dir_overlay)
-    overlay_dir.mkdir(exist_ok=True)
 
     validation_set: set[CoordType] = set()
     with DB_PATH.open("rb") as fin:
@@ -87,7 +83,7 @@ def main(opts: LatticeOptions) -> None:  # noqa: D103
     maker = LatticeMaker(
         regions_db=regsdb,
         validation_set=validation_set,
-        out_dir=overlay_dir,
+        out_dir=areamaps_dir,
     )
 
     tot = len(want_areas)

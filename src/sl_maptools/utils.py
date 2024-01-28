@@ -184,8 +184,6 @@ class FontSpec(Protocol):
 class LatticeConfig(Protocol):
     """Attributes for the [grids] section of config.toml"""
 
-    dir_composite: str
-    dir_overlay: str
     name: FontSpec
     coord: FontSpec
 
