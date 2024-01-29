@@ -43,39 +43,46 @@ DEFA_GRID_CLR: Final[RGBTuple] = 255, 255, 255
 
 
 class Options(Protocol):
+    """Represents options extracted from CLI"""
+
     tile_size: int
     bg_color: RGBTuple
     grid_color: RGBTuple
 
 
 class RGBParser(argparse.Action):
-    def __call__(self, parser, namespace, values, option_string=None):
+    """Parses comma-separated RGB values into a 3-tuple"""
+
+    def __call__(self, parser, namespace, values, option_string=None):  # noqa: D102, ANN001, ARG002
         if (m := re.match(r"^(?P<r>\d{1,3}),(?P<g>\d{1,3}),(?P<b>\d{1,3})$", values)) is None:
             parser.error("Please enter color in r,g,b format!")
         rgb = tuple(map(int, m.groups()))
-        if not all(0 <= i <= 255 for i in rgb):
+        if not all(0 <= i <= 255 for i in rgb):  # noqa: PLR2004
             parser.error("Each r,g,b must be 0 <= value <= 255!")
         setattr(namespace, self.dest, rgb)
 
 
 def get_options() -> Options:
+    """Extract options from CLI"""
     parser = argparse.ArgumentParser("cartographer_v4.gridsectors")
 
     parser.add_argument("--tile-size", type=int, default=DEFA_TILE_SZ)
     parser.add_argument(
         "--bg-color", action=RGBParser, default=DEFA_BG_COLOR, help="Background color in r,g,b (no spaces)"
     )
-    parser.add_argument("--lattice-color", action=RGBParser, default=DEFA_GRID_CLR, help="Grid color in r,g,b (no spaces)")
+    parser.add_argument(
+        "--lattice-color", action=RGBParser, default=DEFA_GRID_CLR, help="Grid color in r,g,b (no spaces)"
+    )
 
     _opts = parser.parse_args()
     return cast(Options, _opts)
 
 
-def main(opts: Options):
+def main(opts: Options) -> None:  # noqa: D103
     GRID_DIR.mkdir(parents=True, exist_ok=True)
     valid_coords = get_bonnie_coords(Config.bonnie)
     maptiles = {co: mapp for co, mapp in inventorize_maps_latest(MAP_DIR).items() if co in valid_coords}
-    bk_clr = opts.bg_color + (0,)
+    bk_clr = (*opts.bg_color, 0)
 
     sq_sz = opts.tile_size * 10
     sq = Image.new("RGBA", (sq_sz, sq_sz), color=bk_clr)
@@ -83,7 +90,7 @@ def main(opts: Options):
     ul = 0
     lr = sq_sz - 1
     for a in ALPHA_PATTERN:
-        sq_draw.rectangle((ul, ul, lr, lr), width=1, outline=opts.grid_color + (a,))
+        sq_draw.rectangle((ul, ul, lr, lr), width=1, outline=(*opts.grid_color, a))
         ul += 1
         lr -= 1
 
