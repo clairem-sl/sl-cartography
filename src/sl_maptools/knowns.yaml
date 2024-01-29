@@ -404,9 +404,21 @@ LostWorld:
 
 # region # User/Private Continents
 
-A523:
+1929Berlin:
+  includes:
+    - 980-981/1363-1366
+
+A524:
   includes:
     - 1077-1081/1118-1123
+
+A525:
+  includes:
+    - 971-974/1081-1083
+
+A526:  # Possibly Japanese Islands?
+  includes:
+    - 650-651/1250-1252
 
 AmazonRiver:
   includes:
@@ -428,6 +440,10 @@ AntiquityLand:
 #ASLMetaverse:
 #  includes:
 #    - [763, 915, 765, 917]
+
+AussieShores:
+  includes:
+    - 660-662/1188-1189
 
 AzureIslands:
   includes:
@@ -482,6 +498,10 @@ Boystown:
   includes:
     - 505-506/1396-1400
 
+BriarwoodEstates:
+  includes:
+    - 1067-1071/1158-1163
+
 Burn2:
   includes:
     - 1022-1024/1023-1026
@@ -514,13 +534,25 @@ CrackDen:
   includes:
     - [742, 1389, 745, 1391]
 
+DANAANEstate:
+  includes:
+    - 671-672/1309-1311
+
 EdenFruitIslands:
   includes:
     - [459, 1700, 481, 1720]
 
+Enarah:
+  includes:
+    - 762-767/1143-1148
+
 EndOfTime:
   includes:
     - [500, 1027, 503, 1030]
+
+EtherealCity:
+  includes:
+    - 1054-1056/1161-1163
 
 Etopia:
   includes:
@@ -546,6 +578,10 @@ Freedom:
   includes:
     - [750, 1013, 758, 1020]
 
+GoombahSL:
+  includes:
+    - 1104-1108/1105-1129
+
 # Gone in January 2024
 #Gooseberry:
 #  includes:
@@ -564,9 +600,41 @@ JunglesOfGor:
   includes:
     - [1097, 949, 1099, 951]
 
+Junkyard:
+  includes:
+    - 749-751/1214-1216
+
+Ko-Ro-Ba:
+  includes:
+    - 639/1222-1225
+
+Labyrinth:
+  includes:
+    - 786-789/1216-1218
+
+LagoonRetreat:
+  includes:
+    - 618-622/1293-1294
+
+LeChateau:
+  includes:
+    - 577-580/1328-1332
+
 LondonCity:
   includes:
     - 850-851/895-897
+
+LuanesWorld:
+  includes:
+    - 1078-1082/1279-1281
+
+LunasEmpire:
+  includes:
+    - 1001-1002/1100-1102
+
+LuxeLA:
+  includes:
+    - 765-767/1201-1205
 
 Luxory:
   includes:
@@ -605,6 +673,10 @@ Mieville:
   includes:
     - [533, 1196, 537, 1202]
 
+MorningwoodAcres:
+  includes:
+    - 806-807/1315-1317
+
 Mythera:
   includes:
     - [720, 1324, 722, 1328]
@@ -634,6 +706,10 @@ PlayaIsles:
   includes:
     - [824, 1207, 831, 1217]
 
+Progeny:
+  includes:
+    - 686-691/1289-1290
+
 Raglan:
   includes:
     - [1083, 1296, 1086, 1299]
@@ -662,6 +738,10 @@ SeabirdIslands:
   includes:
     - [686, 920, 692, 928]
 
+SecondLifeBookClub:
+  includes:
+    - 1055/1389-1392
+
 SecondNorway:
   includes:
     - [1149, 1041, 1165, 1063]
@@ -677,6 +757,22 @@ SecondScotland:
 SeductionEstate:
   includes:
     - [757, 926, 763, 932]
+
+Shadowfall2401:
+  includes:
+    - 708-710/1185-1186
+
+Shopping:
+  includes:
+    - 1071-1073/1168-1170
+
+SLEA:
+  includes:
+    - 695-699/1405-1410
+
+SturbridgeGrove:
+  includes:
+    - 1114-1117/1210-1212
 
 SnugHarbor:
   includes:
@@ -696,9 +792,17 @@ TempletonCove:
   includes:
     - [1027, 1240, 1030, 1242]
 
+THAPLUG:
+  includes:
+    - 749-751/1197-1199
+
 TheGroveEstate:
   includes:
     - [1000, 1166, 1008, 1171]
+
+TheSignShopping:
+  includes:
+    - 1043-1046/1136-1137
 
 TheWastelands:
   includes:
@@ -739,13 +843,29 @@ Uhre:
   includes:
     - [860, 984, 865, 989]
 
+UnityMaxim:
+  includes:
+    -   1060-1062/1325-1328
+
+VikingVillages:
+  includes:
+    - 811-813/1351-1353
+
 VWBPE:
   includes:
     - [1102, 1312, 1106, 1314]
 
-WildWest:
+WesternTerritories:
   includes:
-    - [963, 1145, 967, 1149]
+    - [963, 1144, 967, 1149]
+
+WoodlandGrove:
+  includes:
+    - 1031-1033/1393-1395
+
+WW2RP:
+  includes:
+    - 642/1268-1272
 
 Yumix:
   includes:
