@@ -53,7 +53,7 @@ async def aretrieve(opts: Options, wants: dict[str, list[tuple[int, int, int, in
             print(f"Retrieving {name}:")
             for x1, y1, x2, y2 in lista:
                 tasks = [
-                    asyncio.create_task(fetcher.async_get_region_raw(MapCoord(*xy), quiet=True))
+                    asyncio.create_task(fetcher.async_get_raw(MapCoord(*xy), quiet=True))
                     for xy in product(range(x1, x2 + 1), range(y1, y2 + 1))
                     if xy not in seen
                 ]
