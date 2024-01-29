@@ -36,14 +36,8 @@ Config: SLMapToolsConfig = ConfigReader("config.toml")
 
 RE_MAP: Final[re.Pattern] = re.compile(r"^(\d+)-(\d+)_\d+-\d+.jpg$")
 
-DEFA_MAPDIR: Final[Path] = Path(Config.maps.dir)
-DEFA_OUTDIR: Final[Path] = Path(Config.mosaic.dir)
-DEFA_DOMC_DBP: Final[Path] = Path(Config.mosaic.dir) / Config.mosaic.domc_db
-
 DEFA_CALC_WORKERS: Final[int] = max(1, MP.cpu_count() - 2) * 2
 DEFA_MAKE_WORKERS: Final[int] = 1
-
-DEFA_REGIONSDB = Path(r"C:\Cache\SL-Carto\RegionsDB2.pkl")
 
 FASCIA_PIXELS: Final[dict[int, int]] = {
     1: 3,
@@ -61,15 +55,11 @@ FASCIA_PIXELS: Final[dict[int, int]] = {
 class OptionsType(Protocol):
     """Represents options extracted from CLI"""
 
-    domc_db_path: Path
     calc_workers: int
     make_workers: int
     pip_every: int
     stats_every_min: int
     save_every: int
-    mapdir: Path
-    outdir: Path
-    regionsdb: Path
     no_bonnie: bool
     final_only: bool
 
@@ -78,18 +68,12 @@ def get_opts() -> OptionsType:
     """Get options from CLI"""
     parser = argparse.ArgumentParser("worldmap_v4.mosaic")
 
-    parser.add_argument("--domc-db", dest="domc_db_path", type=Path, default=DEFA_DOMC_DBP)
-
     parser.add_argument("--calc-workers", metavar="N", type=int, default=DEFA_CALC_WORKERS)
     parser.add_argument("--make-workers", metavar="N", type=int, default=DEFA_MAKE_WORKERS)
     parser.add_argument("--pip-every", metavar="N", type=int, default=100)
     parser.add_argument("--save-every", metavar="N", type=int, default=2000)
     parser.add_argument("--stats-every-min", metavar="N", type=int, default=15)
     parser.add_argument("--final-only", action="store_true")
-    parser.add_argument("--mapdir", metavar="DIR", type=Path, default=DEFA_MAPDIR)
-    parser.add_argument("--outdir", metavar="DIR", type=Path, default=DEFA_OUTDIR)
-
-    parser.add_argument("--regionsdb", metavar="DB", type=Path, default=DEFA_REGIONSDB)
 
     bonnie_grp = parser.add_mutually_exclusive_group()
     bonnie_grp.add_argument(
@@ -256,8 +240,10 @@ def make_mosaic(params: MakerParams) -> None:
 
 
 def main(opts: OptionsType) -> None:  # noqa: D103
+    mosaic_dir = Path(Config.mosaic.dir)
+
     domc_db: dict[CoordType, dict[Path, DomColors]] = {}
-    domc_db_path = opts.domc_db_path
+    domc_db_path = mosaic_dir / Config.mosaic.domc_db
     if domc_db_path.exists():
         try:
             with domc_db_path.open("rb") as fin:
@@ -266,11 +252,12 @@ def main(opts: OptionsType) -> None:  # noqa: D103
             pass
     print(f"Cached Dominant Colors = {len(domc_db):_} coords ({sum(map(len, domc_db.values())):_} files)")
 
-    mapfiles_d: dict[CoordType, list[Path]] = inventorize_maps_all(opts.mapdir)
+    mapfiles_d: dict[CoordType, list[Path]] = inventorize_maps_all(Config.maps.dir)
     #
+    regdb_p = Path(Config.names.dir) / Config.names.db
     regions_db: dict[CoordType, RegionsDBRecord] = {}
-    if opts.regionsdb.exists():
-        with opts.regionsdb.open("rb") as fin:
+    if regdb_p.exists():
+        with regdb_p.open("rb") as fin:
             regions_db = pickle.load(fin)  # noqa: S301
     if regions_db:
         for k in list(mapfiles_d.keys()):
@@ -313,7 +300,7 @@ def main(opts: OptionsType) -> None:  # noqa: D103
     }
 
     for sz in FASCIA_PIXELS:
-        targ = opts.outdir / f"worldmap4_mosaic_{sz}x{sz}.png"
+        targ = mosaic_dir / f"worldmap4_mosaic_{sz}x{sz}.png"
         if targ.exists():
             make_backup(targ)
 
@@ -334,7 +321,7 @@ def main(opts: OptionsType) -> None:  # noqa: D103
             queue=maker_queue,
             patches_coll=cast(dict, patches_coll),
             coll_lock=coll_lock,
-            outdir=opts.outdir,
+            outdir=mosaic_dir,
         )
 
         coll_queue = manager.Queue(maxsize=(opts.save_every * 2))

@@ -40,9 +40,6 @@ class CartographerOptions(Protocol):
     no_lattice: bool
     continents: list[str]
     areas: list[AreaBounds]
-    mapdir: Path
-    outdir: Path
-    regionsdb: Path
     overwrite: bool
     exclusion_method: ExclusionMethod
     no_bonnie: bool
@@ -128,27 +125,6 @@ def get_options() -> Options:
         ),
     )
 
-    parser.add_argument(
-        "--mapdir",
-        type=Path,
-        default=Config.maps.dir,
-        help=(
-            "Directory containing map tiles retrieved using retriever_v4.maps. "
-            "Defaults to as specified in config.toml"
-        ),
-    )
-    parser.add_argument(
-        "--outdir",
-        type=Path,
-        default=Config.areas.dir,
-        help="Directory to put the resulting hi-res maps in. Defaults to as specified in config.toml",
-    )
-    parser.add_argument(
-        "--regionsdb",
-        type=Path,
-        default=Path(Config.names.dir) / Config.names.db,
-        help="RegionsDB for validation. If not specified, use names.db in config.toml",
-    )
     parser.add_argument(
         "--overwrite",
         action="store_true",
@@ -243,7 +219,8 @@ def main(opts: Options) -> None:  # noqa: D103
                 wanted_areas.extend((kn, KNOWN_AREAS[kn]) for knf, kn in known_folded.items() if fnmatch(knf, want))
         del known_folded
 
-    with opts.regionsdb.open("rb") as fin:
+    regionsdb = Path(Config.names.dir) / Config.names.db
+    with regionsdb.open("rb") as fin:
         regsdb: dict[CoordType, RegionsDBRecord3] = pickle.load(fin)  # noqa: S301
     validation_set: set[CoordType] = {k for k, v in regsdb.items() if v["current_name"]}
 
@@ -251,7 +228,7 @@ def main(opts: Options) -> None:  # noqa: D103
         bonnie_coords = get_bonnie_coords(Config.bonnie)
         validation_set.intersection_update(bonnie_coords)
 
-    map_tiles = inventorize_maps_latest(opts.mapdir)
+    map_tiles = inventorize_maps_latest(Config.maps.dir)
 
     print("\nMaking maps:")
     new_count = 0
@@ -260,7 +237,7 @@ def main(opts: Options) -> None:  # noqa: D103
         if not opts.no_lattice:
             maker = LatticeMaker(regions_db=regsdb, validation_set=validation_set)
         for area_name, area_desc in wanted_areas:
-            targdir = opts.outdir / (area_desc.target_dir or area_name)
+            targdir = Path(Config.areas.dir) / (area_desc.target_dir or area_name)
             targdir.mkdir(parents=True, exist_ok=True)
             print(f"{area_name}: ", end="", flush=True)
             targ = targdir / (area_name + ".png")

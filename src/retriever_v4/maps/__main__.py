@@ -58,7 +58,6 @@ AbortRequested: SupportsSet = MP.Event()
 class MPMapOptions(Protocol):
     """Represents the options parsed from CLI"""
 
-    mapdir: Path
     workers: int
     savers: int
     prune_on_abort: bool
@@ -69,7 +68,6 @@ def get_options() -> MPMapOptions:
     """Get options from CLI"""
     parser = argparse.ArgumentParser("retriever.maps.mp")
 
-    parser.add_argument("--mapdir", type=Path, default=Path(Config.maps.dir))
     parser.add_argument("--workers", type=int, default=RETR_WORKERS)
     parser.add_argument("--savers", type=int, default=SAVE_WORKERS)
 
@@ -418,7 +416,8 @@ def launch_workers(
 def main(opts: MPMapOptions) -> None:  # noqa: D103
     start = time.monotonic()
 
-    progress_file = opts.mapdir / Config.maps.progress
+    mapdir = Path(Config.maps.dir)
+    progress_file = mapdir / Config.maps.progress
     if progress_file.exists():
         with progress_file.open("rb") as fin:
             progress: ProgressDict = pickle.load(fin)  # noqa: S301
@@ -466,7 +465,7 @@ def main(opts: MPMapOptions) -> None:  # noqa: D103
     yaml = YAML(typ="safe")
     yaml.Representer = RoundTripRepresenter
     perfdata: dict[datetime, dict[int, float]] = {}
-    performance_file = opts.mapdir / "performance.yaml"
+    performance_file = mapdir / "performance.yaml"
     if performance_file.exists():
         make_backup(performance_file)
         with performance_file.open("rt") as fin:
@@ -487,7 +486,7 @@ def main(opts: MPMapOptions) -> None:  # noqa: D103
         return
 
     print("Starting prune:", flush=True)
-    total, count = prune(inventorize_maps_all(opts.mapdir), quiet=True)
+    total, count = prune(inventorize_maps_all(mapdir), quiet=True)
     print(f"{total - count} files pruned.")
 
 

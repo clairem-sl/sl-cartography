@@ -19,10 +19,6 @@ TilerClass: type | None = None
 
 Config = ConfigReader("config.toml")
 
-DEFA_DB_PATH: Final[Path] = Path(Config.names.dir) / Config.names.db
-DEFA_MAPDIR: Final[Path] = Path(Config.maps.dir)
-DEFA_OUTDIR: Final[Path] = Path(Config.nightlights.dir)
-
 MIN_X: Final[int] = COORD_RANGE.min_
 MAX_X: Final[int] = COORD_RANGE.max_
 
@@ -43,9 +39,6 @@ TILERS: Final[dict[str, dict[str, int]]] = {
 class Options(Protocol):
     """Options returned from command line"""
 
-    dbpath: Path
-    mapdir: Path
-    outdir: Path
     no_bonnie: bool
     no_maptiles: bool
     tiler: str
@@ -62,10 +55,6 @@ class BonnieRegionData(TypedDict):
 def get_options() -> Options:
     """Get options from command line"""
     parser = argparse.ArgumentParser("worldmap_v4.nightlights")
-
-    parser.add_argument("--dbpath", type=Path, default=DEFA_DB_PATH)
-    parser.add_argument("--mapdir", type=Path, default=DEFA_MAPDIR)
-    parser.add_argument("--outdir", type=Path, default=DEFA_OUTDIR)
 
     parser.add_argument("--no-bonnie", action="store_true", default=False, help="Don't validate against BonnieBots DB")
     parser.add_argument(
@@ -246,7 +235,8 @@ def make_nightlights2(regions: set[MapCoord], *, tiler: str) -> Image.Image:
 
 def main(opts: Options) -> None:  # noqa: D103
     # Read Regions from DB
-    with opts.dbpath.open("rb") as fin:
+    regdb_p = Path(Config.names.dir) / Config.names.db
+    with regdb_p.open("rb") as fin:
         data_raw: dict[tuple[int, int], RegionsDBRecord] = pickle.load(fin)  # noqa: S301
     regions: set[tuple[int, int]] = set(k for k, v in data_raw.items() if v["current_name"])
 
@@ -262,12 +252,12 @@ def main(opts: Options) -> None:  # noqa: D103
     # Filter with Maptiles if not prevented
     if not opts.no_maptiles:
         # Get Maptiles data
-        mapfiles = inventorize_maps_all(opts.mapdir)
+        mapfiles = inventorize_maps_all(Config.maps.dir)
         regions.intersection_update(mapfiles.keys())
         del mapfiles
 
     _ts = datetime.now().strftime("%y%m%d-%H%M")
-    targ = opts.outdir / f"worldmap4_nightlights_{opts.tiler}_{_ts}.png"
+    targ = Path(Config.maps.dir) / f"worldmap4_nightlights_{opts.tiler}_{_ts}.png"
     if targ.exists():
         make_backup(targ)
         targ.unlink()

@@ -16,7 +16,6 @@ from sl_maptools.knowns import KNOWN_AREAS
 from sl_maptools.utils import ConfigReader
 from sl_maptools.validator import get_bonnie_coords, inventorize_maps_latest
 
-
 Config = ConfigReader("config.toml")
 
 # language=yaml
@@ -123,8 +122,6 @@ class Options(NamedTuple):
     """Represents options extracted from CLI"""
 
     overwrite: bool
-    mapdir: Path
-    outdir: Path
 
 
 def get_options() -> Options:
@@ -132,8 +129,6 @@ def get_options() -> Options:
     parser = argparse.ArgumentParser()
 
     parser.add_argument("--overwrite", action="store_true", default=False)
-    parser.add_argument("--mapdir", type=Path, default=Path(r"C:\Cache\SL-Carto\MapTilesMP"))
-    parser.add_argument("--outdir", type=Path, default=Path(r"C:\Cache\SL-Carto\AreaMaps\Belli_for_SLGI"))
 
     _opts = parser.parse_args()
 
@@ -147,7 +142,7 @@ def main(opts: Options) -> None:  # noqa: D103
     belli_coords: set[CoordType] = set(xy for xy in belli_all.xy_iterator())
 
     bonnie_coords = get_bonnie_coords(Config.bonnie)
-    map_tiles = inventorize_maps_latest(opts.mapdir)
+    map_tiles = inventorize_maps_latest(Config.maps.dir)
 
     with StringIO(BELLI_EXCLUSIONS_YAML) as fin:
         data: dict[str, list[str]] = YAML(typ="safe").load(fin)
@@ -172,7 +167,7 @@ def main(opts: Options) -> None:  # noqa: D103
     westmost = belli_all.x_westmost
     nordmost = belli_all.y_northmost
     for mapname, excludes in data.items():
-        targ: Path = opts.outdir / f"{mapname}.png"
+        targ: Path = Path(Config.areas.dir) / f"{mapname}.png"
         if not opts.overwrite and targ.exists():
             print(f"Skipping {mapname}")
             continue
