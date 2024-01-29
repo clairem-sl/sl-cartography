@@ -11,7 +11,7 @@ log = 'NameOfLogFile.log.yaml'
 progress = 'NameOfFileToStoreRetrievalProgress.yaml'
 
 [maps]
-# Configuration for the Retriever.Maps module
+# Configuration for the Retriever.Maps module, which fetches maptiles
 # Note that some information, notably 'dir', will be used by other modules
 dir = '\path\to\directory\to\save\results'
 lock = 'NameOfLockFile.lock'
