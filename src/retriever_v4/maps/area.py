@@ -17,6 +17,7 @@ import httpx
 from sl_maptools import RE_SLGI_NOTATION, AreaDescriptor, MapCoord
 from sl_maptools.fetchers.map import MapFetcher
 from sl_maptools.knowns import KNOWN_AREAS
+from sl_maptools.utils import ConfigReader, SLMapToolsConfig
 
 if TYPE_CHECKING:
     from sl_maptools.fetchers import RawResult
@@ -25,10 +26,12 @@ if TYPE_CHECKING:
 RE_BOXCOORDS = re.compile(r"(?P<x1>\d+),(?P<y1>\d+)[,-](?P<x2>\d+),(?P<y2>\d+)")
 
 
+Config: SLMapToolsConfig = ConfigReader("config.toml")
+
+
 class Options(NamedTuple):
     """Represents options extracted from the CLI"""
 
-    out_dir: Path
     area: list[str]
 
 
@@ -36,7 +39,6 @@ def get_options() -> Options:
     """Get option from the CLI"""
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("--out-dir", type=Path, default=Path())
     parser.add_argument("area", type=str, nargs="+")
 
     _opts = parser.parse_args()
@@ -44,7 +46,7 @@ def get_options() -> Options:
     return cast(Options, _opts)
 
 
-async def aretrieve(opts: Options, wants: dict[str, list[tuple[int, int, int, int]]]) -> None:
+async def aretrieve(wants: dict[str, list[tuple[int, int, int, int]]]) -> None:
     """Performs asynchronous retrieval of wanted areas"""
     seen: set[tuple[int, int]] = set()
     async with httpx.AsyncClient(http2=True) as aclient:
@@ -58,6 +60,7 @@ async def aretrieve(opts: Options, wants: dict[str, list[tuple[int, int, int, in
                     if xy not in seen
                 ]
             totlen = len(str(tot := len(tasks)))
+            targdir = Path(Config.maps.dir)
             reg_c = 0
             for c, fut in enumerate(asyncio.as_completed(tasks), start=1):
                 mr: RawResult = await fut
@@ -65,7 +68,7 @@ async def aretrieve(opts: Options, wants: dict[str, list[tuple[int, int, int, in
                     continue
                 x, y = mr.coord
                 ts = datetime.strftime(datetime.now(), "%y%m%d-%H%M")
-                targ = opts.out_dir / f"{x}-{y}_{ts}.jpg"
+                targ = targdir / f"{x}-{y}_{ts}.jpg"
                 with targ.open("wb") as fout:
                     fout.write(mr.result)
                 print(f"  ({c:{totlen}}/{tot}) {targ}")
@@ -98,7 +101,7 @@ def main(opts: Options) -> None:  # noqa: D103
     print(f"Parsed {len(wants)} areas")
 
     if wants:
-        asyncio.run(aretrieve(opts, wants))
+        asyncio.run(aretrieve(wants))
 
 
 if __name__ == "__main__":
