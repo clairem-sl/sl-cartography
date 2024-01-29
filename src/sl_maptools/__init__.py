@@ -45,14 +45,20 @@ COORD_RANGE: Final[IntRange] = IntRange(0, 2100)
 RE_MAPFILE: Final[re.Pattern] = re.compile(r"^(?P<x>\d+)-(?P<y>\d+)_(?P<ts>\d{6}-\d{4}).jpe?g")
 RE_SLGI_NOTATION: Final[re.Pattern] = re.compile(
     r"""
-    ^\D*             # Possible open parenthesis
+    ^\(?             # Possible open parenthesis
+    \s*
     (?P<x1>\d+)      # First longitude
-    (-(?P<x2>\d+))?  # Optional second longitude
-    (                  # Optional latitude
-        \s*[,/]\s*       # Long/Lat separator
-        (?P<y1>\d+)      # First latitude
-        (-(?P<y2>\d+))?  # Optional second latitude
-    )?
+    (?:\s*-\s*       # Optional second longitude, there must be a hyphen
+        (?P<x2>\d+)
+    )?  
+    \s*[,/]\s*       # Long/Lat separator
+    (?P<y1>\d+)      # First latitude
+    (?:\s*-\s*       # Optional second latitude, there must be a hyphen
+        (?P<y2>\d+)
+    )?  
+    \s*
+    \)?              # Possible closing parenthesis
+    $
     """,
     re.VERBOSE,
 )
