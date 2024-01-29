@@ -145,10 +145,8 @@ def get_options() -> Options:
         help="If specified, do not perform validation against BonnieBots database",
     )
 
-    _opts = parser.parse_args()
-    if _opts.outdir is None:
-        _opts.outdir = _opts.mapdir
-    return cast(Options, _opts)
+    _opts: Options = cast(Options, parser.parse_args())
+    return _opts
 
 
 def make_map(
