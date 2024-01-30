@@ -580,7 +580,7 @@ Freedom:
 
 GoombahSL:
   includes:
-    - 1104-1108/1105-1129
+    - 1104-1108/1119-1129
 
 # Gone in January 2024
 #Gooseberry:
@@ -590,7 +590,11 @@ GoombahSL:
 # Originally "A518"
 GoreanLands:
   includes:
-    - [1014, 1175, 1020, 1179]
+    - [1014, 1175, 1019, 1178]
+
+IndecentEstates:
+  includes:
+    - 855-858/1015-1018
 
 IsleOfWyrms:
   includes:
@@ -769,6 +773,10 @@ Shopping:
 SLEA:
   includes:
     - 695-699/1405-1410
+
+SomeonesDream:
+  includes:
+    - 637-640/942-945
 
 SturbridgeGrove:
   includes:
