@@ -3,26 +3,22 @@
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 from __future__ import annotations
 
-import pickle
 from pathlib import Path
-from typing import TYPE_CHECKING, Final
+from typing import Final
 
 from ruamel.yaml import YAML, RoundTripRepresenter
 
-if TYPE_CHECKING:
-    from sl_maptools import CoordType, RegionsDBRecord3
 from sl_maptools.knowns import KNOWN_AREAS
 from sl_maptools.utils import ConfigReader, SLMapToolsConfig
+from sl_maptools.validator import get_nonvoid_regions
 
 Config: SLMapToolsConfig = ConfigReader("config.toml")
 
-DB_PATH: Final[Path] = Path(Config.names.dir) / Config.names.db
 LIST_PATH: Final[Path] = Path(Config.areas.dir)
 
 
 def main() -> None:  # noqa: D103
-    with DB_PATH.open("rb") as fin:
-        regsdb: dict[CoordType, RegionsDBRecord3] = pickle.load(fin)  # noqa: S301
+    regsdb = get_nonvoid_regions(Config.names)
 
     r_a: dict[str, list[str]] = {}
 

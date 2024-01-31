@@ -1,17 +1,18 @@
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
-import pickle
 from collections import deque
-from pathlib import Path
 from pprint import pprint
 from typing import Final
 
-from sl_maptools import CoordType, RegionsDBRecord, AreaBounds
+from sl_maptools import AreaBounds, CoordType
 from sl_maptools.knowns import KNOWN_AREAS
 from sl_maptools.utils import ConfigReader
-from sl_maptools.validator import get_bonnie_coords, inventorize_maps_latest
-
+from sl_maptools.validator import (
+    get_bonnie_coords,
+    get_nonvoid_regions,
+    inventorize_maps_latest,
+)
 
 INTERESTING_CLUMPSIZE_THRESHOLD: Final[int] = 10
 
@@ -21,15 +22,8 @@ Config = ConfigReader("config.toml")
 
 def main():
     map_tiles = inventorize_maps_latest(Config.maps.dir)
-    regionsdb = Path(Config.names.dir) / Config.names.db
 
-    validation_set: set[CoordType] = set()
-    with regionsdb.open("rb") as fin:
-        regsdb: dict[CoordType, RegionsDBRecord] = pickle.load(fin)
-    validation_set.update(k for k, v in regsdb.items() if v["current_name"])
-    bonnie_coords = get_bonnie_coords(Config.bonnie)
-    print()
-    validation_set.intersection_update(bonnie_coords)
+    validation_set = set(get_nonvoid_regions(Config.names)) & get_bonnie_coords(Config.bonnie)
     for co in list(map_tiles.keys()):
         if co not in validation_set:
             del map_tiles[co]
@@ -75,11 +69,7 @@ def main():
 
     known_coords: dict[str, set[CoordType]] = {}
     for aname, abounds in KNOWN_AREAS.items():
-        known_coords[aname] = {
-            coord
-            for coord in abounds.xy_iterator()
-            if coord in all_coords
-        }
+        known_coords[aname] = {coord for coord in abounds.xy_iterator() if coord in all_coords}
 
     new_clup: list[set[CoordType]] = []
     for clump in clumps:
@@ -116,5 +106,5 @@ def main():
     pprint(interesting)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -4,16 +4,19 @@
 from __future__ import annotations
 
 import argparse
-import pickle
 from datetime import datetime
 from pathlib import Path
 from typing import Final, Protocol, TypedDict, cast
 
 from PIL import Image, ImageDraw
 
-from sl_maptools import COORD_RANGE, MapCoord, RegionsDBRecord
+from sl_maptools import COORD_RANGE, MapCoord
 from sl_maptools.utils import ConfigReader, make_backup
-from sl_maptools.validator import get_bonnie_coords, inventorize_maps_all
+from sl_maptools.validator import (
+    get_bonnie_coords,
+    get_nonvoid_regions,
+    inventorize_maps_all,
+)
 
 TilerClass: type | None = None
 
@@ -234,11 +237,8 @@ def make_nightlights2(regions: set[MapCoord], *, tiler: str) -> Image.Image:
 
 
 def main(opts: Options) -> None:  # noqa: D103
-    # Read Regions from DB
-    regdb_p = Path(Config.names.dir) / Config.names.db
-    with regdb_p.open("rb") as fin:
-        data_raw: dict[tuple[int, int], RegionsDBRecord] = pickle.load(fin)  # noqa: S301
-    regions: set[tuple[int, int]] = set(k for k, v in data_raw.items() if v["current_name"])
+    regsdb = get_nonvoid_regions(Config.names)
+    regions: set[tuple[int, int]] = set(k for k, v in regsdb.items() if v["current_name"])
 
     # Filter with Bonnie if not prevented
     if not opts.no_bonnie:

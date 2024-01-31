@@ -2,15 +2,17 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 import argparse
-import pickle
 from collections import deque
-from pathlib import Path
 from typing import Final, Protocol, cast
 
-from sl_maptools import AreaBounds, CoordType, RegionsDBRecord
+from sl_maptools import AreaBounds, CoordType
 from sl_maptools.knowns import DO_NOT_MAP_AREAS, KNOWN_AREAS
 from sl_maptools.utils import ConfigReader
-from sl_maptools.validator import get_bonnie_coords, inventorize_maps_latest
+from sl_maptools.validator import (
+    get_bonnie_coords,
+    get_nonvoid_regions,
+    inventorize_maps_latest,
+)
 
 INTERESTING_CLUMPSIZE_THRESHOLD: Final[int] = 10
 
@@ -32,16 +34,9 @@ def get_options() -> ClumpOptions:
 
 def main(opts: ClumpOptions):
     map_tiles = inventorize_maps_latest(Config.maps.dir)
-    regionsdb = Path(Config.names.dir) / Config.names.db
 
-    validation_set: set[CoordType] = set()
-    with regionsdb.open("rb") as fin:
-        regsdb: dict[CoordType, RegionsDBRecord] = pickle.load(fin)
-    validation_set.update(k for k, v in regsdb.items() if v["current_name"])
-    bonnie_coords = get_bonnie_coords(Config.bonnie)
-    print()
-    # print(bonnie_coords)
-    validation_set.intersection_update(bonnie_coords)
+    regsdb = get_nonvoid_regions(Config.names)
+    validation_set = set(regsdb) & get_bonnie_coords(Config.bonnie)
     for co in list(map_tiles.keys()):
         if co not in validation_set:
             del map_tiles[co]

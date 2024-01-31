@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import argparse
-import pickle
 import re
 import time
 from datetime import datetime
@@ -17,16 +16,14 @@ from typing import Final, Protocol, cast
 from PIL import Image
 
 from cartographer_v4.lattice import ExclusionMethod, LatticeMaker
-from sl_maptools import (
-    AreaBounds,
-    AreaDescriptor,
-    CoordType,
-    RegionsDBRecord3,
-    SupportsSet,
-)
+from sl_maptools import AreaBounds, AreaDescriptor, CoordType, SupportsSet
 from sl_maptools.knowns import KNOWN_AREAS
 from sl_maptools.utils import ConfigReader, SLMapToolsConfig, handle_sigint
-from sl_maptools.validator import get_bonnie_coords, inventorize_maps_latest
+from sl_maptools.validator import (
+    get_bonnie_coords,
+    get_nonvoid_regions,
+    inventorize_maps_latest,
+)
 
 Config: SLMapToolsConfig = ConfigReader("config.toml")
 AbortRequested: SupportsSet = Event()
@@ -217,10 +214,8 @@ def main(opts: Options) -> None:  # noqa: D103
                 wanted_areas.extend((kn, KNOWN_AREAS[kn]) for knf, kn in known_folded.items() if fnmatch(knf, want))
         del known_folded
 
-    regionsdb = Path(Config.names.dir) / Config.names.db
-    with regionsdb.open("rb") as fin:
-        regsdb: dict[CoordType, RegionsDBRecord3] = pickle.load(fin)  # noqa: S301
-    validation_set: set[CoordType] = {k for k, v in regsdb.items() if v["current_name"]}
+    regsdb = get_nonvoid_regions(Config.names)
+    validation_set: set[CoordType] = set(regsdb)
 
     if not opts.no_bonnie:
         bonnie_coords = get_bonnie_coords(Config.bonnie)

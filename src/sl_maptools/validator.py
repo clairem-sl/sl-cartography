@@ -3,6 +3,7 @@
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 from __future__ import annotations
 
+import pickle
 import re
 import urllib.parse
 import uuid
@@ -16,10 +17,10 @@ import httpx
 import msgpack
 from ruamel import yaml as ryaml
 
-from sl_maptools import RE_MAPFILE, CoordType, MapCoord, MapRegion
+from sl_maptools import RE_MAPFILE, CoordType, MapCoord, MapRegion, RegionsDBRecord3
 
 if TYPE_CHECKING:
-    from sl_maptools.utils import BonnieConfig
+    from sl_maptools.utils import BonnieConfig, NamesConfig
 
 # This source file uses data & API provided by Tyche Shepherd & gridsurvey.com
 
@@ -147,6 +148,14 @@ class MapValidatorGridSurvey(object):
 """var slRegionName = {'error' : true };"""
 RE_ERROR = re.compile(r"=\s*\{\s*'error'\s+:\s+true\s*}")
 """var slRegionName='Da Boom';"""
+
+
+def get_nonvoid_regions(config: NamesConfig) -> dict[CoordType, RegionsDBRecord3]:
+    """Get a dict of valid regions, i.e., regions with a current name"""
+    regionsdb = Path(config.dir) / config.db
+    with regionsdb.open("rb") as fin:
+        regsdb: dict[CoordType, RegionsDBRecord3] = pickle.load(fin)  # noqa: S301
+    return {k: v for k, v in regsdb.items() if v["current_name"]}
 
 
 def get_bonnie_coords(config: BonnieConfig, *, maxage: timedelta | int = 1) -> set[CoordType]:
