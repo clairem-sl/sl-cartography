@@ -90,8 +90,8 @@ def main() -> None:  # noqa: D103
             for co in coset:
                 rn = regsdb[co]["current_name"]
                 print(f"{i:2}) {co} {rn}", end=" ")
-                if reglist := regareas.get(rn):
-                    print(f"[in {', '.join(reglist)}]")
+                if arealist := regareas.get(rn):
+                    print(f"[in {', '.join(arealist)}]")
                 else:
                     print()
             print("-" * 10)
