@@ -76,9 +76,13 @@ def main() -> None:  # noqa: D103
     with regions_areas.open("rt") as fin:
         regareas = yaml.load(fin)
 
+    lenss = sorted(len_clumps)
     while True:
-        print(sorted(len_clumps))
-        inp = int(input("Len (0 to end) ? "))
+        print("Available lens:", lenss)
+        try:
+            inp = int(input("Len (0 to end) ? "))
+        except ValueError:
+            inp = 0
         if inp == 0:
             break
 
