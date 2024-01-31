@@ -4,10 +4,11 @@ from typing import TYPE_CHECKING
 
 import ruamel.yaml
 
-if TYPE_CHECKING:
-    from sl_maptools import CoordType
 from sl_maptools.utils import ConfigReader, SLMapToolsConfig
 from sl_maptools.validator import get_bonnie_coords, get_nonvoid_regions
+
+if TYPE_CHECKING:
+    from sl_maptools import CoordType
 
 Config: SLMapToolsConfig = ConfigReader("config.toml")
 
