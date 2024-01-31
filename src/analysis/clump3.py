@@ -18,22 +18,22 @@ def main() -> None:  # noqa: D103
     regsdb = get_nonvoid_regions(Config.names)
     valid_coords: set[CoordType] = set(regsdb) & get_bonnie_coords(Config.bonnie)
 
-    coordsets: list[set[CoordType]] = []
+    # Make a list of "zones", i.e., coordinates with adjancies
+    zones: list[set[CoordType]] = []
     for co in valid_coords:
-        curset: set[CoordType] = {co}
+        curzone: set[CoordType] = {co}
         x, y = co
         for dx, dy in OFFSETS:
             tco = x + dx, y + dy
             if tco in valid_coords:
-                curset.add(tco)
-        if len(curset) > 1:
-            # Append only coordinates with adjacencies
-            coordsets.append(curset)
+                curzone.add(tco)
+        if len(curzone) > 1:
+            zones.append(curzone)
 
     # Combine adjacent zones into clumps
     # How this works:
     #  - Get one zone from working list
-    #  - Find a zone that intersects
+    #  - For the rest of the zones
     #    - If intersects, combine the zones
     #    - If not, add the zone into a "left out" list
     #  - Record the enlarged zone (might also be still same size)
@@ -43,32 +43,32 @@ def main() -> None:  # noqa: D103
     combos: list[set[CoordType]]
     left_out: list[set[CoordType]]
     prev_len: int = 0
-    while prev_len != len(coordsets):
-        prev_len = len(coordsets)
+    while prev_len != len(zones):
+        prev_len = len(zones)
         print(prev_len, flush=True)
         combos = []
-        while coordsets:
-            curset: set[CoordType] = coordsets.pop()
+        while zones:
+            curzone: set[CoordType] = zones.pop()
             left_out = []
-            for one in coordsets:
-                if curset.intersection(one):
-                    curset.update(one)
+            for one in zones:
+                if curzone.intersection(one):
+                    curzone.update(one)
                 else:
                     left_out.append(one)
-            combos.append(curset)
-            coordsets = left_out
-        coordsets = combos
+            combos.append(curzone)
+            zones = left_out
+        zones = combos
 
-    len_clumps: dict[int, list[set[CoordType]]] = {}
-    for coset in coordsets:
-        len_clumps.setdefault(len(coset), []).append(coset)
+    len_zones: dict[int, list[set[CoordType]]] = {}
+    for zone in zones:
+        len_zones.setdefault(len(zone), []).append(zone)
 
-    for num in sorted(len_clumps):
-        print(f"Clump of size {num} = {len(len_clumps[num])} areas")
+    for num in sorted(len_zones):
+        print(f"Clump of size {num} = {len(len_zones[num])} zones")
 
     clumpsdb_p = Path(Config.names.dir) / "clumps.pkl"
     with clumpsdb_p.open("wb") as fout:
-        pickle.dump(len_clumps, fout)
+        pickle.dump(len_zones, fout)
     print(f"Saved to {clumpsdb_p}")
 
     regions_areas = Path(Config.areas.dir) / "regions_areas.yaml"
@@ -76,7 +76,7 @@ def main() -> None:  # noqa: D103
     with regions_areas.open("rt") as fin:
         regareas = yaml.load(fin)
 
-    lenss = sorted(len_clumps)
+    lenss = sorted(len_zones)
     while True:
         print("Available lens:", lenss)
         try:
@@ -86,8 +86,8 @@ def main() -> None:  # noqa: D103
         if inp == 0:
             break
 
-        for i, coset in enumerate(len_clumps[inp], start=1):
-            for co in coset:
+        for i, zone in enumerate(len_zones[inp], start=1):
+            for co in zone:
                 rn = regsdb[co]["current_name"]
                 print(f"{i:2}) {co} {rn}", end=" ")
                 if arealist := regareas.get(rn):
