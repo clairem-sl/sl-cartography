@@ -85,7 +85,11 @@ def main() -> None:  # noqa: D103
         for i, coset in enumerate(len_clumps[inp], start=1):
             for co in coset:
                 rn = regsdb[co]["current_name"]
-                print(f"{i:2}) {co} {rn} [in {regareas.get(rn)}]")
+                print(f"{i:2}) {co} {rn}", end=" ")
+                if reglist := regareas.get(rn):
+                    print(f"[in {', '.join(reglist)}]")
+                else:
+                    print()
             print("-" * 10)
 
 
