@@ -1,5 +1,6 @@
 import pickle
 import time
+from collections import deque
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -22,48 +23,27 @@ def main() -> None:  # noqa: D103
 
     start = time.monotonic()
 
-    # Make a list of "zones", i.e., coordinates with adjancies
+    work_queue: deque[CoordType]
     zones: list[set[CoordType]] = []
-    for co in valid_coords:
-        curzone: set[CoordType] = {co}
-        x, y = co
-        for dx, dy in OFFSETS:
-            tco = x + dx, y + dy
-            if tco in valid_coords:
-                curzone.add(tco)
-        if len(curzone) > 1:
-            zones.append(curzone)
-
-    # Combine adjacent zones into clumps
-    # How this works:
-    #  - Get one zone from working list
-    #  - For the rest of the zones
-    #    - If intersects, combine the zones
-    #    - If not, add the zone into a "left out" list
-    #  - Record the enlarged zone (might also be still same size)
-    #  - Replace working list with the "left out" list
-    #  - Repeat until working list is fully consumed
-    #  - Then repeat everything until no changes
-
-    combos: list[set[CoordType]]
-    left_out: list[set[CoordType]]
-    prev_len: int = 0
-    while prev_len != len(zones):
-        prev_len = len(zones)
-        print(prev_len, flush=True)
-        combos = []
-        while zones:
-            curzone: set[CoordType] = zones.pop()
-            left_out = []
-            for one in zones:
-                if curzone.intersection(one):
-                    curzone.update(one)
-                else:
-                    left_out.append(one)
-            combos.append(curzone)
-            zones = left_out
-        zones = combos
-    del left_out
+    zone: set[CoordType]
+    while valid_coords:
+        work_queue = deque([valid_coords.pop()])
+        zone = set()
+        while work_queue:
+            coord = work_queue.popleft()
+            zone.add(coord)
+            x, y = coord
+            for dx, dy in OFFSETS:
+                dco = x + dx, y + dy
+                if dco in zone:
+                    continue
+                if dco not in valid_coords:
+                    continue
+                valid_coords.remove(dco)
+                zone.add(dco)
+                work_queue.append(dco)
+        if len(zone) > 1:
+            zones.append(zone)
 
     finish = time.monotonic() - start
     print(f"Zoning took {finish:.2f} seconds")
