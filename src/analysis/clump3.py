@@ -38,7 +38,8 @@ def main() -> None:  # noqa: D103
     #    - If not, add the zone into a "left out" list
     #  - Record the enlarged zone (might also be still same size)
     #  - Replace working list with the "left out" list
-    #  - Repeat until no changes
+    #  - Repeat until working list is fully consumed
+    #  - Then repeat everything until no changes
 
     combos: list[set[CoordType]]
     left_out: list[set[CoordType]]
