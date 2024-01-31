@@ -60,6 +60,7 @@ def main() -> None:  # noqa: D103
             combos.append(curzone)
             zones = left_out
         zones = combos
+    del left_out
 
     len_zones: dict[int, list[set[CoordType]]] = {}
     for zone in zones:
