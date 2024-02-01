@@ -45,153 +45,236 @@ Bellisseria_ALL:
     - 1023-1048/998-1023
 
 
-# region ## Claire's Belli separation
+# region ## Claire's Original Belli separation
 
-Bellisseria_CM_Annex:
-  includes:
-    - [1037, 930, 1053, 949]
-
-Bellisseria_CM_Atolls:
-  includes:
-    - [1023, 928, 1032, 940]
-
-Bellisseria_CM_Central:
-  includes:
-    - [1058, 967, 1081, 1000]
-
-Bellisseria_CM_North:
-  includes:
-    - [1078, 987, 1100, 1024]
-  excludes:
-    # Parts of Satori
-    - 1100/1007-1010
-
-Bellisseria_CM_South:
-  includes:
-    - [1038, 950, 1063, 977]
-
-Bellisseria_CM_West:
-  includes:
-    - [1023, 940, 1045, 977]
+#Bellisseria_CM_Annex:
+#  includes:
+#    - [1037, 930, 1053, 949]
+#
+#Bellisseria_CM_Atolls:
+#  includes:
+#    - [1023, 928, 1032, 940]
+#
+#Bellisseria_CM_Central:
+#  includes:
+#    - [1058, 967, 1081, 1000]
+#
+#Bellisseria_CM_North:
+#  includes:
+#    - [1078, 987, 1100, 1024]
+#  excludes:
+#    # Parts of Satori
+#    - 1100/1007-1010
+#
+#Bellisseria_CM_South:
+#  includes:
+#    - [1038, 950, 1063, 977]
+#
+#Bellisseria_CM_West:
+#  includes:
+#    - [1023, 940, 1045, 977]
 
 # endregion
 
 # region ## SLGI's Belli separation
 
-Bellisseria_SLGI_East:
-  includes:
-    - [1078, 987, 1100, 1024]
-  excludes:
-    - 1100/1005-1010
-    - [1078, 987, 1080, 989]
-
-Bellisseria_SLGI_Forest:
-  includes:
-    - [1043, 950, 1063, 977]
-  excludes:
-    # Bellisseria_SLGI_WaterParadise
-    - [1063, 977, 1063, 977]
-    # Bellisseria Primordial / Victorian
-    - [1038, 964, 1045, 977]
-    - [1038, 963, 1044, 963]
-    - [1038, 950, 1042, 962]
-    - [1043, 955, 1043, 956]
-
-Bellisseria_SLGI_Jeogeot:
-  includes:
-    - [1023, 928, 1035, 943]
-  excludes:
-    - [1023, 942, 1034, 943]
-    - [1025, 941, 1034, 941]
-    - [1031, 935, 1035, 939]
-    - [1029, 935, 1030, 937]
-    - [1031, 935, 1035, 939]
-    - [1032, 928, 1035, 934]
-    - [1029, 928, 1031, 931]
-    - 1028/928-929
-    - 1026-1027/928
-
-Bellisseria_SLGI_Magic:
-  includes:
-    - [1037, 930, 1053, 949]
-  excludes:
-    - [1037, 947, 1038, 948]
-    - 1037/930-939
-    - [1038, 930, 1039, 934]
-
-Bellisseria_SLGI_Primordial:
-  includes:
-    - [1023, 953, 1045, 977]
-  excludes:
-    - [1044, 953, 1045, 966]
-    - 1043/964-965
-    - 1042-1043/953-963
-    - 1041/953-962
-    - 1040/953-958
-    - 1035-1039/953
-
-Bellisseria_SLGI_Sakura:
-  includes:
-    - [1063, 992, 1072, 1000]
-
-Bellisseria_SLGI_Victorian:
-  includes:
-    - [1024, 941, 1046, 966]
-  excludes:
-    - [1024, 966, 1043, 966]
-    - [1024, 965, 1042, 965]
-    - [1024, 964, 1041, 964]
-    - [1024, 959, 1040, 963]
-    - [1024, 954, 1039, 958]
-    - [1046, 941, 1046, 962]
-    - [1045, 941, 1045, 961]
-    - [1044, 958, 1044, 961]
-    - [1044, 941, 1044, 953]
-    - [1040, 941, 1043, 948]
-    - [1037, 941, 1039, 945]
-    - [1035, 941, 1039, 943]
-    - [1024, 941, 1024, 941]
-
-Bellisseria_SLGI_WaterParadise:
-  includes:
-    - [1058, 967, 1081, 992]
-  excludes:
-    - [1058, 967, 1063, 974]
-    - 1058-1062/975
-    - 1060-1061/976
-    - 1064-1068/992
-    - [1080, 990, 1081, 992]
-    - 1081/989
+#Bellisseria_SLGI_East:
+#  includes:
+#    - [1078, 987, 1100, 1024]
+#  excludes:
+#    - 1100/1005-1010
+#    - [1078, 987, 1080, 989]
+#
+#Bellisseria_SLGI_Forest:
+#  includes:
+#    - [1043, 950, 1063, 977]
+#  excludes:
+#    # Bellisseria_SLGI_WaterParadise
+#    - [1063, 977, 1063, 977]
+#    # Bellisseria Primordial / Victorian
+#    - [1038, 964, 1045, 977]
+#    - [1038, 963, 1044, 963]
+#    - [1038, 950, 1042, 962]
+#    - [1043, 955, 1043, 956]
+#
+#Bellisseria_SLGI_Jeogeot:
+#  includes:
+#    - [1023, 928, 1035, 943]
+#  excludes:
+#    - [1023, 942, 1034, 943]
+#    - [1025, 941, 1034, 941]
+#    - [1031, 935, 1035, 939]
+#    - [1029, 935, 1030, 937]
+#    - [1031, 935, 1035, 939]
+#    - [1032, 928, 1035, 934]
+#    - [1029, 928, 1031, 931]
+#    - 1028/928-929
+#    - 1026-1027/928
+#
+#Bellisseria_SLGI_Magic:
+#  includes:
+#    - [1037, 930, 1053, 949]
+#  excludes:
+#    - [1037, 947, 1038, 948]
+#    - 1037/930-939
+#    - [1038, 930, 1039, 934]
+#
+#Bellisseria_SLGI_Primordial:
+#  includes:
+#    - [1023, 953, 1045, 977]
+#  excludes:
+#    - [1044, 953, 1045, 966]
+#    - 1043/964-965
+#    - 1042-1043/953-963
+#    - 1041/953-962
+#    - 1040/953-958
+#    - 1035-1039/953
+#
+#Bellisseria_SLGI_Sakura:
+#  includes:
+#    - [1063, 992, 1072, 1000]
+#
+#Bellisseria_SLGI_Victorian:
+#  includes:
+#    - [1024, 941, 1046, 966]
+#  excludes:
+#    - [1024, 966, 1043, 966]
+#    - [1024, 965, 1042, 965]
+#    - [1024, 964, 1041, 964]
+#    - [1024, 959, 1040, 963]
+#    - [1024, 954, 1039, 958]
+#    - [1046, 941, 1046, 962]
+#    - [1045, 941, 1045, 961]
+#    - [1044, 958, 1044, 961]
+#    - [1044, 941, 1044, 953]
+#    - [1040, 941, 1043, 948]
+#    - [1037, 941, 1039, 945]
+#    - [1035, 941, 1039, 943]
+#    - [1024, 941, 1024, 941]
+#
+#Bellisseria_SLGI_WaterParadise:
+#  includes:
+#    - [1058, 967, 1081, 992]
+#  excludes:
+#    - [1058, 967, 1063, 974]
+#    - 1058-1062/975
+#    - 1060-1061/976
+#    - 1064-1068/992
+#    - [1080, 990, 1081, 992]
+#    - 1081/989
 
 # endregion
 
-# region ## BBB's & BB's Belli separation
+# region ## BBB's & BB's Belli separation + Claire's 2024 Naming
+
+Bellisseria-Alps:
+  includes:
+    - 1079-1100/987-1008
+  excludes:
+    # Stiltlands
+    - 1079-1080/987-988
+    # Newbrooke
+    - 1079-1082/995-1008
+    - 1083/997-1008
+    - 1084-1085/999-1008
+    - 1086/1001-1008
+    - 1087/1004-1008
+    - 1088/1005-1008
+    - 1089/1006-1008
+    - 1090-1091/1007-1008
+    - 1092/1008
+    # Satori
+    - 1100/1007-1008
+
+Bellisseria-AtollsFishermen:
+  includes:
+    - 1023-1031/928-940
+    - 1032-1033/932-934
+  excludes:
+    # Pyri (Jeogeot)
+    - 1029-1031/935-937
+    # Jeogeot
+    - 1033/932
+    - 1032/928-931
+    - 1031/928-930
+    - 1030/928-929
+    - 1028-1029/928
 
 Bellisseria-Fantasseria:
   includes:
     - [1037, 930, 1053, 949]
   excludes:
-    - [1037, 947, 1038, 948]
+    # Victoria
+    - 1037-1039/947-949
+    # Jeogeot
     - 1037/930-939
     - [1038, 930, 1039, 934]
 
+Bellisseria-Forest:
+  includes:
+    - 1043-1063/949-978
+  excludes:
+    # Stiltlands
+    - 1063/977-978
+    # Welcome Hub
+    - 1050-1052/974-978
+    # Pickles, BelliHub and a bit of Victoria East
+    - 1043-1045/964-978
+    # Victoria East
+    - 1043-1044/963
+    - 1043/955-956
+
 Bellisseria-Mediterranea:
   includes:
-    - 1050-1056/988-999
+    - 1050-1060/988-999
   excludes:
     # Parts of Ranchlands
-    - 1050/988-989
+    - 1050/988-990
+
+Bellisseria-Newbrooke:
+  includes:
+    - 1079-1097/994-1014
+  excludes:
+    # Belli Alps
+    - 1084-1097/994
+    - 1085-1098/995-996
+    - 1088-1098/997-1002
+    - 1089-1098/1003
+    - 1091-1098/1004-1005
+    - 1093-1098/1006
+    - 1094-1098/1007
+    # New Islands
+    - 1093-1097/1014
+    - 1094-1098/1013
+
+Bellisseria-NewIslands:
+  includes:
+    - 1088-1100/1012-1023
+  excludes:
+    # Newbrooke
+    - 1088-1091/1012-1013
+    - 1092/1012
+
+Bellisseria-OldBelli:
+  includes:
+    - 1023-1040/954-978
+  excludes:
+    # The Pickles
+    - 1035-1040/961-968
+    # Victoria East
+    - 1039-1040/959-960
+    - 1040/954-958
 
 Bellisseria-Ranchlands:
   includes:
-    - 1037-1057/978-996
+    - 1037-1057/978-997
   excludes:
     # Parts of Welcome Hub
     - 1050-1052/978
     # Parts of Artsy Sims
     - 1036-1038/982-986
     # Mediterranean area
-    - 1051-1056/988-996
+    - 1051-1057/988-997
     - 1050/994-996
 
 Bellisseria-Sakurasseria:
@@ -212,6 +295,33 @@ Bellisseria-Stiltlands:
     - [1058, 967, 1063, 974]
     - [1058, 975, 1062, 975]
     - [1060, 976, 1061, 976]
+
+Bellisseria-ThePickles:
+  includes:
+    - 1040-1045/969-978
+    - 1035-1044/967-968
+    - 1035-1043/966
+    - 1035-1042/964-965
+    - 1035-1040/961-963
+    - 1037-1038/960
+
+Bellisseria-Victoria:
+  includes:
+    - 1024-1039/940-953
+    - 1040-1043/950-965
+    - 1044-1046/962-966
+    - 1044/954-957
+    - 1039/959-960
+  excludes:
+    # Forest
+    - 1046/962
+#    - 1044-1046/958-961
+#    - 1044/958-961
+    # Forest and Fantasseria
+#    - 1045-1046/940-957
+#    - 1044/940-953
+    # Fantasseria
+    - 1037-1039/940-945
 
 # endregion
 
