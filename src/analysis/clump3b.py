@@ -67,13 +67,18 @@ def main() -> None:  # noqa: D103
 
     lenss = sorted(len_zones)
     while True:
-        print("Available lens:", lenss)
+        print("\nAvailable lens:", lenss)
+        inp = input("Len (0 to end) ? ")
         try:
-            inp = int(input("Len (0 to end) ? "))
+            inp = int(inp)
         except ValueError:
-            inp = 0
+            print(f"Invalid input: {inp}")
+            continue
         if inp == 0:
             break
+        if inp not in len_zones:
+            print(f"\nNo clumps of size {inp}")
+            continue
 
         for i, zone in enumerate(len_zones[inp], start=1):
             minx = miny = 9999
