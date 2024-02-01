@@ -21,14 +21,16 @@ OFFSETS = [(-1, 0), (1, 0), (0, -1), (0, 1)]
 class Options(Protocol):
     """Represents options extracted from CLI"""
 
-    only_nones: bool
+    all: bool
     no_save: bool
 
 
 def get_options() -> Options:
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("--only-nones", action="store_true", default=False)
+    parser.add_argument(
+        "--all", action="store_true", default=False, help="Show all regions, not just those not associated with an area"
+    )
     parser.add_argument("--no-save", action="store_true", default=False)
 
     return cast(Options, parser.parse_args())
@@ -116,7 +118,7 @@ def main(opts: Options) -> None:  # noqa: D103
                 prefx = f"{i:2}) {co} {rn}"
                 if arealist := regareas.get(rn):
                     areas.update(arealist)
-                    if not opts.only_nones:
+                    if opts.all:
                         print(prefx, f"[in {', '.join(arealist)}]")
                 else:
                     print(prefx, "### None")
