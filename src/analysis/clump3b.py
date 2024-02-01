@@ -40,15 +40,12 @@ def main(opts: Options) -> None:  # noqa: D103
 
     start = time.monotonic()
 
-    work_queue: deque[CoordType]
+    work_queue = deque([])
     zones: list[set[CoordType]] = []
     zone: set[CoordType]
     while valid_coords:
-        work_queue = deque([valid_coords.pop()])
-        zone = set()
-        while work_queue:
-            coord = work_queue.popleft()
-            zone.add(coord)
+        zone = {coord := valid_coords.pop()}
+        while True:
             x, y = coord
             for dx, dy in OFFSETS:
                 dco = x + dx, y + dy
@@ -59,9 +56,14 @@ def main(opts: Options) -> None:  # noqa: D103
                 valid_coords.remove(dco)
                 zone.add(dco)
                 work_queue.append(dco)
+            if not work_queue:
+                break
+            coord = work_queue.popleft()
         if len(zone) > 1:
             zones.append(zone)
-
+    del work_queue
+    del valid_coords
+    
     finish = time.monotonic() - start
     print(f"Zoning took {finish:.2f} seconds")
 
