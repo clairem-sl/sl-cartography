@@ -1,8 +1,9 @@
+import argparse
 import pickle
 import time
 from collections import deque
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Protocol, cast
 
 import ruamel.yaml
 
@@ -17,7 +18,23 @@ Config: SLMapToolsConfig = ConfigReader("config.toml")
 OFFSETS = [(-1, 0), (1, 0), (0, -1), (0, 1)]
 
 
-def main() -> None:  # noqa: D103
+class Options(Protocol):
+    """Represents options extracted from CLI"""
+
+    only_nones: bool
+    no_save: bool
+
+
+def get_options() -> Options:
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument("--only-nones", action="store_true", default=False)
+    parser.add_argument("--no-save", action="store_true", default=False)
+
+    return cast(Options, parser.parse_args())
+
+
+def main(opts: Options) -> None:  # noqa: D103
     regsdb = get_nonvoid_regions(Config.names)
     valid_coords: set[CoordType] = set(regsdb) & get_bonnie_coords(Config.bonnie)
 
@@ -55,10 +72,13 @@ def main() -> None:  # noqa: D103
     for num in sorted(len_zones):
         print(f"Clump of size {num} = {len(len_zones[num])} zones")
 
-    clumpsdb_p = Path(Config.names.dir) / "clumps.pkl"
-    with clumpsdb_p.open("wb") as fout:
-        pickle.dump(len_zones, fout)
-    print(f"Saved to {clumpsdb_p}")
+    if not opts.no_save:
+        clumpsdb_p = Path(Config.names.dir) / "clumps.pkl"
+        with clumpsdb_p.open("wb") as fout:
+            pickle.dump(len_zones, fout)
+        print(f"Saved to {clumpsdb_p}")
+    else:
+        print("Not saved because --no-save is specified")
 
     regions_areas = Path(Config.areas.dir) / "regions_areas.yaml"
     yaml = ruamel.yaml.YAML(typ="safe")
@@ -90,13 +110,14 @@ def main() -> None:  # noqa: D103
                 minx = min(co[0], minx)
                 maxx = max(co[0], maxx)
                 miny = min(co[1], miny)
-                maxy = max(co[1], maxy)                
-                print(f"{i:2}) {co} {rn}", end=" ")
+                maxy = max(co[1], maxy)
+                prefx = f"{i:2}) {co} {rn}"
                 if arealist := regareas.get(rn):
-                    print(f"[in {', '.join(arealist)}]")
                     areas.update(arealist)
+                    if not opts.only_nones:
+                        print(prefx, f"[in {', '.join(arealist)}]")
                 else:
-                    print("### None")
+                    print(prefx, "### None")
             print("-" * 10, end=" ")
             bounds = [str(minx)]
             if maxx != minx:
@@ -108,4 +129,4 @@ def main() -> None:  # noqa: D103
 
 
 if __name__ == "__main__":
-    main()
+    main(get_options())
