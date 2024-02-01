@@ -158,9 +158,11 @@ def get_nonvoid_regions(config: NamesConfig) -> dict[CoordType, RegionsDBRecord3
     return {k: v for k, v in regsdb.items() if v["current_name"]}
 
 
-def get_bonnie_coords(config: BonnieConfig, *, maxage: timedelta | int = 1) -> set[CoordType]:
+def get_bonnie_coords(config: BonnieConfig, *, maxage: timedelta | int | None = None) -> set[CoordType]:
     """Get a set of coordinates from BonnieBots, using local database if not older than maxage"""
-    if not isinstance(maxage, timedelta):
+    if maxage is None:
+        maxage = timedelta(days=config.maxage)
+    elif not isinstance(maxage, timedelta):
         maxage = timedelta(days=maxage)
     bdb_data_raw = {}
     bonniedb: Path = Path(config.dir) / config.db

@@ -194,6 +194,7 @@ class BonnieConfig(Protocol):
     dir: str
     db: str
     url: str
+    maxage: int
 
 
 class SLMapToolsConfig(Protocol):
