@@ -65,9 +65,9 @@ def main() -> None:  # noqa: D103
     with regions_areas.open("rt") as fin:
         regareas = yaml.load(fin)
 
-    lenss = sorted(len_zones)
+    lenssc = [f"{k} ({len(v)})" for k, v in sorted(len_zones.items())]
     while True:
-        print("\nAvailable lens:", lenss)
+        print("\nAvailable lens:", ", ".join(lenssc))
         inp = input("Len (0 to end) ? ")
         try:
             inp = int(inp)
@@ -81,6 +81,7 @@ def main() -> None:  # noqa: D103
             continue
 
         for i, zone in enumerate(len_zones[inp], start=1):
+            print()
             minx = miny = 9999
             maxx = maxy = -1
             areas: set[str] = set()
