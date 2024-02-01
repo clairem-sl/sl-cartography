@@ -577,9 +577,10 @@ AzureIslands:
   excludes:
     - 1143-1145/1070-1071
 
-AzureIslands-Old:
-  includes:
-    - [977, 959, 989, 966]
+# Stop tracking this since move is complete
+#AzureIslands-Old:
+#  includes:
+#    - [977, 959, 989, 966]
 
 Babbage:
   includes:
