@@ -27,7 +27,7 @@ RGBATuple = tuple[int, int, int, int]
 Config: SLMapToolsConfig = ConfigReader("config.toml")
 
 MAP_DIR: Final[Path] = Path(Config.maps.dir)
-GRID_DIR: Final[Path] = Path(r"C:\Cache\SL-Carto\WorldMaps\GridSectors")
+GRID_DIR: Final[Path] = Path(Config.gridsectors.dir)
 
 # fmt: off
 GRID_COLS: Final[list[str]] = [

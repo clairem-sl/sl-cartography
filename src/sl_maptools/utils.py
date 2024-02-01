@@ -164,6 +164,12 @@ class NightlightsConfig(Protocol):
     dir: str
 
 
+class GridSectorsConfig(Protocol):
+    """Attributes for the [nightlights] section of config.toml"""
+
+    dir: str
+
+
 class AreasConfig(Protocol):
     """Attributes for the [areas] section of config.toml"""
 
@@ -204,6 +210,7 @@ class SLMapToolsConfig(Protocol):
     maps: MapsConfig
     mosaic: MosaicConfig
     nightlights: NightlightsConfig
+    gridsectors: GridSectorsConfig
     areas: AreasConfig
     lattice: LatticeConfig
     bonnie: BonnieConfig
