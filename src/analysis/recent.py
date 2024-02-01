@@ -1,18 +1,21 @@
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
-
+import argparse
 import pickle
 from collections import defaultdict
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Final, NamedTuple, cast
+from typing import Final, NamedTuple, Protocol, cast
 from zoneinfo import ZoneInfo
 
 from sl_maptools import CoordType, RegionsDBRecord3
+from sl_maptools.utils import ConfigReader
 
-DB_PATH = Path(r"C:\Cache\SL-Carto\RegionsDB3.pkl")
-CUTOFF = 3
+Config = ConfigReader(r"C:\Cache\SL-Carto\RegionsDB3.pkl")
+
+DB_PATH = Path(Config.names.dir) / Config.names.db
+DEFA_CUTOFF = 6
 
 # fmt: off
 GRID_COLS: Final[list[str]] = [
@@ -22,18 +25,37 @@ GRID_COLS: Final[list[str]] = [
 
 _NAO = datetime.now().astimezone()
 
-DATABASE: dict[CoordType, RegionsDBRecord3]
+
+class Options(Protocol):
+    """Represent options extracted from command line"""
+
+    cutoff: int
+
+
+def get_options() -> Options:
+    """Extract options from CLI"""
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument("--cutoff", type=int, default=DEFA_CUTOFF)
+
+    return cast(Options, parser.parse_args())
 
 
 class InterestingRegion(NamedTuple):
+    """A record of interesting regions"""
+
     timestamp: datetime
     name: str
     coord: CoordType
 
 
 def recent(max_days: int) -> set[InterestingRegion]:
+    """Returns a set of interesting regions with age <= max_days"""
+    with DB_PATH.open("rb") as fin:
+        database: dict[CoordType, RegionsDBRecord3] = pickle.load(fin)  # noqa: S301
+
     result: set[InterestingRegion] = set()
-    for co, data in DATABASE.items():
+    for co, data in database.items():
         if not data["current_name"]:
             continue
         delta = _NAO - data["first_seen"]
@@ -43,14 +65,9 @@ def recent(max_days: int) -> set[InterestingRegion]:
     return result
 
 
-def main():
-    global DATABASE
-
-    with DB_PATH.open("rb") as fin:
-        DATABASE = pickle.load(fin)
-
-    interesting: list[InterestingRegion] = sorted(recent(CUTOFF))
-    print(f"{len(interesting)} new regions the past {CUTOFF} days")
+def main(opts: Options) -> None:  # noqa: D103
+    interesting: list[InterestingRegion] = sorted(recent(opts.cutoff))
+    print(f"{len(interesting)} new regions the past {opts.cutoff} days")
     # new_areas: dict[str, list[CoordType]] = {}
     x_s: dict[str, set[int]] = defaultdict(set)
     y_s: dict[str, set[int]] = defaultdict(set)
@@ -82,5 +99,5 @@ def main():
         print(f"{i:>3} {gs:6} {sco:12} [{age}d] {name}")
 
 
-if __name__ == '__main__':
-    main()
+if __name__ == "__main__":
+    main(get_options())
