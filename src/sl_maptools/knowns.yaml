@@ -600,10 +600,6 @@ IsleOfWyrms:
   includes:
     - [545, 1059, 548, 1063]
 
-JunglesOfGor:
-  includes:
-    - [1097, 949, 1099, 951]
-
 Junkyard:
   includes:
     - 749-751/1214-1216
