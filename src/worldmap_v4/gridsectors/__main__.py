@@ -64,7 +64,7 @@ class RGBParser(argparse.Action):
 
 def get_options() -> Options:
     """Extract options from CLI"""
-    parser = argparse.ArgumentParser("cartographer_v4.gridsectors")
+    parser = argparse.ArgumentParser("worldmap_v4.gridsectors")
 
     parser.add_argument("--tile-size", type=int, default=DEFA_TILE_SZ)
     parser.add_argument(
