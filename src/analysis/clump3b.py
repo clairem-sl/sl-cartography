@@ -26,6 +26,7 @@ class Options(Protocol):
 
 
 def get_options() -> Options:
+    """Extract options from CLI"""
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
@@ -65,7 +66,7 @@ def main(opts: Options) -> None:  # noqa: D103
             zones.append(zone)
     del work_queue
     del valid_coords
-    
+
     finish = time.monotonic() - start
     print(f"Zoning took {finish:.2f} seconds")
 
