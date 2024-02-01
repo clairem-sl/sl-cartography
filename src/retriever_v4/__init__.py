@@ -297,20 +297,19 @@ async def dispatch_fetcher(
             # result_handler() should perform outstanding jobs retiring!
             if result_handler(task.result()):
                 has_response += 1
+        progress.save()
 
-        if completed_count:
-            progress.save()
-            if exc_count == completed_count:
-                print("\nLast batch all raised Exceptions!")
-                print("Cancelling the rest of the tasks...")
-                for t in pending_tasks:
-                    t.cancel()
-                done, _ = await asyncio.wait(pending_tasks, return_when=asyncio.ALL_COMPLETED)
-                for t in done:
-                    if not isinstance((exc := t.exception()), asyncio.CancelledError):
-                        print(f"\n{t.get_name()} raised Exception: <{type(exc)}> {exc}")
-                pending_tasks.clear()
-                break
+        if completed_count and exc_count == completed_count:
+            print("\nLast batch all raised Exceptions!")
+            print("Cancelling the rest of the tasks...")
+            for t in pending_tasks:
+                t.cancel()
+            done, _ = await asyncio.wait(pending_tasks, return_when=asyncio.ALL_COMPLETED)
+            for t in done:
+                if not isinstance((exc := t.exception()), asyncio.CancelledError):
+                    print(f"\n{t.get_name()} raised Exception: <{type(exc)}> {exc}")
+            pending_tasks.clear()
+            break
 
         post_batch()
 
