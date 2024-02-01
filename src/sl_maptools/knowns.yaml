@@ -420,6 +420,18 @@ A526:  # Possibly Japanese Islands?
   includes:
     - 650-651/1250-1252
 
+A527:  # Skill gaming regions? Cannot get in
+  includes:
+    - 913-914/1220-1222
+
+A528:  # Virtual New York? Cannot get in
+  includes:
+    - 1153-1155/973-974
+
+AlphaBay:
+  includes:
+    - 665-668/1148-1150
+
 AmazonRiver:
   includes:
     - [832, 969, 835, 972]
@@ -440,6 +452,10 @@ AntiquityLand:
 #ASLMetaverse:
 #  includes:
 #    - [763, 915, 765, 917]
+
+AstoriaEstate:
+  includes:
+    - 680-682/1026-1029
 
 AussieShores:
   includes:
@@ -514,6 +530,10 @@ Caledon:
   includes:
     - [905, 1021, 909, 1025]
 
+CDP_USU:
+  includes:
+    - 539-542/1008-1010
+
 CDS:
   includes:
     - [1135, 1311, 1139, 1317]
@@ -521,6 +541,10 @@ CDS:
 CedarCreek:
   includes:
     - [849, 1342, 853, 1346]
+
+Chamberlain:
+  includes:
+    - 1126-1127/1242-1245
 
 Coeur:
   includes:
@@ -530,9 +554,17 @@ CoralOcean:
   includes:
     - [479, 1270, 485, 1280]
 
+CosyIsles:
+  includes:
+    - 710-712/943-947
+
 CrackDen:
   includes:
     - [742, 1389, 745, 1391]
+
+Cuddles:
+  includes:
+    - 874-876/1301-1304
 
 DANAANEstate:
   includes:
@@ -574,9 +606,17 @@ FirestormGateway:
   includes:
     - 651-656/1112-1115
 
+FoxValley:
+  includes:
+    - 933-936/908-910
+
 Freedom:
   includes:
     - [750, 1013, 758, 1020]
+
+GianfarPeaks:
+  includes:
+    - 979-980/1069-1071
 
 GoombahSL:
   includes:
@@ -592,9 +632,21 @@ GoreanLands:
   includes:
     - [1014, 1175, 1019, 1178]
 
+HavenOfDreams:
+  includes:
+    - 830-832/1155-1158
+
+HawaiianIslands:
+  includes:
+    - 507-511/1230-1232
+
 IndecentEstates:
   includes:
     - 855-858/1015-1018
+
+Indochina1970RP:
+  includes:
+    - 932-935/1083-1084
 
 IsleOfWyrms:
   includes:
@@ -774,6 +826,10 @@ SomeonesDream:
   includes:
     - 637-640/942-945
 
+SpiaggiaTromonto:
+  includes:
+    - 617-619/1184-1186
+
 SturbridgeGrove:
   includes:
     - 1114-1117/1210-1212
@@ -799,6 +855,10 @@ TempletonCove:
 THAPLUG:
   includes:
     - 749-751/1197-1199
+
+FaeryCrossing:
+  includes:
+    - 559-561/1059-1061
 
 TheGroveEstate:
   includes:
@@ -874,6 +934,10 @@ WoodlandGrove:
 WW2RP:
   includes:
     - 642/1268-1272
+
+XCESSEstates:
+  includes:
+    - 756-759/908-911
 
 Yumix:
   includes:
