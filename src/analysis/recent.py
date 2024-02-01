@@ -83,12 +83,12 @@ def main(opts: Options) -> None:  # noqa: D103
         # age = 0
         by_grid.append((gs, sco, name, age))
         print(f"{i:>3}) {t.isoformat(timespec='minutes')} {sco:12} {gs:6} {name}")
-        if 22 <= i <= 27:
-            x_s["Silks"].add(x)
-            y_s["Silks"].add(y)
-        elif i >= 31:
-            x_s["Azure"].add(x)
-            y_s["Azure"].add(y)
+        # if 22 <= i <= 27:
+        #     x_s["Silks"].add(x)
+        #     y_s["Silks"].add(y)
+        # elif i >= 31:
+        #     x_s["Azure"].add(x)
+        #     y_s["Azure"].add(y)
 
     for k in x_s:
         print(f"{k}: {min(x_s[k])}-{max(x_s[k])}/{min(y_s[k])}-{max(y_s[k])}")
