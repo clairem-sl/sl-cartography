@@ -265,7 +265,7 @@ def main(opts: Options) -> None:  # noqa: D103
     print("Creating Nightlights Map ... ", end="", flush=True)
     canvas = make_nightlights2({MapCoord(x, y) for x, y in regions}, tiler=opts.tiler)
 
-    print("\nSaving nightlights mosaic ... ", end="", flush=True)
+    print("\nSaving nightlights map ... ", end="", flush=True)
     targ.parent.mkdir(parents=True, exist_ok=True)
     canvas.save(targ, optimize=True)
 
