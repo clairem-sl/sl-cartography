@@ -11,10 +11,10 @@ from typing import NamedTuple, cast
 from PIL import Image
 from ruamel.yaml import YAML
 
-from sl_maptools import AreaBounds, AreaBoundsSet, CoordType
+from sl_maptools import AreaBounds, AreaBoundsSet, CoordType, inventorize_maps_latest
 from sl_maptools.knowns import KNOWN_AREAS
 from sl_maptools.utils import ConfigReader
-from sl_maptools.validator import get_bonnie_coords, inventorize_maps_latest
+from sl_maptools.validator import get_bonnie_coords
 
 Config = ConfigReader("config.toml")
 

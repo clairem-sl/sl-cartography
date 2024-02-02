@@ -16,14 +16,14 @@ from typing import Final, NamedTuple, Optional, Protocol, TypedDict, cast
 
 from PIL import Image, UnidentifiedImageError
 
-from sl_maptools import CoordType, RegionsDBRecord
+from sl_maptools import CoordType, RegionsDBRecord, inventorize_maps_all
 from sl_maptools.image_processing import (
     FASCIA_SIZES,
     RGBTuple,
     calculate_dominant_colors,
 )
 from sl_maptools.utils import ConfigReader, SLMapToolsConfig, make_backup
-from sl_maptools.validator import get_bonnie_coords, inventorize_maps_all
+from sl_maptools.validator import get_bonnie_coords
 
 # region ##### Types
 

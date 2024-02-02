@@ -13,12 +13,12 @@ from PIL import Image, ImageDraw
 # noinspection PyUnresolvedReferences
 from PIL.Image import Resampling
 
+from sl_maptools import inventorize_maps_latest
 from sl_maptools.utils import ConfigReader, SLMapToolsConfig
-from sl_maptools.validator import get_bonnie_coords, inventorize_maps_latest
+from sl_maptools.validator import get_bonnie_coords
 
 if TYPE_CHECKING:
     from sl_maptools import CoordType
-
 
 RGBTuple = tuple[int, int, int]
 RGBATuple = tuple[int, int, int, int]

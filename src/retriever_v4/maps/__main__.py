@@ -32,10 +32,9 @@ import httpx
 from ruamel.yaml import YAML, RoundTripRepresenter
 
 from retriever_v4.maps.prune import prune
-from sl_maptools import CoordType, MapCoord, SupportsSet
+from sl_maptools import CoordType, SupportsSet, inventorize_maps_all
 from sl_maptools.fetchers.map import BoundedMapFetcher
 from sl_maptools.utils import ConfigReader, handle_sigint, make_backup
-from sl_maptools.validator import inventorize_maps_all
 
 UNKNOWN_COORD: Final[MapCoord] = MapCoord(-1, -1)
 

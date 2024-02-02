@@ -450,3 +450,33 @@ class SupportsSet(Protocol):  # noqa: D101
 
     def is_set(self) -> bool:  # noqa: D102
         ...
+
+
+def inventorize_maps_latest(mapdir: Path | str) -> dict[CoordType, Path]:
+    """Makes a dict of all available map tiles, by region coords"""
+    mapdir = Path(mapdir)
+    rslt: dict[CoordType, Path] = {}
+    for fp in sorted(mapdir.glob("*.jp*"), reverse=True):
+        if (m := RE_MAPFILE.match(fp.name)) is None:
+            continue
+        coord = int(m.group("x")), int(m.group("y"))
+        if coord not in rslt:
+            rslt[coord] = fp
+    return rslt
+
+
+def inventorize_maps_all(mapdir: Path | str) -> dict[CoordType, list[Path]]:
+    """
+    Returns a dict (by coordinate) of maptile files in mapdir, sorted ascending by filename.
+    (So if filename has timestamp, the latest will be the last)
+
+    :param mapdir: Directory containing the maptile files
+    """
+    mapdir: Path = Path(mapdir)
+    rslt: dict[CoordType, list[Path]] = {}
+    for fp in sorted(mapdir.glob("*.jp*")):
+        if (m := RE_MAPFILE.match(fp.name)) is None:
+            continue
+        coord = int(m.group("x")), int(m.group("y"))
+        rslt.setdefault(coord, []).append(fp)
+    return rslt
