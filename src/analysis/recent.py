@@ -12,7 +12,7 @@ from zoneinfo import ZoneInfo
 from sl_maptools import CoordType, RegionsDBRecord3
 from sl_maptools.utils import ConfigReader
 
-Config = ConfigReader(r"C:\Cache\SL-Carto\RegionsDB3.pkl")
+Config = ConfigReader("config.toml")
 
 DB_PATH = Path(Config.names.dir) / Config.names.db
 DEFA_CUTOFF = 6
