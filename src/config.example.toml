@@ -27,6 +27,10 @@ domc_db = 'NameOfDominantColorDatabase.pkl'
 # Configuration for the Worldmap.nightlights module
 dir = '\path\to\directory\to\save\results'
 
+[gridsectors]
+# Configuration for the Worldmap.gridsectors module
+dir = '\path\to\directory\to\save\results'
+
 [areas]
 # Configuration for the Cartographer module
 dir = 'C:\Cache\SL-Carto\AreaMaps'
@@ -58,3 +62,4 @@ dir = '\path\to\directory\to\save\cache'
 db = 'BonnieDBCacheName.yaml'
 # The next is already correct; usually you don't have to change this
 url = 'https://www.bonniebots.com/static-api/regions/index.json'
+maxage = 1
