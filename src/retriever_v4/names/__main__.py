@@ -25,10 +25,10 @@ if TYPE_CHECKING:
     from sl_maptools.fetchers import CookedResult
 
 
-CONN_LIMIT: Final[int] = 80
+CONN_LIMIT: Final[int] = 100
 # SEMA_SIZE: Final[int] = 180
 HTTP2: Final[bool] = False
-START_BATCH_SIZE: Final[int] = 600
+START_BATCH_SIZE: Final[int] = 300
 BATCH_WAIT: Final[float] = 5.0
 MAVG_SAMPLES: Final[int] = 5
 ACCEPTABLE_STATUSCODES: Final[set[int]] = {0, 200, 403}
