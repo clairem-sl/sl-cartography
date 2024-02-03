@@ -29,6 +29,11 @@ MIN_Y: Final[int] = COORD_RANGE.min_
 MAX_Y: Final[int] = COORD_RANGE.max_
 
 
+# csize  = The edge-length of the center square
+# border = The width of the gap around the center square
+# shrink = How many pixels to reduce to draw the connecting paths
+#          That means, the connecting paths' width will be ( csize - 2 * shrink )
+
 TILERS: Final[dict[str, dict[str, int]]] = {
     "b42": {"csize": 4, "border": 2, "shrink": 1},
     "b43": {"csize": 4, "border": 3, "shrink": 1},
