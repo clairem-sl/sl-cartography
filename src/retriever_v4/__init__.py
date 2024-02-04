@@ -269,7 +269,6 @@ async def dispatch_fetcher(
     done_last10: deque[int] = deque(maxlen=mavg_samples)
     elapsed_last10: deque[float] = deque(maxlen=mavg_samples)
     done: set[asyncio.Task]
-    pending_tasks: set[asyncio.Task]
     while tasks:
         pre_batch()
 
@@ -277,7 +276,7 @@ async def dispatch_fetcher(
         print(f"{len(tasks)} async jobs =>", end=" ")
         start_batch = time.monotonic()
         
-        done, pending_tasks = await asyncio.wait(tasks, timeout=batch_wait)
+        done, tasks = await asyncio.wait(tasks, timeout=batch_wait)
         
         if not abort_event.is_set():
             elapsed_last10.append(time.monotonic() - start_batch)
@@ -288,7 +287,11 @@ async def dispatch_fetcher(
         # Handle results
         completed_count = exc_count = 0
         for completed_count, task in enumerate(done, start=1):  # noqa: B007
-            if exc := task.exception():
+            try:
+                exc = task.exception()
+            except Exception as e:
+                exc = e
+            if exc is not None:
                 exc_count += 1
                 print(f"\n{task.get_name()} raised Exception: <{type(exc)}> {exc}")
                 continue
@@ -302,13 +305,17 @@ async def dispatch_fetcher(
         if completed_count and exc_count == completed_count:
             print("\nLast batch all raised Exceptions!")
             print("Cancelling the rest of the tasks...")
-            for t in pending_tasks:
+            for t in tasks:
                 t.cancel()
-            done, _ = await asyncio.wait(pending_tasks, return_when=asyncio.ALL_COMPLETED)
+            done, _ = await asyncio.wait(tasks, return_when=asyncio.ALL_COMPLETED)
             for t in done:
-                if not isinstance((exc := t.exception()), asyncio.CancelledError):
+                try:
+                    exc = t.exception()
+                except Exception as e:
+                    exc = e
+                if not isinstance(exc, asyncio.CancelledError):
                     print(f"\n{t.get_name()} raised Exception: <{type(exc)}> {exc}")
-            pending_tasks.clear()
+            tasks.clear()
             break
 
         post_batch()
@@ -322,7 +329,6 @@ async def dispatch_fetcher(
         )
 
         # Next iteration
-        tasks = pending_tasks
         if statistics.median(done_last10) < abort_low_rps:
             abort_event.set()
         if elapsed >= duration > 0:
