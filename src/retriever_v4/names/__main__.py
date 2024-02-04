@@ -27,6 +27,7 @@ if TYPE_CHECKING:
 
 CONN_LIMIT: Final[int] = 100
 # SEMA_SIZE: Final[int] = 180
+SEMA_MULT: Final[float] = 3.5
 HTTP2: Final[bool] = False
 START_BATCH_SIZE: Final[int] = 300
 BATCH_WAIT: Final[float] = 5.0
@@ -181,7 +182,8 @@ async def amain(db_path: Path, duration: int, min_batch_size: int, abort_low_rps
     """Asynchronous main()"""
     limits = httpx.Limits(max_connections=CONN_LIMIT, max_keepalive_connections=CONN_LIMIT)
     async with httpx.AsyncClient(limits=limits, timeout=10.0, http2=HTTP2) as client:
-        fetcher = BoundedNameFetcher(CONN_LIMIT * 3, client, cooked=True, cancel_flag=AbortRequested)
+        sema_count = int(CONN_LIMIT * SEMA_MULT)
+        fetcher = BoundedNameFetcher(sema_count, client, cooked=True, cancel_flag=AbortRequested)
         shown = False
 
         def make_task(coord: CoordType) -> Task:
