@@ -49,6 +49,8 @@ def main(opts: Options) -> None:  # noqa: D103
 
     start = time.monotonic()
 
+    # A 'zone' is a set of coordinates that are ultimately traversable by travelling via adjacent regions
+    # (not going diagonally, only N-E-W-S)
     work_queue = deque([])
     zones: list[set[CoordType]] = []
     zone: set[CoordType]
@@ -71,8 +73,8 @@ def main(opts: Options) -> None:  # noqa: D103
     del work_queue
     del valid_coords
 
-    finish = time.monotonic() - start
-    print(f"Zoning took {finish:.2f} seconds")
+    elapsed = time.monotonic() - start
+    print(f"Zoning took {elapsed:.2f} seconds")
 
     len_zones: dict[int, list[set[CoordType]]] = {}
     for zone in zones:
