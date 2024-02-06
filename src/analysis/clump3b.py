@@ -124,7 +124,7 @@ def main(opts: Options) -> None:  # noqa: D103
                 if arealist := regareas.get(rn):
                     areas.update(arealist)
                     if opts.all:
-                        print(prefx, f"[in {', '.join(arealist)}]")
+                        print(prefx, f"[{'; '.join(arealist)}]")
                 else:
                     print(prefx, "### None")
             print("-" * 10, end=" ")
@@ -134,7 +134,11 @@ def main(opts: Options) -> None:  # noqa: D103
             bounds.append(f"/{miny}")
             if maxy != miny:
                 bounds.append(f"-{maxy}")
-            print("".join(bounds), " ".join(sorted(areas)))
+            print("".join(bounds), end="")
+            if areas:
+                print(" =>", "; ".join(sorted(areas)))
+            else:
+                print()
 
 
 if __name__ == "__main__":
