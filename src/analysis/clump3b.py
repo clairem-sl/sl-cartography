@@ -114,13 +114,13 @@ def main(opts: Options) -> None:  # noqa: D103
             minx = miny = 9999
             maxx = maxy = -1
             areas: set[str] = set()
-            for co in zone:
-                rn = regsdb[co]["current_name"]
-                minx = min(co[0], minx)
-                maxx = max(co[0], maxx)
-                miny = min(co[1], miny)
-                maxy = max(co[1], maxy)
-                prefx = f"{i:2}) {co} {rn}"
+            for x, y in zone:
+                rn = regsdb[x, y]["current_name"]
+                minx = min(x, minx)
+                maxx = max(x, maxx)
+                miny = min(y, miny)
+                maxy = max(y, maxy)
+                prefx = f"{i:2}) ({x},{y}) {rn}"
                 if arealist := regareas.get(rn):
                     areas.update(arealist)
                     if opts.all:
