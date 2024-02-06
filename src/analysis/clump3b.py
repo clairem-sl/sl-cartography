@@ -3,19 +3,16 @@ import pickle
 import time
 from collections import deque
 from pathlib import Path
-from typing import TYPE_CHECKING, Protocol, cast
+from typing import Protocol, cast, Generator
 
 import ruamel.yaml
 
+from sl_maptools import CoordType
 from sl_maptools.utils import ConfigReader, SLMapToolsConfig
 from sl_maptools.validator import get_bonnie_coords, get_nonvoid_regions
 
-if TYPE_CHECKING:
-    from sl_maptools import CoordType
 
 Config: SLMapToolsConfig = ConfigReader("config.toml")
-
-OFFSETS = [(-1, 0), (1, 0), (0, -1), (0, 1)]
 
 
 class Options(Protocol):
@@ -37,6 +34,15 @@ def get_options() -> Options:
     return cast(Options, parser.parse_args())
 
 
+def iter_neighbors(co: CoordType) -> Generator[CoordType, None, None]:
+    """Iterates through all 4 neighbors of a coordinate"""
+    x, y = co
+    yield x - 1, y  # West
+    yield x + 1, y  # East
+    yield x, y - 1  # South
+    yield x, y + 1  # North
+
+
 def main(opts: Options) -> None:  # noqa: D103
     regsdb = get_nonvoid_regions(Config.names)
     valid_coords: set[CoordType] = set(regsdb) & get_bonnie_coords(Config.bonnie)
@@ -49,9 +55,7 @@ def main(opts: Options) -> None:  # noqa: D103
     while valid_coords:
         zone = {coord := valid_coords.pop()}
         while True:
-            x, y = coord
-            for dx, dy in OFFSETS:
-                dco = x + dx, y + dy
+            for dco in iter_neighbors(coord):
                 if dco in zone:
                     continue
                 if dco not in valid_coords:
