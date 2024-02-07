@@ -27,9 +27,11 @@ def get_clumps(coords: set[CoordType], *, skip_singles: bool = True) -> list[set
     :param skip_singles: If True (default), do not add zones of single members to the result
     """
     valid_coords = coords.copy()
+
     work_queue = deque([])
     zones: list[set[CoordType]] = []
     zone: set[CoordType]
+
     while valid_coords:
         zone = {coord := valid_coords.pop()}
         while True:
@@ -46,7 +48,5 @@ def get_clumps(coords: set[CoordType], *, skip_singles: bool = True) -> list[set
             coord = work_queue.popleft()
         if not skip_singles or len(zone) > 1:
             zones.append(zone)
-    del work_queue
-    del valid_coords
 
     return zones
