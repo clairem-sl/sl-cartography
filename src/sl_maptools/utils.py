@@ -174,6 +174,9 @@ class AreasConfig(Protocol):
     """Attributes for the [areas] section of config.toml"""
 
     dir: str
+    """Directory to store Area Maps"""
+    region_areas: str
+    """YAML file containing a map of region names to a list of areas the region is included in"""
 
 
 class FontSpec(Protocol):
@@ -203,6 +206,15 @@ class BonnieConfig(Protocol):
     maxage: int
 
 
+class AnalysisConfig(Protocol):
+    """Attributes for the [analysis] section of config.toml"""
+
+    dir: str
+    """Directory to store results from Analysis modules"""
+    clumps_db: str
+    """Pickle file containing the result of clump analysis, containing a list of sets of coordinates"""
+
+
 class SLMapToolsConfig(Protocol):
     """Representation of configuration in config.toml"""
 
@@ -214,6 +226,8 @@ class SLMapToolsConfig(Protocol):
     areas: AreasConfig
     lattice: LatticeConfig
     bonnie: BonnieConfig
+    analysis: AnalysisConfig
+    """Configuration for Analysis modules"""
 
 
 class ConfigReader(SLMapToolsConfig):

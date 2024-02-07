@@ -51,14 +51,14 @@ def main(opts: Options) -> None:  # noqa: D103
         print(f"Clump of size {num} = {len(len_zones[num])} zones")
 
     if not opts.no_save:
-        clumpsdb_p = Path(Config.names.dir) / "clumps.pkl"
+        clumpsdb_p = Path(Config.analysis.dir) / Config.analysis.clumps_db
         with clumpsdb_p.open("wb") as fout:
             pickle.dump(len_zones, fout)
         print(f"Saved to {clumpsdb_p}")
     else:
         print("Not saved because --no-save is specified")
 
-    regions_areas = Path(Config.areas.dir) / "regions_areas.yaml"
+    regions_areas = Path(Config.areas.dir) / Config.areas.region_areas
     yaml = ruamel.yaml.YAML(typ="safe")
     with regions_areas.open("rt") as fin:
         regareas = yaml.load(fin)
