@@ -3,17 +3,17 @@
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 import argparse
 import pickle
-import time
-from collections import deque
 from pathlib import Path
-from typing import Protocol, cast, Generator
+from typing import TYPE_CHECKING, Protocol, cast
 
 import ruamel.yaml
 
-from sl_maptools import CoordType
+from analysis.clumps import get_clumps
 from sl_maptools.utils import ConfigReader, SLMapToolsConfig
-from sl_maptools.validator import get_bonnie_coords, get_nonvoid_regions
+from sl_maptools.validator import get_nonvoid_regions, get_bonnie_coords
 
+if TYPE_CHECKING:
+    from sl_maptools import CoordType
 
 Config: SLMapToolsConfig = ConfigReader("config.toml")
 
@@ -37,47 +37,11 @@ def get_options() -> Options:
     return cast(Options, parser.parse_args())
 
 
-def iter_neighbors(co: CoordType) -> Generator[CoordType, None, None]:
-    """Iterates through all 4 neighbors of a coordinate"""
-    x, y = co
-    yield x - 1, y  # West
-    yield x + 1, y  # East
-    yield x, y - 1  # South
-    yield x, y + 1  # North
-
-
 def main(opts: Options) -> None:  # noqa: D103
     regsdb = get_nonvoid_regions(Config.names)
     valid_coords: set[CoordType] = set(regsdb) & get_bonnie_coords(Config.bonnie)
 
-    start = time.monotonic()
-
-    # A 'zone' is a set of coordinates that are ultimately traversable by travelling via adjacent regions
-    # (not going diagonally, only N-E-W-S)
-    work_queue = deque([])
-    zones: list[set[CoordType]] = []
-    zone: set[CoordType]
-    while valid_coords:
-        zone = {coord := valid_coords.pop()}
-        while True:
-            for dco in iter_neighbors(coord):
-                if dco in zone:
-                    continue
-                if dco not in valid_coords:
-                    continue
-                valid_coords.remove(dco)
-                zone.add(dco)
-                work_queue.append(dco)
-            if not work_queue:
-                break
-            coord = work_queue.popleft()
-        if len(zone) > 1:
-            zones.append(zone)
-    del work_queue
-    del valid_coords
-
-    elapsed = time.monotonic() - start
-    print(f"Zoning took {elapsed:.2f} seconds")
+    zones: list[set[CoordType]] = get_clumps(valid_coords)
 
     len_zones: dict[int, list[set[CoordType]]] = {}
     for zone in zones:
