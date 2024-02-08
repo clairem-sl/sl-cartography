@@ -293,7 +293,7 @@ async def dispatch_fetcher(
                 exc = e
             if exc is not None:
                 exc_count += 1
-                print(f"\n{task.get_name()} raised Exception: <{type(exc)}> {exc}")
+                print(f"\n{exc_count}:{task.get_name()} raised Exception: <{type(exc)}> {exc}")
                 continue
 
             # Actual result handling
@@ -314,7 +314,8 @@ async def dispatch_fetcher(
                 except Exception as e:
                     exc = e
                 if not isinstance(exc, asyncio.CancelledError):
-                    print(f"\n{t.get_name()} raised Exception: <{type(exc)}> {exc}")
+                    exc_count += 1
+                    print(f"\n{exc_count}:{t.get_name()} raised Exception: <{type(exc)}> {exc}")
             tasks.clear()
             break
 
