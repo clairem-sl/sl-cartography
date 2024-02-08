@@ -25,34 +25,24 @@ authors = [
     {name = "Claire Morgenthau", email = "claire_morgenthau@outlook.com"}
 ]
 dependencies = [
+    'uvloop; platform_system == "Linux" and platform_python_implementation == "CPython"',
+    "tomli>=1.1.0; python_version < '3.11'",
     "pillow",
     "httpx",
     "httpx[http2]",
-    'uvloop; platform_system == "Linux" and platform_python_implementation == "CPython"',
-    "msgpack",
-    "appdirs",
-    "beautifulsoup4",
     "ruamel.yaml",
-    "pytz",
-    "scikit-image",
-    "tomli>=1.1.0; python_version < '3.11'",
-    "tzdata",
     "packaging",
+#    "msgpack",
+#    "appdirs",
+#    "beautifulsoup4",
+#    "pytz",
+#    "scikit-image",
+#    "tzdata",
 ]
 
 [build-system]
 build-backend = "setuptools.build_meta"
 requires = [
-    "pillow",
-    "httpx",
-    "httpx[http2]",
-    'uvloop; platform_system == "Linux" and platform_python_implementation == "CPython"',
-    "msgpack",
-    "appdirs",
-    "beautifulsoup4",
-    "ruamel.yaml",
-    "pytz",
-    #
     "black",
     "black[d]",
     "isort",
