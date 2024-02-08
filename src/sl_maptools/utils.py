@@ -175,7 +175,7 @@ class AreasConfig(Protocol):
 
     dir: str
     """Directory to store Area Maps"""
-    region_areas: str
+    region_areas_db: str
     """YAML file containing a map of region names to a list of areas the region is included in"""
 
 

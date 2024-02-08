@@ -58,7 +58,7 @@ def main(opts: Options) -> None:  # noqa: D103
     else:
         print("NOT SAVED because --no-save is specified")
 
-    regions_areas = Path(Config.areas.dir) / Config.areas.region_areas
+    regions_areas = Path(Config.areas.dir) / Config.areas.region_areas_db
     yaml = ruamel.yaml.YAML(typ="safe")
     with regions_areas.open("rt") as fin:
         regareas = yaml.load(fin)
