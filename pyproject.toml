@@ -37,6 +37,7 @@ dependencies = [
     "scikit-image",
     "tomli>=1.1.0; python_version < '3.11'",
     "tzdata",
+    "packaging",
 ]
 
 [build-system]
