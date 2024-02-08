@@ -10,7 +10,7 @@ import ruamel.yaml
 
 from analysis.clumps import get_clumps
 from sl_maptools.utils import ConfigReader, SLMapToolsConfig
-from sl_maptools.validator import get_nonvoid_regions, get_bonnie_coords
+from sl_maptools.validator import get_bonnie_coords, get_nonvoid_regions
 
 if TYPE_CHECKING:
     from sl_maptools import CoordType
