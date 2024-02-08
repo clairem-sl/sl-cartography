@@ -260,8 +260,11 @@ def main(app_context: RetrieverApplication, opts: OptionsProtocol) -> None:  # n
     start_coord = Progress.next_coordinate
     #
     print("Dispatching async fetchers!", flush=True)
-    with handle_sigint(AbortRequested):
-        asyncio.run(amain(opts.dbpath, dur, opts.min_batch_size, opts.abort_low_rps))
+    try:
+        with handle_sigint(AbortRequested):
+            asyncio.run(amain(opts.dbpath, dur, opts.min_batch_size, opts.abort_low_rps))
+    except asyncio.CancelledError:
+        print("### Fetchers cancelled prematurely ###")
     #
     end_x, end_y = Progress.next_coordinate
     if end_x == 0:
