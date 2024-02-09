@@ -189,3 +189,35 @@ class ConfigReader(SLMapToolsConfig):
 
     def __repr__(self):
         return f"{self.__class__.__name__}({self._cfg_file!r})"
+
+
+class DelayedConfigReader(SLMapToolsConfig):
+    """Reads configuration from config.toml, but only after first attribute access"""
+
+    def __init__(self, config_file: str | Path):
+        """
+        :param config_file: Configuration file
+        """
+        self._cfg_file = Path(config_file)
+        self._cfg_tree: ValueTree | None = None
+
+    def __read(self) -> None:
+        with self._cfg_file.open("rb") as fin:
+            self._cfg_dict = tomllib.load(fin)
+        self._cfg_tree = ValueTree(self._cfg_dict, on_not_found="none")
+
+    def __getattr__(self, item: str):
+        if self._cfg_tree is None:
+            self.__read()
+        return getattr(self._cfg_tree, item)
+
+    def __getitem__(self, item: str):
+        if self._cfg_tree is None:
+            self.__read()
+        return self._cfg_tree[item]
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}({self._cfg_file!r})"
+
+
+DefaultConfig = DelayedConfigReader("config.toml")

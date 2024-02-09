@@ -18,7 +18,7 @@ import httpx
 from retriever_v4 import RetrieverApplication, RetrieverProgress, dispatch_fetcher
 from retriever_v4.names.xchg import export
 from sl_maptools import CoordType, MapCoord, RegionsDBRecord3
-from sl_maptools.config import ConfigReader, SLMapToolsConfig
+from sl_maptools.config import DefaultConfig as Config
 from sl_maptools.fetchers.cap import BoundedNameFetcher
 from sl_maptools.utils import handle_sigint, make_backup
 
@@ -35,7 +35,6 @@ BATCH_WAIT: Final[float] = 5.0
 MAVG_SAMPLES: Final[int] = 5
 ACCEPTABLE_STATUSCODES: Final[set[int]] = {0, 200, 403}
 
-Config: SLMapToolsConfig = ConfigReader("config.toml")
 DEFA_DB: Final[Path] = Path(Config.names.dir) / Config.names.db
 
 Progress: RetrieverProgress
