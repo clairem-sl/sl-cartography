@@ -79,7 +79,8 @@ class NamesConfig(Protocol):
     lock: str
     log: str
     progress: str
-
+    connection_limit: int
+    semaphore_multiplier: float
 
 class MapsConfig(Protocol):
     """Attributes for the [maps] section of config.toml"""
