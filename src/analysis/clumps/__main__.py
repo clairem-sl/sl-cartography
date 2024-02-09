@@ -9,13 +9,11 @@ from typing import TYPE_CHECKING, Protocol, cast
 import ruamel.yaml
 
 from analysis.clumps import get_clumps
-from sl_maptools.config import ConfigReader, SLMapToolsConfig
+from sl_maptools.config import DefaultConfig as Config
 from sl_maptools.validator import get_bonnie_coords, get_nonvoid_regions
 
 if TYPE_CHECKING:
     from sl_maptools import CoordType
-
-Config: SLMapToolsConfig = ConfigReader("config.toml")
 
 
 class Options(Protocol):

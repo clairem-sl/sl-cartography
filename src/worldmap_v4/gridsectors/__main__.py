@@ -14,7 +14,7 @@ from PIL import Image, ImageDraw
 from PIL.Image import Resampling
 
 from sl_maptools import inventorize_maps_latest
-from sl_maptools.config import ConfigReader, SLMapToolsConfig
+from sl_maptools.config import DefaultConfig as Config
 from sl_maptools.validator import get_bonnie_coords
 
 if TYPE_CHECKING:
@@ -22,9 +22,6 @@ if TYPE_CHECKING:
 
 RGBTuple = tuple[int, int, int]
 RGBATuple = tuple[int, int, int, int]
-
-
-Config: SLMapToolsConfig = ConfigReader("config.toml")
 
 MAP_DIR: Final[Path] = Path(Config.maps.dir)
 GRID_DIR: Final[Path] = Path(Config.gridsectors.dir)

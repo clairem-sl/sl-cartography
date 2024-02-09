@@ -23,12 +23,12 @@ from sl_maptools import (
     SupportsSet,
     inventorize_maps_latest,
 )
-from sl_maptools.config import ConfigReader, SLMapToolsConfig
+from sl_maptools.config import DefaultConfig as Config
 from sl_maptools.knowns import KNOWN_AREAS
 from sl_maptools.utils import handle_sigint
 from sl_maptools.validator import get_bonnie_coords, get_nonvoid_regions
 
-Config: SLMapToolsConfig = ConfigReader("config.toml")
+
 AbortRequested: SupportsSet = Event()
 
 

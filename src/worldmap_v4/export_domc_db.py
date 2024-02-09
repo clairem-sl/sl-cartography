@@ -5,9 +5,8 @@ from typing import Final
 from ruamel.yaml import YAML, RoundTripRepresenter
 
 from sl_maptools import CoordType
-from sl_maptools.config import ConfigReader
+from sl_maptools.config import DefaultConfig as Config
 
-Config = ConfigReader("config.toml")
 
 DOMC_DB_PATH: Final[Path] = Path(Config.mosaic.dir) / Config.mosaic.domc_db
 

@@ -17,7 +17,7 @@ from skimage.metrics import mean_squared_error as mse
 from skimage.metrics import structural_similarity as ssim
 
 from sl_maptools import inventorize_maps_all
-from sl_maptools.config import ConfigReader
+from sl_maptools.config import DefaultConfig as Config
 
 if TYPE_CHECKING:
     from multiprocessing.pool import Pool as MPPool
@@ -28,8 +28,6 @@ RE_MAPTILE_FILE = re.compile(r"^(?P<x>\d+)-(?P<y>\d+)_(?P<ts>[^.]+)\.jpe?g$")
 
 SSIM_THRESHOLD: Final[float] = 0.895
 MSE_THRESHOLD: Final[float] = 0.01
-
-Config = ConfigReader("config.toml")
 
 
 class PruneOptions(Protocol):

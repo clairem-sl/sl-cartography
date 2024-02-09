@@ -10,9 +10,8 @@ from typing import Final, NamedTuple, Protocol, cast
 from zoneinfo import ZoneInfo
 
 from sl_maptools import CoordType, RegionsDBRecord3
-from sl_maptools.config import ConfigReader
+from sl_maptools.config import DefaultConfig as Config
 
-Config = ConfigReader("config.toml")
 
 DB_PATH = Path(Config.names.dir) / Config.names.db
 DEFA_CUTOFF = 6

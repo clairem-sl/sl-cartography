@@ -25,7 +25,7 @@ from retriever_v4.maps._workers.retriever import retrieve
 from retriever_v4.maps._workers.saver import saver
 from retriever_v4.maps.prune import prune
 from sl_maptools import CoordType, SupportsSet, inventorize_maps_all
-from sl_maptools.config import ConfigReader
+from sl_maptools.config import DefaultConfig as Config
 from sl_maptools.utils import handle_sigint, make_backup
 
 if TYPE_CHECKING:
@@ -38,7 +38,6 @@ SAVE_WORKERS: Final[int] = min((RETR_WORKERS // 2), 4)
 
 START_ROW: Final[int] = 2100
 
-Config = ConfigReader("config.toml")
 AbortRequested: SupportsSet = MP.Event()
 
 

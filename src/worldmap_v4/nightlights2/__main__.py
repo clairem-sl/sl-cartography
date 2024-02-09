@@ -11,13 +11,11 @@ from typing import Final, Protocol, TypedDict, cast
 from PIL import Image, ImageDraw
 
 from sl_maptools import COORD_RANGE, MapCoord, inventorize_maps_all
-from sl_maptools.config import ConfigReader
+from sl_maptools.config import DefaultConfig as Config
 from sl_maptools.utils import make_backup
 from sl_maptools.validator import get_bonnie_coords, get_nonvoid_regions
 
 TilerClass: type | None = None
-
-Config = ConfigReader("config.toml")
 
 MIN_X: Final[int] = COORD_RANGE.min_
 MAX_X: Final[int] = COORD_RANGE.max_

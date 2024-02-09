@@ -10,13 +10,10 @@ from pathlib import Path
 from pprint import pprint
 from typing import TYPE_CHECKING, Callable
 
-from sl_maptools.config import ConfigReader
+from sl_maptools.config import DefaultConfig as Config
 
 if TYPE_CHECKING:
     from sl_maptools import CoordType, RegionsDBRecord, RegionsDBRecord3
-
-
-Config = ConfigReader("config.toml")
 
 
 def upgrade_history_to_db3(

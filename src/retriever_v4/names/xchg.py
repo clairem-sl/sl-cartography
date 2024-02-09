@@ -15,15 +15,13 @@ import packaging.version as versioning
 from ruamel.yaml import YAML, RoundTripRepresenter
 
 from retriever_v4.names.upgrade_db import upgrade_history_to_db3
-from sl_maptools.config import ConfigReader
+from sl_maptools.config import DefaultConfig as Config
 from sl_maptools.utils import make_backup
 
 if TYPE_CHECKING:
     from sl_maptools import CoordType, RegionsDBRecord3
 
 RE_COORD = re.compile(r"\D*(?P<x>\d+)\D*(?P<y>\d+)")
-
-Config = ConfigReader("config.toml")
 
 
 DEFA_DB = Path(Config.names.dir) / Config.names.db

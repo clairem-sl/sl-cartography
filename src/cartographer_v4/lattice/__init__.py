@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Final, Optional, TypedDict
 
 from PIL import Image, ImageDraw, ImageFont
 
-from sl_maptools.config import ConfigReader, FontSpec, SLMapToolsConfig
+from sl_maptools.config import DefaultConfig as Config, FontSpec
 from sl_maptools.knowns import KNOWN_AREAS
 
 if TYPE_CHECKING:
@@ -30,8 +30,6 @@ STROKE_RGBA: Final[RGBATuple] = (0, 0, 0, 159)
 ALPHA_PATTERN: Final[tuple[int, ...]] = (96, 32)
 
 COORD_SHIFT_RATIO: float = 1.05
-
-Config: SLMapToolsConfig = ConfigReader("config.toml")
 
 
 class TextSettings(TypedDict):

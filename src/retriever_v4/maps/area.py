@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING, NamedTuple, cast
 import httpx
 
 from sl_maptools import RE_SLGI_NOTATION, AreaDescriptor, MapCoord
-from sl_maptools.config import ConfigReader, SLMapToolsConfig
+from sl_maptools.config import DefaultConfig as Config
 from sl_maptools.fetchers.map import MapFetcher
 from sl_maptools.knowns import KNOWN_AREAS
 
@@ -24,9 +24,6 @@ if TYPE_CHECKING:
 
 
 RE_BOXCOORDS = re.compile(r"(?P<x1>\d+),(?P<y1>\d+)[,-](?P<x2>\d+),(?P<y2>\d+)")
-
-
-Config: SLMapToolsConfig = ConfigReader("config.toml")
 
 
 class Options(NamedTuple):

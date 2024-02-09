@@ -17,7 +17,7 @@ from typing import Final, NamedTuple, Optional, Protocol, TypedDict, cast
 from PIL import Image, UnidentifiedImageError
 
 from sl_maptools import CoordType, RegionsDBRecord, inventorize_maps_all
-from sl_maptools.config import ConfigReader, SLMapToolsConfig
+from sl_maptools.config import DefaultConfig as Config
 from sl_maptools.image_processing import (
     FASCIA_SIZES,
     RGBTuple,
@@ -33,8 +33,6 @@ DomColors = dict[int, list[RGBTuple]]
 # endregion
 
 # region ##### CONSTs
-Config: SLMapToolsConfig = ConfigReader("config.toml")
-
 RE_MAP: Final[re.Pattern] = re.compile(r"^(\d+)-(\d+)_\d+-\d+.jpg$")
 
 DEFA_CALC_WORKERS: Final[int] = max(1, MP.cpu_count() - 2) * 2

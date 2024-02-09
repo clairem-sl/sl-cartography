@@ -10,11 +10,10 @@ from typing import Final, Protocol, cast
 from PIL import Image
 
 from cartographer_v4.lattice import LatticeMaker
-from sl_maptools.config import ConfigReader, SLMapToolsConfig
+from sl_maptools.config import DefaultConfig as Config
 from sl_maptools.knowns import KNOWN_AREAS
 from sl_maptools.validator import get_bonnie_coords, get_nonvoid_regions
 
-Config: SLMapToolsConfig = ConfigReader("config.toml")
 
 DB_PATH: Final[Path] = Path(Config.names.dir) / Config.names.db
 AREAMAPS_DIR: Final[Path] = Path(Config.areas.dir)
