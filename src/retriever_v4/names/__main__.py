@@ -183,7 +183,8 @@ async def amain(db_path: Path, duration: int, min_batch_size: int, abort_low_rps
     conn_limit = Config.names.connection_limit or DEFA_CONN_LIMIT
     sema_mult = Config.names.semaphore_multiplier or DEFA_SEMA_MULT
     limits = httpx.Limits(max_connections=conn_limit, max_keepalive_connections=conn_limit)
-    async with httpx.AsyncClient(limits=limits, timeout=10.0, http2=HTTP2) as client:
+    timeouts = httpx.Timeout(10.0, pool=20.0)
+    async with httpx.AsyncClient(limits=limits, timeout=timeouts, http2=HTTP2) as client:
         sema_count = int(conn_limit * sema_mult)
         fetcher = BoundedNameFetcher(sema_count, client, cooked=True, cancel_flag=AbortRequested)
         shown = False
