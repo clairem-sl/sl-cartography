@@ -6,7 +6,7 @@ from __future__ import annotations
 import argparse
 from io import StringIO
 from pathlib import Path
-from typing import NamedTuple, cast
+from typing import Final, NamedTuple, cast
 
 from PIL import Image
 from ruamel.yaml import YAML
@@ -19,7 +19,7 @@ from sl_maptools.validator import get_bonnie_coords
 Config = ConfigReader("config.toml")
 
 # language=yaml
-BELLI_EXCLUSIONS_YAML = """
+BELLI_EXCLUSIONS_YAML: Final[str] = """
 Atolls-FishermansTown:
     - 1023-1100/940-1023
     - 1034-1100/928-939
