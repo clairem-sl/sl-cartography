@@ -1,20 +1,22 @@
 import pickle
 from pathlib import Path
-from typing import Final
+from typing import TYPE_CHECKING, Final
 
 from ruamel.yaml import YAML, RoundTripRepresenter
 
-from sl_maptools import CoordType
 from sl_maptools.config import DefaultConfig as Config
+
+if TYPE_CHECKING:
+    from sl_maptools import CoordType
 
 
 DOMC_DB_PATH: Final[Path] = Path(Config.mosaic.dir) / Config.mosaic.domc_db
 
 
-def main():
+def main() -> None:  # noqa: D103
     print("Reading DB")
     with DOMC_DB_PATH.open("rb") as fin:
-        domc_db: dict[CoordType, dict[Path, dict[int, list]]] = pickle.load(fin)
+        domc_db: dict[CoordType, dict[Path, dict[int, list]]] = pickle.load(fin)  # noqa: S301
 
     print("Transform DB")
     out_db: dict[str, dict[str, dict[int, list]]] = {}
@@ -34,5 +36,5 @@ def main():
     print("Done.")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

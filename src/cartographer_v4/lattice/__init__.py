@@ -91,7 +91,7 @@ class LatticeMaker:
         lr = 255
         for a in ALPHA_PATTERN:
             sq_draw.rectangle((ul, ul, lr, lr), width=1, outline=(255, 255, 255, a))
-            ul += 1
+            ul += 1  # noqa: SIM113
             lr -= 1
 
         self.default_regname_settings: TextSettings = {
@@ -122,7 +122,7 @@ class LatticeMaker:
             lr = 255
             for a in ALPHA_PATTERN:
                 _drw.rectangle((ul, ul, lr, lr), width=1, outline=(255, 255, 255, a))
-                ul += 1
+                ul += 1  # noqa: SIM113
                 lr -= 1
             for c in range(31, 256, 32):
                 _drw.line([(c - 4, 2), (2, c - 4)], fill=(255, 255, 255, 32), width=5)
