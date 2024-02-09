@@ -155,8 +155,9 @@ class RetrieverProgress:
 
     def load(self) -> None:
         """Load progress from backing file"""
+        yml = ryaml.YAML(typ="safe", pure=True)
         with self.backing_file.open("rt") as fin:
-            _last_sess: ProgressDict = ryaml.safe_load(fin)
+            _last_sess: ProgressDict = yml.load(fin)
         if _last_sess is None:
             # noinspection PyTypeChecker
             _last_sess = {}
@@ -174,8 +175,9 @@ class RetrieverProgress:
             "next_y": self.next_y,
             "outstanding": [f"{x},{y}" for x, y in sorted(self.outstanding, key=lambda t: (t[1], t[0]))],
         }
+        yml = ryaml.YAML(typ="safe", pure=True)
         with self.backing_file.open("wt") as fout:
-            ryaml.dump(exported, fout, default_flow_style=False)
+            yml.dump(exported, fout)
 
     def add(self, coord: CoordType) -> None:
         """Add item into outstanding set"""
@@ -403,15 +405,16 @@ class RetrieverApplication(AbstractContextManager):
             return
         (logf := self.log_file).parent.mkdir(exist_ok=True)
         logf.touch(exist_ok=True)
+        yml = ryaml.YAML(typ="safe", pure=True)
         with logf.open("rt+") as finout:
-            log_data: dict[str, str | dict] = ryaml.safe_load(finout)
+            log_data: dict[str, str | dict] = yml.load(finout)
             if log_data is None:
                 log_data = {}
             if not isinstance(log_item, dict):
                 log_item = {"msg": str(log_item)}
             log_data[datetime.now().astimezone().isoformat(timespec="minutes")] = log_item
             finout.seek(0)
-            ryaml.dump(log_data, finout)
+            yml.dump(log_data, finout)
 
     class Options(Protocol):
         """Common options for Retriever_v4 modules"""
