@@ -10,7 +10,7 @@ from typing import Final, NamedTuple, Protocol, cast
 from zoneinfo import ZoneInfo
 
 from sl_maptools import CoordType, RegionsDBRecord3
-from sl_maptools.utils import ConfigReader
+from sl_maptools.config import ConfigReader
 
 Config = ConfigReader("config.toml")
 

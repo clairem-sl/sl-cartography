@@ -15,9 +15,9 @@ from typing import TYPE_CHECKING, NamedTuple, cast
 import httpx
 
 from sl_maptools import RE_SLGI_NOTATION, AreaDescriptor, MapCoord
+from sl_maptools.config import ConfigReader, SLMapToolsConfig
 from sl_maptools.fetchers.map import MapFetcher
 from sl_maptools.knowns import KNOWN_AREAS
-from sl_maptools.utils import ConfigReader, SLMapToolsConfig
 
 if TYPE_CHECKING:
     from sl_maptools.fetchers import RawResult

@@ -14,24 +14,19 @@ import sys
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import (
-    TYPE_CHECKING,
-    Final,
-    Optional,
-    Protocol,
-    TypedDict,
-    cast,
-)
+from typing import TYPE_CHECKING, Final, Optional, Protocol, TypedDict, cast
 
 from ruamel.yaml import YAML, RoundTripRepresenter
 
 # noinspection PyProtectedMember
 from retriever_v4.maps._workers.retriever import retrieve
+
 # noinspection PyProtectedMember
 from retriever_v4.maps._workers.saver import saver
 from retriever_v4.maps.prune import prune
 from sl_maptools import CoordType, SupportsSet, inventorize_maps_all
-from sl_maptools.utils import ConfigReader, handle_sigint, make_backup
+from sl_maptools.config import ConfigReader
+from sl_maptools.utils import handle_sigint, make_backup
 
 if TYPE_CHECKING:
     from retriever_v4.maps import QResult

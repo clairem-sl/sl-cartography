@@ -14,7 +14,7 @@ from PIL import Image, ImageDraw
 from PIL.Image import Resampling
 
 from sl_maptools import inventorize_maps_latest
-from sl_maptools.utils import ConfigReader, SLMapToolsConfig
+from sl_maptools.config import ConfigReader, SLMapToolsConfig
 from sl_maptools.validator import get_bonnie_coords
 
 if TYPE_CHECKING:

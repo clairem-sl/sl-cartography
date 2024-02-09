@@ -5,8 +5,7 @@ from typing import Final
 from ruamel.yaml import YAML, RoundTripRepresenter
 
 from sl_maptools import CoordType
-from sl_maptools.utils import ConfigReader
-
+from sl_maptools.config import ConfigReader
 
 Config = ConfigReader("config.toml")
 

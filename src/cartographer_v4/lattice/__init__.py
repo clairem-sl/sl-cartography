@@ -8,8 +8,8 @@ from typing import TYPE_CHECKING, Final, Optional, TypedDict
 
 from PIL import Image, ImageDraw, ImageFont
 
+from sl_maptools.config import ConfigReader, FontSpec, SLMapToolsConfig
 from sl_maptools.knowns import KNOWN_AREAS
-from sl_maptools.utils import ConfigReader, FontSpec, SLMapToolsConfig
 
 if TYPE_CHECKING:
     from pathlib import Path

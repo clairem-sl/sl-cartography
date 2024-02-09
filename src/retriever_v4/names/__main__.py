@@ -18,8 +18,9 @@ import httpx
 from retriever_v4 import RetrieverApplication, RetrieverProgress, dispatch_fetcher
 from retriever_v4.names.xchg import export
 from sl_maptools import CoordType, MapCoord, RegionsDBRecord3
+from sl_maptools.config import ConfigReader, SLMapToolsConfig
 from sl_maptools.fetchers.cap import BoundedNameFetcher
-from sl_maptools.utils import ConfigReader, SLMapToolsConfig, handle_sigint, make_backup
+from sl_maptools.utils import handle_sigint, make_backup
 
 if TYPE_CHECKING:
     from sl_maptools.fetchers import CookedResult

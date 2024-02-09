@@ -10,7 +10,7 @@ from pathlib import Path
 from pprint import pprint
 from typing import TYPE_CHECKING, Callable
 
-from sl_maptools.utils import ConfigReader
+from sl_maptools.config import ConfigReader
 
 if TYPE_CHECKING:
     from sl_maptools import CoordType, RegionsDBRecord, RegionsDBRecord3

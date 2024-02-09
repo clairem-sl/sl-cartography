@@ -6,12 +6,9 @@ from collections import deque
 from typing import Final, Protocol, cast
 
 from sl_maptools import AreaBounds, CoordType, inventorize_maps_latest
+from sl_maptools.config import ConfigReader
 from sl_maptools.knowns import DO_NOT_MAP_AREAS, KNOWN_AREAS
-from sl_maptools.utils import ConfigReader
-from sl_maptools.validator import (
-    get_bonnie_coords,
-    get_nonvoid_regions,
-)
+from sl_maptools.validator import get_bonnie_coords, get_nonvoid_regions
 
 INTERESTING_CLUMPSIZE_THRESHOLD: Final[int] = 10
 

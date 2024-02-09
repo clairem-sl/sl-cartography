@@ -20,7 +20,7 @@ from ruamel import yaml as ryaml
 from sl_maptools import CoordType, MapCoord, MapRegion, RegionsDBRecord3
 
 if TYPE_CHECKING:
-    from sl_maptools.utils import BonnieConfig, NamesConfig
+    from sl_maptools.config import BonnieConfig, NamesConfig
 
 # This source file uses data & API provided by Tyche Shepherd & gridsurvey.com
 

@@ -15,7 +15,8 @@ import packaging.version as versioning
 from ruamel.yaml import YAML, RoundTripRepresenter
 
 from retriever_v4.names.upgrade_db import upgrade_history_to_db3
-from sl_maptools.utils import ConfigReader, make_backup
+from sl_maptools.config import ConfigReader
+from sl_maptools.utils import make_backup
 
 if TYPE_CHECKING:
     from sl_maptools import CoordType, RegionsDBRecord3

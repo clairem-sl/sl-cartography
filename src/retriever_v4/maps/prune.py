@@ -17,7 +17,7 @@ from skimage.metrics import mean_squared_error as mse
 from skimage.metrics import structural_similarity as ssim
 
 from sl_maptools import inventorize_maps_all
-from sl_maptools.utils import ConfigReader
+from sl_maptools.config import ConfigReader
 
 if TYPE_CHECKING:
     from multiprocessing.pool import Pool as MPPool

@@ -16,13 +16,17 @@ from typing import Final, Protocol, cast
 from PIL import Image
 
 from cartographer_v4.lattice import ExclusionMethod, LatticeMaker
-from sl_maptools import AreaBounds, AreaDescriptor, CoordType, SupportsSet, inventorize_maps_latest
-from sl_maptools.knowns import KNOWN_AREAS
-from sl_maptools.utils import ConfigReader, SLMapToolsConfig, handle_sigint
-from sl_maptools.validator import (
-    get_bonnie_coords,
-    get_nonvoid_regions,
+from sl_maptools import (
+    AreaBounds,
+    AreaDescriptor,
+    CoordType,
+    SupportsSet,
+    inventorize_maps_latest,
 )
+from sl_maptools.config import ConfigReader, SLMapToolsConfig
+from sl_maptools.knowns import KNOWN_AREAS
+from sl_maptools.utils import handle_sigint
+from sl_maptools.validator import get_bonnie_coords, get_nonvoid_regions
 
 Config: SLMapToolsConfig = ConfigReader("config.toml")
 AbortRequested: SupportsSet = Event()

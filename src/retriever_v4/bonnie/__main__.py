@@ -16,8 +16,9 @@ from ruamel.yaml import YAML, RoundTripRepresenter
 
 from retriever_v4 import ProgressInterface, dispatch_fetcher
 from sl_maptools import CoordType, MapCoord
+from sl_maptools.config import ConfigReader, SLMapToolsConfig
 from sl_maptools.fetchers.bonnie import BoundedBonnieFetcher, CookedBonnieResult
-from sl_maptools.utils import ConfigReader, SLMapToolsConfig, make_backup
+from sl_maptools.utils import make_backup
 
 CONN_LIMIT: Final[int] = 400
 HTTP2: Final[bool] = False
