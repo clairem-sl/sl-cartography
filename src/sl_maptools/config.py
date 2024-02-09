@@ -3,10 +3,10 @@
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 from __future__ import annotations
 
-import tomllib
 from pathlib import Path
+from typing import Any, Hashable, Literal, Protocol, Sequence
 
-from typing import Literal, Sequence, Any, Hashable, Protocol
+import tomllib
 
 ValueTreeOnNotFound = Literal["raise"] | Literal["..."] | Literal["ellipsis"] | Literal["none"]
 
@@ -81,6 +81,7 @@ class NamesConfig(Protocol):
     progress: str
     connection_limit: int
     semaphore_multiplier: float
+
 
 class MapsConfig(Protocol):
     """Attributes for the [maps] section of config.toml"""
