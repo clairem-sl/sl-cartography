@@ -7,6 +7,7 @@ import argparse
 import asyncio
 import pickle
 import re
+import time
 from asyncio import Task
 from datetime import datetime
 from pathlib import Path
@@ -238,6 +239,8 @@ async def amain(db_path: Path, duration: int, min_batch_size: int, abort_low_rps
 def main(app_context: RetrieverApplication, opts: OptionsProtocol) -> None:  # noqa: D103
     global DataBase, Progress  # noqa: PLW0603
 
+    start = time.monotonic()
+
     dur = RetrieverApplication.calc_duration(opts)
 
     prog_file = opts.dbpath.parent / Config.names.progress
@@ -295,6 +298,10 @@ def main(app_context: RetrieverApplication, opts: OptionsProtocol) -> None:  # n
         print("Exporting ... ", end="", flush=True)
         rslt = export(opts.dbpath, opts.export, quiet=True)
         print(f"=> {rslt}")
+
+    elapsed = time.monotonic() - start
+    tstamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    print(f"\n### Finished on {tstamp} ({elapsed:_.2f}s since start)")
 
 
 if __name__ == "__main__":
