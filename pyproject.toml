@@ -26,18 +26,18 @@ authors = [
 ]
 dependencies = [
     'uvloop; platform_system == "Linux" and platform_python_implementation == "CPython"',
-    "tomli>=1.1.0; python_version < '3.11'",
     "pillow",
     "httpx",
     "httpx[http2]",
     "ruamel.yaml",
     "packaging",
-#    "msgpack",
+    "tzdata",
+    "msgpack",
+    "numpy",
+    "scikit-image",
 #    "appdirs",
 #    "beautifulsoup4",
 #    "pytz",
-#    "scikit-image",
-#    "tzdata",
 ]
 
 [build-system]
