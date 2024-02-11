@@ -13,13 +13,6 @@ if TYPE_CHECKING:
     from pathlib import Path
     from sl_maptools import SupportsSet
 
-try:
-    # noinspection PyCompatibility
-    import tomllib
-except ModuleNotFoundError:
-    # noinspection PyUnresolvedReferences
-    import tomli as tomllib  # noqa: F401
-
 
 def make_backup(the_file: Path, levels: int = 2) -> None:
     """

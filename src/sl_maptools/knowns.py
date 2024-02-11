@@ -3,14 +3,10 @@
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 from __future__ import annotations
 
-import sys
 from pathlib import Path
 from typing import Final
 
-if sys.version_info < (3, 11):
-    from typing_extensions import NotRequired, TypedDict
-else:
-    from typing import NotRequired, TypedDict
+from typing import NotRequired, TypedDict
 
 from ruamel.yaml import YAML
 
