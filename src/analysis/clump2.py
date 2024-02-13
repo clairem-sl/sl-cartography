@@ -1,6 +1,8 @@
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
+from __future__ import annotations
+
 import argparse
 from collections import deque
 from typing import Final, Protocol, cast
@@ -81,10 +83,10 @@ def main(opts: ClumpOptions):
     # print(list_of_clumps)
 
     # Now, let's find per-area "clumps of interest"
-    unassigned_clumps: list[set[CoordType]] = [c for c in list_of_clumps]
+    unassigned_clumps: list[set[CoordType]] = list(list_of_clumps)
     perarea_clumps_of_interest: dict[str, list[set[CoordType]]] = {}
     for aname, abounds in KNOWN_AREAS.items():
-        acoords: set[CoordType] = {xy for xy in abounds.xy_iterator()}
+        acoords: set[CoordType] = set(abounds.xy_iterator())
         for clump in list_of_clumps:
             if clump not in unassigned_clumps:
                 continue
@@ -99,7 +101,7 @@ def main(opts: ClumpOptions):
     perarea_existing_clumps: dict[str, list[set[CoordType]]] = {}
     perarea_existing_coords: dict[str, set[CoordType]] = {}
     for aname, abounds in KNOWN_AREAS.items():
-        _coords: set[CoordType] = {xy for xy in abounds.xy_iterator()}
+        _coords: set[CoordType] = set(abounds.xy_iterator())
         _unprocs = _coords.copy()
         while _unprocs:
             _co = _unprocs.pop()
@@ -140,8 +142,8 @@ def main(opts: ClumpOptions):
 
     # Finally, let's do some blacklisting
     do_not_check_coords: set[CoordType] = set()
-    for aname, abounds in DO_NOT_MAP_AREAS.items():
-        _coords: set[CoordType] = {xy for xy in abounds.xy_iterator()}
+    for abounds in DO_NOT_MAP_AREAS.values():
+        _coords: set[CoordType] = set(abounds.xy_iterator())
         _coords.intersection_update(all_coords)
         do_not_check_coords.update(_coords)
     clumps_to_check: list[tuple[str, set[CoordType], str]] = []

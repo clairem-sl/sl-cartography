@@ -21,7 +21,7 @@ class FetcherConnectionError(ConnectionError):
 
     def __init__(
         self,
-        *args,
+        *args,  # noqa: ANN002
         internal_errors: list[Exception] | None = None,
         coord: MapCoord = None,
     ):

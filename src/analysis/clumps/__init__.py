@@ -1,10 +1,15 @@
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
-from collections import deque
-from collections.abc import Generator
+from __future__ import annotations
 
-from sl_maptools import CoordType
+from collections import deque
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
+
+    from sl_maptools import CoordType
 
 
 def iter_neighbors(co: CoordType) -> Generator[CoordType, None, None]:

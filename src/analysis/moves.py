@@ -1,15 +1,18 @@
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
+from __future__ import annotations
 
 import pickle
 from datetime import datetime
 from io import StringIO
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from ruamel.yaml import YAML, RoundTripRepresenter
 
-from sl_maptools import CoordType, RegionsDBRecord3
+if TYPE_CHECKING:
+    from sl_maptools import CoordType, RegionsDBRecord3
 
 DB_PATH = Path(r"C:\Cache\SL-Carto\RegionsDB3.pkl")
 CUTOFF = 3
@@ -49,5 +52,5 @@ def main():
         print(f"{name}: {locs}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -1,17 +1,20 @@
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
+from __future__ import annotations
+
 import argparse
 import pickle
 from collections import defaultdict
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Final, NamedTuple, Protocol, cast
+from typing import TYPE_CHECKING, Final, NamedTuple, Protocol, cast
 from zoneinfo import ZoneInfo
 
-from sl_maptools import CoordType, RegionsDBRecord3
 from sl_maptools.config import DefaultConfig as Config
 
+if TYPE_CHECKING:
+    from sl_maptools import CoordType, RegionsDBRecord3
 
 DB_PATH = Path(Config.names.dir) / Config.names.db
 DEFA_CUTOFF = 6
