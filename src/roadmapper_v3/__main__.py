@@ -1,6 +1,7 @@
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
+from __future__ import annotations
 
 import argparse
 from itertools import cycle
@@ -20,12 +21,15 @@ from roadmapper_v3.model.yaml import load_from
 
 
 class Options(Protocol):
+    """Represent options extracted from CLI"""
+
     savedir: Path
     conti: str
     yaml_file: list[Path]
 
 
-def options() -> Options:
+def get_options() -> Options:
+    """Extract options from CLI"""
     parser = argparse.ArgumentParser("roadmapper_v3")
     parser.add_argument("--savedir", "-s", required=True, type=Path, help="Directory to save the road overlays in")
     parser.add_argument("--conti", "-c", default="", help="Comma-separated continents to render (defaults to all)")
@@ -35,7 +39,7 @@ def options() -> Options:
     return cast(Options, _opts)
 
 
-def main(opts: Options):
+def main(opts: Options) -> None:  # noqa: D103
     # savedir: Path, conti: str, yaml_file: list[Path]
     savedir = opts.savedir
     yaml_file = opts.yaml_file
@@ -50,7 +54,7 @@ def main(opts: Options):
     if nf:
         raise FileNotFoundError(f"These files are not found: {nf}")
 
-    conti_set = set(c.casefold() for c in conti.split(",")) if conti else None
+    conti_set = {c.casefold() for c in conti.split(",")} if conti else None
 
     all_routes = {}
     for yf in yaml_file:
@@ -102,4 +106,4 @@ def main(opts: Options):
 
 
 if __name__ == "__main__":
-    main(options())
+    main(get_options())

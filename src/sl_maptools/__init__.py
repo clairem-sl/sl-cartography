@@ -5,25 +5,14 @@ from __future__ import annotations
 
 import math
 import re
-from typing import (
-    TYPE_CHECKING,
-    Final,
-    Generator,
-    Iterable,
-    Iterator,
-    NamedTuple,
-    NotRequired,
-    Optional,
-    Protocol,
-    TypedDict,
-    Union,
-)
+from collections.abc import Generator, Iterable, Iterator
+from pathlib import Path
+from typing import TYPE_CHECKING, Final, NamedTuple, NotRequired, Protocol, TypedDict
 
 if TYPE_CHECKING:
     from datetime import datetime
-    from pathlib import Path
 
-from PIL import Image
+    from PIL import Image
 
 CoordType = tuple[int, int]
 ColorType = (
@@ -113,7 +102,7 @@ class AreaBounds(NamedTuple):
             for x in self.x_iterator():
                 yield x, y
 
-    def intersection(self, other: AreaBounds) -> Union[AreaBounds, None]:
+    def intersection(self, other: AreaBounds) -> AreaBounds | None:
         """Returns an AreaBounds containing intersecting coordinates, or None if no intersection"""
         oth_x1, oth_y1, oth_x2, oth_y2 = other
         my = set(range(self.x_westmost, self.x_eastmost + 1))
@@ -132,7 +121,7 @@ class AreaBounds(NamedTuple):
         new_y2 = max(inter)
         return AreaBounds(new_x1, new_y1, new_x2, new_y2)
 
-    def __and__(self, other: AreaBounds) -> Union[AreaBounds, None]:
+    def __and__(self, other: AreaBounds) -> AreaBounds | None:
         return self.intersection(other)
 
     def to_slgi(self) -> str:
@@ -178,7 +167,7 @@ class AreaBounds(NamedTuple):
 class AreaBoundsSet(Iterable):
     """A wrapper around a frozenset of AreaBounds"""
 
-    def __init__(self, areas: Union[AreaBounds, Iterable[AreaBounds]] = None):
+    def __init__(self, areas: AreaBounds | Iterable[AreaBounds] = None):
         """
         :param areas: One or more AreaBounds to contain
         """
@@ -232,7 +221,7 @@ AreaDescriptorMeta = TypedDict(
         "automatic": NotRequired[bool],
         "validate": NotRequired[bool],
         "target-dir": NotRequired[bool],
-    }
+    },
 )
 
 
@@ -256,11 +245,11 @@ class AreaDescriptor:
 
     def __init__(
         self,
-        includes: Union[AreaBounds, Iterable[AreaBounds]],
+        includes: AreaBounds | Iterable[AreaBounds],
         *,
-        excludes: Union[AreaBounds, Iterable[AreaBounds]] = None,
-        name: Optional[str] = None,
-        description: Optional[str] = None,
+        excludes: AreaBounds | Iterable[AreaBounds] = None,
+        name: str | None = None,
+        description: str | None = None,
         meta: AreaDescriptorMeta = None,
     ):
         """
@@ -275,7 +264,7 @@ class AreaDescriptor:
         self.name = name
         self.description = description
         self.meta = DEFAULT_ADMETA | (meta or {})
-        self._bbox: Optional[AreaBounds] = None
+        self._bbox: AreaBounds | None = None
 
     def __contains__(self, item: CoordType):
         return (item in self.includes) and item not in self.excludes
@@ -374,7 +363,7 @@ class MapCoord(NamedTuple):
         return self.x, self.y
 
 
-class MapRegion(object):
+class MapRegion:
     """
     A Map Tile (image of a region) with its global geo-coordinates
     """
@@ -382,7 +371,7 @@ class MapRegion(object):
     def __init__(
         self,
         coord: MapCoord,
-        image: Optional[Image.Image],
+        image: Image.Image | None,
         # is_new: Optional[bool] = None,
     ):
         """

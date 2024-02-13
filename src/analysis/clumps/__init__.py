@@ -2,7 +2,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 from collections import deque
-from typing import Generator
+from collections.abc import Generator
 
 from sl_maptools import CoordType
 

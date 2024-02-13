@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import re
-from typing import TYPE_CHECKING, Any, ClassVar, Final, Optional, Protocol
+from typing import TYPE_CHECKING, Any, ClassVar, Final, Protocol
 
 import httpx
 
@@ -40,7 +40,7 @@ class NameFetcher(Fetcher):
         quiet: bool = False,
         retries: int = 6,
         raise_err: bool = True,
-        acceptable_codes: Optional[set[int]] = None,
+        acceptable_codes: set[int] | None = None,
     ) -> RawResult:
         """Asynchronously return raw data from Cap server."""
         del acceptable_codes
@@ -52,7 +52,7 @@ class NameFetcher(Fetcher):
         quiet: bool = False,
         retries: int = 6,
         raise_err: bool = True,
-        acceptable_codes: Optional[set[int]] = None,
+        acceptable_codes: set[int] | None = None,
     ) -> CookedResult:
         """Asynchronously get data from Cap server, and decodes it"""
         del acceptable_codes

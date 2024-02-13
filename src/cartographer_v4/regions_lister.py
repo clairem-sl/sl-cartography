@@ -12,7 +12,6 @@ from sl_maptools.config import DefaultConfig as Config
 from sl_maptools.knowns import KNOWN_AREAS
 from sl_maptools.validator import get_nonvoid_regions
 
-
 LIST_PATH: Final[Path] = Path(Config.areas.dir)
 
 

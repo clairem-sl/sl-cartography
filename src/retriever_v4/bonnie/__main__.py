@@ -9,7 +9,7 @@ from asyncio import Task
 from collections import deque
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Final, Generator, NoReturn, Optional, TypedDict
+from typing import TYPE_CHECKING, Any, Final, NoReturn, TypedDict
 
 import httpx
 from ruamel.yaml import YAML, RoundTripRepresenter
@@ -19,6 +19,9 @@ from sl_maptools import CoordType, MapCoord
 from sl_maptools.config import DefaultConfig as Config
 from sl_maptools.fetchers.bonnie import BoundedBonnieFetcher, CookedBonnieResult
 from sl_maptools.utils import make_backup
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
 
 CONN_LIMIT: Final[int] = 400
 HTTP2: Final[bool] = False
@@ -55,7 +58,7 @@ class BonnieRegionDetails(TypedDict):
     hard_max_objects: int
     deny_age_unverified: bool
     region_access: int
-    deleted_at: Optional[str]
+    deleted_at: str | None
     estate_name: str
     region_ip: str
     region_port: int
@@ -195,7 +198,7 @@ async def amain(duration: int, min_batch_size: int, abort_low_rps: int) -> None:
             nonlocal shown
             shown = False
 
-        def process_result(fut_result: Optional[CookedBonnieResult]) -> bool:
+        def process_result(fut_result: CookedBonnieResult | None) -> bool:
             nonlocal shown
             if fut_result is None:
                 return False

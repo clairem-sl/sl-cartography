@@ -4,9 +4,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Final
-
-from typing import NotRequired, TypedDict
+from typing import Final, NotRequired, TypedDict
 
 from ruamel.yaml import YAML
 

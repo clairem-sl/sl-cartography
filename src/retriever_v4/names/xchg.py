@@ -9,7 +9,7 @@ import re
 from datetime import datetime
 from operator import methodcaller
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Final, Optional, Protocol, TypedDict, cast
+from typing import TYPE_CHECKING, Any, Final, Protocol, TypedDict, cast
 
 import packaging.version as versioning
 from ruamel.yaml import YAML, RoundTripRepresenter
@@ -39,8 +39,8 @@ class OptionsType(Protocol):
 
     command: str
     db: Path
-    to_yaml: Optional[Path]
-    from_yaml: Optional[Path]
+    to_yaml: Path | None
+    from_yaml: Path | None
 
 
 def get_options() -> OptionsType:
@@ -88,7 +88,7 @@ class RegionsDBRecord3ForSerialization(TypedDict):
 def export(db: Path, targ: Path, quiet: bool = False) -> Path:
     """Perform export of DB"""
     if targ is None:
-        targ = DEFA_DB.with_suffix(f".{datetime.now().strftime('%Y%m%d-%H%M')}.yaml")
+        targ = DEFA_DB.with_suffix(f".{datetime.now().astimezone().strftime('%Y%m%d-%H%M')}.yaml")
     with db.open("rb") as fin:
         data: dict[CoordType, RegionsDBRecord3] = pickle.load(fin)  # noqa: S301
     if not quiet:
@@ -228,9 +228,7 @@ def import_(yaml_src: Path, db: Path, quiet: bool = False) -> None:
     result: dict[CoordType, RegionsDBRecord3] = {
         1: import_1,
         3: import_3,
-    }[
-        _ver.major
-    ](regs_data)
+    }[_ver.major](regs_data)
 
     make_backup(db)
     with db.open("wb") as fout:

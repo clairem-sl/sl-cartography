@@ -3,10 +3,10 @@
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 from __future__ import annotations
 
-from pathlib import Path
-from typing import Any, Hashable, Literal, Protocol, Sequence
-
 import tomllib
+from collections.abc import Hashable, Sequence
+from pathlib import Path
+from typing import Any, Literal, Protocol
 
 ValueTreeOnNotFound = Literal["raise"] | Literal["..."] | Literal["ellipsis"] | Literal["none"]
 

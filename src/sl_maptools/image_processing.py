@@ -8,20 +8,24 @@ from typing import Final, Self, TypedDict, cast
 
 import numpy as np
 from PIL import Image, ImageFilter
-from skimage.metrics import mean_squared_error as mse
-from skimage.metrics import normalized_root_mse as nrmse
-from skimage.metrics import structural_similarity as ssim
+from skimage.metrics import (
+    mean_squared_error as mse,
+    normalized_root_mse as nrmse,
+    structural_similarity as ssim,
+)
 
 BoxTuple = tuple[int, int, int, int]
 RGBTuple = tuple[int, int, int]
 
 
 def _gen_fascia(shift: int, size: int) -> list[BoxTuple]:
+    # fmt: off
     return [
         (x, y, x + size, y + size)
         for x in range(0, 257 - shift, shift)
         for y in range(0, 257 - shift, shift)
     ]
+    # fmt: on
 
 
 FASCIA_COORDS: dict[int, list[BoxTuple]] = {
@@ -54,9 +58,7 @@ def calculate_dominant_colors(
     reflecting the visual quantization.
     """
     if fascia_per_side not in FASCIA_COORDS:
-        raise KeyError(
-            f"Valid fascia_per_side values: {', '.join(map(str, FASCIA_SIZES))}"
-        )
+        raise KeyError(f"Valid fascia_per_side values: {', '.join(map(str, FASCIA_SIZES))}")
     if kmeans is None:
         kmeans = DEFA_KMEAN_DICT
     if isinstance(kmeans, dict):
@@ -74,6 +76,7 @@ def calculate_dominant_colors(
 
 class SimilarityThresholds(TypedDict):
     """Definition of Similarity Threshold fields"""
+
     mse: float
     ssim: float
     ssim_enh: float
@@ -117,9 +120,7 @@ class SimilarityResult:
         return self
 
 
-def are_similar(
-    image1: Image.Image, image2: Image.Image, thresholds: SimilarityThresholds = None
-) -> SimilarityResult:
+def are_similar(image1: Image.Image, image2: Image.Image, thresholds: SimilarityThresholds = None) -> SimilarityResult:
     """
     Perform image similarity tests using mse, ssim, nrmse, and ssim with K values tuned by Wang et al
 
@@ -143,6 +144,7 @@ def are_similar(
         result.append(_nrmse := nrmse(im1_arr, im2_arr))
         if _nrmse < thresholds["nrmse"]:
             return result.success("nrmse")
+        # fmt: off
         im1_enh = (
             im1.filter(ImageFilter.GaussianBlur)
             .filter(ImageFilter.GaussianBlur)
@@ -153,15 +155,16 @@ def are_similar(
             .filter(ImageFilter.GaussianBlur)
             .filter(ImageFilter.FIND_EDGES)
         )
+        # fmt: on
         # noinspection PyTypeChecker
         im1_arr, im2_arr = np.asarray(im1_enh), np.asarray(im2_enh)
-        wangk = dict(
-            gaussian_weights=True,
-            sigma=1.5,
-            use_sample_covariance=False,
-            K1=0.02,
-            K2=0.03,
-        )
+        wangk = {
+            "gaussian_weights": True,
+            "sigma": 1.5,
+            "use_sample_covariance": False,
+            "K1": 0.02,
+            "K2": 0.03,
+        }
         # print(wangk)
         result.append(_ssim_e := ssim(im1_arr, im2_arr, **wangk))
         if _ssim_e > thresholds["ssim_enh"]:

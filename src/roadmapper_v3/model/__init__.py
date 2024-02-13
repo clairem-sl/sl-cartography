@@ -1,7 +1,6 @@
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
-
 from __future__ import annotations
 
 import math
@@ -157,7 +156,7 @@ def merge_all_routes(data1: dict[str, Continent], data2: dict[str, Continent]) -
     for conti_name, conti_data in data1.items():
         merged[conti_name] = (continent := Continent(conti_name))
         for route_name, route_data in conti_data.routes.items():
-            continent.add_route((route := Route(route_name)))
+            continent.add_route(route := Route(route_name))
             route.color = route_data.color
             for seg in route_data.segments:
                 new_seg = Segment(mode=seg.mode, desc=seg.desc)

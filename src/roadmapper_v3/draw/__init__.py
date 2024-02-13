@@ -1,16 +1,18 @@
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
-
 from __future__ import annotations
 
 import math
 from itertools import cycle, pairwise
-from typing import Generator, NamedTuple
-
-from PIL import ImageDraw
+from typing import TYPE_CHECKING, NamedTuple
 
 from roadmapper_v3.model import Point, Route, Segment, SegmentMode
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
+
+    from PIL import ImageDraw
 
 
 def extend_by_t(p1: Point, p2: Point, t: float) -> Point:
@@ -28,30 +30,40 @@ def extend_by_t(p1: Point, p2: Point, t: float) -> Point:
 
 
 def extend_ends(points: list[Point], extend_by: float) -> list[Point]:
+    """Extend both ends of a line segment by a certain length"""
     new_p0 = extend_by_t(points[1], points[0], extend_by)
     new_pz = extend_by_t(points[-2], points[-1], extend_by)
     return [new_p0, *points[1:-1], new_pz]
 
 
 class ParametricLine:
+    """A Parametric Line described by 2 points on the line"""
+
     __slots__ = ("p1", "p2")
 
     def __init__(self, p1: Point, p2: Point):
+        """
+        :param p1: First point on the line
+        :param p2: Second point on the line
+        """
         self.p1 = p1
         self.p2 = p2
 
     @property
     def displacement(self) -> Point:
+        """Displacement (vector) from first point to second point"""
         x1, y1 = self.p1
         x2, y2 = self.p2
         return Point((x2 - x1), (y2 - y1))
 
     @property
     def length(self) -> float:
+        """Length of the line"""
         dx, dy = self.displacement
         return math.sqrt(dx**2 + dy**2)
 
     def move_start_by(self, t: float) -> Point:
+        """Move the starting point by a certain distance"""
         leng = self.length
         dx, dy = self.displacement
         new_x = self.p1.x + (t / leng) * dx
@@ -225,7 +237,7 @@ def drawarc(
     gy3 = cheight - cy3
     circle: tuple[Point, float, bool]
     if (circle := fit_circle_cartes(cx1, gy1, cx2, gy2, cx3, gy3)) is None:
-        return None
+        return
     center, radius, countercw = circle
     ang1 = math.degrees(math.atan2(gy1 - center.y, cx1 - center.x))
     ang2 = math.degrees(math.atan2(gy3 - center.y, cx3 - center.x))

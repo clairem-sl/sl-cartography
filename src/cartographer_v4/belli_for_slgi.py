@@ -16,7 +16,6 @@ from sl_maptools.config import DefaultConfig as Config
 from sl_maptools.knowns import KNOWN_AREAS
 from sl_maptools.validator import get_bonnie_coords
 
-
 # language=yaml
 BELLI_EXCLUSIONS_YAML: Final[str] = """
 Atolls-FishermansTown:
@@ -138,7 +137,7 @@ def main(opts: Options) -> None:  # noqa: D103
     belli_all = KNOWN_AREAS["Bellisseria_ALL"]
     belli_width = belli_all.bounding_box.width * 256
     belli_height = belli_all.bounding_box.height * 256
-    belli_coords: set[CoordType] = set(xy for xy in belli_all.xy_iterator())
+    belli_coords: set[CoordType] = set(belli_all.xy_iterator())
 
     bonnie_coords = get_bonnie_coords(Config.bonnie)
     map_tiles = inventorize_maps_latest(Config.maps.dir)

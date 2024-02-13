@@ -12,7 +12,7 @@ from asyncio import Task
 from datetime import datetime
 from pathlib import Path
 from pprint import pprint
-from typing import TYPE_CHECKING, Final, Optional, Protocol, TypedDict, Union, cast
+from typing import TYPE_CHECKING, Final, Protocol, TypedDict, cast
 
 import httpx
 
@@ -71,7 +71,7 @@ class RetrieverNamesOptions(Protocol):
     """Additional CLI options specified by this module"""
 
     dbpath: Path
-    export: Union[Path, Ellipsis]
+    export: Path | Ellipsis
     auto_reset: bool
 
 
@@ -197,7 +197,7 @@ async def amain(db_path: Path, duration: int, min_batch_size: int, abort_low_rps
             nonlocal shown
             shown = False
 
-        def process_result(fut_result: Optional[CookedResult]) -> bool:
+        def process_result(fut_result: CookedResult | None) -> bool:
             nonlocal shown
             if fut_result is None:
                 return False
@@ -294,13 +294,15 @@ def main(app_context: RetrieverApplication, opts: OptionsProtocol) -> None:  # n
         }
     )
 
+    # noinspection PyTestUnpassedFixture
     if opts.export is not Ellipsis:
         print("Exporting ... ", end="", flush=True)
+        # noinspection PyTestUnpassedFixture
         rslt = export(opts.dbpath, opts.export, quiet=True)
         print(f"=> {rslt}")
 
     elapsed = time.monotonic() - start
-    tstamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    tstamp = datetime.now().astimezone().strftime("%Y-%m-%d %H:%M:%S")
     print(f"\n### Finished on {tstamp} ({elapsed:_.2f}s since start)")
 
 

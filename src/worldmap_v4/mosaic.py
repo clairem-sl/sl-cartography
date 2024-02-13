@@ -12,7 +12,7 @@ import re
 import signal
 import time
 from pathlib import Path
-from typing import Final, NamedTuple, Optional, Protocol, TypedDict, cast
+from typing import Final, NamedTuple, Protocol, TypedDict, cast
 
 from PIL import Image, UnidentifiedImageError
 
@@ -164,6 +164,7 @@ def collector(
 
 class MakerParams(NamedTuple):
     """Parameters passed to the make_mosaic worker"""
+
     worker_state: dict[str, str]
     queue: MP.Queue
     patches_coll: dict[tuple[CoordType, int], list[RGBTuple]]
@@ -194,7 +195,7 @@ def make_mosaic(params: MakerParams) -> None:
 
         _state("got_job")
         assert isinstance(item, tuple)
-        patches_bysz: Optional[dict[int, dict[CoordType, list[RGBTuple]]]] = {sz: {} for sz in item}
+        patches_bysz: dict[int, dict[CoordType, list[RGBTuple]]] = {sz: {} for sz in item}
         with params.coll_lock:
             _state("transform")
             for k, v in dict(params.patches_coll).items():
@@ -227,10 +228,10 @@ def make_mosaic(params: MakerParams) -> None:
             canvas.save(params.outdir / f"worldmap4_mosaic_{sz}x{sz}.png")
             canvas.close()
             print(f"💾{sz}", end="", flush=True)
-        # noinspection PyUnusedLocal
-        canvas = None
-        # noinspection PyUnusedLocal
-        patches_bysz = None
+
+        # Release references to help GC
+        del canvas
+        del patches_bysz
 
     _state("ended")
 

@@ -64,7 +64,7 @@ async def aretrieve(wants: dict[str, list[tuple[int, int, int, int]]]) -> None:
                 if mr.result is None:
                     continue
                 x, y = mr.coord
-                ts = datetime.strftime(datetime.now(), "%y%m%d-%H%M")
+                ts = datetime.strftime(datetime.now().astimezone(), "%y%m%d-%H%M")
                 targ = targdir / f"{x}-{y}_{ts}.jpg"
                 with targ.open("wb") as fout:
                     fout.write(mr.result)
@@ -90,11 +90,11 @@ def main(opts: Options) -> None:  # noqa: D103
             wants[want] = [x1, y1, x2, y2]
             continue
         if (area_desc := known_folded.get(want.casefold())) is not None:
-            wants[want] = [a for a in area_desc.includes]
+            wants[want] = list(area_desc.includes)
             continue
         for k, area_desc in known_folded.items():
             if fnmatch(k, want.casefold()):
-                wants[want] = [a for a in area_desc.includes]
+                wants[want] = list(area_desc.includes)
     print(f"Parsed {len(wants)} areas")
 
     if wants:

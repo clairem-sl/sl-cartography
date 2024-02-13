@@ -1,7 +1,6 @@
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
-
 from __future__ import annotations
 
 import argparse
@@ -9,7 +8,7 @@ import datetime
 import math
 import re
 from pathlib import Path
-from typing import cast, Final, Protocol
+from typing import Final, Protocol, cast
 
 from roadmapper_v3.draw.colors import ALL_COLORS
 from roadmapper_v3.model import Continent, Point, Route, Segment, SegmentMode
@@ -233,7 +232,7 @@ def bake(parsed: list[ChatLine]) -> dict[str, Continent]:
                         print(f"WARNING: Unrecognized command '{other}' ({p.source})")
 
         elif isinstance(p, PosRecord):
-            if not continent.contains_geo((geop := p.to_point())):
+            if not continent.contains_geo(geop := p.to_point()):
                 print(f"WARNING: Coordinates {geop} outside of continent '{continent.name}' ({p.source})")
             if route is None:
                 print(f"WARNING: New PosRecord but no route is active! Will be discarded! ({p.source})")

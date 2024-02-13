@@ -11,13 +11,16 @@ import sys
 import time
 from datetime import datetime
 from multiprocessing import shared_memory as MPSharedMem
-from typing import Union, Iterable, cast, Final
+from typing import TYPE_CHECKING, Final, cast
 
 import httpx
 
 from retriever_v4.maps import QResult, QSaveJob
-from sl_maptools import SupportsSet, CoordType, MapCoord
+from sl_maptools import CoordType, MapCoord, SupportsSet
 from sl_maptools.fetchers.map import BoundedMapFetcher
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 
 async def aretrieve(
@@ -40,7 +43,7 @@ async def aretrieve(
 
         tasks: set[asyncio.Task] = set()
         done: set[asyncio.Task]
-        job: Union[Ellipsis, tuple[str, Union[CoordType, Iterable[CoordType], int]]] = in_queue.get()
+        job: Ellipsis | tuple[str, CoordType | Iterable[CoordType] | int] = in_queue.get()
         co: CoordType
         while True:
             if job is not None and job is not Ellipsis:
@@ -93,7 +96,7 @@ async def aretrieve(
                     shm.buf[:] = fut_result.result
                     save: QSaveJob = {
                         "coord": fut_result.coord,
-                        "tsf": datetime.strftime(datetime.now(), "%y%m%d-%H%M"),
+                        "tsf": datetime.strftime(datetime.now().astimezone(), "%y%m%d-%H%M"),
                         "shm": shm,
                     }
                     out_queue.put(save)

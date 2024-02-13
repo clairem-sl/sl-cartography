@@ -13,8 +13,10 @@ from typing import TYPE_CHECKING, Final, Protocol, cast
 
 import numpy as np
 from PIL import Image, UnidentifiedImageError
-from skimage.metrics import mean_squared_error as mse
-from skimage.metrics import structural_similarity as ssim
+from skimage.metrics import (
+    mean_squared_error as mse,
+    structural_similarity as ssim,
+)
 
 from sl_maptools import inventorize_maps_all
 from sl_maptools.config import DefaultConfig as Config

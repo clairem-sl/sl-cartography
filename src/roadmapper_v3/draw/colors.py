@@ -1,6 +1,7 @@
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
+from __future__ import annotations
 
 from typing import Final
 
@@ -56,6 +57,7 @@ BREWER_Q_10: Final = [
 
 
 def web_to_(web_hex: str) -> tuple[int, int, int]:
+    """Convert web color #rrggbb to RGB tuple"""
     return int(web_hex[1:3], 16), int(web_hex[3:5], 16), int(web_hex[5:7], 16)
 
 

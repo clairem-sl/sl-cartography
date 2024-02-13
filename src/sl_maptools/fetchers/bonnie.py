@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import json
-from typing import TYPE_CHECKING, NamedTuple, Optional
+from typing import TYPE_CHECKING, NamedTuple
 
 from sl_maptools.fetchers import BoundedFetcher, Fetcher
 
@@ -16,7 +16,7 @@ class CookedBonnieResult(NamedTuple):
     """Represents BonnieBots region retrieval result, decoded from JSON"""
 
     coord: MapCoord
-    result: Optional[dict]
+    result: dict | None
     status_code: int = 0
 
 
@@ -31,7 +31,7 @@ class BonnieFetcher(Fetcher):
         quiet: bool = False,
         retries: int = 6,
         raise_err: bool = True,
-        acceptable_codes: Optional[set[int]] = None,
+        acceptable_codes: set[int] | None = None,
     ) -> CookedBonnieResult:
         """Asynchronously retrieves and decodes region data from BonnieBots"""
         del acceptable_codes

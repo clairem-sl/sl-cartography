@@ -7,10 +7,11 @@ import shutil
 import signal
 import time
 from contextlib import contextmanager
-from typing import IO, TYPE_CHECKING, Optional
+from typing import IO, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from pathlib import Path
+
     from sl_maptools import SupportsSet
 
 
@@ -28,7 +29,7 @@ def make_backup(the_file: Path, levels: int = 2) -> None:
     shutil.copy(the_file, the_file.with_suffix(".prev0" + suff))
     for n in range(levels, 0, -1):
         prev_n = the_file.with_suffix(f".prev{n}{suff}")
-        prev_b = the_file.with_suffix(f".prev{n-1}{suff}")
+        prev_b = the_file.with_suffix(f".prev{n - 1}{suff}")
         if prev_b.exists():
             prev_b.replace(prev_n)
 
@@ -47,10 +48,10 @@ class QuietablePrint:
     def __call__(
         self,
         *values: object,
-        sep: Optional[str] = "",
-        end: Optional[str] = "\n",
-        file: Optional[IO] = None,
-        flush: Optional[bool] = ...,
+        sep: str | None = "",
+        end: str | None = "\n",
+        file: IO | None = None,
+        flush: bool | None | Ellipsis = ...,
     ) -> None:
         """Emulates call to the print() function"""
         if flush is Ellipsis:

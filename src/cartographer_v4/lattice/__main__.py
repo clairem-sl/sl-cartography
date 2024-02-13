@@ -14,7 +14,6 @@ from sl_maptools.config import DefaultConfig as Config
 from sl_maptools.knowns import KNOWN_AREAS
 from sl_maptools.validator import get_bonnie_coords, get_nonvoid_regions
 
-
 DB_PATH: Final[Path] = Path(Config.names.dir) / Config.names.db
 AREAMAPS_DIR: Final[Path] = Path(Config.areas.dir)
 
@@ -68,7 +67,7 @@ def main(opts: LatticeOptions) -> None:  # noqa: D103
             if a1 in cs_anames
         }
     else:
-        want_areas = {areamap for areamap in areamaps_dir.glob("*.png")}
+        want_areas = set(areamaps_dir.glob("*.png"))
 
     maker = LatticeMaker(
         regions_db=regsdb,

@@ -7,7 +7,7 @@ import argparse
 from datetime import datetime
 from itertools import chain
 from pathlib import Path
-from typing import Final, Literal, Optional, Protocol, cast
+from typing import Final, Literal, Protocol, cast
 
 from PIL import Image, ImageDraw, ImageFont
 
@@ -41,9 +41,9 @@ OVERLAY_VARIANTS = {
 class Options(Protocol):
     """Options extracted from CLI"""
 
-    worldmapfile: Optional[Path]
+    worldmapfile: Path | None
     source_type: Literal["mos", "nl"]
-    source_dir: Optional[Path]
+    source_dir: Path | None
 
 
 _TYPE_CHOICES = {
@@ -136,16 +136,16 @@ def main(opts: Options) -> None:  # noqa: D103
         src_dir = opts.source_dir
         if not src_dir.exists() or not src_dir.is_dir():
             raise RuntimeError(f"Not a directory: {src_dir}")
-        if opts.source_type == "nl":
+        if opts.source_type == "nl":  # noqa: SIM108
             patt = "worldmap4_nightlights_*"
         else:
             patt = "worldmap4_mosaic_*"
-        files = [f for f in src_dir.glob(patt)]
+        files = list(src_dir.glob(patt))
         if not files:
             raise FileNotFoundError(f"Cannot find '{patt}' in {src_dir}")
         files.sort(key=lambda f: f.stat().st_mtime)
         worldmap_p = files[-1].expanduser().absolute()
-    worldmap_m = datetime.fromtimestamp(worldmap_p.stat().st_mtime)
+    worldmap_m = datetime.fromtimestamp(worldmap_p.stat().st_mtime).astimezone()
 
     Image.MAX_IMAGE_PIXELS = None
     min_co, max_co = COORD_RANGE
@@ -170,7 +170,7 @@ def main(opts: Options) -> None:  # noqa: D103
         "stroke_fill": (0, 0, 0, 255),
     }
 
-    ts = datetime.now().strftime("%y%m%d-%H%M")
+    ts = datetime.now().astimezone().strftime("%y%m%d-%H%M")
     for variant in OVERLAY_VARIANTS:
         canvas = make_grid(worldmap, variant, text_settings)
         print("  Saving ...", end="", flush=True)

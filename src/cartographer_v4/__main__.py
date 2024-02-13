@@ -28,7 +28,6 @@ from sl_maptools.knowns import KNOWN_AREAS
 from sl_maptools.utils import handle_sigint
 from sl_maptools.validator import get_bonnie_coords, get_nonvoid_regions
 
-
 AbortRequested: SupportsSet = Event()
 
 
@@ -164,7 +163,7 @@ def make_map(
     csize_y = (area.y_northmost - area.y_southmost + 1) * 256
     canvas = Image.new("RGBA", (csize_x, csize_y))
 
-    if exclusion_method is ExclusionMethod.HIDE:
+    if exclusion_method is ExclusionMethod.HIDE:  # noqa: SIM108
         xy_iterator = area.xy_iterator
     else:
         xy_iterator = area.bounding_box.xy_iterator
@@ -196,7 +195,7 @@ def make_map(
 def main(opts: Options) -> None:  # noqa: D103
     start = time.monotonic()
 
-    ts = datetime.now().strftime("%Y%m%d-%H%M")
+    ts = datetime.now().astimezone().strftime("%Y%m%d-%H%M")
     wanted_areas: list[tuple[str, AreaDescriptor]] = []
 
     if not opts.areas:
@@ -210,7 +209,7 @@ def main(opts: Options) -> None:  # noqa: D103
     if opts.continents:
         known_folded = {a.casefold(): a for a in KNOWN_AREAS}
         want: str
-        for want in chain.from_iterable(map(lambda s: s.split(","), opts.continents)):
+        for want in chain.from_iterable(s.split(",") for s in opts.continents):
             if kn := known_folded.get(want := want.casefold()):
                 wanted_areas.append((kn, KNOWN_AREAS[kn]))
             else:

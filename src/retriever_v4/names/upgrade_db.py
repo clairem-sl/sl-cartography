@@ -8,16 +8,18 @@ import pickle
 from datetime import datetime, timedelta
 from pathlib import Path
 from pprint import pprint
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING
 
 from sl_maptools.config import DefaultConfig as Config
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from sl_maptools import CoordType, RegionsDBRecord, RegionsDBRecord3
 
 
 def upgrade_history_to_db3(
-        first_seen: datetime, hist_old: dict[str, list[str]]
+    first_seen: datetime, hist_old: dict[str, list[str]]
 ) -> dict[str, list[tuple[datetime, datetime]]]:
     chronology: list[tuple[str, str]] = [(ts, aname) for aname, timestamps in hist_old.items() for ts in timestamps]
     chronology.sort(reverse=True)
@@ -61,28 +63,32 @@ def upgrade_db_to_db3(db: dict[CoordType, RegionsDBRecord]) -> dict[CoordType, R
     return new_db
 
 
-def main():
+def main() -> None:  # noqa: D103
     db: dict[CoordType, RegionsDBRecord]
     db_path = Path(Config.names.dir) / "RegionsDB2.pkl"
     with db_path.open("rb") as fin:
-        db = pickle.load(fin)
+        db = pickle.load(fin)  # noqa: S301
 
     new_db = upgrade_db_to_db3(db)
     iso_ts: Callable[[datetime], str] = operator.methodcaller("isoformat", timespec="minutes")
     for coord, record in new_db.items():
-        for aname, timestamps in record["name_history3"].items():
+        for timestamps in record["name_history3"].values():
             if len(timestamps) > 1:
-                pprint({coord: {
-                    "name": record["current_name"],
-                    "first_seen": iso_ts(record["first_seen"]),
-                    "last_seen": iso_ts(record["last_seen"]),
-                    "last_check": iso_ts(record["last_check"]),
-                    "history": {
-                        aname: [f"{iso_ts(t1)}~{iso_ts(t2)}" for t1, t2 in tslist]
-                        for aname, tslist in record["name_history3"].items()
-                    },
-                    "sources": record["sources"]
-                }})
+                pprint(
+                    {
+                        coord: {
+                            "name": record["current_name"],
+                            "first_seen": iso_ts(record["first_seen"]),
+                            "last_seen": iso_ts(record["last_seen"]),
+                            "last_check": iso_ts(record["last_check"]),
+                            "history": {
+                                aname: [f"{iso_ts(t1)}~{iso_ts(t2)}" for t1, t2 in tslist]
+                                for aname, tslist in record["name_history3"].items()
+                            },
+                            "sources": record["sources"],
+                        }
+                    }
+                )
 
     # new_db_path = Path(Config.names.dir) / "RegionsDB3.pkl"
     # print(f"Saving to {new_db_path}")

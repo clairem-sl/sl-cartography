@@ -15,22 +15,14 @@ import time
 from asyncio import Task
 from collections import deque
 from contextlib import AbstractContextManager, contextmanager
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from enum import IntEnum
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Final,
-    Generator,
-    Protocol,
-    Type,
-    TypedDict,
-)
+from typing import TYPE_CHECKING, Any, Final, Protocol, TypedDict
 
 import ruamel.yaml as ryaml
 
 if TYPE_CHECKING:
+    from collections.abc import Callable, Generator
     from pathlib import Path
     from types import TracebackType
 
@@ -103,6 +95,7 @@ class RetrieverProgress:
     ----------
         next_coordinate(int): The next coordinate that will be returned by the job generator
         outstanding_count(int): The number of jobs in the outstanding queue
+
     """
 
     DEFA_MIN_COORD: Final[CoordType] = 0, 0
@@ -277,9 +270,9 @@ async def dispatch_fetcher(
         # Dispatch
         print(f"{len(tasks)} async jobs =>", end=" ")
         start_batch = time.monotonic()
-        
+
         done, tasks = await asyncio.wait(tasks, timeout=batch_wait)
-        
+
         if not abort_event.is_set():
             elapsed_last10.append(time.monotonic() - start_batch)
             done_last10.append(len(done))
@@ -387,7 +380,7 @@ class RetrieverApplication(AbstractContextManager):
 
     def __exit__(
         self,
-        __exc_type: Type[BaseException] | None,
+        __exc_type: type[BaseException] | None,
         __exc_value: BaseException | None,
         __traceback: TracebackType | None,
     ) -> bool | None:
@@ -483,7 +476,7 @@ class RetrieverApplication(AbstractContextManager):
     @staticmethod
     def calc_duration(opts: RetrieverApplication.Options) -> int:
         """Calculate duration (in seconds) given a particular combination of CLI options"""
-        nao = datetime.now()
+        nao = datetime.now().astimezone()
         if opts.duration > 0:
             dur = opts.duration
         elif opts.until:
@@ -494,7 +487,7 @@ class RetrieverApplication(AbstractContextManager):
             dur = (unt - nao).seconds
         elif opts.until_utc:
             hh, mm = opts.until_utc
-            nao = nao.astimezone(timezone.utc)
+            nao = nao.astimezone(UTC)
             unt = nao.replace(hour=hh, minute=mm, second=0, microsecond=0)
             if unt < nao:
                 unt = unt + timedelta(days=1)

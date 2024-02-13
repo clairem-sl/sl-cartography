@@ -3,10 +3,11 @@
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, NamedTuple, Optional, TypedDict
+from typing import TYPE_CHECKING, NamedTuple, TypedDict
 
 if TYPE_CHECKING:
     from multiprocessing import shared_memory as MPSharedMem
+
     from sl_maptools import MapCoord
 
 
@@ -15,7 +16,7 @@ class QResult(NamedTuple):
 
     entity: str
     coord: MapCoord
-    exc: Optional[Exception]
+    exc: Exception | None
 
 
 class QSaveJob(TypedDict):

@@ -6,7 +6,7 @@ from __future__ import annotations
 import asyncio
 import random
 from abc import ABCMeta, abstractmethod
-from typing import TYPE_CHECKING, NamedTuple, Optional
+from typing import TYPE_CHECKING, NamedTuple
 
 import httpx
 
@@ -20,7 +20,10 @@ class FetcherConnectionError(ConnectionError):
     """Exception raised if Fetcher classes experienced a connection error."""
 
     def __init__(
-        self, *args, internal_errors: Optional[list[Exception]] = None, coord: MapCoord = None  # noqa: ANN002
+        self,
+        *args,
+        internal_errors: list[Exception] | None = None,
+        coord: MapCoord = None,
     ):
         """
         :param internal_errors: A list of internal errors
@@ -69,7 +72,7 @@ class Fetcher(metaclass=ABCMeta):
         quiet: bool = False,
         retries: int = 6,
         raise_err: bool = True,
-        acceptable_codes: Optional[set[int]] = None,
+        acceptable_codes: set[int] | None = None,
     ) -> RawResult | None:
         """Get raw data for a coordinate asynchronously"""
         qprint = QuietablePrint(quiet, flush=True)
@@ -115,7 +118,7 @@ class Fetcher(metaclass=ABCMeta):
         quiet: bool = False,
         retries: int = 6,
         raise_err: bool = True,
-        acceptable_codes: Optional[set[int]] = None,
+        acceptable_codes: set[int] | None = None,
     ) -> CookedResult | None:
         """Get cooked (decoded) data for a coordinate asynchronously"""
         raise NotImplementedError()
@@ -137,9 +140,9 @@ class BoundedFetcher(Fetcher, metaclass=ABCMeta):
         async_session: httpx.AsyncClient,
         *,
         retries: int = 3,
-        timeout: Optional[int] = None,
+        timeout: int | None = None,
         cooked: bool = False,
-        cancel_flag: Optional[asyncio.Event] = None,
+        cancel_flag: asyncio.Event | None = None,
         suppress_cancelled_message: bool = True,
     ):
         """
@@ -156,7 +159,7 @@ class BoundedFetcher(Fetcher, metaclass=ABCMeta):
         self.cancel_flag = cancel_flag
         self.suppress_cancelled_message = suppress_cancelled_message
 
-    async def async_fetch(self, coord: MapCoord) -> Optional[RawResult | CookedResult]:
+    async def async_fetch(self, coord: MapCoord) -> RawResult | CookedResult | None:
         """Perform async fetch, but won't actually start fetching if semaphore is depleted."""
         try:
             async with self.sema:
@@ -172,6 +175,6 @@ class BoundedFetcher(Fetcher, metaclass=ABCMeta):
             if not self.suppress_cancelled_message:
                 print(f"{coord} cancelled")
             raise
-        except (asyncio.TimeoutError, httpx.PoolTimeout):
+        except (TimeoutError, httpx.PoolTimeout):
             print(f"{coord} Timeout!")
             raise

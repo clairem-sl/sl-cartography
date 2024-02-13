@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from itertools import islice
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, Optional, Self, Tuple, Union
+from typing import TYPE_CHECKING, Self, cast
 
 import httpx
 import msgpack
@@ -32,7 +32,7 @@ incidents 0 updated 2022-11-06 region_uuid 4126bd1e-964a-590a-d55f-e160475fde4b 
 
 
 @dataclass(frozen=True)
-class GridSurveyDatum(object):
+class GridSurveyDatum:
     """A decoded datum from GridSurvey"""
 
     status: str
@@ -49,17 +49,18 @@ class GridSurveyDatum(object):
     region_uuid: uuid.UUID
     name: str
 
+    # noinspection PyUnresolvedReferences
     @classmethod
     def from_str(cls, string: str) -> Self:
         """Instantiates a datum from a raw string acquired from GridSurvey"""
         elems = string.split()
-        kvp = {k: v for k, v in zip(islice(elems, 0, None, 2), islice(elems, 1, None, 2), strict=True)}
+        kvp = dict(zip(islice(elems, 0, None, 2), islice(elems, 1, None, 2), strict=True))
         kvp["x"] = int(kvp["x"])
         kvp["y"] = int(kvp["y"])
         for dk in ("firstseen", "lastseen", "updated"):
-            kvp[dk] = datetime.strptime(kvp[dk], "%Y-%m-%d").date()
+            kvp[dk] = datetime.strptime(kvp[dk], "%Y-%m-%d").astimezone().date()
         for uk in ("objects_uuid", "terrain_uuid", "region_uuid"):
-            kvp[uk] = uuid.UUID(kvp[uk])
+            kvp[uk] = uuid.UUID(cast(str, kvp[uk]))
         return cls(**kvp)
 
     def encode(self) -> str:
@@ -75,7 +76,7 @@ class GridSurveyDatum(object):
         )
 
 
-class GridSurveyError(object):
+class GridSurveyError:
     """Raised when an error happens retrieving/processing GridSurvey data"""
 
     pass
@@ -84,12 +85,12 @@ class GridSurveyError(object):
 GridSurvey_NotRegion = GridSurveyError()
 
 
-class MapValidatorGridSurvey(object):
+class MapValidatorGridSurvey:
     """Validates whether a coordinate exists in GridSurvey database"""
 
     GRIDSURVEY_API = "http://api.gridsurvey.com/simquery.php?xy={x},{y}"
 
-    def __init__(self, a_session: httpx.AsyncClient, cache_file: Optional[Path] = None):
+    def __init__(self, a_session: httpx.AsyncClient, cache_file: Path | None = None):
         """
         :param a_session: An async httpx session to be used
         :param cache_file: Optional file where the GridSurvey data is cached
@@ -97,7 +98,7 @@ class MapValidatorGridSurvey(object):
         self.session = a_session
         self.cache_file = cache_file
         if cache_file is None or not cache_file.exists():
-            self.cache: Dict[MapCoord, GridSurveyDatum] = {}
+            self.cache: dict[MapCoord, GridSurveyDatum] = {}
             return
         with cache_file.open("rb") as fin:
             cac = msgpack.unpack(fin)
@@ -105,7 +106,7 @@ class MapValidatorGridSurvey(object):
 
     async def fetch_gs_data(
         self, coord: MapCoord, use_cache: bool = True
-    ) -> Tuple[MapCoord, Union[GridSurveyDatum, GridSurveyError]]:
+    ) -> tuple[MapCoord, GridSurveyDatum | GridSurveyError]:
         """Fetch the datum of a coordinate from GridSurvey database"""
         if use_cache and (datum := self.cache.get(coord)):
             return coord, datum
@@ -169,7 +170,7 @@ def get_bonnie_coords(config: BonnieConfig, *, maxage: timedelta | int | None = 
     yml = ryaml.YAML(typ="safe", pure=True)
     if bonniedb.exists():
         print(f"BonnieBots DB exists: {bonniedb}, checking ... ", end="", flush=True)
-        age = datetime.now() - datetime.fromtimestamp(bonniedb.stat().st_mtime)
+        age = datetime.now() - datetime.fromtimestamp(bonniedb.stat().st_mtime)  # noqa: DTZ005, DTZ006
         if age < maxage:
             print("loading ... ", end="", flush=True)
             with bonniedb.open("rt") as fin:

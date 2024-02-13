@@ -6,15 +6,7 @@ from __future__ import annotations
 import asyncio
 import io
 import time
-from typing import (
-    Any,
-    Callable,
-    ClassVar,
-    Final,
-    Optional,
-    Protocol,
-    Union,
-)
+from typing import TYPE_CHECKING, Any, ClassVar, Final, Protocol
 
 from PIL import Image
 
@@ -26,6 +18,9 @@ from sl_maptools.fetchers import (
     RawResult,
 )
 from sl_maptools.utils import QuietablePrint
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 class MapProgressProtocol(Protocol):
@@ -41,7 +36,7 @@ class MapFetcher(Fetcher):
 
     URL_TEMPLATE: Final[str] = "https://secondlife-maps-cdn.akamaized.net/map-1-{x}-{y}-objects.jpg"
 
-    def __init__(self, *args, skip_tiles: Optional[set[MapCoord]] = None, **kwargs):  # noqa: ANN002, ANN003
+    def __init__(self, *args, skip_tiles: set[MapCoord] | None = None, **kwargs):  # noqa: ANN002, ANN003
         """
         Creates a Map Tile Getter with logic to retrieve map tiles
 
@@ -59,7 +54,7 @@ class MapFetcher(Fetcher):
         quiet: bool = False,
         retries: int = 2,
         raise_err: bool = True,
-        acceptable_codes: Optional[set[int]] = None,
+        acceptable_codes: set[int] | None = None,
     ) -> RawResult:
         """
         Asynchronously fetch a map tile from a given coordinate
@@ -98,7 +93,7 @@ class MapFetcher(Fetcher):
         quiet: bool = False,
         retries: int = 2,
         raise_err: bool = True,
-        acceptable_codes: Optional[set[int]] = None,
+        acceptable_codes: set[int] | None = None,
     ) -> MapRegion:
         """Asynchronously get a region's map tile"""
         del acceptable_codes
@@ -116,12 +111,12 @@ class MapFetcher(Fetcher):
         self,
         corner1: MapCoord,
         corner2: MapCoord,
-        tile_callback: Callable[[Union[MapRegion, str]], None],
+        tile_callback: Callable[[MapRegion | str], None],
         save_every: int = 451,
         stats_every: int = 20,
-        force_rows: Optional[frozenset[int]] = None,
+        force_rows: frozenset[int] | None = None,
         progress: MapProgressProtocol = None,
-        err_callback: Optional[Callable[[str], None]] = None,
+        err_callback: Callable[[str], None] | None = None,
         quiet: bool = False,
     ) -> None:
         """
@@ -183,7 +178,7 @@ class MapFetcher(Fetcher):
                         print(y + 1)
 
                 qprint(f"Waiting for row {y}...", end="", flush=True)
-                tile: Optional[MapRegion] = None
+                tile: MapRegion | None = None
                 row_nonvoids = 0
 
                 aborting_exception = None

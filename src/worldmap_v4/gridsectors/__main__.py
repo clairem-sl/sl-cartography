@@ -67,9 +67,7 @@ def get_options() -> Options:
     parser.add_argument(
         "--bg-color", action=RGBParser, default=DEFA_BG_COLOR, help="Background color in r,g,b (no spaces)"
     )
-    parser.add_argument(
-        "--grid-color", action=RGBParser, default=DEFA_GRID_CLR, help="Grid color in r,g,b (no spaces)"
-    )
+    parser.add_argument("--grid-color", action=RGBParser, default=DEFA_GRID_CLR, help="Grid color in r,g,b (no spaces)")
 
     _opts = parser.parse_args()
     return cast(Options, _opts)
@@ -88,7 +86,7 @@ def main(opts: Options) -> None:  # noqa: D103
     lr = sq_sz - 1
     for a in ALPHA_PATTERN:
         sq_draw.rectangle((ul, ul, lr, lr), width=1, outline=(*opts.grid_color, a))
-        ul += 1
+        ul += 1  # noqa: SIM113
         lr -= 1
 
     gridsec_sz = sq_sz * 10

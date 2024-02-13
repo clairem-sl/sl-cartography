@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 from enum import Enum, auto, unique
-from typing import TYPE_CHECKING, Final, Optional, TypedDict
+from typing import TYPE_CHECKING, Final, TypedDict
 
 from PIL import Image, ImageDraw, ImageFont
 
@@ -74,7 +74,7 @@ class LatticeMaker:
         self,
         regions_db: dict[CoordType, RegionsDBRecord3],
         validation_set: set[CoordType],
-        out_dir: Optional[Path] = None,
+        out_dir: Path | None = None,
     ):
         """
         :param regions_db: Database of existing regions
@@ -109,8 +109,8 @@ class LatticeMaker:
             "overdraw": Config.lattice.coord.overdraw,
         }
 
-        self._cover_hr: Optional[Image.Image] = None
-        self._cover_fog: Optional[Image.Image] = None
+        self._cover_hr: Image.Image | None = None
+        self._cover_fog: Image.Image | None = None
 
     @property
     def cover_hatched(self) -> Image.Image:
@@ -156,7 +156,7 @@ class LatticeMaker:
         areamap: Path,
         validate: bool = True,
         overwrite: bool = False,
-        out_dir: Optional[Path] = None,
+        out_dir: Path | None = None,
         no_names: bool = False,
         no_coords: bool = False,
         regname_settings: TextSettings = None,

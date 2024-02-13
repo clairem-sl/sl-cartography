@@ -5,19 +5,20 @@ from __future__ import annotations
 
 from enum import Enum
 from itertools import combinations
+from pathlib import Path
 
 import numpy as np
-from pathlib import Path
-from PIL import Image, ImageFilter
-# noinspection PyUnresolvedReferences
-from PIL.Image import Resampling, Dither
-from skimage.metrics import mean_squared_error as mse
-from skimage.metrics import structural_similarity as ssim
-from skimage.metrics import normalized_mutual_information as nmi
-from skimage.metrics import normalized_root_mse as nrmse
-
 from image_processing import are_similar
+from PIL import Image, ImageFilter
 
+# noinspection PyUnresolvedReferences
+from PIL.Image import Dither, Resampling
+from skimage.metrics import (
+    mean_squared_error as mse,
+    normalized_mutual_information as nmi,
+    normalized_root_mse as nrmse,
+    structural_similarity as ssim,
+)
 
 mapdir = Path(r"C:\Cache\SL-Carto\Maps2")
 # p1 = mapdir / "496-1519_230506-1431.jpg"
@@ -43,7 +44,7 @@ TEST_CASES: list[tuple[bool, list[str]]] = [
 
 
 def compare(im1, im2):
-    with (im1.convert("L") as i1, im2.convert("L") as i2):
+    with im1.convert("L") as i1, im2.convert("L") as i2:
         i1arr = np.asarray(i1)
         i2arr = np.asarray(i2)
         mse_val = mse(i1arr, i2arr)
@@ -63,35 +64,35 @@ class EnhanceMethod(Enum):
 
 def enhance(method: EnhanceMethod, *i: Image.Image) -> tuple[Image.Image, ...]:
     if method == EnhanceMethod.GB_FE:
-        return tuple([
-            im.filter(ImageFilter.GaussianBlur).filter(ImageFilter.FIND_EDGES)
-            for im in i
-        ])
+        return tuple([im.filter(ImageFilter.GaussianBlur).filter(ImageFilter.FIND_EDGES) for im in i])
     elif method == EnhanceMethod.GB_FE_B_FE:
-        return tuple([
-            im
-            .filter(ImageFilter.GaussianBlur)
-            .filter(ImageFilter.FIND_EDGES)
-            .filter(ImageFilter.BLUR)
-            .filter(ImageFilter.FIND_EDGES)
-            for im in i
-        ])
+        return tuple(
+            [
+                im.filter(ImageFilter.GaussianBlur)
+                .filter(ImageFilter.FIND_EDGES)
+                .filter(ImageFilter.BLUR)
+                .filter(ImageFilter.FIND_EDGES)
+                for im in i
+            ]
+        )
     elif method == EnhanceMethod.GB_GB_FE:
-        return tuple([
-            im.filter(ImageFilter.GaussianBlur).filter(ImageFilter.GaussianBlur).filter(ImageFilter.FIND_EDGES)
-            for im in i
-        ])
+        return tuple(
+            [
+                im.filter(ImageFilter.GaussianBlur).filter(ImageFilter.GaussianBlur).filter(ImageFilter.FIND_EDGES)
+                for im in i
+            ]
+        )
+    raise NotImplementedError(f"enhance not implemented for {method}")
 
 
-GREY_PAL = [i for i in range(0, 256, 16)]
+GREY_PAL = list(range(0, 256, 16))
 
 
 def preprocess(im: Image.Image, chg_pal: bool = False) -> Image.Image:
     im_c = im.copy()
     # im_c.thumbnail((64, 64))
     im_p = (
-        im_c
-        .resize((64, 64), resample=Resampling.BICUBIC)
+        im_c.resize((64, 64), resample=Resampling.BICUBIC)
         .convert("L", dither=Dither.NONE)
         .quantize(colors=16, dither=Dither.NONE)
     )
@@ -125,7 +126,7 @@ def main():
             f1, f2 = sorted(combi)
             fp1 = mapdir / f1
             fp2 = mapdir / f2
-            with (Image.open(fp1) as im1, Image.open(fp2) as im2):
+            with Image.open(fp1) as im1, Image.open(fp2) as im2:
                 print(f"{fp1.name} =?= {fp2.name}  {expected=}")
                 rslt = are_similar(im1, im2)
                 if rslt.similar != expected:
@@ -179,5 +180,5 @@ def main():
         print()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
