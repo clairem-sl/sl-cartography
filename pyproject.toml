@@ -43,9 +43,6 @@ dependencies = [
 [build-system]
 build-backend = "setuptools.build_meta"
 requires = [
-    "black",
-    "black[d]",
-    "isort",
     "pytest",
     #
     "setuptools>=40.8.0",
@@ -54,19 +51,7 @@ requires = [
 
 [project.optional-dependencies]
 # Dev dependencies.
-dev = [
-    "black",
-    "black[d]",
-    "isort",
-]
-
-[tool.isort]
-profile = "black"
-py_version = 310
-
-[tool.black]
-line-length = 120
-target-version = ['py311']
+dev = ["ruff"]
 
 [tool.pytest.ini_options]
 addopts = [
@@ -76,9 +61,13 @@ addopts = [
 [tool.ruff]
 indent-width = 4
 line-length = 120
+src = ["src"]
 
 [tool.ruff.lint]
-select = ["F", "E", "D", "UP", "YTT", "ANN", "S", "B", "A", "CPY001", "C4", "DTZ", "FA", "RET", "SLOT", "SIM", "TCH", "ARG", "PTH", "FIX", "PGH", "PL", "TRY", "FLY", "PERF", "FURB", "LOG", "RUF"]
+select = [
+    "F", "E", "I", "D", "UP", "YTT", "ANN", "S", "B", "A", "C4", "DTZ", "FA", "RET", "SLOT", "SIM", "TCH", "ARG", "PTH",
+    "FIX", "PGH", "PL", "TRY", "FLY", "PERF", "FURB", "LOG", "RUF"
+]
 ignore = [
     "ANN101",  # No need to annotate 'self'
     "ANN102",  # No need to annotate 'cls' (in @classmethod)
@@ -91,8 +80,6 @@ ignore = [
     "D400",  # Do not enforce period at end of 1st line of docstring ...
     "D415",  # ... or any closing mark for that matter
     "D401",  # I have no idea what "imperative mood" is; so subjective
-    "D411",  # This is buggy (see issue #7216 in Ruff's repo)
-    "E501",  # I disagree with short line lengths
     "PLR0912",  # "Too many branches (18 > 12)" we shall silent this for now...
     "PLR0913",  # "Too many arguments to function call (12 > 5)" we also shall silent this for now...
     "PLR0915",  # "Too many statements (58 > 50)" ignore as well...
@@ -112,3 +99,8 @@ multiprocessing = "mp"
 
 [tool.ruff.lint.flake8-unused-arguments]
 ignore-variadic-names = true
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
+known-first-party = ["src"]
+required-imports = ["from __future__ import annotations"]
