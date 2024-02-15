@@ -65,8 +65,8 @@ src = ["src"]
 
 [tool.ruff.lint]
 select = [
-    "F", "E", "I", "D", "UP", "YTT", "ANN", "S", "B", "A", "C4", "DTZ", "FA", "RET", "SLOT", "SIM", "TCH", "ARG", "PTH",
-    "FIX", "PGH", "PL", "TRY", "FLY", "PERF", "FURB", "LOG", "RUF"
+    'A', 'ANN', 'ARG', 'B', 'C4', 'D', 'DTZ', 'E', 'F', 'FA', 'FIX', 'FLY', 'FURB', 'I', 'ICN', 'LOG', 'PERF', 'PGH',
+    'PL', 'PTH', 'RET', 'RUF', 'S', 'SIM', 'SLOT', 'TCH', 'TRY', 'UP', 'YTT'
 ]
 ignore = [
     "ANN101",  # No need to annotate 'self'
