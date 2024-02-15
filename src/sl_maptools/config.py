@@ -6,7 +6,7 @@ from __future__ import annotations
 import tomllib
 from collections.abc import Hashable, Sequence
 from pathlib import Path
-from typing import Any, Literal, Protocol
+from typing import Any, Final, Literal, Protocol
 
 ValueTreeOnNotFound = Literal["raise"] | Literal["..."] | Literal["ellipsis"] | Literal["none"]
 
@@ -222,4 +222,4 @@ class DelayedConfigReader(SLMapToolsConfig):
         return f"{self.__class__.__name__}({self._cfg_file!r})"
 
 
-DefaultConfig = DelayedConfigReader("config.toml")
+DefaultConfig: Final[SLMapToolsConfig] = DelayedConfigReader("config.toml")
