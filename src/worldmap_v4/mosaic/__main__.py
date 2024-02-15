@@ -12,25 +12,21 @@ import re
 import signal
 import time
 from pathlib import Path
-from typing import Final, NamedTuple, Protocol, TypedDict, cast
-
-from PIL import Image, UnidentifiedImageError
+from typing import Final, Protocol, cast
 
 from sl_maptools import CoordType, RegionsDBRecord, inventorize_maps_all
 from sl_maptools.config import DefaultConfig as Config
-from sl_maptools.image_processing import (
-    FASCIA_SIZES,
-    RGBTuple,
-    calculate_dominant_colors,
-)
+from sl_maptools.image_processing import FASCIA_SIZES
 from sl_maptools.utils import make_backup
 from sl_maptools.validator import get_bonnie_coords
-
-# region ##### Types
-
-DomColors = dict[int, list[RGBTuple]]
-
-# endregion
+# noinspection PyProtectedMember
+from worldmap_v4.mosaic._workers import DomColors
+# noinspection PyProtectedMember
+from worldmap_v4.mosaic._workers.calc_domc import calc_domc_init, calc_domc, CalcDomcArgs
+# noinspection PyProtectedMember
+from worldmap_v4.mosaic._workers.collector import collector, CollectorArgs
+# noinspection PyProtectedMember
+from worldmap_v4.mosaic._workers.maker import FASCIA_PIXELS, MakerParams, make_mosaic
 
 # region ##### CONSTs
 RE_MAP: Final[re.Pattern] = re.compile(r"^(\d+)-(\d+)_\d+-\d+.jpg$")
@@ -38,13 +34,6 @@ RE_MAP: Final[re.Pattern] = re.compile(r"^(\d+)-(\d+)_\d+-\d+.jpg$")
 DEFA_CALC_WORKERS: Final[int] = max(1, MP.cpu_count() - 2) * 2
 DEFA_MAKE_WORKERS: Final[int] = 1
 
-FASCIA_PIXELS: Final[dict[int, int]] = {
-    1: 3,
-    2: 3,
-    3: 3,
-    4: 2,
-    5: 2,
-}
 
 # endregion
 
@@ -81,159 +70,6 @@ def get_opts() -> OptionsType:
 
     _opts = parser.parse_args()
     return cast(OptionsType, _opts)
-
-
-# endregion
-
-# region ##### Worker: Dominant Color Calculator
-
-
-class CalcJob(TypedDict):
-    """Represents a job containing coordinates and a map tile"""
-
-    coord: CoordType
-    fpath: Path
-
-
-PatchesDict: dict[tuple[CoordType, int], list[RGBTuple]]
-CollectorQueue: MP.Queue
-
-
-def calc_domc_init(
-    patches_dict: dict[tuple[CoordType, int], list[RGBTuple]],
-    coll_queue: MP.Queue,
-) -> None:
-    """Initializer for domc calculator workers"""
-    global PatchesDict, CollectorQueue  # noqa: PLW0603
-    signal.signal(signal.SIGINT, signal.SIG_IGN)
-    PatchesDict = patches_dict
-    CollectorQueue = coll_queue
-
-
-CalcResultType = tuple[CoordType, Path, DomColors]
-
-
-def calc_domc(job: tuple[CoordType, Path]) -> CalcResultType | None:
-    """A worker that calculates dominant color for a job"""
-    coord, fpath = job
-    if not fpath.exists() or not fpath.is_file():
-        return None
-
-    try:
-        with Image.open(fpath) as img:
-            img.load()
-            domc: DomColors = {fsz: calculate_dominant_colors(img, fsz) for fsz in FASCIA_SIZES}
-    except UnidentifiedImageError:
-        fpath.unlink()
-        return None
-
-    rslt = coord, fpath, domc
-    CollectorQueue.put(rslt)
-    return rslt
-
-
-# endregion
-
-# region ##### Worker: Collector
-
-
-def collector(
-    coll_queue: MP.Queue,
-    patches_coll: dict[tuple[CoordType, int], list[RGBTuple]],
-    coll_lock: MP.RLock,
-) -> None:
-    """Gather results of domc calculation into a collection"""
-    signal.signal(signal.SIGINT, signal.SIG_IGN)
-    while True:
-        item = coll_queue.get()
-        if item is None:
-            break
-        if item is Ellipsis:
-            continue
-
-        coord, _, domc = cast(CalcResultType, item)
-        with coll_lock:
-            for sz, colors in domc.items():
-                patches_coll[coord, sz] = colors
-
-
-# endregion
-
-# region ##### Worker: Mosaic Maker
-
-
-class MakerParams(NamedTuple):
-    """Parameters passed to the make_mosaic worker"""
-
-    worker_state: dict[str, str]
-    queue: MP.Queue
-    patches_coll: dict[tuple[CoordType, int], list[RGBTuple]]
-    coll_lock: MP.RLock
-    outdir: Path
-
-
-def make_mosaic(params: MakerParams) -> None:
-    """
-    Gather dominant colors and create the mosaic maps.
-    You shouldn't launch too many of this worker, since this worker is not the bottleneck.
-    """
-    signal.signal(signal.SIGINT, signal.SIG_IGN)
-
-    def _state(state: str) -> None:
-        params.worker_state["maker"] = state
-
-    while True:
-        _state("idle")
-        item = params.queue.get()
-        if item is None:
-            break
-        if item is Ellipsis:
-            continue
-
-        if not isinstance(item, tuple):
-            continue
-
-        _state("got_job")
-        assert isinstance(item, tuple)
-        patches_bysz: dict[int, dict[CoordType, list[RGBTuple]]] = {sz: {} for sz in item}
-        with params.coll_lock:
-            _state("transform")
-            for k, v in dict(params.patches_coll).items():
-                coord, sz = k
-                if sz not in patches_bysz:
-                    continue
-                patches_bysz[sz][coord] = v
-
-        for sz, patches in patches_bysz.items():
-            _state(f"make_{sz}_canvas")
-            print(f"⏺{sz}", end="", flush=True)
-            fpx = FASCIA_PIXELS[sz]
-            fbox = fpx, fpx
-            tsz = fpx * sz
-            sidelen = 2101 * tsz
-            canvas = Image.new("RGBA", (sidelen, sidelen))
-            _state(f"make_{sz}_patches")
-            for coord, colors in patches.items():
-                x, y = coord
-                cx = tsz * x
-                cy = tsz * (2100 - y)
-                sx = sy = 0
-                for col in colors:
-                    canvas.paste(Image.new("RGB", fbox, color=col), (cx + sx, cy + sy))
-                    sy += fpx
-                    if sy >= tsz:
-                        sy = 0
-                        sx += fpx
-            _state(f"save_{sz}")
-            canvas.save(params.outdir / f"worldmap4_mosaic_{sz}x{sz}.png")
-            canvas.close()
-            print(f"💾{sz}", end="", flush=True)
-
-        # Release references to help GC
-        del canvas
-        del patches_bysz
-
-    _state("ended")
 
 
 # endregion
@@ -317,28 +153,32 @@ def main(opts: OptionsType) -> None:  # noqa: D103
         maker_queue = manager.Queue()
         # make_args = (maker_states, maker_queue, patches_coll, coll_lock, opts.outdir)
         make_args = MakerParams(
-            worker_state=cast(dict, maker_states),
+            worker_state=maker_states,
             queue=maker_queue,
-            patches_coll=cast(dict, patches_coll),
+            patches_coll=patches_coll,
             coll_lock=coll_lock,
             outdir=mosaic_dir,
         )
 
         coll_queue = manager.Queue(maxsize=(opts.save_every * 2))
-        coll_args = (coll_queue, patches_coll, coll_lock)
+        # coll_args = (coll_queue, patches_coll, coll_lock)
+        coll_args = CollectorArgs(
+            coll_queue=coll_queue,
+            patches_coll=patches_coll,
+            coll_lock=coll_lock,
+        )
 
         calc_workers = opts.calc_workers
-        calc_domc_args = (
-            patches_coll,
-            coll_queue,
+        calc_domc_args = CalcDomcArgs(
+            coll_queue=coll_queue,
         )
 
         pool_calc: MPPool.Pool
         pool_coll: MPPool.Pool
         pool_maker: MPPool.Pool
         with (
-            MP.Pool(calc_workers, initializer=calc_domc_init, initargs=calc_domc_args) as pool_calc,
-            MP.Pool(1, initializer=collector, initargs=coll_args) as pool_coll,
+            MP.Pool(calc_workers, initializer=calc_domc_init, initargs=(calc_domc_args,)) as pool_calc,
+            MP.Pool(1, initializer=collector, initargs=(coll_args,)) as pool_coll,
             MP.Pool(maker_workers, initializer=make_mosaic, initargs=(make_args,)) as pool_maker,
         ):
             try:
