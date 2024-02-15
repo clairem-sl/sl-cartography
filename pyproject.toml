@@ -95,7 +95,8 @@ mypy-init-return = true
 author = "Claire Morgenthau"
 
 [tool.ruff.lint.flake8-import-conventions.aliases]
-multiprocessing = "mp"
+multiprocessing = "MP"
+multiprocessing.managers = "MPMgr"
 
 [tool.ruff.lint.flake8-unused-arguments]
 ignore-variadic-names = true
