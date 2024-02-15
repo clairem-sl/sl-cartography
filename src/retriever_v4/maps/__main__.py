@@ -113,10 +113,11 @@ def launch_workers(
         try:
             if msg:
                 print("Flushing dispatch queue", flush=True)
+            di : list[CoordType] | int
             while True:
                 di = dispatched_queue.get_nowait()
                 if isinstance(di, list):
-                    outstanding.update(cast(list[CoordType], di))
+                    outstanding.update(di)
                 elif isinstance(di, int):
                     count += di
         except queue.Empty:

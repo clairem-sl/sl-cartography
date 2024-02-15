@@ -173,7 +173,7 @@ def process(region: CookedResult) -> bool:
         record_history()
 
     if xy in DataBase:
-        DataBase[xy].update(cast(dict, dbxy))
+        DataBase[xy].update(dbxy)
     else:
         DataBase[xy] = dbxy
     return True

@@ -6,10 +6,9 @@ from __future__ import annotations
 import argparse
 import pickle
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Final, NamedTuple, Protocol, cast
-from zoneinfo import ZoneInfo
 
 from sl_maptools.config import DefaultConfig as Config
 
@@ -75,13 +74,16 @@ def main(opts: Options) -> None:  # noqa: D103
     y_s: dict[str, set[int]] = defaultdict(set)
 
     by_grid = []
+    t : datetime
+    name : str
+    co : CoordType
     for i, (t, name, co) in enumerate(interesting, start=1):
         x, y = co
         col = x // 100
         row = y // 100
         gs = f"[{GRID_COLS[col]}{row}]"
         sco = f"{co}"
-        age = (cast(timedelta, datetime.now(tz=ZoneInfo("Asia/Jakarta")) - t)).days
+        age = (datetime.now().astimezone() - t).days
         # age = 0
         by_grid.append((gs, sco, name, age))
         print(f"{i:>3}) {t.isoformat(timespec='minutes')} {sco:12} {gs:6} {name}")

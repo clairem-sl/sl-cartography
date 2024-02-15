@@ -151,6 +151,7 @@ def export(db: Path, targ: Path, quiet: bool = False) -> Path:
 def import_1(regs_data: dict[str, Any]) -> dict[CoordType, RegionsDBRecord3]:
     """Performs import of v1 database"""
     result: dict[CoordType, RegionsDBRecord3] = {}
+    data: dict[str, Any]
     for scoord, data in regs_data.items():
         m = RE_COORD.match(scoord)
         coord: CoordType = int(m.group("x")), int(m.group("y"))
