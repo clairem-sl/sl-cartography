@@ -94,7 +94,8 @@ def main(opts: Options) -> None:  # noqa: D103
             continue
         for k, area_desc in known_folded.items():
             if fnmatch(k, want.casefold()):
-                wants[want] = list(area_desc.includes)
+                print(f"  + {area_desc.name}")
+                wants[area_desc.name] = list(area_desc.includes)
     print(f"Parsed {len(wants)} areas")
 
     if wants:
