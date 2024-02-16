@@ -71,7 +71,11 @@ async def aretrieve(
                 disp_queue.put(len(done))
 
                 for fut in done:
-                    if (exc := fut.exception()) is not None:
+                    try:
+                        exc = fut.exception()
+                    except Exception as e:
+                        exc = e
+                    if exc is not None:
                         print(
                             f"{_myname}:{fut.get_name()} ERR <{type(exc)}>{exc}",
                             file=sys.stderr,
