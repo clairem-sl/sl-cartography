@@ -40,6 +40,17 @@ SPRING_PASTELS_WEB: Final = [
     "#fdcce5",
     "#8bd3c7",
 ]
+BLUE_TO_YELLOW_WEB: Final = [
+    "#115f9a",
+    "#1984c5",
+    "#22a7f0",
+    "#48b5c4",
+    "#76c68f",
+    "#a6d75b",
+    "#c9e52f",
+    "#d0ee11",
+    "#d0f400",
+]
 
 # Source: https://colorbrewer2.org/#type=qualitative&scheme=Paired&n=10
 BREWER_Q_10: Final = [
@@ -73,6 +84,7 @@ PALETTES: Final[dict[str, dict[str, tuple[int, int, int]]]] = {
         "tangerine": (245, 154, 142),  # Vivid Tangerine
     },
     "brewer_q_10": {f"bq10-{n}": c for n, c in enumerate(BREWER_Q_10, start=1)},
+    "blue_to_yellow": {f"b-to-y{n}": web_to_(c) for n, c in enumerate(BLUE_TO_YELLOW_WEB, start=1)},
 }
 # endregion
 

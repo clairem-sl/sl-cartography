@@ -11,13 +11,9 @@ from typing import Protocol, cast
 from PIL import Image, ImageDraw
 
 from roadmapper_v3.draw import SegmentDrawer
-from roadmapper_v3.draw.colors import AUTO_COLORS
-from roadmapper_v3.model import (
-    Point,
-    SegmentMode,
-    merge_all_routes,
-)
+from roadmapper_v3.model import Point, SegmentMode, merge_all_routes
 from roadmapper_v3.model.yaml import load_from
+from sl_maptools.colors import AUTO_COLORS
 
 
 class Options(Protocol):

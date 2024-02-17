@@ -10,9 +10,9 @@ import re
 from pathlib import Path
 from typing import Final, Protocol, cast
 
-from roadmapper_v3.draw.colors import ALL_COLORS
 from roadmapper_v3.model import Continent, Point, Route, Segment, SegmentMode
 from roadmapper_v3.model.yaml import load_from, save_to
+from sl_maptools.colors import ALL_COLORS
 
 RE_TS: Final = re.compile(
     r"(?P<year>\d{4})[/-]?(?P<month>\d{1,2})[/-]?(?P<day>\d{1,2})"
