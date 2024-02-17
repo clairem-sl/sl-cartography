@@ -58,6 +58,14 @@ addopts = [
     "--import-mode=importlib",
 ]
 
+[tool.isort]
+profile = "black"
+py_version = 310
+
+[tool.black]
+line-length = 120
+target-version = ['py311']
+
 [tool.ruff]
 indent-width = 4
 line-length = 120
