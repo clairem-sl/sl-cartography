@@ -17,6 +17,8 @@ from sl_maptools.validator import get_bonnie_coords, get_nonvoid_regions
 
 PALETTE_NAME: Final = "blue_to_yellow"
 EXISTING_COLOR: Final = 47, 47, 47
+MAP_SIZE: Final = 2100
+DEFA_TILE_SIZE: Final = 4
 
 
 class Options(Protocol):  # noqa: D101
@@ -26,7 +28,7 @@ class Options(Protocol):  # noqa: D101
 def _get_options() -> Options:
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("--size", type=int, default=3)
+    parser.add_argument("--size", type=int, default=DEFA_TILE_SIZE)
 
     opts = parser.parse_args()
 
@@ -42,37 +44,42 @@ def main(opts: Options) -> None:  # noqa: D103
     del bonnie_coords
 
     palette = list(reversed(PALETTES[PALETTE_NAME].values()))
+    maxage = (len(palette) - 1) * 2
+    print(f"Making world map of recent regions (within the past {maxage} days):")
 
     db_path = Path(Config.names.dir) / Config.names.db
-    interesting: list[InterestingRegion] = sorted(recent(db_path, (len(palette) - 1) * 2))
+    interesting: list[InterestingRegion] = sorted(recent(db_path, len(palette) * 2 - 1))
 
     for one in interesting:
         regions.discard(one.coord)
 
-    psize = 2100 * opts.size
+    psize = MAP_SIZE * opts.size
     canvas = Image.new("RGB", (psize, psize), color=(0, 0, 0))
     draw = ImageDraw.Draw(canvas, "RGB")
+    sz1: Final = opts.size - 1
+    msz1: Final = MAP_SIZE - 1
+
+    def rect(co: tuple[int, int]) -> tuple[int, int, int, int]:
+        x, y = co
+        cx = x * opts.size
+        cy = (msz1 - y) * opts.size
+        return cx, cy, cx + sz1, cy + sz1
 
     print("Drawing older regions...", end="", flush=True)
     for i, coord in enumerate(regions):
         if (i % 1000) == 0:
             print(".", end="", flush=True)
-        x, y = coord
-        cx = x * opts.size
-        cy = (2099 - y) * opts.size
-        draw.rectangle((cx, cy, cx + opts.size, cy + opts.size), fill=EXISTING_COLOR)
+        draw.rectangle(rect(coord), fill=EXISTING_COLOR)
     print()
 
     print("Drawing recent regions...", end="", flush=True)
     nao = datetime.now().astimezone()
-    for one in interesting:
-        print(".", end="", flush=True)
+    for i, one in enumerate(interesting):
+        if (i % 10) == 0:
+            print(".", end="", flush=True)
         age = (nao - one.timestamp).days
         color = palette[age // 2]
-        x, y = one.coord
-        cx = x * opts.size
-        cy = (2099 - y) * opts.size
-        draw.rectangle((cx, cy, cx + opts.size, cy + opts.size), fill=color)
+        draw.rectangle(rect(one.coord), fill=color)
     print()
 
     targ = Path(Config.nightlights.dir) / "recent.png"
