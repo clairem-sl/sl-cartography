@@ -4,18 +4,17 @@
 from __future__ import annotations
 
 import argparse
-import pickle
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Final, NamedTuple, Protocol, cast
+from typing import TYPE_CHECKING, Final, Protocol, cast
 
+from analysis.recent import InterestingRegion, recent
 from sl_maptools.config import DefaultConfig as Config
 
 if TYPE_CHECKING:
-    from sl_maptools import CoordType, RegionsDBRecord3
+    from sl_maptools import CoordType
 
-DB_PATH = Path(Config.names.dir) / Config.names.db
 DEFA_CUTOFF = 6
 
 # fmt: off
@@ -23,8 +22,6 @@ GRID_COLS: Final[list[str]] = [
     "AA", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U"
 ]
 # fmt: on
-
-_NAO = datetime.now().astimezone()
 
 
 class Options(Protocol):
@@ -42,32 +39,9 @@ def _get_options() -> Options:
     return cast(Options, parser.parse_args())
 
 
-class InterestingRegion(NamedTuple):
-    """A record of interesting regions"""
-
-    timestamp: datetime
-    name: str
-    coord: CoordType
-
-
-def recent(max_days: int) -> set[InterestingRegion]:
-    """Returns a set of interesting regions with age <= max_days"""
-    with DB_PATH.open("rb") as fin:
-        database: dict[CoordType, RegionsDBRecord3] = pickle.load(fin)  # noqa: S301
-
-    result: set[InterestingRegion] = set()
-    for co, data in database.items():
-        if not data["current_name"]:
-            continue
-        delta = _NAO - data["first_seen"]
-        if delta.days <= max_days:
-            d = InterestingRegion(data["first_seen"], data["current_name"], co)
-            result.add(d)
-    return result
-
-
 def main(opts: Options) -> None:  # noqa: D103
-    interesting: list[InterestingRegion] = sorted(recent(opts.cutoff))
+    db_path = Path(Config.names.dir) / Config.names.db
+    interesting: list[InterestingRegion] = sorted(recent(db_path, opts.cutoff))
     print(f"{len(interesting)} new regions the past {opts.cutoff} days")
     # new_areas: dict[str, list[CoordType]] = {}
     x_s: dict[str, set[int]] = defaultdict(set)
