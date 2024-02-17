@@ -104,7 +104,7 @@ author = "Claire Morgenthau"
 
 [tool.ruff.lint.flake8-import-conventions.aliases]
 multiprocessing = "MP"
-multiprocessing.managers = "MPMgr"
+"multiprocessing.managers" = "MPMgr"
 
 [tool.ruff.lint.flake8-unused-arguments]
 ignore-variadic-names = true
