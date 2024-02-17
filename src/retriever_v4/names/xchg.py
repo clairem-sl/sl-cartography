@@ -34,7 +34,7 @@ class InvalidSourceError(RuntimeError):
     pass
 
 
-class OptionsType(Protocol):
+class Options(Protocol):
     """Represents options extracted from CLI"""
 
     command: str
@@ -43,7 +43,7 @@ class OptionsType(Protocol):
     from_yaml: Path | None
 
 
-def get_options() -> OptionsType:
+def _get_options() -> Options:
     """Get options from CLI"""
     parser = argparse.ArgumentParser("retriever_v4.names.xchg", epilog="For more details, do COMMAND --help")
     subparsers = parser.add_subparsers(title="COMMANDS", dest="command", required=True)
@@ -71,7 +71,7 @@ def get_options() -> OptionsType:
     p_import_.add_argument("from_yaml", type=Path, help="Source YAML file path")
 
     _opts = parser.parse_args()
-    return cast(OptionsType, _opts)
+    return cast(Options, _opts)
 
 
 class RegionsDBRecord3ForSerialization(TypedDict):
@@ -239,7 +239,7 @@ def import_(yaml_src: Path, db: Path, quiet: bool = False) -> None:
         print(f"\nImported to {db}")
 
 
-def main(opts: OptionsType) -> None:  # noqa: D103
+def main(opts: Options) -> None:  # noqa: D103
     if opts.command == "export":
         export(opts.db, opts.to_yaml)
     elif opts.command == "import":
@@ -249,5 +249,5 @@ def main(opts: OptionsType) -> None:  # noqa: D103
 
 
 if __name__ == "__main__":
-    options = get_options()
+    options = _get_options()
     main(options)

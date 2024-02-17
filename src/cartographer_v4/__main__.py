@@ -90,7 +90,7 @@ class AreaParser(argparse.Action):
         setattr(namespace, self.dest, rslt)
 
 
-def get_options() -> Options:
+def _get_options() -> Options:
     """
     Get options from CLI
     """
@@ -258,5 +258,5 @@ def main(opts: Options) -> None:  # noqa: D103
 
 
 if __name__ == "__main__":
-    options = get_options()
+    options = _get_options()
     main(options)

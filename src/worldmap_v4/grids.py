@@ -52,7 +52,7 @@ _TYPE_CHOICES = {
 }
 
 
-def get_options() -> Options:
+def _get_options() -> Options:
     """Parse CLI arguments to get the options"""
     parser = argparse.ArgumentParser("worldmap_v4.grids")
 
@@ -181,4 +181,4 @@ def main(opts: Options) -> None:  # noqa: D103
 
 
 if __name__ == "__main__":
-    main(get_options())
+    main(_get_options())

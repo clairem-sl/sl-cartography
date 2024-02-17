@@ -55,7 +55,7 @@ class BonnieRegionData(TypedDict):
     region_y: int
 
 
-def get_options() -> Options:
+def _get_options() -> Options:
     """Get options from command line"""
     parser = argparse.ArgumentParser("worldmap_v4.nightlights")
 
@@ -273,4 +273,4 @@ def main(opts: Options) -> None:  # noqa: D103
 
 
 if __name__ == "__main__":
-    main(get_options())
+    main(_get_options())

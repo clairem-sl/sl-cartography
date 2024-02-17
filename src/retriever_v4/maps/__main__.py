@@ -41,7 +41,7 @@ START_ROW: Final[int] = 2100
 AbortRequested: SupportsSet = MP.Event()
 
 
-class MPMapOptions(Protocol):
+class Options(Protocol):
     """Represents the options parsed from CLI"""
 
     workers: int
@@ -50,7 +50,7 @@ class MPMapOptions(Protocol):
     prune: bool
 
 
-def get_options() -> MPMapOptions:
+def _get_options() -> Options:
     """Get options from CLI"""
     parser = argparse.ArgumentParser("retriever.maps.mp")
 
@@ -66,7 +66,7 @@ def get_options() -> MPMapOptions:
     grp_prune.add_argument("--prune", action="store_true", default=False, help="Prune after finish")
 
     _opts = parser.parse_args()
-    return cast(MPMapOptions, _opts)
+    return cast(Options, _opts)
 
 
 class ProgressDict(TypedDict):
@@ -85,7 +85,7 @@ class ProgressionDict(TypedDict):
 
 
 def launch_workers(
-    opts: MPMapOptions, progress: ProgressDict, mgr: MPMgr.SyncManager
+    opts: Options, progress: ProgressDict, mgr: MPMgr.SyncManager
 ) -> tuple[int, set[CoordType], dict[int, ProgressionDict], list[QResult]]:
     """Launches MP workers"""
     errs: list[QResult] = []
@@ -224,7 +224,7 @@ def launch_workers(
         return next_row, outstanding, progression, errs  # noqa: B012
 
 
-def main(opts: MPMapOptions) -> None:  # noqa: D103
+def main(opts: Options) -> None:  # noqa: D103
     start = time.monotonic()
 
     mapdir = Path(Config.maps.dir)
@@ -302,5 +302,5 @@ def main(opts: MPMapOptions) -> None:  # noqa: D103
 
 
 if __name__ == "__main__":
-    options = get_options()
+    options = _get_options()
     main(options)

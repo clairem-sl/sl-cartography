@@ -32,18 +32,18 @@ SSIM_THRESHOLD: Final[float] = 0.895
 MSE_THRESHOLD: Final[float] = 0.01
 
 
-class PruneOptions(Protocol):
+class Options(Protocol):
     """Represents the options extracted from CLI"""
 
     mapdir: Path
 
 
-def get_options() -> PruneOptions:
+def _get_options() -> Options:
     """Get options from CLI"""
     parser = argparse.ArgumentParser("retriever_v4.maps.prune")
     parser.add_argument("mapdir", type=Path, nargs="?", default=Path(Config.maps.dir))
     _opts = parser.parse_args()
-    return cast(PruneOptions, _opts)
+    return cast(Options, _opts)
 
 
 @dataclass
@@ -151,7 +151,7 @@ def prune(mapfiles_bycoord: dict[CoordType, list[Path]], quiet: bool = False) ->
     return total, count
 
 
-def main(opts: PruneOptions) -> None:  # noqa: D103
+def main(opts: Options) -> None:  # noqa: D103
     print(f"Pruning {opts.mapdir}")
     start = time.monotonic()
     total, count = prune(inventorize_maps_all(opts.mapdir))
@@ -160,5 +160,5 @@ def main(opts: PruneOptions) -> None:  # noqa: D103
 
 
 if __name__ == "__main__":
-    options = get_options()
+    options = _get_options()
     main(options)

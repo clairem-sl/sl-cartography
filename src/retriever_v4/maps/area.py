@@ -32,7 +32,7 @@ class Options(NamedTuple):
     area: list[str]
 
 
-def get_options() -> Options:
+def _get_options() -> Options:
     """Get option from the CLI"""
     parser = argparse.ArgumentParser()
 
@@ -103,4 +103,4 @@ def main(opts: Options) -> None:  # noqa: D103
 
 
 if __name__ == "__main__":
-    main(get_options())
+    main(_get_options())

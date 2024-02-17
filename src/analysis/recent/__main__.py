@@ -33,7 +33,7 @@ class Options(Protocol):
     cutoff: int
 
 
-def get_options() -> Options:
+def _get_options() -> Options:
     """Extract options from CLI"""
     parser = argparse.ArgumentParser()
 
@@ -74,9 +74,9 @@ def main(opts: Options) -> None:  # noqa: D103
     y_s: dict[str, set[int]] = defaultdict(set)
 
     by_grid = []
-    t : datetime
-    name : str
-    co : CoordType
+    t: datetime
+    name: str
+    co: CoordType
     for i, (t, name, co) in enumerate(interesting, start=1):
         x, y = co
         col = x // 100
@@ -104,4 +104,4 @@ def main(opts: Options) -> None:  # noqa: D103
 
 
 if __name__ == "__main__":
-    main(get_options())
+    main(_get_options())

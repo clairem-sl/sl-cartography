@@ -15,19 +15,19 @@ from sl_maptools.validator import get_bonnie_coords, get_nonvoid_regions
 INTERESTING_CLUMPSIZE_THRESHOLD: Final[int] = 10
 
 
-class ClumpOptions(Protocol):
+class Options(Protocol):
     min_clumpsize: int
 
 
-def get_options() -> ClumpOptions:
+def _get_options() -> Options:
     parser = argparse.ArgumentParser("analysis.clump2")
     parser.add_argument("--min-clumpsize", type=int, default=INTERESTING_CLUMPSIZE_THRESHOLD)
 
     _opts = parser.parse_args()
-    return cast(ClumpOptions, _opts)
+    return cast(Options, _opts)
 
 
-def main(opts: ClumpOptions):
+def main(opts: Options):
     map_tiles = inventorize_maps_latest(Config.maps.dir)
 
     regsdb = get_nonvoid_regions(Config.names)
@@ -183,5 +183,5 @@ def main(opts: ClumpOptions):
 
 
 if __name__ == "__main__":
-    options = get_options()
+    options = _get_options()
     main(options)

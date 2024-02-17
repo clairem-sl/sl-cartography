@@ -18,7 +18,7 @@ DB_PATH: Final[Path] = Path(Config.names.dir) / Config.names.db
 AREAMAPS_DIR: Final[Path] = Path(Config.areas.dir)
 
 
-class LatticeOptions(Protocol):
+class Options(Protocol):
     """Options extracted from the CLI"""
 
     no_names: bool
@@ -26,7 +26,7 @@ class LatticeOptions(Protocol):
     areas: list[str]
 
 
-def get_options() -> LatticeOptions:
+def _get_options() -> Options:
     """Get options from CLI"""
     parser = argparse.ArgumentParser("cartographer_v4.lattice")
 
@@ -44,10 +44,10 @@ def get_options() -> LatticeOptions:
     )
 
     _opts = parser.parse_args()
-    return cast(LatticeOptions, _opts)
+    return cast(Options, _opts)
 
 
-def main(opts: LatticeOptions) -> None:  # noqa: D103
+def main(opts: Options) -> None:  # noqa: D103
     # Disable DecompressionBombWarning
     Image.MAX_IMAGE_PIXELS = None
 
@@ -83,5 +83,5 @@ def main(opts: LatticeOptions) -> None:  # noqa: D103
 
 
 if __name__ == "__main__":
-    options = get_options()
+    options = _get_options()
     main(options)

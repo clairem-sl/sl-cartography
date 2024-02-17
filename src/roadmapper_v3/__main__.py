@@ -24,7 +24,7 @@ class Options(Protocol):
     yaml_file: list[Path]
 
 
-def get_options() -> Options:
+def _get_options() -> Options:
     """Extract options from CLI"""
     parser = argparse.ArgumentParser("roadmapper_v3")
     parser.add_argument("--savedir", "-s", required=True, type=Path, help="Directory to save the road overlays in")
@@ -102,4 +102,4 @@ def main(opts: Options) -> None:  # noqa: D103
 
 
 if __name__ == "__main__":
-    main(get_options())
+    main(_get_options())

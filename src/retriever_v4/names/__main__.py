@@ -75,13 +75,13 @@ class RetrieverNamesOptions(Protocol):
     auto_reset: bool
 
 
-class OptionsProtocol(RetrieverNamesOptions, RetrieverApplication.Options, Protocol):
+class Options(RetrieverNamesOptions, RetrieverApplication.Options, Protocol):
     """CLI Options to extract"""
 
     pass
 
 
-def get_options() -> OptionsProtocol:
+def _get_options() -> Options:
     """Extract options from CLI"""
     parser = argparse.ArgumentParser("retriever_v4.names")
 
@@ -110,7 +110,7 @@ def get_options() -> OptionsProtocol:
 
     _opts = parser.parse_args()
 
-    return cast(OptionsProtocol, _opts)
+    return cast(Options, _opts)
 
 
 def process(region: CookedResult) -> bool:
@@ -236,7 +236,7 @@ async def amain(db_path: Path, duration: int, min_batch_size: int, abort_low_rps
         )
 
 
-def main(app_context: RetrieverApplication, opts: OptionsProtocol) -> None:  # noqa: D103
+def main(app_context: RetrieverApplication, opts: Options) -> None:  # noqa: D103
     global DataBase, Progress  # noqa: PLW0603
 
     start = time.monotonic()
@@ -307,7 +307,7 @@ def main(app_context: RetrieverApplication, opts: OptionsProtocol) -> None:  # n
 
 
 if __name__ == "__main__":
-    options = get_options()
+    options = _get_options()
     lock_file = options.dbpath.parent / Config.names.lock
     log_file = options.dbpath.parent / Config.names.log
     with RetrieverApplication(lock_file=lock_file, log_file=lock_file, force=options.force) as app:
