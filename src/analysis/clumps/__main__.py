@@ -30,7 +30,10 @@ def _get_options() -> Options:
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
-        "--all", action="store_true", default=False, help="Show all regions, not just those not associated with an area"
+        "--all",
+        action="store_true",
+        default=False,
+        help="Show all regions when drilling down int clunps, not just those not associated with an area",
     )
     parser.add_argument("--no-save", action="store_true", default=False)
 
