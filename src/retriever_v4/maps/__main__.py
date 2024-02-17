@@ -14,7 +14,7 @@ import sys
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Final, Optional, Protocol, TypedDict, cast
+from typing import TYPE_CHECKING, Final, Protocol, TypedDict, cast
 
 from ruamel.yaml import YAML, RoundTripRepresenter
 
@@ -72,16 +72,16 @@ def _get_options() -> Options:
 class ProgressDict(TypedDict):
     """Represents the progress of map retrieval"""
 
-    next_row: Optional[int]
+    next_row: int | None
     backlog: set[CoordType]
 
 
 class ProgressionDict(TypedDict):
     """Represents per-row progression of map retrieval"""
 
-    start: Optional[datetime]
+    start: datetime | None
     done: int
-    last: Optional[datetime]
+    last: datetime | None
 
 
 def launch_workers(
@@ -113,7 +113,7 @@ def launch_workers(
         try:
             if msg:
                 print("Flushing dispatch queue", flush=True)
-            di : list[CoordType] | int
+            di: list[CoordType] | int
             while True:
                 di = dispatched_queue.get_nowait()
                 if isinstance(di, list):
