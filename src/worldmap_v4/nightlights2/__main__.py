@@ -238,7 +238,7 @@ def make_nightlights2(regions: set[MapCoord], *, tiler: str) -> Image.Image:
 
 def main(opts: Options) -> None:  # noqa: D103
     regsdb = get_nonvoid_regions(Config.names)
-    regions: set[tuple[int, int]] = set(k for k, v in regsdb.items() if v["current_name"])
+    regions: set[tuple[int, int]] = set(coord for coord, v in regsdb.items() if v["current_name"])
 
     # Filter with Bonnie if not prevented
     if not opts.no_bonnie:
