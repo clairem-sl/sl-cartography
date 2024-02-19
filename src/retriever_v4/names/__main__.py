@@ -302,8 +302,7 @@ def main(app_context: RetrieverApplication, opts: Options) -> None:  # noqa: D10
         print(f"=> {rslt}")
 
     elapsed = time.monotonic() - start
-    tstamp = datetime.now().astimezone().strftime("%Y-%m-%d %H:%M:%S")
-    print(f"\n### Finished on {tstamp} ({elapsed:_.2f}s since start)")
+    print(f"\n### Finished on {datetime.now().astimezone():%Y-%m-%d %H:%M:%S} ({elapsed:_.2f}s since start)")
 
 
 if __name__ == "__main__":

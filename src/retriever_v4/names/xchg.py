@@ -88,7 +88,7 @@ class RegionsDBRecord3ForSerialization(TypedDict):
 def export(db: Path, targ: Path, quiet: bool = False) -> Path:
     """Perform export of DB"""
     if targ is None:
-        targ = DEFA_DB.with_suffix(f".{datetime.now().astimezone().strftime('%Y%m%d-%H%M')}.yaml")
+        targ = DEFA_DB.with_suffix(f".{datetime.now().astimezone():%Y%m%d-%H%M}.yaml")
     with db.open("rb") as fin:
         data: dict[CoordType, RegionsDBRecord3] = pickle.load(fin)  # noqa: S301
     if not quiet:

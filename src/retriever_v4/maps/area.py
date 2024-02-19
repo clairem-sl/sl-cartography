@@ -64,8 +64,7 @@ async def aretrieve(wants: dict[str, list[tuple[int, int, int, int]]]) -> None:
                 if mr.result is None:
                     continue
                 x, y = mr.coord
-                ts = datetime.strftime(datetime.now().astimezone(), "%y%m%d-%H%M")
-                targ = targdir / f"{x}-{y}_{ts}.jpg"
+                targ = targdir / f"{x}-{y}_{datetime.now().astimezone():%y%m%d-%H%M}.jpg"
                 with targ.open("wb") as fout:
                     fout.write(mr.result)
                 print(f"  ({c:{totlen}}/{tot}) {targ}")

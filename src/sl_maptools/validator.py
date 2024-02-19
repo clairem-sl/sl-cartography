@@ -67,10 +67,10 @@ class GridSurveyDatum:
         """Encodes this datum into a string similar to the one acquired from GridSurvey"""
         return (
             f"status {self.status} x {self.x} y {self.y} access {self.access} "
-            f"estate {self.estate} firstseen {self.firstseen.strftime('%Y-%m-%d')} "
-            f"lastseen {self.lastseen.strftime('%Y-%m-%d')} "
+            f"estate {self.estate} firstseen {self.firstseen:%Y-%m-%d} "
+            f"lastseen {self.lastseen:%Y-%m-%d} "
             f"objects_uuid {self.objects_uuid} terrain_uuid {self.terrain_uuid} "
-            f"incidents {self.incidents} updated {self.updated.strftime('%Y-%m-%d')} "
+            f"incidents {self.incidents} updated {self.updated:%Y-%m-%d} "
             f"region_uuid {self.region_uuid} "
             f"name {urllib.parse.quote_plus(self.name)}"
         )

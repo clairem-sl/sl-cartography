@@ -256,8 +256,10 @@ def main(opts: Options) -> None:  # noqa: D103
         regions.intersection_update(mapfiles.keys())
         del mapfiles
 
-    _ts = datetime.now().strftime("%y%m%d-%H%M")
-    targ = Path(Config.nightlights.dir) / f"worldmap4_nightlights_{opts.tiler}_{_ts}.png"
+    targ = (
+        Path(Config.nightlights.dir)
+        / f"worldmap4_nightlights_{opts.tiler}_{datetime.now().astimezone():%y%m%d-%H%M}.png"
+    )
     if targ.exists():
         make_backup(targ)
         targ.unlink()
