@@ -100,7 +100,7 @@ async def aretrieve(
                     shm.buf[:] = fut_result.result
                     save: QSaveJob = {
                         "coord": fut_result.coord,
-                        "tsf": datetime.strftime(datetime.now().astimezone(), "%y%m%d-%H%M"),
+                        "tsf": datetime.now().astimezone().strftime("%y%m%d-%H%M"),
                         "shm": shm,
                     }
                     out_queue.put(save)
