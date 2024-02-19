@@ -82,7 +82,7 @@ def main(opts: Options) -> None:  # noqa: D103
         draw.rectangle(rect(one.coord), fill=color)
     print()
 
-    targ = Path(Config.nightlights.dir) / "recent.png"
+    targ = Path(Config.nightlights.dir) / f"recent_{datetime.now().astimezone():%Y-%m-%d}.png"
     canvas.save(targ, optimize=True)
     print(f"Saved to {targ}")
 
