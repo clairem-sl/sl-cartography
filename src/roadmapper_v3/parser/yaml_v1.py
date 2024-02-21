@@ -15,8 +15,9 @@ from roadmapper_v3.model.yaml import save_to
 def load_from_v1(yaml_file: Path):
     if not yaml_file.exists():
         raise FileNotFoundError()
+    yaml = ryaml.YAML(typ="safe", pure=True)
     with yaml_file.open("rt", encoding="utf-8") as fin:
-        data = ryaml.safe_load(fin)
+        data: dict = yaml.load(fin)
     assert "version" in data
     assert data["version"] == 1
     assert "road_data" in data

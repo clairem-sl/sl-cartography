@@ -37,8 +37,9 @@ def decode(raw_data: dict[str, dict[str, dict[str, Any]]]) -> dict[str, Continen
 def load_from(yaml_file: Path) -> dict[str, Continent]:
     if not yaml_file.exists():
         raise FileNotFoundError()
+    yaml = ryaml.YAML(typ="safe", pure=True)
     with yaml_file.open("rt", encoding="utf-8") as fin:
-        data = ryaml.safe_load(fin)
+        data: dict = yaml.load(fin)
     assert isinstance(data, dict)
     assert "version" in data
     assert data["version"] == 2
