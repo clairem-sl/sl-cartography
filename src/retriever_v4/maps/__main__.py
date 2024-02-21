@@ -221,8 +221,7 @@ def launch_workers(
             pool_s.join()
 
     finally:
-        # pylint: disable=return-in-finally
-        return next_row, outstanding, progression, errs  # noqa: B012
+        return next_row, outstanding, progression, errs  # noqa: B012 # pylint: disable=return-in-finally,lost-exception
 
 
 def main(opts: Options) -> None:  # noqa: D103
@@ -244,6 +243,9 @@ def main(opts: Options) -> None:  # noqa: D103
 
     errs: list[QResult]
     mgr: MPMgr.SyncManager
+    # To suppress "used-before-assignment" warnings
+    next_row = progress["next_row"]
+    outstanding = progress["backlog"]
     try:
         with MP.Manager() as mgr:
             next_row, outstanding, progression, errs = launch_workers(opts, progress, mgr)

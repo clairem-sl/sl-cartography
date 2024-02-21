@@ -24,7 +24,7 @@ def load_from_v1(yaml_file: Path):
 
     new_data: dict[str, Continent] = {}
 
-    for road_datum in data["road_data"]:
+    for road_datum in data["road_data"]:  # pylint: disable=too-many-nested-blocks
         assert isinstance(road_datum, dict)
         conti_name = road_datum["continent"]
         continent = Continent(conti_name)
@@ -36,7 +36,7 @@ def load_from_v1(yaml_file: Path):
             for seg_datum in route_datum["segments"]:
                 assert isinstance(seg_datum, dict)
                 if seg_datum["color"] is not None:
-                    assert len(seg_datum["color"]) == 3
+                    assert len(seg_datum["color"]) == 3  # noqa: PLR2004
                     try:
                         new_color = tuple(seg_datum["color"])
                         if route.color is not None and route.color != new_color:
@@ -59,7 +59,7 @@ def load_from_v1(yaml_file: Path):
     return new_data
 
 
-def main():
+def main() -> None:  # noqa: D103
     data = load_from_v1(Path(r"C:\Repos\sl-cartography-claire\src\roadmap.yaml"))
     pprint(data)
     save_to(Path(r"C:\Repos\sl-cartography-pep\roadmap_v2.yaml"), data)

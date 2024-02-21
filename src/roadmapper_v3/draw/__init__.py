@@ -89,7 +89,7 @@ class LinePattern:
                 clr = self.color
             elif phase_clr is None or phase_clr is False:
                 clr = None
-            elif isinstance(phase_clr, tuple) and len(phase_clr) == 3:
+            elif isinstance(phase_clr, tuple) and len(phase_clr) == 3:  # noqa: PLR2004
                 clr = phase_clr
             self.phases[phase_name] = PhaseDesc(phase_len, clr)
 
@@ -100,14 +100,14 @@ def drawline_patterned(
     points: list[Point],
     width: int = 10,
     min_len: float = 0.01,
-    extend_by: float = None,
+    extend_by: float | None = None,
 ) -> None:
     segments: list[tuple[Point, Point]] = []
 
     pattern_cycle = cycle(pattern.phases.items())
     point_pairs = pairwise(points)
 
-    phase, (phase_len, phase_clr) = next(pattern_cycle)
+    phase, (phase_len, phase_clr) = next(pattern_cycle)  # pylint: disable=unused-variable
     pline: ParametricLine | None = None
     p1 = p2 = Point(math.nan, math.nan)
 
@@ -185,7 +185,11 @@ def dotgap_pattern(color: tuple[int, int, int], gap_len: int = 40) -> LinePatter
 
 
 def drawline_solid(
-    drawer: ImageDraw.ImageDraw, points: list[Point], width: int, color: tuple[int, int, int], extend_by: float = None
+    drawer: ImageDraw.ImageDraw,
+    points: list[Point],
+    width: int,
+    color: tuple[int, int, int],
+    extend_by: float | None = None,
 ) -> None:
     if extend_by:
         points = extend_ends(points, extend_by)
@@ -221,7 +225,7 @@ def drawarc(
         ccw = ((x3 - x1) * (y2 - y1) - (y3 - y1) * (x2 - x1)) >= 0
         return Point(x, y), r, ccw
 
-    if len(points) != 3:
+    if len(points) != 3:  # noqa: PLR2004
         raise ValueError("'ARC' segments need EXACTLY 3 (three) points, no more, no less!")
 
     cx1, cy1 = points[0]
@@ -286,7 +290,7 @@ def drawarrow(
     width: int,
     pattern: LinePattern,
     both: bool = True,
-    extend_by: float = None,
+    extend_by: float | None = None,
 ) -> None:
     """
     Draw an arrow with patterned line.
@@ -328,7 +332,7 @@ class SegmentDrawer:
         self.geo_southwest = geo_southwest
 
     def _route_color(self) -> tuple[int, int, int] | None:
-        _route_colors = self.__class__._RouteColors
+        _route_colors = self.__class__._RouteColors  # pylint: disable=protected-access
         if self.route.name not in _route_colors:
             color = self.route.color
             if color is None:
@@ -342,21 +346,21 @@ class SegmentDrawer:
             return
         draw = self.drawer
         # noinspection PyUnresolvedReferences
-        cwidth, cheight = draw.im.size
-        if self.segment.width is None:
+        _, cheight = draw.im.size
+        if self.segment.width is None:  # noqa: SIM108
             width = self.__class__.OutlineWidth
         else:
             width = round(self.segment.width * 1.4)
         sw_x, sw_y = self.geo_southwest
         canv_points = [Point(p.x - sw_x, cheight - (p.y - sw_y)) for p in self.segment.geopoints]
-        if self.mode == SegmentMode.SOLID or self.mode == SegmentMode.RAILS:
+        if self.mode in (SegmentMode.SOLID, SegmentMode.RAILS):
             drawline_solid(draw, canv_points, width, (0, 0, 0), extend_by=extend_by)
         elif self.mode == SegmentMode.DASHED:
             pattern = dash_pattern((0, 0, 0))
             drawline_patterned(draw, pattern, canv_points, width, extend_by=extend_by)
         elif self.mode == SegmentMode.ARC:
             drawarc(draw, canv_points, width, (0, 0, 0), extend_by_deg=extend_by_deg)
-        elif self.mode == SegmentMode.ARROW or self.mode == SegmentMode.ARROW2:
+        elif self.mode in (SegmentMode.ARROW, SegmentMode.ARROW2):
             pattern = dotgap_pattern((0, 0, 0))
             drawarrow(draw, canv_points, width, pattern, extend_by=extend_by)
         elif self.mode == SegmentMode.ARROW1:
@@ -370,8 +374,8 @@ class SegmentDrawer:
             return
         draw = self.drawer
         # noinspection PyUnresolvedReferences
-        cwidth, cheight = draw.im.size
-        if self.segment.width is None:
+        _, cheight = draw.im.size
+        if self.segment.width is None:  # noqa: SIM108
             width = self.__class__.ActualWidth
         else:
             width = self.segment.width
@@ -388,7 +392,7 @@ class SegmentDrawer:
             drawline_patterned(draw, pattern, canv_points, width)
         elif self.mode == SegmentMode.ARC:
             drawarc(draw, canv_points, width, color)
-        elif self.mode == SegmentMode.ARROW or self.mode == SegmentMode.ARROW2:
+        elif self.mode in (SegmentMode.ARROW, SegmentMode.ARROW2):
             pattern = dotgap_pattern(color)
             drawarrow(draw, canv_points, width, pattern)
         elif self.mode == SegmentMode.ARROW1:

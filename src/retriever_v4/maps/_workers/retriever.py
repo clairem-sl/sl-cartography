@@ -73,7 +73,7 @@ async def aretrieve(
                 for fut in done:
                     try:
                         exc = fut.exception()
-                    except Exception as e:
+                    except Exception as e:  # pylint: disable=broad-exception-caught
                         exc = e
                     if exc is not None:
                         print(

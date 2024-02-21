@@ -49,7 +49,7 @@ class Options(CartographerOptions, Protocol):
     Options combined from this module and common ones
     """
 
-    pass
+    pass  # pylint: disable=unnecessary-pass
 
 
 class AreaParser(argparse.Action):

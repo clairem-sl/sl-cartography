@@ -12,8 +12,8 @@ if TYPE_CHECKING:
     from sl_maptools import AreaBounds
 
 
-def main():
-    areas = [(name, bounds) for name, bounds in KNOWN_AREAS.items()]
+def main() -> None:  # noqa: D103
+    areas = list(KNOWN_AREAS.items())
     na1: tuple[str, AreaBounds]
     na2: tuple[str, AreaBounds]
     for na1, na2 in combinations(areas, 2):

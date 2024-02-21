@@ -31,7 +31,7 @@ SUPPORTED_SCHEMA_VERS: Final[set[int]] = {1, 3}
 class InvalidSourceError(RuntimeError):
     """Raised if the Source is invalid"""
 
-    pass
+    pass  # pylint: disable=unnecessary-pass
 
 
 class Options(Protocol):

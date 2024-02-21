@@ -78,7 +78,7 @@ class RetrieverNamesOptions(Protocol):
 class Options(RetrieverNamesOptions, RetrieverApplication.Options, Protocol):
     """CLI Options to extract"""
 
-    pass
+    pass  # pylint: disable=unnecessary-pass
 
 
 def _get_options() -> Options:

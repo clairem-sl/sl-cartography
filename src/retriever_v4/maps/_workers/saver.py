@@ -13,6 +13,7 @@ from retriever_v4.maps import QResult, QSaveJob
 
 if TYPE_CHECKING:
     from pathlib import Path
+
     from sl_maptools import MapCoord
 
 
@@ -53,7 +54,7 @@ def saver(
             shm.close()
             shm.unlink()
             result = QResult(myname, coord, None)
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught
             print(f"\nERR: {myname}:{type(e)}:{e}", file=sys.stderr, flush=True)
             result = QResult(myname, coord, e)
         result_queue.put(result)

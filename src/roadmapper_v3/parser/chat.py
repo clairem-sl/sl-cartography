@@ -80,7 +80,7 @@ class PosRecord(ChatLine):
         assert line.startswith("3;;")
         elems = line.split(";;")
         assert len(elems) >= 5
-        _, regname, parname, regcorner, pos, *etc = elems
+        _, regname, parname, regcorner, pos, *_etc = elems
         self.region_name = regname
         self.parcel_name = parname
         if (matches := RE_VECTOR.match(regcorner)) is None:
@@ -91,8 +91,8 @@ class PosRecord(ChatLine):
         self.pos_local = tuple(map(float, matches.groups()))
 
     def to_point(self) -> Point:
-        xr, yr, zr = self.region_corner
-        xp, yp, zp = self.pos_local
+        xr, yr, _ = self.region_corner
+        xp, yp, _ = self.pos_local
         return Point(xr + xp, yr + yp)
 
 
@@ -203,8 +203,8 @@ def bake(parsed: list[ChatLine]) -> dict[str, Continent]:
                 case "mode", new_mode:
                     try:
                         new_mode = SegmentMode[new_mode]
-                    except KeyError:
-                        raise KeyError(f"Unrecognized mode '{new_mode}' ({p.source})")
+                    except KeyError as e:
+                        raise KeyError(f"Unrecognized mode '{new_mode}' ({p.source})") from e
                     if new_mode != segment.mode:
                         new_segment(new_mode)
                 case "break", _:

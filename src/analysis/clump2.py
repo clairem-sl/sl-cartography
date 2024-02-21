@@ -155,7 +155,7 @@ def main(opts: Options):
     for info in clumps_to_check:
         aname, clump, reason = info
         if len(clump) >= opts.min_clumpsize:
-            if aname:
+            if aname:  # pylint: disable=no-else-continue
                 continue
                 # if reason == "grew":
                 #     diff = clump - perarea_existing_coords[aname]

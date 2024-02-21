@@ -5,17 +5,20 @@
 #  Copyright (C) 2023, Claire Morgenthau
 from __future__ import annotations
 
-import multiprocessing as MP
 import signal
 from dataclasses import dataclass
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 from PIL import Image, UnidentifiedImageError
 
-from sl_maptools import CoordType
-from sl_maptools.image_processing import calculate_dominant_colors, FASCIA_SIZES
-from worldmap_v4.mosaic._workers import CalcResultType, DomColors
+from sl_maptools.image_processing import FASCIA_SIZES, calculate_dominant_colors
 
+if TYPE_CHECKING:
+    import multiprocessing as MP
+    from pathlib import Path
+
+    from sl_maptools import CoordType
+    from worldmap_v4.mosaic._workers import CalcResultType, DomColors
 
 CollectorQueue: MP.Queue
 

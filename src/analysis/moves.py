@@ -22,11 +22,9 @@ _NAO = datetime.now().astimezone()
 DATABASE: dict[CoordType, RegionsDBRecord3] = {}
 
 
-def main():
-    global DATABASE
-
+def main() -> None:  # noqa: D103
     with DB_PATH.open("rb") as fin:
-        DATABASE.update(pickle.load(fin))
+        DATABASE.update(pickle.load(fin))  # noqa: S301
 
     yaml = YAML()
     yaml.Representer = RoundTripRepresenter
@@ -47,7 +45,7 @@ def main():
             region_locations.setdefault(hname, set()).add(co)
 
     for name, locs in sorted(region_locations.items()):
-        if len(locs) < 2:
+        if len(locs) < 2:  # noqa: PLR2004
             continue
         print(f"{name}: {locs}")
 
