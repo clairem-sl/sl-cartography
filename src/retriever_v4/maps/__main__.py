@@ -221,6 +221,7 @@ def launch_workers(
             pool_s.join()
 
     finally:
+        # pylint: disable=return-in-finally
         return next_row, outstanding, progression, errs  # noqa: B012
 
 

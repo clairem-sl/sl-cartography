@@ -63,7 +63,7 @@ class ValueTree:
         _prev_nf = self.__notfound
         self.__notfound = "raise"
         try:
-            value = self.__getattr__(key)
+            value = getattr(self, key)
         except KeyError:
             value = default
         finally:
@@ -205,8 +205,8 @@ class DelayedConfigReader(SLMapToolsConfig):
 
     def __read(self) -> None:
         with self._cfg_file.open("rb") as fin:
-            self._cfg_dict = tomllib.load(fin)
-        self._cfg_tree = ValueTree(self._cfg_dict, on_not_found="none")
+            _cfg_dict = tomllib.load(fin)
+        self._cfg_tree = ValueTree(_cfg_dict, on_not_found="none")
 
     def __getattr__(self, item: str):
         if self._cfg_tree is None:
@@ -222,4 +222,4 @@ class DelayedConfigReader(SLMapToolsConfig):
         return f"{self.__class__.__name__}({self._cfg_file!r})"
 
 
-DefaultConfig: Final[SLMapToolsConfig] = DelayedConfigReader("config.toml")
+DefaultConfig: Final[SLMapToolsConfig] = DelayedConfigReader("config.toml")  # pylint: disable=invalid-name

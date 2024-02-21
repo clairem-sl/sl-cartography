@@ -113,3 +113,30 @@ ignore-variadic-names = true
 combine-as-imports = true
 known-first-party = ["src"]
 required-imports = ["from __future__ import annotations"]
+
+[tool.pylint.main]
+source-roots = [
+    "src",
+    "tests",
+]
+ignore-paths = [
+    ".*coba.*",
+    ".*gridsurvey.*",
+]
+disable = [
+    "missing-class-docstring",
+    "missing-function-docstring",
+    "line-too-long",
+    "too-few-public-methods",
+    "too-many-locals",
+    "too-many-branches",
+    "too-many-instance-attributes",
+    "unnecessary-ellipsis",
+    "superfluous-parens",
+]
+
+[tool.pylint.format]
+max-line-length = 120
+
+[tool.pylint.design]
+max-args = 10

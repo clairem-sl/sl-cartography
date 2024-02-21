@@ -8,7 +8,6 @@ from itertools import combinations
 from pathlib import Path
 
 import numpy as np
-from image_processing import are_similar
 from PIL import Image, ImageFilter
 
 # noinspection PyUnresolvedReferences
@@ -19,6 +18,8 @@ from skimage.metrics import (
     normalized_root_mse as nrmse,
     structural_similarity as ssim,
 )
+
+from sl_maptools.image_processing import are_similar
 
 mapdir = Path(r"C:\Cache\SL-Carto\Maps2")
 # p1 = mapdir / "496-1519_230506-1431.jpg"
@@ -64,23 +65,19 @@ class EnhanceMethod(Enum):
 
 def enhance(method: EnhanceMethod, *i: Image.Image) -> tuple[Image.Image, ...]:
     if method == EnhanceMethod.GB_FE:
-        return tuple([im.filter(ImageFilter.GaussianBlur).filter(ImageFilter.FIND_EDGES) for im in i])
-    elif method == EnhanceMethod.GB_FE_B_FE:
+        return tuple(im.filter(ImageFilter.GaussianBlur).filter(ImageFilter.FIND_EDGES) for im in i)
+    if method == EnhanceMethod.GB_FE_B_FE:
         return tuple(
-            [
-                im.filter(ImageFilter.GaussianBlur)
-                .filter(ImageFilter.FIND_EDGES)
-                .filter(ImageFilter.BLUR)
-                .filter(ImageFilter.FIND_EDGES)
-                for im in i
-            ]
+            im.filter(ImageFilter.GaussianBlur)
+            .filter(ImageFilter.FIND_EDGES)
+            .filter(ImageFilter.BLUR)
+            .filter(ImageFilter.FIND_EDGES)
+            for im in i
         )
-    elif method == EnhanceMethod.GB_GB_FE:
+    if method == EnhanceMethod.GB_GB_FE:
         return tuple(
-            [
-                im.filter(ImageFilter.GaussianBlur).filter(ImageFilter.GaussianBlur).filter(ImageFilter.FIND_EDGES)
-                for im in i
-            ]
+            im.filter(ImageFilter.GaussianBlur).filter(ImageFilter.GaussianBlur).filter(ImageFilter.FIND_EDGES)
+            for im in i
         )
     raise NotImplementedError(f"enhance not implemented for {method}")
 
@@ -110,7 +107,7 @@ def preprocess(im: Image.Image, chg_pal: bool = False) -> Image.Image:
 
 
 def main():
-    for i, (expected, flist) in enumerate(TEST_CASES, start=1):
+    for i, (expected, flist) in enumerate(TEST_CASES, start=1):  # pylint: disable=unused-variable
         print("===== Control =====")
         print(f"{expected=} {flist=}")
         for fn in sorted(flist):

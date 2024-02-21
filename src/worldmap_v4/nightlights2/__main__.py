@@ -88,7 +88,7 @@ class TileProducer:
         "_elbow",
     )
 
-    _Neighbors: Final[dict[tuple[int, int], str]] = {
+    _NEIGHBORS: Final[dict[tuple[int, int], str]] = {
         (0, -1): "S",
         (-1, 0): "W",
         (1, 0): "E",
@@ -166,7 +166,8 @@ class TileProducer:
         :param coord: Geo-coordinate of the region
         :return: A set of compass points representing existing neighbors
         """
-        return {compass for offset, compass in self.__class__._Neighbors.items() if (coord + offset) in self.regions}
+        # pylint: disable=protected-access
+        return {compass for offset, compass in self.__class__._NEIGHBORS.items() if (coord + offset) in self.regions}
 
     def maketile(self, coord: MapCoord) -> Image:
         """

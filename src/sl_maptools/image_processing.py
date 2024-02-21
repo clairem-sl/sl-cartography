@@ -69,7 +69,7 @@ def calculate_dominant_colors(
         quant = fascia.quantize(colors=16, kmeans=kmeans)
         rgb = quant.convert("RGB")
         colors = cast(list[tuple[int, RGBTuple]], rgb.getcolors())
-        freq, dom = max(colors, key=lambda x: x[0])
+        freq, dom = max(colors, key=lambda x: x[0])  # pylint: disable=unused-variable
         dom_colors.append(dom)
     return dom_colors
 

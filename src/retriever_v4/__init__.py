@@ -254,6 +254,7 @@ async def dispatch_fetcher(
     abort_low_rps: int = -1,
 ) -> None:
     """Asynchronously dispatch jobs"""
+    # pylint: disable=broad-exception-caught
     start = time.monotonic()
     tasks: set[asyncio.Task] = {taskmaker(coord) async for coord in progress.abatch(start_batch_size)}
     if not tasks:
@@ -424,6 +425,7 @@ class RetrieverApplication(AbstractContextManager):
 
         def __call__(self, parser, namespace, values, option_string=None):  # noqa: ANN001, ARG002
             """Will be called by argument parser to parse detected options"""
+            # pylint: disable=superfluous-parens
             m = re.match(r"^(\d{1,2}):(\d{1,2})$", values)
             if m is None or not (0 <= int(m.group(1)) <= 23) or not (0 <= int(m.group(2)) <= 59):  # noqa: PLR2004
                 parser.error("Please enter time in 24h HH:MM format!")

@@ -28,7 +28,7 @@ if TYPE_CHECKING:
 status online x 1000 y 1000 access moderate estate Mainland firstseen 2008-03-09 lastseen 2022-11-06 \
 objects_uuid 66a40961-1669-55fc-11f6-73d9eb1e1858 terrain_uuid b52b420a-94f6-eff7-ce6e-09cd07eb9c53 \
 incidents 0 updated 2022-11-06 region_uuid 4126bd1e-964a-590a-d55f-e160475fde4b name Da+Boom
-"""
+"""  # pylint: disable=pointless-string-statement
 
 
 @dataclass(frozen=True)
@@ -76,7 +76,7 @@ class GridSurveyDatum:
         )
 
 
-class GridSurveyError:
+class GridSurveyError(Exception):
     """Raised when an error happens retrieving/processing GridSurvey data"""
 
     pass
@@ -146,9 +146,9 @@ class MapValidatorGridSurvey:
         return gs_datum is not GridSurvey_NotRegion
 
 
-"""var slRegionName = {'error' : true };"""
+# var slRegionName = {'error' : true };
 RE_ERROR = re.compile(r"=\s*\{\s*'error'\s+:\s+true\s*}")
-"""var slRegionName='Da Boom';"""
+# var slRegionName='Da Boom';
 
 
 def get_nonvoid_regions(config: NamesConfig) -> dict[CoordType, RegionsDBRecord3]:

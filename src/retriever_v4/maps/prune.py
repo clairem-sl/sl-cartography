@@ -50,6 +50,8 @@ def _get_options() -> Options:
 class Thresholds:
     """Represents thresholds to determine similarity"""
 
+    # pylint: disable=invalid-name
+
     MSE: float
     SSIM: float
 

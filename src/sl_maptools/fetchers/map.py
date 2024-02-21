@@ -189,7 +189,7 @@ class MapFetcher(Fetcher):
                     except KeyboardInterrupt as e:
                         progress.last_fail_rows.add(y)
                         aborting_exception = e
-                    except Exception as e:
+                    except Exception as e:  # pylint: disable=broad-exception-caught
                         if not isinstance(e, FetcherConnectionError):
                             print(str(e), flush=True)
                         if err_callback:

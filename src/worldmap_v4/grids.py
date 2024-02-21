@@ -73,7 +73,7 @@ def _get_options() -> Options:
 
 def make_grid(worldmap: Image, variant: str, text_settings: dict) -> Image:
     """Make an image of the grids overlaid on specified worldmap"""
-    sx, sy = worldmap.size
+    sx = worldmap.size[0]
     reg_sz = sx // (COORD_RANGE[1] + 1)
     sect_sz = reg_sz * GRIDSECTOR_SIZE
     padded_sz = ((sx + sect_sz - 1) // sect_sz) * sect_sz
@@ -148,7 +148,7 @@ def main(opts: Options) -> None:  # noqa: D103
     worldmap_m = datetime.fromtimestamp(worldmap_p.stat().st_mtime).astimezone()
 
     Image.MAX_IMAGE_PIXELS = None
-    min_co, max_co = COORD_RANGE
+    max_co = COORD_RANGE[1]
 
     # return
     print(f"Loading worldmap {worldmap_p} (m = {worldmap_m})")
@@ -156,7 +156,7 @@ def main(opts: Options) -> None:  # noqa: D103
         worldmap = Image.open(fin)
         worldmap.load()
     sx, sy = worldmap.size
-    reg_sz, rem = divmod(sx, max_co + 1)
+    _, rem = divmod(sx, max_co + 1)
     if sx != sy or rem != 0:
         raise RuntimeError(f"File size funky: {sx}, {sy}")
 
