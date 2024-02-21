@@ -5,36 +5,39 @@ from __future__ import annotations
 
 import argparse
 import multiprocessing as MP
-import multiprocessing.managers as MPMgrs
+import multiprocessing.managers as MPMgr
 import multiprocessing.pool as MPPool
 import pickle
 import re
 import signal
 import time
 from pathlib import Path
-from typing import Final, Protocol, cast
+from typing import TYPE_CHECKING, Final, Protocol, cast
 
 from sl_maptools import CoordType, RegionsDBRecord, inventorize_maps_all
 from sl_maptools.config import DefaultConfig as Config
 from sl_maptools.image_processing import FASCIA_SIZES
 from sl_maptools.utils import make_backup
 from sl_maptools.validator import get_bonnie_coords
+
 # noinspection PyProtectedMember
-from worldmap_v4.mosaic._workers import DomColors
+from worldmap_v4.mosaic._workers.calc_domc import CalcDomcArgs, calc_domc, calc_domc_init
+
 # noinspection PyProtectedMember
-from worldmap_v4.mosaic._workers.calc_domc import calc_domc_init, calc_domc, CalcDomcArgs
-# noinspection PyProtectedMember
-from worldmap_v4.mosaic._workers.collector import collector, CollectorArgs
+from worldmap_v4.mosaic._workers.collector import CollectorArgs, collector
+
 # noinspection PyProtectedMember
 from worldmap_v4.mosaic._workers.maker import FASCIA_PIXELS, MakerParams, make_mosaic
+
+if TYPE_CHECKING:
+    # noinspection PyProtectedMember
+    from worldmap_v4.mosaic._workers import DomColors
 
 # region ##### CONSTs
 RE_MAP: Final[re.Pattern] = re.compile(r"^(\d+)-(\d+)_\d+-\d+.jpg$")
 
 DEFA_CALC_WORKERS: Final[int] = max(1, MP.cpu_count() - 2) * 2
 DEFA_MAKE_WORKERS: Final[int] = 1
-
-
 # endregion
 
 # region ##### CLI options
@@ -143,7 +146,7 @@ def main(opts: OptionsType) -> None:  # noqa: D103
     last_stat = start = time.monotonic()
     last_fin = 0
     stats_every_sec = opts.stats_every_min * 60
-    manager: MPMgrs.SyncManager
+    manager: MPMgr.SyncManager
     with MP.Manager() as manager:
         patches_coll = manager.dict({(co, sz): vals for co, domc in latest_domc.items() for sz, vals in domc.items()})
         coll_lock = manager.RLock()
