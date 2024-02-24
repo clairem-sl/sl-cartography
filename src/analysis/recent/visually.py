@@ -23,12 +23,14 @@ DEFA_TILE_SIZE: Final = 4
 
 class Options(Protocol):  # noqa: D101
     size: int
+    no_bonnie: bool
 
 
 def _get_options() -> Options:
     parser = argparse.ArgumentParser()
 
     parser.add_argument("--size", type=int, default=DEFA_TILE_SIZE)
+    parser.add_argument("--no-bonnie", action="store_true", default=False)
 
     opts = parser.parse_args()
 
@@ -38,10 +40,11 @@ def _get_options() -> Options:
 def main(opts: Options) -> None:  # noqa: D103
     regsdb = get_nonvoid_regions(Config.names)
     regions: set[tuple[int, int]] = {coord for coord, v in regsdb.items() if v["current_name"]}
-    if bonnie_coords := get_bonnie_coords(Config.bonnie):
-        regions.intersection_update(bonnie_coords)
-        print(flush=True)
-    del bonnie_coords
+    if not opts.no_bonnie:
+        if bonnie_coords := get_bonnie_coords(Config.bonnie):
+            regions.intersection_update(bonnie_coords)
+            print(flush=True)
+        del bonnie_coords
 
     palette = list(reversed(PALETTES[PALETTE_NAME].values()))
     maxage = (len(palette) - 1) * 2
@@ -82,7 +85,11 @@ def main(opts: Options) -> None:  # noqa: D103
         draw.rectangle(rect(one.coord), fill=color)
     print()
 
-    targ = Path(Config.nightlights.dir) / f"recent_{datetime.now().astimezone():%Y-%m-%d}.png"
+    targ = Path(Config.nightlights.dir)
+    if opts.no_bonnie:
+        targ = targ / f"recent_nb_{datetime.now().astimezone():%Y-%m-%d}.png"
+    else:
+        targ = targ / f"recent_{datetime.now().astimezone():%Y-%m-%d}.png"
     canvas.save(targ, optimize=True)
     print(f"Saved to {targ}")
 
