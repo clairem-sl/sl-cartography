@@ -13,6 +13,7 @@ from roadmapper_v3.model.yaml import save_to
 
 
 def load_from_v1(yaml_file: Path):
+    # pylint: disable=duplicate-code
     if not yaml_file.exists():
         raise FileNotFoundError()
     yaml = ryaml.YAML(typ="safe", pure=True)

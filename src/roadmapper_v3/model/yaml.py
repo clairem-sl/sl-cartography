@@ -35,6 +35,7 @@ def decode(raw_data: dict[str, dict[str, dict[str, Any]]]) -> dict[str, Continen
 
 
 def load_from(yaml_file: Path) -> dict[str, Continent]:
+    # pylint: disable=duplicate-code
     if not yaml_file.exists():
         raise FileNotFoundError()
     yaml = ryaml.YAML(typ="safe", pure=True)
