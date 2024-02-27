@@ -230,7 +230,9 @@ def main(opts: Options) -> None:  # noqa: D103
     with handle_sigint(AbortRequested):
         Image.MAX_IMAGE_PIXELS = None
         if not opts.no_lattice:
-            maker = LatticeMaker(regions_db=regsdb, validation_set=validation_set)
+            maker = LatticeMaker(
+                regions_db=regsdb, validation_set=validation_set, exclusion_method=opts.exclusion_method
+            )
         for area_name, area_desc in wanted_areas:
             targdir = Path(Config.areas.dir) / (area_desc.target_dir or area_name)
             targdir.mkdir(parents=True, exist_ok=True)
@@ -244,9 +246,7 @@ def main(opts: Options) -> None:  # noqa: D103
                 new_count += 1
                 print(f"\n  => [{tiles}] {targ}", flush=True)
             if not opts.no_lattice:
-                maker.make_lattice(
-                    targ, validate=area_desc.validate, overwrite=opts.overwrite, exclusion_method=opts.exclusion_method
-                )
+                maker.make_lattice(targ, validate=area_desc.validate, overwrite=opts.overwrite)
                 print()
             if AbortRequested.is_set():
                 break
