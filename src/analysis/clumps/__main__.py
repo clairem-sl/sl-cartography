@@ -40,26 +40,30 @@ def _get_options() -> Options:
     return cast(Options, parser.parse_args())
 
 
-REGIONS_DB: dict[tuple[int, int], RegionsDBRecord3] = {}
-REG_AREAS: dict[str, list[str]] = {}
-
-
-def show_regions(zones: list[set[CoordType]], *, show_incorporated: bool = False) -> None:
+def show_zone(
+    zones: list[set[tuple[int, int]]],
+    *,
+    regions_db: dict[tuple[int, int], RegionsDBRecord3],
+    region_areas: dict[str, list[str]],
+    show_all: bool,
+) -> None:
+    """Show lists of regions in provided zones"""
     for i, zone in enumerate(zones, start=1):
         print()
         minx = miny = 9999
         maxx = maxy = -1
-        areas: set[str] = cast(set[str], set())
+        # noinspection PyTypeChecker
+        areas: set[str] = set()
         for x, y in zone:
-            rn = REGIONS_DB[x, y]["current_name"]
+            rn = regions_db[x, y]["current_name"]
             minx = min(x, minx)
             maxx = max(x, maxx)
             miny = min(y, miny)
             maxy = max(y, maxy)
             prefx = f"{i:2}) ({x},{y}) {rn}"
-            if arealist := REG_AREAS.get(rn):
+            if arealist := region_areas.get(rn):
                 areas.update(arealist)
-                if show_incorporated:
+                if show_all:
                     print(prefx, f"[{'; '.join(arealist)}]")
             else:
                 print(prefx, "### None")
@@ -78,8 +82,8 @@ def show_regions(zones: list[set[CoordType]], *, show_incorporated: bool = False
 
 
 def main(opts: Options) -> None:  # noqa: D103
-    REGIONS_DB.update(get_nonvoid_regions(Config.names))
-    valid_coords: set[CoordType] = set(REGIONS_DB) & get_bonnie_coords(Config.bonnie)
+    regsdb = get_nonvoid_regions(Config.names)
+    valid_coords: set[CoordType] = set(regsdb) & get_bonnie_coords(Config.bonnie)
 
     zones: list[set[CoordType]] = get_clumps(valid_coords)
 
@@ -101,7 +105,7 @@ def main(opts: Options) -> None:  # noqa: D103
     regions_areas = Path(Config.areas.dir) / Config.areas.region_areas_db
     yaml = ruamel.yaml.YAML(typ="safe")
     with regions_areas.open("rt") as fin:
-        REG_AREAS.update(yaml.load(fin))
+        regareas = yaml.load(fin)
 
     lens_and_count = [f"{k} ({len(v)})" for k, v in sorted(len_zones.items())]
     while True:
@@ -118,7 +122,7 @@ def main(opts: Options) -> None:  # noqa: D103
             print(f"\nNo clumps of size {inp}")
             continue
 
-        show_regions(len_zones[inp], show_incorporated=opts.all)
+        show_zone(len_zones[inp], regions_db=regsdb, region_areas=regareas, show_all=opts.all)
 
 
 if __name__ == "__main__":
