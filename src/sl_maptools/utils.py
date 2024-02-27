@@ -73,8 +73,7 @@ def handle_sigint(interrupt_flag: SupportsSet) -> None:
         print("\n### USER INTERRUPT ###")
         print("Cleaning up in-flight job (if any)...", flush=True)
 
-    orig_sigint = signal.getsignal(signal.SIGINT)
-    signal.signal(signal.SIGINT, _handler)
+    orig_sigint = signal.signal(signal.SIGINT, _handler)
     yield
     time.sleep(1)
     signal.signal(signal.SIGINT, orig_sigint)
