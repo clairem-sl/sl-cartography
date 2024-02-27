@@ -15,7 +15,7 @@ from sl_maptools.config import DefaultConfig as Config
 from sl_maptools.validator import get_bonnie_coords, get_nonvoid_regions
 
 if TYPE_CHECKING:
-    from sl_maptools import CoordType
+    from sl_maptools import CoordType, RegionsDBRecord3
 
 
 class Options(Protocol):
@@ -40,9 +40,46 @@ def _get_options() -> Options:
     return cast(Options, parser.parse_args())
 
 
+REGIONS_DB: dict[tuple[int, int], RegionsDBRecord3] = {}
+REG_AREAS: dict[str, list[str]] = {}
+
+
+def show_regions(zones: list[set[CoordType]], *, show_incorporated: bool = False) -> None:
+    for i, zone in enumerate(zones, start=1):
+        print()
+        minx = miny = 9999
+        maxx = maxy = -1
+        areas: set[str] = cast(set[str], set())
+        for x, y in zone:
+            rn = REGIONS_DB[x, y]["current_name"]
+            minx = min(x, minx)
+            maxx = max(x, maxx)
+            miny = min(y, miny)
+            maxy = max(y, maxy)
+            prefx = f"{i:2}) ({x},{y}) {rn}"
+            if arealist := REG_AREAS.get(rn):
+                areas.update(arealist)
+                if show_incorporated:
+                    print(prefx, f"[{'; '.join(arealist)}]")
+            else:
+                print(prefx, "### None")
+        print("-" * 10, end=" ")
+        bounds = [str(minx)]
+        if maxx != minx:
+            bounds.append(f"-{maxx}")
+        bounds.append(f"/{miny}")
+        if maxy != miny:
+            bounds.append(f"-{maxy}")
+        print("".join(bounds), end="")
+        if areas:
+            print(" =>", "; ".join(sorted(areas)))
+        else:
+            print()
+
+
 def main(opts: Options) -> None:  # noqa: D103
-    regsdb = get_nonvoid_regions(Config.names)
-    valid_coords: set[CoordType] = set(regsdb) & get_bonnie_coords(Config.bonnie)
+    REGIONS_DB.update(get_nonvoid_regions(Config.names))
+    valid_coords: set[CoordType] = set(REGIONS_DB) & get_bonnie_coords(Config.bonnie)
 
     zones: list[set[CoordType]] = get_clumps(valid_coords)
 
@@ -64,7 +101,7 @@ def main(opts: Options) -> None:  # noqa: D103
     regions_areas = Path(Config.areas.dir) / Config.areas.region_areas_db
     yaml = ruamel.yaml.YAML(typ="safe")
     with regions_areas.open("rt") as fin:
-        regareas = yaml.load(fin)
+        REG_AREAS.update(yaml.load(fin))
 
     lens_and_count = [f"{k} ({len(v)})" for k, v in sorted(len_zones.items())]
     while True:
@@ -81,36 +118,7 @@ def main(opts: Options) -> None:  # noqa: D103
             print(f"\nNo clumps of size {inp}")
             continue
 
-        for i, zone in enumerate(len_zones[inp], start=1):
-            print()
-            minx = miny = 9999
-            maxx = maxy = -1
-            areas: set[str] = set()
-            for x, y in zone:
-                rn = regsdb[x, y]["current_name"]
-                minx = min(x, minx)
-                maxx = max(x, maxx)
-                miny = min(y, miny)
-                maxy = max(y, maxy)
-                prefx = f"{i:2}) ({x},{y}) {rn}"
-                if arealist := regareas.get(rn):
-                    areas.update(arealist)
-                    if opts.all:
-                        print(prefx, f"[{'; '.join(arealist)}]")
-                else:
-                    print(prefx, "### None")
-            print("-" * 10, end=" ")
-            bounds = [str(minx)]
-            if maxx != minx:
-                bounds.append(f"-{maxx}")
-            bounds.append(f"/{miny}")
-            if maxy != miny:
-                bounds.append(f"-{maxy}")
-            print("".join(bounds), end="")
-            if areas:
-                print(" =>", "; ".join(sorted(areas)))
-            else:
-                print()
+        show_regions(len_zones[inp], show_incorporated=opts.all)
 
 
 if __name__ == "__main__":
