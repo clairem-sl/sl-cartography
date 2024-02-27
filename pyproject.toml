@@ -134,10 +134,11 @@ disable = [
     "unnecessary-ellipsis",
     "superfluous-parens",
     "global-statement",
+    "missing-module-docstring",
 ]
 
 [tool.pylint.format]
 max-line-length = 120
 
 [tool.pylint.design]
-max-args = 10
+max-args = 12
