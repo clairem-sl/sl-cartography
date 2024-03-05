@@ -85,11 +85,9 @@ def main(opts: Options) -> None:  # noqa: D103
         draw.rectangle(rect(one.coord), fill=color)
     print()
 
-    targ = Path(Config.nightlights.dir)
-    if opts.no_bonnie:
-        targ = targ / f"recent_nb_{datetime.now().astimezone():%Y-%m-%d}.png"
-    else:
-        targ = targ / f"recent_{datetime.now().astimezone():%Y-%m-%d}.png"
+    targ = Path(Config.nightlights.dir) / (
+        f"recent{'_nb' if opts.no_bonnie else ''}_{datetime.now().astimezone():%Y%m%d-%H%M}.png"
+    )
     canvas.save(targ, optimize=True)
     print(f"Saved to {targ}")
 
