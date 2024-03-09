@@ -974,7 +974,7 @@ FaeryCrossing:
 
 TheGroveEstate:
   includes:
-    - [1000, 1166, 1008, 1171]
+    - [1000, 1166, 1009, 1171]
 
 TheSignShopping:
   includes:
