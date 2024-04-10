@@ -690,7 +690,7 @@ CalasGaladhonPark:
 
 Caledon:
   includes:
-    - [905, 1021, 909, 1025]
+    - 905-909/1021-1025
 
 CDP_USU:
   includes:
