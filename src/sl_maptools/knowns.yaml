@@ -1045,6 +1045,10 @@ TheGroveEstate:
   includes:
     - [1000, 1166, 1009, 1171]
 
+TheHavens:
+  includes:
+    - 549/1059-1061
+
 TheSignShopping:
   includes:
     - 1043-1046/1136-1137
