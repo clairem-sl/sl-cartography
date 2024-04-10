@@ -896,6 +896,10 @@ MeisterbastlerKreis:
   includes:
     - 1105-1114/1382-1388
 
+MerfolkHaven:
+  includes:
+    - 729-731/1138-1139
+
 Mieville:
   includes:
     - [533, 1196, 537, 1202]
