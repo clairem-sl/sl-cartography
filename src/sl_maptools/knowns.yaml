@@ -704,9 +704,10 @@ CedarCreek:
   includes:
     - [849, 1342, 853, 1346]
 
-Chamberlain:
-  includes:
-    - 1126-1127/1242-1245
+# Gone during April 2024 update
+#Chamberlain:
+#  includes:
+#    - 1126-1127/1242-1245
 
 Coeur:
   includes:
