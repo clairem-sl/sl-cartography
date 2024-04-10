@@ -759,7 +759,7 @@ EtherealCity:
 
 Etopia:
   includes:
-    - [1136, 1315, 1137, 1317]
+    - [1136, 1314, 1138, 1317]
 
 FairChang:
   includes:
