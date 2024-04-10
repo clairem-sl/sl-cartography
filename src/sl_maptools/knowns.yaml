@@ -375,6 +375,8 @@ Heterocera:
 Horizons:
   includes:
     - [1804, 1200, 1813, 1210]
+  excludes:
+    - 1804-1813/1200
 
 Jeogeot:
   includes:
