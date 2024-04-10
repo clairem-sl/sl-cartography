@@ -581,6 +581,10 @@ A528:  # Virtual New York? Cannot get in
   includes:
     - 1153-1155/973-974
 
+AlbaIslands:
+  includes:
+    - 710-711/1032-1034
+
 AlphaBay:
   includes:
     - 665-668/1148-1150
