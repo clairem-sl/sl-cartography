@@ -639,7 +639,7 @@ Bauer:
 
 Baunatal:
   includes:
-    - [715, 922, 718, 924]
+    - 715-718/922-924
 
 # Gone 2024-01
 #BlackBay:
