@@ -431,7 +431,7 @@ Sansara:
     # Mem Build
     - 986-989/979-981
 
-SansaraSnowlands:
+Sansara-Snowlands:
   includes:
     - [1003, 979, 1018, 995]
 
@@ -439,7 +439,7 @@ Satori:
   includes:
     - [1099, 1005, 1134, 1047]
 
-SeaOfFables:
+Sansara-Sea_of_Fables:
   includes:
     - [1015, 992, 1023, 999]
 
