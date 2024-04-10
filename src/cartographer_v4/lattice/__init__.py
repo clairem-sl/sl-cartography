@@ -264,7 +264,7 @@ class LatticeMaker:
         print("  => ", end="")
         if overwrite or not overlay_p.exists():
             lattice, lattice_regions = self._make_overlay(
-                KNOWN_AREAS["areaname"],
+                KNOWN_AREAS[areaname],
                 validate=validate,
                 no_names=no_names,
                 no_coords=no_coords,
