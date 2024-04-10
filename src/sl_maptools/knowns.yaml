@@ -725,9 +725,9 @@ CrackDen:
   includes:
     - [742, 1389, 745, 1391]
 
-Cuddles:
+CuddlesHomes:
   includes:
-    - 874-876/1301-1304
+    - 874-877/1301-1304
 
 DANAANEstate:
   includes:
