@@ -485,6 +485,10 @@ PremiumSouth-South:
 #  excludes:
 #    - 1138-1139/1311-1317
 
+FantasyFaire:
+  includes:
+    - 535-539/725-730
+
 LindenEstateServices:
   includes:
     - [1025, 1014, 1031, 1016]
