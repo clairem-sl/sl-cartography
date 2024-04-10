@@ -226,11 +226,18 @@ Bellisseria-Forest:
 
 Bellisseria-Mediterranea:
   includes:
-    - 1049-1061/988-999
+    - 1047-1061/985-999
   excludes:
     # Parts of Ranchlands
-    - 1049/988-993
-    - 1050/988-990
+    - 1047-1048/985-994
+    - 1049/985-993
+    - 1050/985-990
+    - 1051-1055/985-987
+    - 1056/985-986
+    - 1057/985
+    # Parts of Stiltlands
+    - 1060-1061/985-988
+    - 1061/989
 
 Bellisseria-Newbrooke:
   includes:
