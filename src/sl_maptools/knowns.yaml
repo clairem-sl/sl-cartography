@@ -424,6 +424,12 @@ Nautilus:
 Sansara:
   includes:
     - [982, 978, 1038, 1012]
+  excludes:
+    # Bellisseria Ranchlands
+    - 1034-1038/994-1003
+    - 1038/993
+    # Mem Build
+    - 986-989/979-981
 
 SansaraSnowlands:
   includes:
