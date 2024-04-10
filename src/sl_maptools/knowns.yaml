@@ -528,6 +528,8 @@ Preflight:
 WelcomeHub:
   includes:
     - 1050-1052/973-978
+  excludes:
+    - 1050-1052/973
 
 # endregion
 
