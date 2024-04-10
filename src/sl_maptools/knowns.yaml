@@ -737,6 +737,10 @@ EdenFruitIslands:
   includes:
     - [459, 1700, 481, 1720]
 
+ElvenIsle:
+  includes:
+    - 980/1129-1134
+
 Enarah:
   includes:
     - 762-767/1143-1148
