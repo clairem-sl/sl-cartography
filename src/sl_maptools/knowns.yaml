@@ -478,9 +478,12 @@ PremiumSouth-South:
 
 # region # Special Linden Areas
 
-K13-Areas:
-  includes:
-    - 1135-1162/1300-1319
+# Identical to -- and a subset of -- ScienceCluster
+#K13-Areas:
+#  includes:
+#    - 1138-1162/1300-1317
+#  excludes:
+#    - 1138-1139/1311-1317
 
 LindenEstateServices:
   includes:
@@ -936,6 +939,8 @@ Schindleria:
 ScienceCluster:
   includes:
     - [1138, 1296, 1160, 1317]
+  excludes:
+    - 1138-1139/1311-1317
 
 SeabirdIslands:
   includes:
