@@ -1049,6 +1049,10 @@ TheHavens:
   includes:
     - 549/1059-1061
 
+TheJungle:
+  includes:
+    - 1187-1189/919-920
+
 TheSignShopping:
   includes:
     - 1043-1046/1136-1137
