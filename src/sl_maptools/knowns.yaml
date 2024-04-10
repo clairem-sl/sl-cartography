@@ -275,15 +275,23 @@ Bellisseria-OldBelli:
 
 Bellisseria-Ranchlands:
   includes:
-    - 1037-1057/978-997
+    - 1033-1057/978-1004
   excludes:
+    # Parts of Sansara
+    - 1033-1034/991-996
     # Parts of Welcome Hub
     - 1050-1052/978
     # Parts of Artsy Sims
-    - 1036-1038/982-986
-    # Mediterranean area
-    - 1051-1057/988-997
-    - 1049-1050/994-997
+    - 1033-1038/982-986
+    # Mediterranea area
+    - 1048-1057/995-999
+    - 1049-1057/994
+    - 1050-1057/991-993
+    - 1051-1057/988-990
+    - 1056-1057/987
+    - 1057/986
+    # Loose regions
+    - 1040/1004
 
 Bellisseria-Sakurasseria:
   includes:
