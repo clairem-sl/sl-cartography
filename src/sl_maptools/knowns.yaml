@@ -715,7 +715,7 @@ Coeur:
 
 CoralOcean:
   includes:
-    - [479, 1270, 485, 1280]
+    - [479, 1270, 487, 1280]
 
 CosyIsles:
   includes:
