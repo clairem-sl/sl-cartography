@@ -620,7 +620,7 @@ AussieShores:
 
 AzureIslands:
   includes:
-    - 1143-1155/1064-1073
+    - 1143-1155/1064-1074
   excludes:
     - 1143-1145/1070-1071
 
