@@ -749,6 +749,10 @@ EndOfTime:
   includes:
     - [500, 1027, 503, 1030]
 
+EroticaIslands:
+  includes:
+    - 941-945/1083-1086
+
 EtherealCity:
   includes:
     - 1054-1056/1161-1163
