@@ -6,6 +6,7 @@ import re
 import shutil
 import subprocess
 import sys
+from datetime import datetime
 from pathlib import Path
 from typing import Protocol, cast
 
@@ -56,19 +57,27 @@ def cwebp(src: Path, dst: Path) -> bool:  # noqa: D103
     return result.returncode == 0
 
 
-def exiftool(src: Path, dst: Path) -> bool:  # noqa: D103
+def exiftool(src: Path, dst: Path, creation_timestamp: datetime) -> bool:  # noqa: D103
     # exiftool -q -overwrite_original_in_place \
     #   -tagsFromFile {src} \
     #   -tagsFromFile {src} "-Comment>UserComment" \
     #   Yumix.composited.2024-04.webp
     # The "-tagsFromFile" need to be doubled, because the second one *only* copies *exactly* one tag.
     # The first one performs the mass-copying first.
+    tz_offset = round(creation_timestamp.tzinfo.utcoffset(None).seconds / 3600)
     args: list[str] = (
         f"exiftool -q -overwrite_original_in_place "
         f"-tagsFromFile {src} "
-        f"-tagsFromFile {src} -Comment>UserComment "
-        f"{dst}"
+        f"-tagsFromFile {src} -Comment>UserComment -CreationTime>DateTimeOriginal "
+        f"-TimeZoneOffset={tz_offset} -OffsetTimeOriginal={tz_offset}"
     ).split()
+    args.extend(
+        [
+            f"-CreateDate={creation_timestamp:%Y-%m-%d %H:%M:%S}",
+            f"-OffsetTimeDigitized={tz_offset}",
+            f"{dst}",
+        ]
+    )
     result = run_suppressed(args)
     return result.returncode == 0
 
@@ -129,20 +138,19 @@ def main(opts: _Options) -> None:  # noqa: D103
             if opts.no_jxl:
                 print("\n  ERROR: Failed creating .webp file!")
                 continue
-            _jxl_success = (
-                cjxl(src, targ_jxl, opts.jxl_q) and
-                (
-                    opts.no_verify_jxl or jxl_verify(targ_jxl, opts.jxl_decoder)
-                )
-            )
+            if _jxl_success := cjxl(src, targ_jxl, opts.jxl_q):
+                tstamp = datetime.now().astimezone()
+                _jxl_success &= opts.no_verify_jxl or jxl_verify(targ_jxl, opts.jxl_decoder)
             if not _jxl_success:
                 targ_jxl.unlink(missing_ok=True)
                 print("\n  ERROR: Failed creating .webp or .jxl files!")
                 continue
             targ = targ_jxl
         else:
+            tstamp = datetime.now().astimezone()
             targ = targ_webp
-        if not exiftool(src, targ):
+        # noinspection PyUnboundLocalVariable
+        if not exiftool(src, targ, tstamp):
             print("\n  ERROR: Failed copying tags!")
             continue
         print("done.")
