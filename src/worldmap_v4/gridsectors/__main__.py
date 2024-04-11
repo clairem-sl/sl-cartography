@@ -125,7 +125,7 @@ def main(opts: Options) -> None:  # noqa: D103
                 metadata = make_pnginfo(
                     title=f"Grid Sector {col_letter}{row} of Second Life",
                     description=f"Grid Sector Map of Grid {col_letter}{row} using Lanczos-resized actual map tiles",
-                    config=Config,
+                    info=Config.info,
                 )
                 out.save(gridsector_mapp, optimize=True, pnginfo=metadata)
                 print(" 💾 ", end="", flush=True)

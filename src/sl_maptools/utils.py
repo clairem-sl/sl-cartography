@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     from sl_maptools import SupportsSet
-    from sl_maptools.config import SLMapToolsConfig
+    from sl_maptools.config import InfoConfig
 
 
 def make_backup(the_file: Path, levels: int = 2) -> None:
@@ -83,35 +83,35 @@ def handle_sigint(interrupt_flag: SupportsSet) -> None:
     signal.signal(signal.SIGINT, orig_sigint)
 
 
-def make_pnginfo(title: str, description: str, config: SLMapToolsConfig) -> PngInfo:
+def make_pnginfo(title: str, description: str, info: InfoConfig) -> PngInfo:
     """Make metadata suitable for injection into a PNG file"""
-    author = config.info.author
+    author = info.author
 
-    info = PngInfo()
+    metadata = PngInfo()
 
     # Ref: https://www.w3.org/TR/png/#11keywords
 
     # Defined keywords
 
-    info.add_itxt(key="Title", value=title)
-    info.add_itxt(key="Author", value=author)
-    info.add_itxt(key="Description", value=description, lang="en")
+    metadata.add_itxt(key="Title", value=title)
+    metadata.add_itxt(key="Author", value=author)
+    metadata.add_itxt(key="Description", value=description, lang="en")
     nao = datetime.now().astimezone()
-    info.add_itxt(key="Copyright", value=f"©{nao:%Y}, {author}", lang="en")
-    info.add_itxt(key="Creation Time", value=f"{nao:%Y-%m-%dT%H:%M:%S%z}")
-    info.add_itxt(key="Software", value="sl-cartography")
-    info.add_itxt(key="Source", value="Second Life")
-    info.add_itxt(key="Comment", value=config.info.comment)
+    metadata.add_itxt(key="Copyright", value=f"©{nao:%Y}, {author}", lang="en")
+    metadata.add_itxt(key="Creation Time", value=f"{nao:%Y-%m-%dT%H:%M:%S%z}")
+    metadata.add_itxt(key="Software", value="sl-cartography")
+    metadata.add_itxt(key="Source", value="Second Life")
+    metadata.add_itxt(key="Comment", value=info.comment)
 
     # Custom keywords
 
     # Apparently, exiftool uses the custom "License" keyword as the base for creating the
     # EXIF XMP-cc:License field, and it expects a URI/URL there.
     # So we disable the older code but keep it here as documentation
-    # info.add_itxt(key="License", value=config.info.license, lang="en")
-    # info.add_itxt(key="License URL", value=config.info.license_url)
-    info.add_itxt(key="License", value=config.info.license_url)
+    # info.add_itxt(key="License", value=info.license, lang="en")
+    # info.add_itxt(key="License URL", value=info.license_url)
+    metadata.add_itxt(key="License", value=info.license_url)
 
-    info.add_itxt(key="SPDX-License-Identifier", value=config.info.license_spdx)
+    metadata.add_itxt(key="SPDX-License-Identifier", value=info.license_spdx)
 
-    return info
+    return metadata

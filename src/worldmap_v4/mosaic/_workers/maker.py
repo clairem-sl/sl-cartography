@@ -96,7 +96,7 @@ def make_mosaic(params: MakerParams) -> None:
                     f"Mosaic Worldmap of Second Life, each region reduced to {sz}x{sz} tiles representing "
                     f"the region's dominant colors"
                 ),
-                config=Config,
+                info=Config.info,
             )
             targ = params.outdir / f"worldmap4_mosaic_{sz}x{sz}.png"
             canvas.save(targ, optimize=True, pnginfo=metadata)

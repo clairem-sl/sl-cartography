@@ -273,7 +273,7 @@ def main(opts: Options) -> None:  # noqa: D103
     metadata = make_pnginfo(
         title="Second Life Nightlights Worldmap",
         description=f"'Nightlights Worldap' of Second Life, using the {opts.tiler} tiler strategy",
-        config=Config,
+        info=Config.info,
     )
     canvas.save(targ, optimize=True, pnginfo=metadata)
 

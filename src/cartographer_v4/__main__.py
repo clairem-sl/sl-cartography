@@ -190,7 +190,7 @@ def make_map(
             canvas.paste(img, (canv_x, canv_y))
 
     # print(targ)
-    info = make_pnginfo(area.name, f"High-resolution map of {area.name}", Config) if add_info else None
+    info = make_pnginfo(area.name, f"High-resolution map of {area.name}", Config.info) if add_info else None
     canvas.save(targ, optimize=True, pnginfo=info)
 
     return c

@@ -181,7 +181,7 @@ def main(opts: Options) -> None:  # noqa: D103
         metadata = make_pnginfo(
             title=f"Grid Sectors of Second Life {opts.source_type.upper()}",
             description=f"Second Life Worldmap divided into grid sectors, based on {opts.source_type.upper()} Worldmap",
-            config=Config,
+            info=Config.info,
         )
         canvas.save(targ_p, optimize=True, pnginfo=metadata)
         print(f" {targ_p}", flush=True)
