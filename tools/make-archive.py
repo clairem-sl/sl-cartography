@@ -18,11 +18,15 @@ ROOT_DIR = Path(r"C:\Cache\SL-Carto\AreaMaps")
 class _Options(Protocol):
     tag: str
     overwrite: bool
+    no_jxl: bool
+    jxl_q: int
 
 
 def _get_options() -> _Options:
     parser = argparse.ArgumentParser()
     parser.add_argument("--overwrite", action="store_true", default=False)
+    parser.add_argument("--no-jxl", action="store_true", default=False)
+    parser.add_argument("--jxl-q", type=int, default=85)
     parser.add_argument("tag", help="Tag in YYYY-MM format, optionally with one additional character")
     opts = cast(_Options, parser.parse_args())
     if not RE_YM.match(opts.tag):
@@ -53,12 +57,22 @@ def exiftool(src: Path, dst: Path) -> bool:  # noqa: D103
     return result.returncode == 0
 
 
+def cjxl(src: Path, dst: Path, q: int) -> bool:  # noqa: D103
+    # cjxl.exe .\Bellisseria_ALL.png .\Bellisseria_ALL.2024-04.jxl -q 85
+    args: list[str] = f"cjxl.exe {src} {dst} -q {q}".split()
+    result = run_suppressed(args)
+    return result.returncode == 0
+
+
 def main(opts: _Options) -> None:  # noqa: D103
     if not ROOT_DIR.exists() or not ROOT_DIR.is_dir():
         print("ERROR: ROOT_DIR not found", file=sys.stderr)
         print("Have you adjusted ROOT_DIR to match config.toml?", file=sys.stderr)
         sys.exit(1)
-    for cmd in ("cwebp", "exiftool"):
+    tools = ["cwebp", "exiftool"]
+    if not opts.no_jxl:
+        tools.append("cjxl")
+    for cmd in tools:
         if shutil.which(cmd) is None:
             print(f"ERROR: Require '{cmd}' in PATH to run!", file=sys.stderr)
             sys.exit(1)
@@ -73,15 +87,26 @@ def main(opts: _Options) -> None:  # noqa: D103
             print("\n  WARNING: More than 1 .composited.png")
             continue
         src = compositeds[0]
-        targ = src.with_suffix(f".{opts.tag}.webp")
-        if targ.exists():
+        targ_webp = src.with_suffix(f".{opts.tag}.webp")
+        targ_jxl = targ_webp.with_suffix(".jxl")
+        if targ_webp.exists() or targ_jxl.exists():
             if not opts.overwrite:
                 print("Already have an archive and --overwrite not specified")
                 continue
-            targ.unlink()
-        if not cwebp(src, targ):
-            print("\n  ERROR: Failed creating .webp file!")
-            continue
+            targ_webp.unlink(missing_ok=True)
+            targ_jxl.unlink(missing_ok=True)
+        if not cwebp(src, targ_webp):
+            targ_webp.unlink(missing_ok=True)
+            if opts.no_jxl:
+                print("\n  ERROR: Failed creating .webp file!")
+                continue
+            if not cjxl(src, targ_jxl, opts.jxl_q):
+                targ_jxl.unlink(missing_ok=True)
+                print("\n  ERROR: Failed creating .webp or .jxl files!")
+                continue
+            targ = targ_jxl
+        else:
+            targ = targ_webp
         if not exiftool(src, targ):
             print("\n  ERROR: Failed copying tags!")
             continue
