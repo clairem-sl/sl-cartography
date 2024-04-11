@@ -14,6 +14,8 @@ RE_YM = re.compile(r"\d{4}-\d{2}.?")
 # Match this with the areas.dir in config.toml
 ROOT_DIR = Path(r"C:\Cache\SL-Carto\AreaMaps")
 
+_JXL_DECODERS = ["djxl", "jxl-oxide"]
+
 
 class _Options(Protocol):
     tag: str
@@ -21,6 +23,7 @@ class _Options(Protocol):
     no_jxl: bool
     jxl_q: int
     no_verify_jxl: bool
+    jxl_decoder: str
 
 
 def _get_options() -> _Options:
@@ -29,6 +32,7 @@ def _get_options() -> _Options:
     parser.add_argument("--no-jxl", action="store_true", default=False)
     parser.add_argument("--jxl-q", type=int, default=85)
     parser.add_argument("--no-verify-jxl", action="store_true", default=False)
+    parser.add_argument("--jxl-decoder", type=str, choices=_JXL_DECODERS, default="djxl")
     parser.add_argument("tag", help="Tag in YYYY-MM format, optionally with one additional character")
     opts = cast(_Options, parser.parse_args())
     if not RE_YM.match(opts.tag):
@@ -69,14 +73,21 @@ def exiftool(src: Path, dst: Path) -> bool:  # noqa: D103
     return result.returncode == 0
 
 
-def cjxl(src: Path, dst: Path, q: int, verify: bool = True) -> bool:  # noqa: D103
+def jxl_verify(target: Path, decoder: str) -> bool:  # noqa: D103
+    if decoder == "djxl":
+        args = f"djxl {target} - --output_format ppm".split()
+    elif decoder == "jxl-oxide":
+        args = f"jxl-oxide decode {target}".split()
+    else:
+        raise NotImplementedError(f"JPEG-XL decoder '{decoder}' is not supported")
+    result = run_suppressed(args)
+    return result.returncode == 0
+
+
+def cjxl(src: Path, dst: Path, q: int) -> bool:  # noqa: D103
     # cjxl.exe .\Bellisseria_ALL.png .\Bellisseria_ALL.2024-04.jxl -q 85
     args: list[str] = f"cjxl {src} {dst} -q {q}".split()
     result = run_suppressed(args)
-    if result.returncode == 0 and verify:
-        # Extract to stdout (will be suppressed) just to check if decoding is successful
-        args = f"djxl {dst} - --output_format ppm".split()
-        result = run_suppressed(args)
     return result.returncode == 0
 
 
@@ -89,7 +100,7 @@ def main(opts: _Options) -> None:  # noqa: D103
     if not opts.no_jxl:
         tools.append("cjxl")
         if not opts.no_verify_jxl:
-            tools.append("djxl")
+            tools.append(opts.jxl_decoder)
     for cmd in tools:
         if shutil.which(cmd) is None:
             print(f"ERROR: Require '{cmd}' in PATH to run!", file=sys.stderr)
@@ -118,7 +129,13 @@ def main(opts: _Options) -> None:  # noqa: D103
             if opts.no_jxl:
                 print("\n  ERROR: Failed creating .webp file!")
                 continue
-            if not cjxl(src, targ_jxl, opts.jxl_q, not opts.no_verify_jxl):
+            _jxl_success = (
+                cjxl(src, targ_jxl, opts.jxl_q) and
+                (
+                    opts.no_verify_jxl or jxl_verify(targ_jxl, opts.jxl_decoder)
+                )
+            )
+            if not _jxl_success:
                 targ_jxl.unlink(missing_ok=True)
                 print("\n  ERROR: Failed creating .webp or .jxl files!")
                 continue
