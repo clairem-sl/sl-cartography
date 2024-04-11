@@ -53,8 +53,18 @@ def cwebp(src: Path, dst: Path) -> bool:  # noqa: D103
 
 
 def exiftool(src: Path, dst: Path) -> bool:  # noqa: D103
-    # exiftool -q -overwrite_original_in_place -tagsFromFile "$ff" -Comment">"UserComment "$targ"
-    args: list[str] = f"exiftool -q -overwrite_original_in_place -tagsFromFile {src} -Comment>UserComment {dst}".split()
+    # exiftool -q -overwrite_original_in_place \
+    #   -tagsFromFile {src} \
+    #   -tagsFromFile {src} "-Comment>UserComment" \
+    #   Yumix.composited.2024-04.webp
+    # The "-tagsFromFile" need to be doubled, because the second one *only* copies *exactly* one tag.
+    # The first one performs the mass-copying first.
+    args: list[str] = (
+        f"exiftool -q -overwrite_original_in_place "
+        f"-tagsFromFile {src} "
+        f"-tagsFromFile {src} -Comment>UserComment "
+        f"{dst}"
+    ).split()
     result = run_suppressed(args)
     return result.returncode == 0
 
