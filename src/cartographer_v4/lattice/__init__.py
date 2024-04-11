@@ -308,7 +308,7 @@ class LatticeMaker:
                             f"High-res Composited Map of {areaname}, composited from the area's lattice on top of "
                             f"the unadorned high-res map of the area itself"
                         ),
-                        Config,
+                        Config.info,
                     )
                     if add_info
                     else None
