@@ -103,9 +103,14 @@ def make_pnginfo(title: str, description: str, config: SLMapToolsConfig) -> PngI
     info.add_itxt(key="Comment", value=config.info.comment)
 
     # Custom keywords
+
+    # Apparently, exiftool uses the custom "License" keyword as the base for creating the
+    # EXIF XMP-cc:License field, and it expects a URI/URL there.
+    # So we disable the older code but keep it here as documentation
     # info.add_itxt(key="License", value=config.info.license, lang="en")
     # info.add_itxt(key="License URL", value=config.info.license_url)
     info.add_itxt(key="License", value=config.info.license_url)
+
     info.add_itxt(key="SPDX-License-Identifier", value=config.info.license_spdx)
 
     return info
