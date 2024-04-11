@@ -92,6 +92,7 @@ def make_pnginfo(title: str, description: str, config: SLMapToolsConfig) -> PngI
     # Ref: https://www.w3.org/TR/png/#11keywords
 
     # Defined keywords
+
     info.add_itxt(key="Title", value=title)
     info.add_itxt(key="Author", value=author)
     info.add_itxt(key="Description", value=description, lang="en")
