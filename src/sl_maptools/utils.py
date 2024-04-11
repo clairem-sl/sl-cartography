@@ -7,12 +7,16 @@ import shutil
 import signal
 import time
 from contextlib import contextmanager
+from datetime import datetime
 from typing import IO, TYPE_CHECKING
+
+from PIL.PngImagePlugin import PngInfo
 
 if TYPE_CHECKING:
     from pathlib import Path
 
     from sl_maptools import SupportsSet
+    from sl_maptools.config import SLMapToolsConfig
 
 
 def make_backup(the_file: Path, levels: int = 2) -> None:
@@ -77,3 +81,31 @@ def handle_sigint(interrupt_flag: SupportsSet) -> None:
     yield
     time.sleep(1)
     signal.signal(signal.SIGINT, orig_sigint)
+
+
+def make_pnginfo(title: str, description: str, config: SLMapToolsConfig) -> PngInfo:
+    """Make metadata suitable for injection into a PNG file"""
+    author = config.info.author
+
+    info = PngInfo()
+
+    # Ref: https://www.w3.org/TR/png/#11keywords
+
+    # Defined keywords
+    info.add_itxt(key="Title", value=title)
+    info.add_itxt(key="Author", value=author)
+    info.add_itxt(key="Description", value=description, lang="en")
+    nao = datetime.now().astimezone()
+    info.add_itxt(key="Copyright", value=f"©{nao:%Y}, {author}", lang="en")
+    info.add_itxt(key="Creation Time", value=f"{nao:%Y-%m-%dT%H:%M:%S%z}")
+    info.add_itxt(key="Software", value="sl-cartography")
+    info.add_itxt(key="Source", value="Second Life")
+    info.add_itxt(key="Comment", value=config.info.comment)
+
+    # Custom keywords
+    # info.add_itxt(key="License", value=config.info.license, lang="en")
+    # info.add_itxt(key="License URL", value=config.info.license_url)
+    info.add_itxt(key="License", value=config.info.license_url)
+    info.add_itxt(key="SPDX-License-Identifier", value=config.info.license_spdx)
+
+    return info

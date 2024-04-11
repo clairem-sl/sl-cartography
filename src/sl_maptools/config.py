@@ -156,6 +156,18 @@ class AnalysisConfig(Protocol):
     """Pickle file containing the result of clump analysis, containing a list of sets of coordinates"""
 
 
+class InfoConfig(Protocol):
+    """Attributes for the [info] section of config.toml"""
+
+    author: str
+    """Name of author"""
+    comment: str
+    """Any free-text comment; usually "SPDX-License-Identifier:" followed by an SPDX license code"""
+    license: str
+    license_url: str
+    license_spdx: str
+
+
 class SLMapToolsConfig(Protocol):
     """Representation of configuration in config.toml"""
 
@@ -169,6 +181,7 @@ class SLMapToolsConfig(Protocol):
     bonnie: BonnieConfig
     analysis: AnalysisConfig
     """Configuration for Analysis modules"""
+    info: InfoConfig
 
 
 class ConfigReader(SLMapToolsConfig):
