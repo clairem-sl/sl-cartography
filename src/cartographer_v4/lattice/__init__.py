@@ -10,6 +10,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 from sl_maptools.config import DefaultConfig as Config, FontSpec
 from sl_maptools.knowns import KNOWN_AREAS
+from sl_maptools.utils import make_pnginfo
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -238,6 +239,8 @@ class LatticeMaker:
         no_names: bool = False,
         no_coords: bool = False,
         save_names: bool = True,
+        *,
+        add_info: bool = True,
     ) -> None:
         """
         Actually create the region lattice on top of provided area map
@@ -249,6 +252,7 @@ class LatticeMaker:
         :param no_names: If True, does not draw the region names
         :param no_coords: If True, does not draw the coordinates
         :param save_names: If True, save a list of regions in the lattice into a text file
+        :param add_info: If True, add metadata
         """
         if out_dir is None:
             out_dir = self.out_dir or areamap.parent
@@ -269,7 +273,8 @@ class LatticeMaker:
                 no_names=no_names,
                 no_coords=no_coords,
             )
-            lattice.save(overlay_p)
+            info = make_pnginfo(f"{areaname}-Lattice", f"Lattice of {areaname}", Config) if add_info else None
+            lattice.save(overlay_p, optimize=True, pnginfo=info)
         print(f"{overlay_p}\n  => ", end="", flush=True)
 
         if save_names and lattice_regions:
@@ -288,5 +293,17 @@ class LatticeMaker:
             print("💠 ", end="")
             with Image.open(areamap) as img:
                 out = Image.alpha_composite(img, lattice)
-                out.save(composite_p)
+                info = (
+                    make_pnginfo(
+                        f"{areaname}-Composited",
+                        (
+                            f"High-res Composited Map of {areaname}, composited from the area's lattice on top of "
+                            f"the unadorned high-res map of the area itself"
+                        ),
+                        Config,
+                    )
+                    if add_info
+                    else None
+                )
+                out.save(composite_p, optimize=True, pnginfo=info)
         print(f"{composite_p}", end="", flush=True)

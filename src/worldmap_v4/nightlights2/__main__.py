@@ -12,7 +12,7 @@ from PIL import Image, ImageDraw
 
 from sl_maptools import COORD_RANGE, MapCoord, inventorize_maps_all
 from sl_maptools.config import DefaultConfig as Config
-from sl_maptools.utils import make_backup
+from sl_maptools.utils import make_backup, make_pnginfo
 from sl_maptools.validator import get_bonnie_coords, get_nonvoid_regions
 
 TilerClass: type | None = None
@@ -270,7 +270,12 @@ def main(opts: Options) -> None:  # noqa: D103
 
     print("\nSaving nightlights map ... ", end="", flush=True)
     targ.parent.mkdir(parents=True, exist_ok=True)
-    canvas.save(targ, optimize=True)
+    metadata = make_pnginfo(
+        title="Second Life Nightlights Worldmap",
+        description=f"'Nightlights Worldap' of Second Life, using the {opts.tiler} tiler strategy",
+        config=Config,
+    )
+    canvas.save(targ, optimize=True, pnginfo=metadata)
 
     print(f"\nNightlights mosaic saved to {targ}")
 

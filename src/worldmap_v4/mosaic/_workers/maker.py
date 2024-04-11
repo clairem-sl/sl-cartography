@@ -7,14 +7,16 @@ from __future__ import annotations
 
 import multiprocessing as MP
 import signal
+from collections.abc import MutableMapping
 from pathlib import Path
-
-from typing import Final, MutableMapping, NamedTuple
+from typing import Final, NamedTuple
 
 from PIL import Image
 
 from sl_maptools import CoordType
+from sl_maptools.config import DefaultConfig as Config
 from sl_maptools.image_processing import RGBTuple
+from sl_maptools.utils import make_pnginfo
 
 FASCIA_PIXELS: Final[dict[int, int]] = {
     1: 3,
@@ -88,7 +90,16 @@ def make_mosaic(params: MakerParams) -> None:
                         sy = 0
                         sx += fpx
             _state(f"save_{sz}")
-            canvas.save(params.outdir / f"worldmap4_mosaic_{sz}x{sz}.png")
+            metadata = make_pnginfo(
+                title=f"Second Life Mosaic Worldmap {sz}x{sz}",
+                description=(
+                    f"Mosaic Worldmap of Second Life, each region reduced to {sz}x{sz} tiles representing "
+                    f"the region's dominant colors"
+                ),
+                config=Config,
+            )
+            targ = params.outdir / f"worldmap4_mosaic_{sz}x{sz}.png"
+            canvas.save(targ, optimize=True, pnginfo=metadata)
             canvas.close()
             print(f"💾{sz}", end="", flush=True)
 

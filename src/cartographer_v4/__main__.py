@@ -25,7 +25,7 @@ from sl_maptools import (
 )
 from sl_maptools.config import DefaultConfig as Config
 from sl_maptools.knowns import KNOWN_AREAS
-from sl_maptools.utils import handle_sigint
+from sl_maptools.utils import handle_sigint, make_pnginfo
 from sl_maptools.validator import get_bonnie_coords, get_nonvoid_regions
 
 AbortRequested: SupportsSet = Event()
@@ -154,6 +154,8 @@ def make_map(
     map_tiles: dict[CoordType, Path],
     validation_set: set[CoordType],
     exclusion_method: ExclusionMethod,
+    *,
+    add_info: bool = True,
 ) -> int:
     """
     Actually create the map file
@@ -188,7 +190,9 @@ def make_map(
             canvas.paste(img, (canv_x, canv_y))
 
     # print(targ)
-    canvas.save(targ)
+    info = make_pnginfo(area.name, f"High-resolution map of {area.name}", Config) if add_info else None
+    canvas.save(targ, optimize=True, pnginfo=info)
+
     return c
 
 

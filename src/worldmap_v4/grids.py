@@ -12,6 +12,8 @@ from typing import Final, Literal, Protocol, cast
 from PIL import Image, ImageDraw, ImageFont
 
 from sl_maptools import COORD_RANGE
+from sl_maptools.config import DefaultConfig as Config
+from sl_maptools.utils import make_pnginfo
 
 FONT_NAME = r"C:\Games\KokuaViewer\fonts\Roboto-Bold.ttf"
 GRID_THICKNESS = 5
@@ -176,7 +178,12 @@ def main(opts: Options) -> None:  # noqa: D103
         print("  Saving ...", end="", flush=True)
         targ_p = gridsector_dir / f"WorldGridSectors_{opts.source_type}_{variant}_{ts}.png"
         targ_p.unlink(missing_ok=True)
-        canvas.save(targ_p)
+        metadata = make_pnginfo(
+            title=f"Grid Sectors of Second Life {opts.source_type.upper()}",
+            description=f"Second Life Worldmap divided into grid sectors, based on {opts.source_type.upper()} Worldmap",
+            config=Config,
+        )
+        canvas.save(targ_p, optimize=True, pnginfo=metadata)
         print(f" {targ_p}", flush=True)
 
 

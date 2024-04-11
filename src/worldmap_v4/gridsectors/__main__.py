@@ -15,6 +15,7 @@ from PIL.Image import Resampling
 
 from sl_maptools import inventorize_maps_latest
 from sl_maptools.config import DefaultConfig as Config
+from sl_maptools.utils import make_pnginfo
 from sl_maptools.validator import get_bonnie_coords
 
 if TYPE_CHECKING:
@@ -121,7 +122,12 @@ def main(opts: Options) -> None:  # noqa: D103
                         immap.thumbnail(tile_box, resample=Resampling.LANCZOS)
                         grid_canvas.paste(immap, (cx, cy))
                 out = Image.alpha_composite(grid_canvas, gridsec_overlay)
-                out.save(gridsector_mapp)
+                metadata = make_pnginfo(
+                    title=f"Grid Sector {col_letter}{row} of Second Life",
+                    description=f"Grid Sector Map of Grid {col_letter}{row} using Lanczos-resized actual map tiles",
+                    config=Config,
+                )
+                out.save(gridsector_mapp, optimize=True, pnginfo=metadata)
                 print(" 💾 ", end="", flush=True)
             print(f"{gridsector_mapp}")
 
