@@ -273,7 +273,15 @@ class LatticeMaker:
                 no_names=no_names,
                 no_coords=no_coords,
             )
-            info = make_pnginfo(f"{areaname}-Lattice", f"Lattice of {areaname}", Config) if add_info else None
+            info = (
+                make_pnginfo(
+                    f"{areaname}-LatticeOverlay",
+                    f"Lattice overlay for {areaname}, indicating region names and their respective coords",
+                    Config,
+                )
+                if add_info
+                else None
+            )
             lattice.save(overlay_p, optimize=True, pnginfo=info)
         print(f"{overlay_p}\n  => ", end="", flush=True)
 
