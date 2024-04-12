@@ -703,7 +703,7 @@ CDP_USU:
   includes:
     - 539-542/1008-1010
 
-CDS:
+CDS-Etopia:
   includes:
     - [1135, 1311, 1139, 1317]
 
@@ -764,9 +764,10 @@ EtherealCity:
   includes:
     - 1054-1056/1161-1163
 
-Etopia:
-  includes:
-    - [1136, 1314, 1138, 1317]
+# Merged with CDS on April 2024 Edition
+#Etopia:
+#  includes:
+#    - [1136, 1314, 1138, 1317]
 
 FairChang:
   includes:
