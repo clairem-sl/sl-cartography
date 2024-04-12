@@ -185,6 +185,7 @@ def main(opts: OptionsType) -> None:  # noqa: D103
             MP.Pool(maker_workers, initializer=make_mosaic, initargs=(make_args,)) as pool_maker,
         ):
             try:
+                make_recently_triggered = False
                 for i, rslt in enumerate(pool_calc.imap_unordered(calc_domc, mapfiles, chunksize=10), start=1):
                     if rslt is None:
                         continue
