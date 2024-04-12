@@ -39,7 +39,7 @@ def main() -> None:  # noqa: D103
         regions_areas[a] = sorted(set(r_a[a]))
     print(f"{len(regions_areas):_} regions have been mapped")
 
-    targ = LIST_PATH / "regions_areas.yaml"
+    targ = LIST_PATH / Config.areas.region_areas_db
     yaml = YAML(typ="safe")
     yaml.Representer = RoundTripRepresenter
     yaml.default_flow_style = False
