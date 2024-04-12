@@ -1101,7 +1101,7 @@ Uhre:
 
 UnityMaxim:
   includes:
-    -   1060-1062/1325-1328
+    - 1060-1062/1325-1328
 
 VegvisirCollective:
   includes:
