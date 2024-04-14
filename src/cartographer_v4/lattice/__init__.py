@@ -277,7 +277,7 @@ class LatticeMaker:
                 make_pnginfo(
                     f"{areaname}-LatticeOverlay",
                     f"Lattice overlay for {areaname}, indicating region names and their respective coords",
-                    Config,
+                    Config.info,
                 )
                 if add_info
                 else None
