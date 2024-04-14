@@ -961,6 +961,10 @@ Rosehaven:
   includes:
     - [906, 1029, 908, 1034]
 
+SaltyGoat:
+  includes:
+    - 921-923/1013-1016
+
 Schindleria:
   includes:
     - [527, 1027, 529, 1029]
