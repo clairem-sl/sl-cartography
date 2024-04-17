@@ -143,6 +143,7 @@ class BonnieConfig(Protocol):
 
     dir: str
     db_regions: str
+    db_details: str
     url: str
     maxage: int
 
