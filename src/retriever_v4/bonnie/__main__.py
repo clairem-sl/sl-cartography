@@ -28,10 +28,6 @@ HTTP2: Final[bool] = False
 ACCEPTABLE_STATUSCODES: Final[set[int]] = {200, 403}
 
 
-BONNIE_RAW = "BonnieRaw.pkl"
-BONNIE_BY_COORD = "BonnieByCoord.pkl"
-BONNIE_DB_PATH = Path(Config.names.dir) / "BonnieDetailsByCoord.yaml"
-
 AbortRequested = asyncio.Event()
 
 
@@ -241,9 +237,11 @@ def main() -> None:  # noqa: D103
     yaml = YAML(typ="safe")
     yaml.Representer = RoundTripRepresenter
 
-    if BONNIE_DB_PATH.exists():
-        print(f"Reading existing BonnieDB {BONNIE_DB_PATH} ...", end="", flush=True)
-        with BONNIE_DB_PATH.open("rt") as fin:
+    bonnie_details_path = Path(Config.bonnie.dir) / Config.bonnie.db_details
+
+    if bonnie_details_path.exists():
+        print(f"Reading existing BonnieDB {bonnie_details_path} ...", end="", flush=True)
+        with bonnie_details_path.open("rt") as fin:
             _bdb = yaml.load(fin)
         if isinstance(_bdb, dict):
             print(f" {len(_bdb)} records read.")
@@ -257,7 +255,7 @@ def main() -> None:  # noqa: D103
     time.sleep(3)
 
     try:
-        make_backup(BONNIE_DB_PATH)
+        make_backup(bonnie_details_path)
         AbortRequested.clear()
         asyncio.run(amain(-1, 100, 0))
     except asyncio.CancelledError:
@@ -270,6 +268,8 @@ def main() -> None:  # noqa: D103
         with BONNIE_DB_PATH.open("wt") as fout:
             yaml.dump(BonnieDB, fout)
         print(f" saved to {BONNIE_DB_PATH}", flush=True)
+        with bonnie_details_path.open("wt") as fout:
+        print(f" saved to {bonnie_details_path}", flush=True)
 
 
 if __name__ == "__main__":
