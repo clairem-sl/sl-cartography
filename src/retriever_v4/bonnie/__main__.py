@@ -19,6 +19,7 @@ from sl_maptools import CoordType, MapCoord
 from sl_maptools.config import DefaultConfig as Config
 from sl_maptools.fetchers.bonnie import BoundedBonnieFetcher, CookedBonnieResult
 from sl_maptools.utils import make_backup
+from sl_maptools.validator import get_bonnie_coords
 
 if TYPE_CHECKING:
     from collections.abc import Generator
@@ -84,21 +85,11 @@ BonnieDB: dict[CoordType, BonnieMeta] = {}
 class BonnieProgress:
     """Tracks progress of BonnieBots retrieval"""
 
-    def __init__(
-        self,
-        bonnie_regions_url: str = "https://www.bonniebots.com/static-api/regions/index.json",
-    ):
-        """
-        :param bonnie_regions_url: URL of BonnieBots DB (in JSON format)
-        """
-        with httpx.Client() as client:
-            resp_all = client.get(bonnie_regions_url)
-            self._all_data: BonnieRegionsAll = resp_all.json()
-
+    def __init__(self):
+        """No parameters"""
         at_end: set[tuple[datetime, CoordType]] = set()
         at_beginning: set[CoordType] = set()
-        for reg in self._all_data["regions"]:
-            co: CoordType = reg["region_x"], reg["region_y"]
+        for co in get_bonnie_coords(Config.bonnie):
             # Prioritize coordinates not yet in DB
             if co not in BonnieDB:
                 at_beginning.add(co)
@@ -110,11 +101,6 @@ class BonnieProgress:
         self._to_fetch.extend(co for _, co in sorted(at_end))
 
         self._outstanding: set[CoordType] = set()
-
-    @property
-    def all_data(self) -> BonnieRegionsAll:
-        """The whole BonnieBots DB"""
-        return self._all_data
 
     @property
     def next_coordinate(self) -> CoordType:
@@ -264,11 +250,9 @@ def main() -> None:  # noqa: D103
         print("User Interrupted")
     finally:
         # pprint(BonnieDB)
-        print(f"{len(BonnieDB)} regions in total now. Saving ...", end="", flush=True)
-        with BONNIE_DB_PATH.open("wt") as fout:
-            yaml.dump(BonnieDB, fout)
-        print(f" saved to {BONNIE_DB_PATH}", flush=True)
+        print(f"{len(BonnieDetailsDB)} regions in total now. Saving ...", end="", flush=True)
         with bonnie_details_path.open("wt") as fout:
+            yaml.dump(BonnieDetailsDB, fout)
         print(f" saved to {bonnie_details_path}", flush=True)
 
 
