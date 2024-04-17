@@ -132,7 +132,7 @@ class BonnieProgress:
 
     def save(self) -> NoReturn:
         """Save progress to file -- NOT IMPLEMENTED"""
-        raise NotImplementedError("This method is not implemented")
+        pass
 
 
 Progress: ProgressInterface
