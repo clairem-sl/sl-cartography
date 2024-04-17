@@ -224,6 +224,7 @@ async def amain(duration: int, min_batch_size: int, abort_low_rps: int) -> None:
             min_batch_size=min_batch_size,
             abort_low_rps=abort_low_rps,
             start_batch_size=300,
+            max_outstanding=1000,
         )
 
 

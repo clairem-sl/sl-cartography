@@ -232,6 +232,7 @@ async def dispatch_fetcher(
     batch_wait: float = 5.0,
     min_batch_size: int = 0,
     abort_low_rps: int = -1,
+    max_outstanding: int | None = None,
 ) -> None:
     """Asynchronously dispatch jobs"""
     # pylint: disable=broad-exception-caught
@@ -314,7 +315,10 @@ async def dispatch_fetcher(
             print("(!A)", end=" ")
             continue
         if (2 * len(tasks)) < batch_size:
-            new_tasks = {taskmaker(coord) async for coord in progress.abatch(batch_size)}
+            to_add = (
+                batch_size if max_outstanding is None else min(max_outstanding - len(tasks), batch_size + len(tasks))
+            )
+            new_tasks = {taskmaker(coord) async for coord in progress.abatch(to_add)}
             print(f"(+{len(new_tasks)})", end=" ")
             tasks.update(new_tasks)
     if abort_event.is_set():
