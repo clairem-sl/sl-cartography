@@ -79,7 +79,7 @@ class BonnieMeta(TypedDict):
     diff: dict[datetime, dict[str, Any]]
 
 
-BonnieDB: dict[CoordType, BonnieMeta] = {}
+BonnieDetailsDB: dict[CoordType, BonnieMeta] = {}
 
 
 class BonnieProgress:
@@ -91,11 +91,11 @@ class BonnieProgress:
         at_beginning: set[CoordType] = set()
         for co in get_bonnie_coords(Config.bonnie):
             # Prioritize coordinates not yet in DB
-            if co not in BonnieDB:
+            if co not in BonnieDetailsDB:
                 at_beginning.add(co)
             else:
                 # Record last_update as well so we can sort by datapoint age
-                at_end.add((BonnieDB[co]["last_update"], co))
+                at_end.add((BonnieDetailsDB[co]["last_update"], co))
         self._to_fetch: deque[CoordType] = deque(at_beginning)
         # Prioritize oldest datapoints. Oldest = smallest timestamp of course
         self._to_fetch.extend(co for _, co in sorted(at_end))
@@ -147,12 +147,12 @@ def update_bonniedata(result: CookedBonnieResult) -> bool | None:
     (x, y), curdata, _ = result
     _co = x, y
     _nao = datetime.now().astimezone()
-    if _co not in BonnieDB:
-        BonnieDB[_co] = {"current": curdata, "last_update": _nao, "diff": {}}
+    if _co not in BonnieDetailsDB:
+        BonnieDetailsDB[_co] = {"current": curdata, "last_update": _nao, "diff": {}}
         return None
-    prev = BonnieDB[_co]["current"]
-    BonnieDB[_co]["current"] = curdata
-    BonnieDB[_co]["last_update"] = _nao
+    prev = BonnieDetailsDB[_co]["current"]
+    BonnieDetailsDB[_co]["current"] = curdata
+    BonnieDetailsDB[_co]["last_update"] = _nao
     prev_diff = {}
     for k, v in prev.items():
         if k not in curdata:
@@ -162,7 +162,7 @@ def update_bonniedata(result: CookedBonnieResult) -> bool | None:
             prev_diff[k] = v
             continue
     if prev_diff:
-        BonnieDB[_co]["diff"][_nao] = prev_diff
+        BonnieDetailsDB[_co]["diff"][_nao] = prev_diff
         return True
     return False
 
@@ -219,7 +219,7 @@ async def amain(duration: int, min_batch_size: int, abort_low_rps: int) -> None:
 
 
 def main() -> None:  # noqa: D103
-    global BonnieDB, Progress  # noqa: PLW0603
+    global BonnieDetailsDB, Progress  # noqa: PLW0603
     yaml = YAML(typ="safe")
     yaml.Representer = RoundTripRepresenter
 
@@ -233,7 +233,7 @@ def main() -> None:  # noqa: D103
             print(f" {len(_bdb)} records read.")
             # _bdb_k = list(_bdb.keys())
             # print(f"First key: <{type(_bdb_k[0])}>{_bdb_k[0]}")
-            BonnieDB = _bdb
+            BonnieDetailsDB = _bdb
         else:
             print(" empty DB")
     Progress = BonnieProgress()
