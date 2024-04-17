@@ -146,7 +146,7 @@ class BonnieProgress:
 Progress: ProgressInterface
 
 
-def update_bonniedata(result: CookedBonnieResult) -> bool | None:
+def update_bonniedata(result: CookedBonnieResult) -> bool:
     """
     Perfom update on the local copy of BonnieBots DB
 
@@ -157,7 +157,7 @@ def update_bonniedata(result: CookedBonnieResult) -> bool | None:
     _nao = datetime.now().astimezone()
     if _co not in BonnieDetailsDB:
         BonnieDetailsDB[_co] = {"current": curdata, "last_update": _nao, "diff": {}}
-        return None
+        return True
     prev = BonnieDetailsDB[_co]["current"]
     BonnieDetailsDB[_co]["current"] = curdata
     BonnieDetailsDB[_co]["last_update"] = _nao
