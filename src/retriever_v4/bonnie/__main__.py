@@ -234,7 +234,7 @@ def main() -> None:  # noqa: D103
     bonnie_details_path = Path(Config.bonnie.dir) / Config.bonnie.db_details
 
     if bonnie_details_path.exists():
-        print(f"Reading existing BonnieDB {bonnie_details_path} ...", end="", flush=True)
+        print(f"Reading existing BonnieDetailsDB {bonnie_details_path} ...", end="", flush=True)
         with bonnie_details_path.open("rt") as fin:
             _bdb = yaml.load(fin)
         if isinstance(_bdb, dict):
