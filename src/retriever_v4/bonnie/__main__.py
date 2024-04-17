@@ -95,7 +95,15 @@ class BonnieProgress:
                 at_beginning.add(co)
             else:
                 # Record last_update as well so we can sort by datapoint age
-                at_end.add((BonnieDetailsDB[co]["last_update"], co))
+                last_update = BonnieDetailsDB[co]["last_update"]
+                try:
+                    if last_update.tzinfo is None or last_update.tzinfo.utcoffset(last_update) is None:
+                        print(f"Existing last_update for {co} is naive")
+                        last_update = last_update.astimezone()
+                except AttributeError:
+                    print(f"Malformed data for [{co}]")
+                    raise
+                at_end.add((last_update, co))
         self._to_fetch: deque[CoordType] = deque(at_beginning)
         # Prioritize oldest datapoints. Oldest = smallest timestamp of course
         self._to_fetch.extend(co for _, co in sorted(at_end))
