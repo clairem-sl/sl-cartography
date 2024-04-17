@@ -142,7 +142,7 @@ class BonnieConfig(Protocol):
     """Attribues for the [bonnie] section of config.toml"""
 
     dir: str
-    db: str
+    db_regions: str
     url: str
     maxage: int
 

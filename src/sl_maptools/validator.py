@@ -166,7 +166,7 @@ def get_bonnie_coords(config: BonnieConfig, *, maxage: timedelta | int | None = 
     elif not isinstance(maxage, timedelta):
         maxage = timedelta(days=maxage)
     bdb_data_raw = {}
-    bonniedb: Path = Path(config.dir) / config.db
+    bonniedb: Path = Path(config.dir) / config.db_regions
     yml = ryaml.YAML(typ="safe", pure=True)
     if bonniedb.exists():
         print(f"BonnieBots DB exists: {bonniedb}, checking ... ", end="", flush=True)
