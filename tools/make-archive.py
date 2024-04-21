@@ -55,6 +55,7 @@ class _Options(Protocol):
     jxl_q: int
     no_verify_jxl: bool
     jxl_decoder: str
+    no_rich: bool
 
 
 def _get_options() -> _Options:
@@ -64,12 +65,19 @@ def _get_options() -> _Options:
     parser.add_argument("--jxl-q", type=int, default=85)
     parser.add_argument("--no-verify-jxl", action="store_true", default=False)
     parser.add_argument("--jxl-decoder", type=str, choices=_JXL_DECODERS, default="djxl")
+    parser.add_argument("--no-rich", action="store_true", default=False)
     parser.add_argument("tag", help="Tag in YYYY-MM format, optionally with one additional character")
     opts = cast(_Options, parser.parse_args())
+    if (
+        not Prompt
+        and not opts.no_rich
+        and input("rich not installed, but --no-rich not specified.\nContinue [yN] ?").strip()[0].upper() != "Y"
+    ):
+        print("Aborted by user.")
+        sys.exit(1)
     if not RE_YM.match(opts.tag):
         print_(f"WARNING: tag '{opts.tag}' is not in YYYY-MMx format", rp="[bold yellow]")
-        cont = input_("Continue [yN] ? ", color="[bold white]", choices=["y", "n"])
-        if cont[0].upper() != "Y":
+        if input_("Continue [yN] ? ", color="[bold white]", choices=["y", "n"])[0].upper() != "Y":
             print("Aborted by user.")
             sys.exit(1)
     return opts
