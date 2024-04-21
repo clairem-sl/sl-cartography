@@ -57,6 +57,7 @@ class _Options(Protocol):
     jxl_decoder: str
     no_rich: bool
     recopy_exif: bool
+    dirs: list[str]
 
 
 def _get_options() -> _Options:
@@ -74,6 +75,7 @@ def _get_options() -> _Options:
         help="Perform exif re-copy (using exiftool) even if the archive already exists",
     )
     parser.add_argument("tag", help="Tag in YYYY-MM format, optionally with one additional character")
+    parser.add_argument("dirs", nargs="*", type=Path, help="(Optional) If specified, only process these directories")
     opts = cast(_Options, parser.parse_args())
     if (
         not Prompt
@@ -222,7 +224,9 @@ def main(opts: _Options) -> None:  # noqa: D103
         if shutil.which(cmd) is None:
             print_(f"ERROR: Require '{cmd}' in PATH to run!", file=sys.stderr)
             sys.exit(1)
-    for d in sorted(Path().glob("*")):
+    if not opts.dirs:
+        opts.dirs = sorted(Path().glob("*"))
+    for d in opts.dirs:
         if not d.is_dir() or d.name == ".venv":
             continue
         print_(f"{d}: ", end="", flush=True)
