@@ -58,6 +58,7 @@ class _Options(Protocol):
     no_verify_jxl: bool
     jxl_decoder: str
     no_rich: bool
+    recopy_exif: bool
 
 
 def _get_options() -> _Options:
@@ -68,6 +69,12 @@ def _get_options() -> _Options:
     parser.add_argument("--no-verify-jxl", action="store_true", default=False)
     parser.add_argument("--jxl-decoder", type=str, choices=_JXL_DECODERS, default="djxl")
     parser.add_argument("--no-rich", action="store_true", default=False)
+    parser.add_argument(
+        "--recopy-exif",
+        action="store_true",
+        default=False,
+        help="Perform exif re-copy (using exiftool) even if the archive already exists",
+    )
     parser.add_argument("tag", help="Tag in YYYY-MM format, optionally with one additional character")
     opts = cast(_Options, parser.parse_args())
     if (
@@ -98,7 +105,7 @@ def cwebp(src: Path, dst: Path) -> bool:  # noqa: D103
     return result.returncode == 0
 
 
-def exiftool(src: Path, dst: Path, creation_timestamp: datetime) -> bool:  # noqa: D103
+def exiftool(src: Path, dst: Path) -> bool:  # noqa: D103
     # An example of the command used in shell:
     #
     # exiftool -q -overwrite_original_in_place \
@@ -114,6 +121,7 @@ def exiftool(src: Path, dst: Path, creation_timestamp: datetime) -> bool:  # noq
     #
     # The "-tagsFromFile" need to be doubled, because the second one *only* copies *exactly* the listed tags after.
     # The first one performs the mass-copying first.
+    creation_timestamp = datetime.fromtimestamp(dst.stat().st_mtime).astimezone()
     tz_offset = f"{creation_timestamp:%z}"
     tz_hours = round(creation_timestamp.utcoffset().total_seconds() / 3600.0)
     # Don't forget trailing space for each line of f"", EXCEPT the last one
@@ -160,34 +168,46 @@ def cjxl(src: Path, dst: Path, q: int) -> bool:  # noqa: D103
     return result.returncode == 0
 
 
-def process(src: Path, opts: _Options) -> None:
-    """Perform all processing for a file"""
+def convert(src: Path, opts: _Options) -> Path | None:  # noqa: PLR0911
+    """Attempt conversion of src into WebP, fallback to JPEG XL if not able"""
     targ_webp = src.with_suffix(f".{opts.tag}.webp")
     targ_jxl = targ_webp.with_suffix(".jxl")
+
     if targ_webp.exists() or targ_jxl.exists():
         if not opts.overwrite:
             print_(" Archive exist and --overwrite not specified", end="")
-            return
+            if opts.recopy_exif:
+                return targ_webp if targ_webp.exists() else targ_jxl
         targ_webp.unlink(missing_ok=True)
         targ_jxl.unlink(missing_ok=True)
-    if not cwebp(src, targ_webp):
-        targ_webp.unlink(missing_ok=True)
-        if opts.no_jxl:
-            print_(" ERROR: Failed creating .webp file!", rp="[bold red]", end="")
-            return
-        if _jxl_success := cjxl(src, targ_jxl, opts.jxl_q):
-            tstamp = datetime.now().astimezone()
-            _jxl_success &= opts.no_verify_jxl or jxl_verify(targ_jxl, opts.jxl_decoder)
-        if not _jxl_success:
-            targ_jxl.unlink(missing_ok=True)
-            print_(" ERROR: Failed creating .webp or .jxl files!", rp="[bold red]", end="")
-            return
-        targ = targ_jxl
-    else:
-        tstamp = datetime.now().astimezone()
-        targ = targ_webp
+
+    if cwebp(src, targ_webp):
+        return targ_webp
+    targ_webp.unlink(missing_ok=True)
+
+    if opts.no_jxl:
+        print_(" ERROR: Failed creating .webp file and --no-jxl specified!", rp="[bold red]", end="")
+        return None
+
+    if not cjxl(src, targ_jxl, opts.jxl_q):
+        targ_jxl.unlink(missing_ok=True)
+        print_(" ERROR: Failed creating .webp or .jxl files!", rp="[bold red]", end="")
+        return None
+    if opts.no_verify_jxl:
+        return targ_jxl
+    if jxl_verify(targ_jxl, opts.jxl_decoder):
+        return targ_jxl
+    targ_jxl.unlink(missing_ok=True)
+    print_(" ERROR: Failed creating .webp or .jxl files!", rp="[bold red]", end="")
+    return None
+
+
+def process(src: Path, opts: _Options) -> None:
+    """Perform all processing for a file"""
+    if (targ := convert(src, opts)) is None:
+        return
     # noinspection PyUnboundLocalVariable
-    if not exiftool(src, targ, tstamp):
+    if not exiftool(src, targ):
         print_(" ERROR: Failed copying tags!", rp="[bold red]", end="")
         return
     print_("done.", end=" ", flush=True)
