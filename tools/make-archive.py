@@ -160,7 +160,16 @@ def exiftool(src: Path, dst: Path) -> bool:  # noqa: D103
     #
     # The "-tagsFromFile" need to be doubled, because the second one *only* copies *exactly* the listed tags after.
     # The first one performs the mass-copying first.
-    creation_timestamp = datetime.fromtimestamp(dst.stat().st_mtime).astimezone()
+    src_stat = dst.stat()
+    # For birth_ts determination logic, read these refs:
+    #   https://docs.python.org/3.9/library/os.html#os.stat_result.st_ctime
+    #   https://docs.python.org/3.12/library/os.html#os.stat_result.st_ctime
+    #   https://docs.python.org/3.12/library/os.html#os.stat_result.st_birthtime
+    try:
+        birth_ts = src_stat.st_birthtime
+    except AttributeError:
+        birth_ts = src_stat.st_ctime
+    creation_timestamp = datetime.fromtimestamp(birth_ts).astimezone()
     tz_offset = f"{creation_timestamp:%z}"
     tz_hours = round(creation_timestamp.utcoffset().total_seconds() / 3600.0)
     # Don't forget trailing space for each line of f"", EXCEPT the last one
