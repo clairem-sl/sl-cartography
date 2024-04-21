@@ -89,19 +89,38 @@ def cwebp(src: Path, dst: Path) -> bool:  # noqa: D103
 
 
 def exiftool(src: Path, dst: Path, creation_timestamp: datetime) -> bool:  # noqa: D103
+    # An example of the command used in shell:
+    #
     # exiftool -q -overwrite_original_in_place \
-    #   -tagsFromFile {src} \
-    #   -tagsFromFile {src} "-Comment>UserComment" \
-    #   Yumix.composited.2024-04.webp
-    # The "-tagsFromFile" need to be doubled, because the second one *only* copies *exactly* one tag.
+    #   -tagsFromFile SOURCE.composited.png \
+    #   -tagsFromFile SOURCE.composited.png \
+    #     "-Comment>UserComment" \
+    #     "-CreationTime>DateTimeOriginal" \
+    #     -TimeZoneOffset=H \
+    #     "-OffsetTimeOriginal=+HHMM" \
+    #     "-CreateDate=YYYY-mm-dd HH:MM:SS" \
+    #     "-OffsetTimeDigitized=+HHMM" \
+    #   TARGET.composited.2024-04.webp
+    #
+    # The "-tagsFromFile" need to be doubled, because the second one *only* copies *exactly* the listed tags after.
     # The first one performs the mass-copying first.
-    tz_offset = round(creation_timestamp.tzinfo.utcoffset(None).seconds / 3600)
+    tz_offset = f"{creation_timestamp:%z}"
+    tz_hours = round(creation_timestamp.utcoffset().total_seconds() / 3600.0)
+    # Don't forget trailing space for each line of f"", EXCEPT the last one
     args: list[str] = (
-        f"exiftool -q -overwrite_original_in_place "
-        f"-tagsFromFile {src} "
-        f"-tagsFromFile {src} -Comment>UserComment -CreationTime>DateTimeOriginal "
-        f"-TimeZoneOffset={tz_offset} -OffsetTimeOriginal={tz_offset}"
-    ).split()
+        (
+            f"exiftool -q -overwrite_original_in_place "
+            f"-tagsFromFile {src} "
+            f"-tagsFromFile {src} "
+            f"-Comment>UserComment "
+            f"-CreationTime>DateTimeOriginal "
+            f"-TimeZoneOffset={tz_hours} "
+            f"-OffsetTimeOriginal={tz_offset}"
+        )
+        .strip()
+        .split()
+    )
+    # Need to use extend manually because CreateDate has a space in it
     args.extend(
         [
             f"-CreateDate={creation_timestamp:%Y-%m-%d %H:%M:%S}",
