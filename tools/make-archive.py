@@ -58,6 +58,7 @@ class _Options(Protocol):
     no_rich: bool
     recopy_exif: bool
     dirs: list[str]
+    skip: list[str]
 
 
 def _get_options() -> _Options:
@@ -76,6 +77,14 @@ def _get_options() -> _Options:
     )
     parser.add_argument("tag", help="Tag in YYYY-MM format, optionally with one additional character")
     parser.add_argument("dirs", nargs="*", type=Path, help="(Optional) If specified, only process these directories")
+    parser.add_argument(
+        "--skip",
+        metavar="DIRS",
+        nargs="*",
+        type=Path,
+        help="If specified, skip these directories (space-separated). If you specify this, you will need to add '--' "
+        "prior to specifying the tag.",
+    )
     opts = cast(_Options, parser.parse_args())
     if (
         not Prompt
@@ -226,8 +235,9 @@ def main(opts: _Options) -> None:  # noqa: D103
             sys.exit(1)
     if not opts.dirs:
         opts.dirs = sorted(Path().glob("*"))
+    skips = set(opts.skip)
     for d in opts.dirs:
-        if not d.is_dir() or d.name == ".venv":
+        if not d.is_dir() or d.name == ".venv" or d in skips:
             continue
         print_(f"{d}: ", end="", flush=True)
         if not (compositeds := sorted(d.glob("*.composited.png"))):
