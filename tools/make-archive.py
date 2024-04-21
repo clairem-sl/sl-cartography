@@ -24,8 +24,6 @@ except ImportError:
 
 RE_YM = re.compile(r"\d{4}-\d{2}.?")
 
-# Match this with the areas.dir in config.toml
-ROOT_DIR = Path(r"C:\Cache\SL-Carto\AreaMaps")
 
 _JXL_DECODERS = ["djxl", "jxl-oxide"]
 
@@ -215,10 +213,6 @@ def process(src: Path, opts: _Options) -> None:
 
 
 def main(opts: _Options) -> None:  # noqa: D103
-    if not ROOT_DIR.exists() or not ROOT_DIR.is_dir():
-        print_("ERROR: ROOT_DIR not found", file=sys.stderr)
-        print_("Have you adjusted ROOT_DIR to match config.toml?", file=sys.stderr)
-        sys.exit(1)
     tools = ["cwebp", "exiftool"]
     if not opts.no_jxl:
         tools.append("cjxl")
@@ -228,7 +222,7 @@ def main(opts: _Options) -> None:  # noqa: D103
         if shutil.which(cmd) is None:
             print_(f"ERROR: Require '{cmd}' in PATH to run!", file=sys.stderr)
             sys.exit(1)
-    for d in sorted(ROOT_DIR.glob("*")):
+    for d in sorted(Path().glob("*")):
         if not d.is_dir() or d.name == ".venv":
             continue
         print_(f"{d}: ", end="", flush=True)
