@@ -26,6 +26,8 @@ RE_YM = re.compile(r"\d{4}-\d{2}.?")
 
 
 _JXL_DECODERS = ["djxl", "jxl-oxide"]
+_DEFA_JXL_Q = 85
+_DEFA_JXL_DEC = "djxl"
 
 
 # noinspection PyCallingNonCallable
@@ -62,13 +64,34 @@ class _Options(Protocol):
 
 
 def _get_options() -> _Options:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--overwrite", action="store_true", default=False)
-    parser.add_argument("--no-jxl", action="store_true", default=False)
-    parser.add_argument("--jxl-q", type=int, default=85)
-    parser.add_argument("--no-verify-jxl", action="store_true", default=False)
-    parser.add_argument("--jxl-decoder", type=str, choices=_JXL_DECODERS, default="djxl")
-    parser.add_argument("--no-rich", action="store_true", default=False)
+    parser = argparse.ArgumentParser(
+        description="Make archival image (WebP or JPEG XL format) from '*.composited.png' images. The resulting "
+        "archival images will have similar metadata as the original.",
+    )
+    parser.add_argument("--overwrite", action="store_true", default=False, help="Overwrite existing archive images")
+    parser.add_argument(
+        "--no-jxl",
+        action="store_true",
+        default=False,
+        help="Do not fallback to creating JPEG XL images if WebP creation fails",
+    )
+    parser.add_argument(
+        "--jxl-q", type=int, default=_DEFA_JXL_Q, help=f"Specify JPEG XL 'q' parameter. Default = {_DEFA_JXL_Q}"
+    )
+    parser.add_argument("--no-verify-jxl", action="store_true", default=False, help="Skip verification of JPEG XL")
+    parser.add_argument(
+        "--jxl-decoder",
+        type=str,
+        choices=_JXL_DECODERS,
+        default=_DEFA_JXL_DEC,
+        help=f"Specify the JPEG XL decoder for verification. Default = {_DEFA_JXL_DEC}",
+    )
+    parser.add_argument(
+        "--no-rich",
+        action="store_true",
+        default=False,
+        help="Acknowledge that we have not installed the 'rich' library. No impact if rich is installed",
+    )
     parser.add_argument(
         "--recopy-exif",
         action="store_true",
@@ -76,7 +99,13 @@ def _get_options() -> _Options:
         help="Perform exif re-copy (using exiftool) even if the archive already exists",
     )
     parser.add_argument("tag", help="Tag in YYYY-MM format, optionally with one additional character")
-    parser.add_argument("dirs", nargs="*", type=Path, help="(Optional) If specified, only process these directories")
+    parser.add_argument(
+        "dirs",
+        nargs="*",
+        type=Path,
+        help="(Optional) If specified, only process these directories. If not specified, then will process all "
+        "subdirectories under cwd",
+    )
     parser.add_argument(
         "--skip",
         metavar="DIRS",
