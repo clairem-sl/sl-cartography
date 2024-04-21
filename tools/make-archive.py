@@ -32,6 +32,7 @@ _JXL_DECODERS = ["djxl", "jxl-oxide"]
 
 # noinspection PyCallingNonCallable
 def print_(*args, rp: str = "", **kwargs) -> None:  # noqa: ANN002, ANN003
+    """Wrapper around print() and rprint()"""
     if rprint:
         if not rp:
             rprint(*args, **kwargs)
@@ -42,6 +43,7 @@ def print_(*args, rp: str = "", **kwargs) -> None:  # noqa: ANN002, ANN003
 
 
 def input_(prompt: str, color: str = "", choices: None | list[str] = None) -> str:
+    """Wrapper around input() and Prompt.ask()"""
     if Prompt:
         # noinspection PyUnresolvedReferences
         return Prompt.ask(f"{color}{prompt}", choices=choices)
@@ -159,6 +161,7 @@ def cjxl(src: Path, dst: Path, q: int) -> bool:  # noqa: D103
 
 
 def process(src: Path, opts: _Options) -> None:
+    """Perform all processing for a file"""
     targ_webp = src.with_suffix(f".{opts.tag}.webp")
     targ_jxl = targ_webp.with_suffix(".jxl")
     if targ_webp.exists() or targ_jxl.exists():
