@@ -265,6 +265,13 @@ def main(opts: _Options) -> None:  # noqa: D103
             sys.exit(1)
     if not opts.dirs:
         opts.dirs = sorted(Path().glob("*"))
+    err = False
+    for d in opts.dirs:
+        if not d.exists():
+            print_(f"ERROR: {d} doesn't exist!", rp="[bold red]")
+            err = True
+    if err:
+        sys.exit(1)
     skips = set(opts.skip)
     for d in opts.dirs:
         if not d.is_dir() or d.name == ".venv" or d in skips:
