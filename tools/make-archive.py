@@ -217,6 +217,7 @@ def convert(src: Path, opts: _Options) -> Path | None:  # noqa: PLR0911
             print_(" Archive exist and --overwrite not specified", end="")
             if not opts.recopy_exif:
                 return None
+            print(" ", end="")
             return targ_webp if targ_webp.exists() else targ_jxl
         targ_webp.unlink(missing_ok=True)
         targ_jxl.unlink(missing_ok=True)
