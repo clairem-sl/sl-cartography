@@ -109,8 +109,9 @@ def _get_options() -> _Options:
     parser.add_argument(
         "--skip",
         metavar="DIRS",
-        nargs="*",
+        nargs="+",
         type=Path,
+        default=[],
         help="If specified, skip these directories (space-separated). If you specify this, you will need to add '--' "
         "prior to specifying the tag.",
     )
