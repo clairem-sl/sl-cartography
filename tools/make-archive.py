@@ -239,13 +239,13 @@ def main(opts: _Options) -> None:  # noqa: D103
     for d in opts.dirs:
         if not d.is_dir() or d.name == ".venv" or d in skips:
             continue
-        print_(f"{d}: ", end="", flush=True)
+        print_(f"{d}:", end="", flush=True)
         if not (compositeds := sorted(d.glob("*.composited.png"))):
-            print_("WARNING: No *.composited.png, skipped", rp="[yellow]")
+            print_(" WARNING: No *.composited.png, skipped", rp="[yellow]")
             continue
         num = len(compositeds)
         for i, src in enumerate(compositeds, start=1):
-            print_(f"[{i}/{num}]", rp="[bold green]", end="", flush=True)
+            print_(f" [{i}/{num}]", rp="[bold green]", end="", flush=True)
             process(src, opts)
         print()
 
