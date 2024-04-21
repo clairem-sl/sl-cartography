@@ -158,6 +158,38 @@ def cjxl(src: Path, dst: Path, q: int) -> bool:  # noqa: D103
     return result.returncode == 0
 
 
+def process(src: Path, opts: _Options) -> None:
+    targ_webp = src.with_suffix(f".{opts.tag}.webp")
+    targ_jxl = targ_webp.with_suffix(".jxl")
+    if targ_webp.exists() or targ_jxl.exists():
+        if not opts.overwrite:
+            print_(" Archive exist and --overwrite not specified", end="")
+            return
+        targ_webp.unlink(missing_ok=True)
+        targ_jxl.unlink(missing_ok=True)
+    if not cwebp(src, targ_webp):
+        targ_webp.unlink(missing_ok=True)
+        if opts.no_jxl:
+            print_(" ERROR: Failed creating .webp file!", rp="[bold red]", end="")
+            return
+        if _jxl_success := cjxl(src, targ_jxl, opts.jxl_q):
+            tstamp = datetime.now().astimezone()
+            _jxl_success &= opts.no_verify_jxl or jxl_verify(targ_jxl, opts.jxl_decoder)
+        if not _jxl_success:
+            targ_jxl.unlink(missing_ok=True)
+            print_(" ERROR: Failed creating .webp or .jxl files!", rp="[bold red]", end="")
+            return
+        targ = targ_jxl
+    else:
+        tstamp = datetime.now().astimezone()
+        targ = targ_webp
+    # noinspection PyUnboundLocalVariable
+    if not exiftool(src, targ, tstamp):
+        print_(" ERROR: Failed copying tags!", rp="[bold red]", end="")
+        return
+    print_("done.", end=" ", flush=True)
+
+
 def main(opts: _Options) -> None:  # noqa: D103
     if not ROOT_DIR.exists() or not ROOT_DIR.is_dir():
         print_("ERROR: ROOT_DIR not found", file=sys.stderr)
@@ -179,39 +211,11 @@ def main(opts: _Options) -> None:  # noqa: D103
         if not (compositeds := sorted(d.glob("*.composited.png"))):
             print_("WARNING: No *.composited.png, skipped", rp="[yellow]")
             continue
-        if len(compositeds) > 1:
-            print_("WARNING: More than 1 .composited.png, skipped", rp="[yellow]")
-            continue
-        src = compositeds[0]
-        targ_webp = src.with_suffix(f".{opts.tag}.webp")
-        targ_jxl = targ_webp.with_suffix(".jxl")
-        if targ_webp.exists() or targ_jxl.exists():
-            if not opts.overwrite:
-                print_("Already have an archive and --overwrite not specified, skipped")
-                continue
-            targ_webp.unlink(missing_ok=True)
-            targ_jxl.unlink(missing_ok=True)
-        if not cwebp(src, targ_webp):
-            targ_webp.unlink(missing_ok=True)
-            if opts.no_jxl:
-                print_("  ERROR: Failed creating .webp file!", rp="[bold red]")
-                continue
-            if _jxl_success := cjxl(src, targ_jxl, opts.jxl_q):
-                tstamp = datetime.now().astimezone()
-                _jxl_success &= opts.no_verify_jxl or jxl_verify(targ_jxl, opts.jxl_decoder)
-            if not _jxl_success:
-                targ_jxl.unlink(missing_ok=True)
-                print_("  ERROR: Failed creating .webp or .jxl files!", rp="[bold red]")
-                continue
-            targ = targ_jxl
-        else:
-            tstamp = datetime.now().astimezone()
-            targ = targ_webp
-        # noinspection PyUnboundLocalVariable
-        if not exiftool(src, targ, tstamp):
-            print_("  ERROR: Failed copying tags!", rp="[bold red]")
-            continue
-        print_("done.")
+        num = len(compositeds)
+        for i, src in enumerate(compositeds, start=1):
+            print_(f"[{i}/{num}]", rp="[bold green]", end="", flush=True)
+            process(src, opts)
+        print()
 
 
 if __name__ == "__main__":
