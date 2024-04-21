@@ -10,12 +10,42 @@ from datetime import datetime
 from pathlib import Path
 from typing import Protocol, cast
 
+try:
+    from rich import print as rprint
+    from rich.prompt import Prompt
+    from rich.traceback import install as rtb_install
+
+    rtb_install(show_locals=True)
+except ImportError:
+    rprint = None
+    Prompt = None
+    rtb_install = None
+
+
 RE_YM = re.compile(r"\d{4}-\d{2}.?")
 
 # Match this with the areas.dir in config.toml
 ROOT_DIR = Path(r"C:\Cache\SL-Carto\AreaMaps")
 
 _JXL_DECODERS = ["djxl", "jxl-oxide"]
+
+
+# noinspection PyCallingNonCallable
+def print_(*args, rp: str = "", **kwargs) -> None:  # noqa: ANN002, ANN003
+    if rprint:
+        if not rp:
+            rprint(*args, **kwargs)
+        else:
+            rprint(f"{rp}{args[0]}", **kwargs)
+    else:
+        print(*args, **kwargs)
+
+
+def input_(prompt: str, color: str = "", choices: None | list[str] = None) -> str:
+    if Prompt:
+        # noinspection PyUnresolvedReferences
+        return Prompt.ask(f"{color}{prompt}", choices=choices)
+    return input(prompt)
 
 
 class _Options(Protocol):
@@ -37,16 +67,17 @@ def _get_options() -> _Options:
     parser.add_argument("tag", help="Tag in YYYY-MM format, optionally with one additional character")
     opts = cast(_Options, parser.parse_args())
     if not RE_YM.match(opts.tag):
-        print(f"WARNING: tag '{opts.tag}' is not in YYYY-MMx format")
-        cont = input("Continue [yN] ? ")
-        if cont[0].upper() != "y":
+        print_(f"WARNING: tag '{opts.tag}' is not in YYYY-MMx format", rp="[bold yellow]")
+        cont = input_("Continue [yN] ? ", color="[bold white]", choices=["y", "n"])
+        if cont[0].upper() != "Y":
+            print("Aborted by user.")
             sys.exit(1)
     return opts
 
 
 def run_suppressed(args: list[str], quiet: bool = False) -> subprocess.CompletedProcess:  # noqa: D103
     if not quiet:
-        print(args[0], end=" ", flush=True)
+        print_(args[0], rp="[bold cyan]", end=" ", flush=True)
     return subprocess.run(args=args, check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 
@@ -102,8 +133,8 @@ def cjxl(src: Path, dst: Path, q: int) -> bool:  # noqa: D103
 
 def main(opts: _Options) -> None:  # noqa: D103
     if not ROOT_DIR.exists() or not ROOT_DIR.is_dir():
-        print("ERROR: ROOT_DIR not found", file=sys.stderr)
-        print("Have you adjusted ROOT_DIR to match config.toml?", file=sys.stderr)
+        print_("ERROR: ROOT_DIR not found", file=sys.stderr)
+        print_("Have you adjusted ROOT_DIR to match config.toml?", file=sys.stderr)
         sys.exit(1)
     tools = ["cwebp", "exiftool"]
     if not opts.no_jxl:
@@ -112,38 +143,38 @@ def main(opts: _Options) -> None:  # noqa: D103
             tools.append(opts.jxl_decoder)
     for cmd in tools:
         if shutil.which(cmd) is None:
-            print(f"ERROR: Require '{cmd}' in PATH to run!", file=sys.stderr)
+            print_(f"ERROR: Require '{cmd}' in PATH to run!", file=sys.stderr)
             sys.exit(1)
     for d in sorted(ROOT_DIR.glob("*")):
-        if not d.is_dir():
+        if not d.is_dir() or d.name == ".venv":
             continue
-        print(f"Processing {d}: ", end="", flush=True)
+        print_(f"{d}: ", end="", flush=True)
         if not (compositeds := sorted(d.glob("*.composited.png"))):
-            print("\n  WARNING: No *.composited.png")
+            print_("WARNING: No *.composited.png, skipped", rp="[yellow]")
             continue
         if len(compositeds) > 1:
-            print("\n  WARNING: More than 1 .composited.png")
+            print_("WARNING: More than 1 .composited.png, skipped", rp="[yellow]")
             continue
         src = compositeds[0]
         targ_webp = src.with_suffix(f".{opts.tag}.webp")
         targ_jxl = targ_webp.with_suffix(".jxl")
         if targ_webp.exists() or targ_jxl.exists():
             if not opts.overwrite:
-                print("Already have an archive and --overwrite not specified")
+                print_("Already have an archive and --overwrite not specified, skipped")
                 continue
             targ_webp.unlink(missing_ok=True)
             targ_jxl.unlink(missing_ok=True)
         if not cwebp(src, targ_webp):
             targ_webp.unlink(missing_ok=True)
             if opts.no_jxl:
-                print("\n  ERROR: Failed creating .webp file!")
+                print_("  ERROR: Failed creating .webp file!", rp="[bold red]")
                 continue
             if _jxl_success := cjxl(src, targ_jxl, opts.jxl_q):
                 tstamp = datetime.now().astimezone()
                 _jxl_success &= opts.no_verify_jxl or jxl_verify(targ_jxl, opts.jxl_decoder)
             if not _jxl_success:
                 targ_jxl.unlink(missing_ok=True)
-                print("\n  ERROR: Failed creating .webp or .jxl files!")
+                print_("  ERROR: Failed creating .webp or .jxl files!", rp="[bold red]")
                 continue
             targ = targ_jxl
         else:
@@ -151,9 +182,9 @@ def main(opts: _Options) -> None:  # noqa: D103
             targ = targ_webp
         # noinspection PyUnboundLocalVariable
         if not exiftool(src, targ, tstamp):
-            print("\n  ERROR: Failed copying tags!")
+            print_("  ERROR: Failed copying tags!", rp="[bold red]")
             continue
-        print("done.")
+        print_("done.")
 
 
 if __name__ == "__main__":
