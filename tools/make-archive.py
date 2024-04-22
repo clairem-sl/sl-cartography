@@ -61,6 +61,7 @@ class _Options(Protocol):
     recopy_exif: bool
     dirs: list[str]
     skip: list[str]
+    root: Path
 
 
 def _get_options() -> _Options:
@@ -106,6 +107,12 @@ def _get_options() -> _Options:
         action="store_true",
         default=False,
         help="Perform exif re-copy (using exiftool) even if the archive already exists",
+    )
+    parser.add_argument(
+        "--root",
+        type=Path,
+        default=Path(),
+        help="(Relative) root of the areas subdir. If not given, defaults to current directory.",
     )
     parser.add_argument(
         "--skip",
@@ -279,7 +286,7 @@ def main(opts: _Options) -> None:  # noqa: D103
             print_(f"ERROR: Require '{cmd}' in PATH to run!", file=sys.stderr)
             sys.exit(1)
     if not opts.dirs:
-        opts.dirs = sorted(Path().glob("*"))
+        opts.dirs = sorted(opts.root.glob("*"))
     err = False
     for d in opts.dirs:
         if not d.exists():
