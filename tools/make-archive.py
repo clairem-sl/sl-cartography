@@ -126,19 +126,24 @@ def _get_options() -> _Options:
 
     opts = cast(_Options, parser.parse_args())
 
-    if (
-        not Prompt
-        and not opts.no_rich
-        and input("rich not installed, but --no-rich not specified.\nContinue [yN] ?").strip()[0].upper() != "Y"
-    ):
-        print("Aborted by user.")
-        sys.exit(1)
-
-    if not RE_YM.match(opts.tag):
-        print_(f"WARNING: tag '{opts.tag}' is not in YYYY-MMx format", rp="[bold yellow]")
+    def user_cont() -> None:
         if input_("Continue [yN] ? ", color="[bold white]", choices=["y", "n"])[0].upper() != "Y":
             print("Aborted by user.")
             sys.exit(1)
+
+    if not Prompt and not opts.no_rich:
+        print_("WARNING: rich not installed, but --no-rich not specified.", rp="[bold yellow]")
+        user_cont()
+
+    if not RE_YM.match(opts.tag):
+        print_(f"WARNING: tag '{opts.tag}' is not in YYYY-MMx format", rp="[bold yellow]")
+        user_cont()
+
+    if opts.overwrite and not opts.dirs:
+        print_("WARNING: --overwrite specified but no dirs specified", rp="[bold yellow]")
+        print_("This might cause *extensive* rebuild of the archives!")
+        print_("If you want to just update/fix the metadata, use --recopy-exif instead.")
+        user_cont()
 
     return opts
 
