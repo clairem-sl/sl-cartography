@@ -7,6 +7,7 @@ import shutil
 import subprocess
 import sys
 from datetime import datetime
+from io import StringIO
 from pathlib import Path
 from typing import Protocol, cast
 
@@ -151,7 +152,7 @@ def _get_options() -> _Options:
 def run_suppressed(args: list[str], quiet: bool = False) -> subprocess.CompletedProcess:  # noqa: D103
     if not quiet:
         print_(args[0], rp="[bold cyan]", end=" ", flush=True)
-    return subprocess.run(args=args, check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    return subprocess.run(args=args, check=False, capture_output=True)
 
 
 def cwebp(src: Path, dst: Path) -> bool:  # noqa: D103
@@ -212,6 +213,15 @@ def exiftool(src: Path, dst: Path) -> bool:  # noqa: D103
         ]
     )
     result = run_suppressed(args)
+    stderr: str = result.stderr.decode("utf-8")
+    if "warning" in stderr.casefold():
+        print_(" Warnings:", rp="[bold yellow]")
+        with StringIO(stderr) as fin:
+            for ln in fin:
+                ln = ln.strip()  # noqa: PLW2901
+                if ln.casefold().startswith("warning"):
+                    print_(f"  {ln}", rp="[bold yellow]")
+        print_(f"{args = }", rp="[yellow]")
     return result.returncode == 0
 
 
