@@ -68,17 +68,15 @@ def _get_options() -> _Options:
         description="Make archival image (WebP or JPEG XL format) from '*.composited.png' images. The resulting "
         "archival images will have similar metadata as the original.",
     )
-    parser.add_argument("--overwrite", action="store_true", default=False, help="Overwrite existing archive images")
+
+    parser.add_argument("tag", help="Tag in YYYY-MM format, optionally with one additional character")
     parser.add_argument(
-        "--no-jxl",
-        action="store_true",
-        default=False,
-        help="Do not fallback to creating JPEG XL images if WebP creation fails",
+        "dirs",
+        nargs="*",
+        type=Path,
+        help="(Optional) If specified, only process these directories. If not specified, then will process all "
+        "subdirectories under cwd",
     )
-    parser.add_argument(
-        "--jxl-q", type=int, default=_DEFA_JXL_Q, help=f"Specify JPEG XL 'q' parameter. Default = {_DEFA_JXL_Q}"
-    )
-    parser.add_argument("--no-verify-jxl", action="store_true", default=False, help="Skip verification of JPEG XL")
     parser.add_argument(
         "--jxl-decoder",
         type=str,
@@ -87,24 +85,27 @@ def _get_options() -> _Options:
         help=f"Specify the JPEG XL decoder for verification. Default = {_DEFA_JXL_DEC}",
     )
     parser.add_argument(
+        "--jxl-q", type=int, default=_DEFA_JXL_Q, help=f"Specify JPEG XL 'q' parameter. Default = {_DEFA_JXL_Q}"
+    )
+    parser.add_argument(
+        "--no-jxl",
+        action="store_true",
+        default=False,
+        help="Do not fallback to creating JPEG XL images if WebP creation fails",
+    )
+    parser.add_argument(
         "--no-rich",
         action="store_true",
         default=False,
         help="Acknowledge that we have not installed the 'rich' library. No impact if rich is installed",
     )
+    parser.add_argument("--no-verify-jxl", action="store_true", default=False, help="Skip verification of JPEG XL")
+    parser.add_argument("--overwrite", action="store_true", default=False, help="Overwrite existing archive images")
     parser.add_argument(
         "--recopy-exif",
         action="store_true",
         default=False,
         help="Perform exif re-copy (using exiftool) even if the archive already exists",
-    )
-    parser.add_argument("tag", help="Tag in YYYY-MM format, optionally with one additional character")
-    parser.add_argument(
-        "dirs",
-        nargs="*",
-        type=Path,
-        help="(Optional) If specified, only process these directories. If not specified, then will process all "
-        "subdirectories under cwd",
     )
     parser.add_argument(
         "--skip",
@@ -115,7 +116,9 @@ def _get_options() -> _Options:
         help="If specified, skip these directories (space-separated). If you specify this, you will need to add '--' "
         "prior to specifying the tag.",
     )
+
     opts = cast(_Options, parser.parse_args())
+
     if (
         not Prompt
         and not opts.no_rich
@@ -123,11 +126,13 @@ def _get_options() -> _Options:
     ):
         print("Aborted by user.")
         sys.exit(1)
+
     if not RE_YM.match(opts.tag):
         print_(f"WARNING: tag '{opts.tag}' is not in YYYY-MMx format", rp="[bold yellow]")
         if input_("Continue [yN] ? ", color="[bold white]", choices=["y", "n"])[0].upper() != "Y":
             print("Aborted by user.")
             sys.exit(1)
+
     return opts
 
 
