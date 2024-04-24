@@ -187,9 +187,9 @@ def exiftool(src: Path, dst: Path) -> bool:  # noqa: D103
         birth_ts = src_stat.st_birthtime
     except AttributeError:
         birth_ts = src_stat.st_ctime
-    creation_timestamp = datetime.fromtimestamp(birth_ts).astimezone()
-    tz_offset = f"{creation_timestamp:%z}"
-    tz_hours = round(creation_timestamp.utcoffset().total_seconds() / 3600.0)
+    creation_moment = datetime.fromtimestamp(birth_ts).astimezone()
+    tz_offset = f"{creation_moment:%z}"
+    tz_hours = round(creation_moment.utcoffset().total_seconds() / 3600.0)
     # Don't forget trailing space for each line of f"", EXCEPT the last one
     args: list[str] = (
         (
@@ -207,7 +207,7 @@ def exiftool(src: Path, dst: Path) -> bool:  # noqa: D103
     # Need to use extend manually because CreateDate has a space in it
     args.extend(
         [
-            f"-CreateDate={creation_timestamp:%Y-%m-%d %H:%M:%S}",
+            f"-CreateDate={creation_moment:%Y-%m-%d %H:%M:%S}",
             f"-OffsetTimeDigitized={tz_offset}",
             f"{dst}",
         ]
