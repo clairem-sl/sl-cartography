@@ -116,7 +116,7 @@ def main(opts: Options) -> None:  # noqa: D103
         except ValueError:
             print(f"Invalid input: {inp}")
             continue
-        if inp == 0:
+        if inp <= 0:
             break
         if inp not in len_zones:
             print(f"\nNo clumps of size {inp}")
