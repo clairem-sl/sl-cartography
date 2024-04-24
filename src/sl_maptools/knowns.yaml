@@ -637,10 +637,6 @@ AzureIslands:
 #  includes:
 #    - [977, 959, 989, 966]
 
-Babbage:
-  includes:
-    - [630, 1004, 633, 1007]
-
 Bauer:
   includes:
     - 899-903/1198-1202
@@ -924,6 +920,10 @@ NakedEstates:
 NativeIslands:
   includes:
     - [733, 1367, 738, 1371]
+
+NewBabbage:
+  includes:
+    - [630, 1004, 633, 1007]
 
 NewHaven:
   includes:
