@@ -220,7 +220,7 @@ AreaDescriptorPragma = TypedDict(
     {
         "automatic": NotRequired[bool],
         "validate": NotRequired[bool],
-        "target-dir": NotRequired[bool],
+        "target-dir": NotRequired[str],
     },
 )
 
@@ -283,7 +283,7 @@ class AreaDescriptor:
         return self.pragma["validate"]
 
     @property
-    def target_dir(self) -> bool | None:
+    def target_dir(self) -> str | None:
         """Preferred target directory, if any"""
         return self.pragma.get("target-dir")
 
