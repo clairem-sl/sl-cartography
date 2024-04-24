@@ -215,8 +215,8 @@ class AreaBoundsSet(Iterable):
         return AreaBounds(x_min, y_min, x_max, y_max)
 
 
-AreaDescriptorMeta = TypedDict(
-    "AreaDescriptorMeta",
+AreaDescriptorPragma = TypedDict(
+    "AreaDescriptorPragma",
     {
         "automatic": NotRequired[bool],
         "validate": NotRequired[bool],
@@ -225,7 +225,7 @@ AreaDescriptorMeta = TypedDict(
 )
 
 
-DEFAULT_ADMETA: AreaDescriptorMeta = {
+DEFAULT_ADPRAGMA: AreaDescriptorPragma = {
     "automatic": True,
     "validate": True,
 }
@@ -239,7 +239,7 @@ class AreaDescriptor:
         "excludes",
         "name",
         "description",
-        "meta",
+        "pragma",
         "_bbox",
     )
 
@@ -250,20 +250,20 @@ class AreaDescriptor:
         excludes: AreaBounds | Iterable[AreaBounds] = None,
         name: str | None = None,
         description: str | None = None,
-        meta: AreaDescriptorMeta = None,
+        pragma: AreaDescriptorPragma = None,
     ):
         """
         :param includes: One or more AreaBound objects that describe the area
         :param excludes: One or more AreaBound objects that need to be excluded
         :param name: Name of the area
         :param description: Description of the area
-        :param meta: Metadata of the area
+        :param pragma: Metadata of the area
         """
         self.includes = AreaBoundsSet(includes)
         self.excludes = AreaBoundsSet(excludes)
         self.name = name
         self.description = description
-        self.meta = DEFAULT_ADMETA | (meta or {})
+        self.pragma = DEFAULT_ADPRAGMA | (pragma or {})
         self._bbox: AreaBounds | None = None
 
     def __contains__(self, item: CoordType):
@@ -275,17 +275,17 @@ class AreaDescriptor:
     @property
     def automatic(self) -> bool:
         """Whether the area will automatically be drawn if not specified explicitly"""
-        return self.meta["automatic"]
+        return self.pragma["automatic"]
 
     @property
     def validate(self) -> bool:
         """Whether the area will obey coordinate validation"""
-        return self.meta["validate"]
+        return self.pragma["validate"]
 
     @property
     def target_dir(self) -> bool | None:
         """Preferred target directory, if any"""
-        return self.meta.get("target-dir")
+        return self.pragma.get("target-dir")
 
     @property
     def bounding_box(self) -> AreaBounds:

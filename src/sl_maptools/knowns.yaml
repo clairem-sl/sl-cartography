@@ -7,7 +7,8 @@
 #   excludes:   # This part is optional
 #     - <area bounds>
 #     - ...
-#   meta:  # Also optional, see AreaDescriptorMeta in sl_maptools.__init__
+#   pragma:     # Optional, see AreaDescriptorPragma in sl_maptools.__init__
+#     # 'pragma' (a.k.a, 'directive') contains instruction about how to process the data point
 #
 # Valid syntax for <area bounds>:
 #   - [x1, y1, x2, y2]   ## The corners notation: A list of 4 elements
@@ -17,7 +18,7 @@
 # region # Linden Continents - Bellisseria
 
 Bellisseria_ALL:
-  meta:
+  pragma:
     automatic: False
   includes:
     - 1023-1100/928-1023
@@ -537,14 +538,14 @@ WelcomeHub:
 # region # 'Lost' Continents
 
 LostGaeta:
-  meta:
+  pragma:
     automatic: False
     validate: False
   includes:
     - [1140, 1112, 1215, 1130]
 
 LostZindra:
-  meta:
+  pragma:
     automatic: False
     validate: False
   includes:
@@ -554,7 +555,7 @@ LostZindra:
     - 1807-1810/1201-1202
 
 LostWorld:
-  meta:
+  pragma:
     automatic: False
     validate: False
   includes:

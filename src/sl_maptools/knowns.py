@@ -8,7 +8,7 @@ from typing import Final, NotRequired, TypedDict
 
 from ruamel.yaml import YAML
 
-from sl_maptools import AreaBounds, AreaDescriptor, AreaDescriptorMeta
+from sl_maptools import AreaBounds, AreaDescriptor, AreaDescriptorPragma
 
 # fmt: off
 DO_NOT_MAP_AREAS: Final[dict[str, AreaBounds]] = {
@@ -30,7 +30,7 @@ class AreaDef(TypedDict):
 
     includes: CoordBounds
     excludes: NotRequired[CoordBounds]
-    meta: NotRequired[AreaDescriptorMeta]
+    pragma: NotRequired[AreaDescriptorPragma]
     slgi_url: NotRequired[str]
     alternative_names: NotRequired[list[str]]
     notes: NotRequired[str]
@@ -53,8 +53,8 @@ def read_known_areas(yaml_file: Path) -> None:
     for _n, _d in _data.items():
         _incs = {_to_abounds(i) for i in _d["includes"]}
         _excs = {_to_abounds(i) for i in _d.get("excludes", [])}
-        _meta = _d.get("meta")
-        KNOWN_AREAS[_n] = AreaDescriptor(includes=_incs, excludes=_excs, name=_n, meta=_meta)
+        _pragma = _d.get("pragma")
+        KNOWN_AREAS[_n] = AreaDescriptor(includes=_incs, excludes=_excs, name=_n, pragma=_pragma)
 
 
 read_known_areas(Path(__file__).with_suffix(".yaml"))
