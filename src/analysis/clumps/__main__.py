@@ -109,8 +109,8 @@ def main(opts: Options) -> None:  # noqa: D103
 
     lens_and_count = [f"{k} ({len(v)})" for k, v in sorted(len_zones.items())]
     while True:
-        print("\nAvailable lens:", ", ".join(lens_and_count))
-        inp = input("Len (0 to end) ? ")
+        print("\nAvailable clump sizes:", ", ".join(lens_and_count))
+        inp = input("Which size (0 to end) ? ")
         try:
             inp = int(inp)
         except ValueError:
