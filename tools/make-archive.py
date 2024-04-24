@@ -171,9 +171,9 @@ def exiftool(src: Path, dst: Path) -> bool:  # noqa: D103
     #     "-Comment>UserComment" \
     #     "-CreationTime>DateTimeOriginal" \
     #     -TimeZoneOffset=H \
-    #     "-OffsetTimeOriginal=+HHMM" \
+    #     "-OffsetTimeOriginal=±HHMM" \
     #     "-CreateDate=YYYY-mm-dd HH:MM:SS" \
-    #     "-OffsetTimeDigitized=+HHMM" \
+    #     "-OffsetTimeDigitized=±HHMM" \
     #   TARGET.composited.2024-04.webp
     #
     # The "-tagsFromFile" need to be doubled, because the second one *only* copies *exactly* the listed tags after.
@@ -188,6 +188,7 @@ def exiftool(src: Path, dst: Path) -> bool:  # noqa: D103
     except AttributeError:
         birth_ts = src_stat.st_ctime
     creation_moment = datetime.fromtimestamp(birth_ts).astimezone()
+    # offset will be in the format "±HHMM"
     tz_offset = f"{creation_moment:%z}"
     tz_hours = round(creation_moment.utcoffset().total_seconds() / 3600.0)
     # Don't forget trailing space for each line of f"", EXCEPT the last one
