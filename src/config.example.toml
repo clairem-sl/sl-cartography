@@ -33,7 +33,11 @@ dir = '\path\to\directory\to\save\results'
 
 [areas]
 # Configuration for the Cartographer module
-dir = 'C:\Cache\SL-Carto\AreaMaps'
+# Maps for each area will be stored in a subdir under this dir
+dir = '\path\to\AreaMaps\parent\dir'
+# The following file lists all regions and which areas each region is part of
+# Will be stored in the dir above as well
+region_areas_db = 'regions_areas.yaml'
 
 [lattice]
 # Configuration for the Cartographer.Lattice module
@@ -59,7 +63,23 @@ coord.overdraw = false
 [bonnie]
 # Configuration for the BonnieBots validator
 dir = '\path\to\directory\to\save\cache'
-db = 'BonnieDBCacheName.yaml'
+# db_regions contains a list of dict, each containing region name and coords
+db_regions = 'BonnieDBCacheName.yaml'
+# db_details contains a dict of details for each coordinate
+db_details = 'BonnieDBCacheDetails.yaml'
 # The next is already correct; usually you don't have to change this
 url = 'https://www.bonniebots.com/static-api/regions/index.json'
 maxage = 1
+
+[analysis]
+# Configuration for map analysis
+dir = '\path\to\config\dir'
+clumps_db = 'clumps.pkl'
+
+[info]
+# Used for metadata
+author = 'Claire Morgenthau'
+license = 'Creative Commons Attribution 4.0 International'
+license_url = 'https://creativecommons.org/licenses/by/4.0/'
+license_spdx = 'CC-BY-4.0'
+comment = 'SPDX-License-Identifier: CC-BY-4.0'
