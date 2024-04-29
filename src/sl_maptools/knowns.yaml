@@ -1,23 +1,15 @@
-# Schema
-# ======
-# <area name>:
-#   includes:
-#     - <area bounds>
-#     - <more if needed>
-#   excludes:   # This part is optional
-#     - <area bounds>
-#     - ...
-#   pragma:     # Optional, see AreaDescriptorPragma in sl_maptools.__init__
-#     # 'pragma' (a.k.a, 'directive') contains instruction about how to process the data point
-#
-# Valid syntax for <area bounds>:
-#   - [x1, y1, x2, y2]   ## The corners notation: A list of 4 elements
-#   - x1-x2/y1-y2        ## The SLGI notation: A string
-# ## (x1, y1) is the southwest corner, (x2, y2) is the northeast corner, inclusive
+# Schema is described in the knowns.yaml.schema.json file
 
 # region # Linden Continents - Bellisseria
 
 Bellisseria_ALL:
+  metadata:
+    name_source: Linden Lab
+    name_lore: >-
+      Official Linden Lab name, with suffix "_ALL" to indicate that the map encompasses the whole supercontinent.
+      (As opposed to the more focused, per-area maps)
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Bellisseria
   pragma:
     automatic: False
   includes:
@@ -170,6 +162,20 @@ Bellisseria_ALL:
 # region ## BBB's & BB's Belli separation + Claire's 2024 Naming
 
 Bellisseria-Alps:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      Based on the fact that the houses in this area are "chalet" style, and per dictionary a chalet is
+      "a wooden house or cottage with overhanging eaves, typically found in the Swiss Alps."
+    also_known_as:
+      - Chalets
+      - Bellevaria
+      - Alpinisseria (BonnieBots designation)
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Bellisseria
+      - https://slgi.fandom.com/wiki/East_Bellisseria
+    other_references:
+      - https://community.secondlife.com/forums/topic/508289-official-bellisseria-subcontenent-names/page/2/#comment-2686823
   includes:
     - 1079-1100/987-1008
   excludes:
@@ -189,6 +195,18 @@ Bellisseria-Alps:
     - 1100/1007-1008
 
 Bellisseria-AtollsFishermen:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      Named by Claire Morgenthau. The "Atolls" part is based on the shape of the reef-based housing, while the
+      "Fishermen" part is based on her naming the island in the area "Fisherman's Town"
+    also_known_as:
+      - South Squishy Pickle
+      - Lower Clumps
+      - Bellisseria Jeogeot (SLGI)
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Bellisseria
+      - https://slgi.fandom.com/wiki/Bellisseria_Jeogeot
   includes:
     - 1023-1031/928-940
     - 1032-1033/932-934
@@ -203,6 +221,16 @@ Bellisseria-AtollsFishermen:
     - 1028-1029/928
 
 Bellisseria-Fantasseria:
+  metadata:
+    name_source: Residents
+    name_lore: >-
+      The name is already well-used and incontested name by residents to indicate this area. Based on the theme of the
+      Linden Homes in this place.
+    also_known_as:
+      - Magic Continent (SLGI)
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Bellisseria
+      - https://slgi.fandom.com/wiki/Magic_Subcontinent
   includes:
     - [1037, 930, 1053, 949]
   excludes:
@@ -213,6 +241,19 @@ Bellisseria-Fantasseria:
     - [1038, 930, 1039, 934]
 
 Bellisseria-Forest:
+  metadata:
+    name_source: SLGI
+    name_lore: >-
+      Named by SLGI, based on the vegetation and terrain [https://slgi.fandom.com/wiki/Bellisseria_Forest].
+      An alternative name is "Loglands", because the Linden Homes are termed "Log Homes" by LL
+      [https://modemworld.me/2020/04/01/second-life-log-theme-linden-homes-released/].
+    also_known_as:
+      - Logland
+      - Loglands
+      - Log Homes
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Bellisseria
+      - https://slgi.fandom.com/wiki/Bellisseria_Forest
   includes:
     - 1043-1063/949-978
   excludes:
@@ -227,6 +268,12 @@ Bellisseria-Forest:
     - 1043/955-956
 
 Bellisseria-Mediterranea:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      Mostly because the style of the houses are termed "mediterranean-style". The "n" is dropped because
+      "mediterranean" is an adjective, not a nomine. Earliest record of the public use of the name is in Claire's
+      post on X/Twitter: https://twitter.com/clairem_sl/status/1746469568187650555 (2024-01-14T09:49:27Z)
   includes:
     - 1047-1061/985-999
   excludes:
@@ -242,6 +289,16 @@ Bellisseria-Mediterranea:
     - 1061/989
 
 Bellisseria-Newbrooke:
+  metadata:
+    name_source: BBB
+    name_lore: >-
+      This is a name that appears in an older map (since replaced) hung on the wall of the BBB headquarters.
+      Screenshot: https://app.box.com/s/13pi5ewojp5lsx9vap4uwtweg8h2tddq/file/1467861126249
+    also_known_as:
+      - Newbrookes
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Bellisseria
+      - https://slgi.fandom.com/wiki/East_Bellisseria
   includes:
     - 1079-1097/994-1014
   excludes:
@@ -258,6 +315,16 @@ Bellisseria-Newbrooke:
     - 1094-1098/1013
 
 Bellisseria-NewIslands:
+  metadata:
+    name_source: BBB
+    name_lore: >-
+      This is a name that appears in an older map (since replaced) hung on the wall of the BBB headquarters.
+      Screenshot: https://app.box.com/s/13pi5ewojp5lsx9vap4uwtweg8h2tddq/file/1467861126249
+    also_known_as:
+      - North Houseboats
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Bellisseria
+      - https://slgi.fandom.com/wiki/East_Bellisseria
   includes:
     - 1088-1100/1012-1023
   excludes:
@@ -266,6 +333,20 @@ Bellisseria-NewIslands:
     - 1092/1012
 
 Bellisseria-OldBelli:
+  metadata:
+    name_source: BBB
+    name_lore: >-
+      This is a name that appears in an older map (since replaced) hung on the wall of the BBB headquarters.
+      Screenshot: https://app.box.com/s/13pi5ewojp5lsx9vap4uwtweg8h2tddq/file/1467861126249
+      SLGI uses "Primordial Bellisseria" which seems a bit too assuming, though this area is, indeed, the very first
+      subcontinent of Bellisseria that Linden Lab deployed.
+    also_known_as:
+      - Olde Belli
+      - Campwich
+      - Primordial Bellisseria (SLGI)
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Bellisseria
+      - https://slgi.fandom.com/wiki/Primordial_Bellisseria
   includes:
     - 1023-1040/954-978
   excludes:
@@ -276,6 +357,16 @@ Bellisseria-OldBelli:
     - 1040/954-958
 
 Bellisseria-Ranchlands:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      Named by Claire Morgenthau. This is based on her public speculation on X/Twitter when the area first detected.
+      She publicly speculated that this area will hold the 2048m² Linden Homes with "Ranch" theme
+      [https://twitter.com/clairem_sl/status/1669542632471818241] (2023-06-16T03:09:16Z). Sometime later she decided
+      to call this area "Ranchlands", and she called the area with that name in her tweet:
+      https://twitter.com/clairem_sl/status/1676729713644167168 (2023-07-05T23:08:10Z)
+    also_known_as:
+      - Ranchland
   includes:
     - 1033-1057/978-1004
   excludes:
@@ -296,10 +387,40 @@ Bellisseria-Ranchlands:
     - 1040/1004
 
 Bellisseria-Sakurasseria:
+  metadata:
+    name_source: BBB
+    name_lore: >-
+      This is a name that appears in an older map (since replaced) hung on the wall of the BBB headquarters.
+      Screenshot: https://app.box.com/s/13pi5ewojp5lsx9vap4uwtweg8h2tddq/file/1467861126249
+      Many gazettes and announcements by BBB use this name, despite the Residents' general displeasure and preference
+      of the shorter "Sakura" name.
+    also_known_as:
+      - Sakura
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Bellisseria
+      - https://slgi.fandom.com/wiki/Sakura
   includes:
     - [1063, 992, 1072, 1000]
 
 Bellisseria-Stiltlands:
+  metadata:
+    name_source: BBB then Claire Morgenthau
+    name_lore: >-
+      An old map hanging in the wall of the BBB HQ (long since replaced) used the names "Stilt Homes".
+      Screenshot: https://app.box.com/s/13pi5ewojp5lsx9vap4uwtweg8h2tddq/file/1467861126249
+      Claire Morgenthau adjusted the name so it is called "Stiltlands"
+      [https://twitter.com/clairem_sl/status/1748218306430197792] (2024-01-19T05:38:19Z).
+      The name is 'finalized' and 'officialized' by the creation & release of the Bellisseria Subcontinents map,
+      the earliest version can be seen here: https://twitter.com/clairem_sl/status/1748385189599047868
+      (2024-01-19T16:41:27Z)
+    also_known_as:
+      - Stilts
+      - Stilthaven
+      - Stilt Homes
+      - Water Paradise
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Bellisseria
+      - https://slgi.fandom.com/wiki/Water_Paradise
   includes:
     - [1058, 967, 1081, 992]
   excludes:
@@ -318,6 +439,14 @@ Bellisseria-Stiltlands:
     - 1058/985
 
 Bellisseria-ThePickles:
+  metadata:
+    name_source: LL + Claire Morgenthau
+    name_lore: >-
+      The name "Pickle" and "Squashed Pickle" was unoffical name by Residents but quasi-officiated by LL due ti
+      inclusion in the "History of Bellisseria" slideshow on BelliHub.
+      Claire Morgenthau named an island in between those two "Pickle End", first mentioned in her post on X/Twitter:
+      https://twitter.com/clairem_sl/status/1748385189599047868 (2024-01-19T16:41:27Z), then grouped all three into
+      this area "The Pickles".
   includes:
     - 1040-1045/969-978
     - 1035-1044/967-968
@@ -327,6 +456,19 @@ Bellisseria-ThePickles:
     - 1037-1038/960
 
 Bellisseria-Victoria:
+  metadata:
+    name_source: BBB then Claire Morgenthau
+    name_lore: >-
+      An old map hanging in the wall of the BBB HQ (long since replaced) used the names "Victorians".
+      Screenshot: https://app.box.com/s/13pi5ewojp5lsx9vap4uwtweg8h2tddq/file/1467861126249
+      Claire removed the ending "n" to convert the adjective "victorian" into a nominative word.
+    also_known_as:
+      - Victorians
+      - Victoribelle
+      - Victorian Subcontinent (SLGI)
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Bellisseria
+      - https://slgi.fandom.com/wiki/Victorian_Subcontinent
   includes:
     - 1024-1039/940-953
     - 1040-1043/950-965
@@ -351,36 +493,88 @@ Bellisseria-Victoria:
 # region # Linden Continents - Mainland
 
 BayCityPlains:
+  metadata:
+    name_source: SLGI
+    name_lore: >-
+      The name is used instead of just "Bay City" because the area as mapped encompass more than just
+      Bay City itself, but also surrounding area which almost match perfectly with what SLGI defined as
+      "Bay City Plains": https://slgi.fandom.com/wiki/Sansara?file=Sansara_G.png#Geographical_Units
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Sansara
+      - https://slgi.fandom.com/wiki/Bay_City
   includes:
     - [982, 999, 995, 1006]
 
 BlakeSea:
+  metadata:
+    name_source: LL and United Sailing Sims (USS)
+    name_lore: >-
+      This is an area that LL donated to be managed by the SL sailing community. The full history is available here:
+      https://blakesea.blogspot.com/p/history-of-blake-sea.html
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Blake_Sea
   includes:
     - [1131, 1048, 1148, 1054]
 
 Corsica:
+  metadata:
+    name_source: LL
+    name_lore: >-
+      This is an official Linden Mainlands continent.
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Corsica
   includes:
     - [1100, 1082, 1159, 1100]
 
 GaetaI:
+  metadata:
+    name_source: LL
+    name_lore: >-
+      This is an official Linden Mainlands continent.
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Gaeta_1
   includes:
     - [1140, 1112, 1155, 1130]
 
 GaetaV:
+  metadata:
+    name_source: LL
+    name_lore: >-
+      This is an official Linden Mainlands continent.
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Gaeta_5
   includes:
     - [1159, 1081, 1189, 1099]
 
 Heterocera:
+  metadata:
+    name_source: LL
+    name_lore: >-
+      This is an official Linden Mainlands continent.
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Heterocera
   includes:
     - [991, 1012, 1014, 1036]
 
 Horizons:
+  metadata:
+    name_source: LL
+    name_lore: >-
+      This is an official Linden extension to the Zindra continent.
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Horizons
   includes:
     - [1804, 1200, 1813, 1210]
   excludes:
     - 1804-1813/1200
 
 Jeogeot:
+  metadata:
+    name_source: LL
+    name_lore: >-
+      This is an official Linden Mainlands continent.
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Jeogeot
   includes:
     - [1004, 897, 1039, 939]
   excludes:
@@ -398,6 +592,12 @@ Jeogeot:
     - 1039/936-939
 
 Nautilus:
+  metadata:
+    name_source: LL
+    name_lore: >-
+      This is an official Linden Mainlands continent.
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Nautilus
   includes:
     - [1104, 1047, 1138, 1081]
     - 1123-1126/1046
@@ -424,6 +624,12 @@ Nautilus:
     - 1135-1138/1079-1080
 
 Sansara:
+  metadata:
+    name_source: LL
+    name_lore: >-
+      This is an official Linden Mainlands continent.
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Sansara
   includes:
     - [982, 978, 1038, 1012]
   excludes:
@@ -434,22 +640,58 @@ Sansara:
     - 986-989/979-981
 
 Sansara-SeaOfFables:
+  metadata:
+    name_source: LL
+    name_lore: >-
+      Part of Sansara, the are is officially named by Hyper Mole in 2010:
+      https://wiki.secondlife.com/w/index.php?title=Sea_of_Fables&oldid=1104472
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Sansara
+      - https://slgi.fandom.com/wiki/Sea_Of_Fables
   includes:
     - [1015, 992, 1023, 999]
 
 Sansara-Snowlands:
+  metadata:
+    name_source: LL
+    name_lore: >-
+      Part of Sansara. Although not officially named by a Linden or a Mole, it is explicitly called that in the
+      official wiki: https://wiki.secondlife.com/wiki/Snowlands_Subcontinent
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Sansara
+      - https://slgi.fandom.com/wiki/Snowlands_Subcontinent
   includes:
     - [1003, 979, 1018, 995]
 
 Satori:
+  metadata:
+    name_source: LL
+    name_lore: >-
+      This is an official Linden Mainlands continent.
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Satori
   includes:
     - [1099, 1005, 1134, 1047]
 
 Sharp:
+  metadata:
+    name_source: LL
+    name_lore: >-
+      This is an official Linden Mainlands continent.
+    also_known_as:
+      - Sharpe
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Sharp_Continent
   includes:
     - [1159, 988, 1179, 1002]
 
 Zindra:
+  metadata:
+    name_source: LL
+    name_lore: >-
+      This is an official Linden Mainlands continent.
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Zindra
   includes:
     - [1797, 1179, 1821, 1202]
   excludes:
@@ -461,18 +703,60 @@ Zindra:
 # region # Linden Continents - Premium
 
 PremiumEast:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      Name chosen because this is one of the 4 Premium Continents, and this one is located a bit separate from the
+      others, and the easternmost. Originally she called this "EastPremium" but decided to rotate the naming so the
+      4 premium continents clump together in sorting order.
+    also_known_as:
+      - EastPremium
+      - Premium 1 (SLGI)
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Premium_Continents
   includes:
     - [1192, 907, 1215, 926]
 
 PremiumSouth-Middle:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      Name chosen because this is one of the 4 Premium Continents, and this one the middle one of the southern
+      Premium Continents cluster. Originally she called this "SouthPremium" but decided to rotate the naming so the
+      4 premium continents clump together in sorting order.
+    also_known_as:
+      - SouthPremium-Middle
+      - Premium South 2 (SLGI)
   includes:
     - [1000, 750, 1022, 768]
 
 PremiumSouth-North:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      Name chosen because this is one of the 4 Premium Continents, and this one the northernmost of the southern
+      Premium Continents cluster. Originally she called this "SouthPremium" but decided to rotate the naming so the
+      4 premium continents clump together in sorting order.
+    also_known_as:
+      - SouthPremium-North
+      - Premium South 1 (SLGI)
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Premium_Continents
   includes:
     - [1013, 811, 1028, 828]
 
 PremiumSouth-South:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      Name chosen because this is one of the 4 Premium Continents, and this one the southernmost of the southern
+      Premium Continents cluster. Originally she called this "SouthPremium" but decided to rotate the naming so the
+      4 premium continents clump together in sorting order.
+    also_known_as:
+      - SouthPremium-South
+      - Premium South 3 (SLGI)
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Premium_Continents
   includes:
     - [1000, 500, 1022, 518]
 
@@ -488,34 +772,84 @@ PremiumSouth-South:
 #    - 1138-1139/1311-1317
 
 FantasyFaire2024:
+  metadata:
+    name_source: LL
+    name_lore: >-
+      This name reflects the purpose of this area, which is the "Fantasy Faire 2024" event.
+    also_known_as:
+      - FantasyFaire
   includes:
     - 535-539/725-730
 
 LindenEstateServices:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      The area's name is based on the 4 westernmost regions, and the general purpose of the regions.
   includes:
     - [1025, 1014, 1031, 1016]
 
 LR-160:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      "LR" starts all region names in this area, and the numbers that follow are in the 160-179 range.
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/LR_Sims
   includes:
     - [1187, 1206, 1190, 1210]
 
 LR-180:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      "LR" starts all region names in this area, and the numbers that follow are in the 180-199 range.
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/LR_Sims
   includes:
     - [1193, 1206, 1196, 1210]
 
 MemBuild:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      "Mem Build" starts all region names in this area.
+    description: >-
+      This seems to be an enhanced copy of the current Linden Memorial Park area north of Corsica.
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Mem_Build
   includes:
     - 986-989/979-981
 
 MoleIslands:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      "Mole Island" starts all region names in this area.
+    description: >-
+      This seems to be an area reserved for the moles to experiment with things.
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Mole_Islands
   includes:
     - [1006, 971, 1011, 976]
 
 PaleoQuest:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      "PaleoQuest" starts all region names in this area.
+    description: >-
+      This seems to be an area for some kind of event?
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/PaleoQuest
   includes:
     - [400, 392, 401, 400]
 
 Preflight:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      "Preflight" starts all region names in this area.
   includes:
     - [1296, 1193, 1299, 1196]
 
@@ -528,6 +862,12 @@ Preflight:
 #    - [386, 359, 403, 377]
 
 WelcomeHub:
+  metadata:
+    name_source: Linden Lab
+    name_lore: >-
+      The area name is mentioned several times from LL official announcements
+    also_known_as:
+      - HUBS
   includes:
     - 1050-1052/973-978
   excludes:
@@ -538,6 +878,12 @@ WelcomeHub:
 # region # 'Lost' Continents
 
 LostGaeta:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      The name is chosen to reflect the fact that this area -- when unvalidated -- shows reserved coordinates around
+      the Gaeta I and Gaeta V continents, showing probable planned locations of Gaeta II through Gaeta IV, including
+      reserved coordinates for finishing Gaeta I.
   pragma:
     automatic: False
     validate: False
@@ -545,6 +891,11 @@ LostGaeta:
     - [1140, 1112, 1215, 1130]
 
 LostZindra:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      The name is chosen to reflect the fact that this area -- when unvalidated -- shows reserved coordinates around
+      the Zindra continent.
   pragma:
     automatic: False
     validate: False
@@ -555,6 +906,11 @@ LostZindra:
     - 1807-1810/1201-1202
 
 LostWorld:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      The name is chosen to reflect the fact that this area containes regions that does not appear in the map unless
+      validation is turned off.
   pragma:
     automatic: False
     validate: False
@@ -566,50 +922,107 @@ LostWorld:
 # region # User/Private Continents
 
 1929Berlin:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      The name is based on a guess after visiting the area.
   includes:
     - 980-981/1363-1366
 
 A524:
+  metadata:
+    name_source: Claire Morgenthau + SLGI
+    name_lore: >-
+      Claire failed to find an 'official' name, but the area is 'interesting' enough (>= 6 regions) that she used
+      SLGI's "transitory name" for the area.
   includes:
     - 1077-1081/1118-1123
 
 A525:
+  metadata:
+    name_source: Claire Morgenthau + SLGI
+    name_lore: >-
+      Claire failed to find an 'official' name, but the area is 'interesting' enough (>= 6 regions) that she used
+      SLGI's "transitory name" for the area.
   includes:
     - 971-974/1081-1083
 
 A526:  # Possibly Japanese Islands?
+  metadata:
+    name_source: Claire Morgenthau + SLGI
+    name_lore: >-
+      Claire failed to find an 'official' name, but the area is 'interesting' enough (>= 6 regions) that she used
+      SLGI's "transitory name" for the area.
   includes:
     - 650-651/1250-1252
 
 A527:  # Skill gaming regions? Cannot get in
+  metadata:
+    name_source: Claire Morgenthau + SLGI
+    name_lore: >-
+      Claire failed to find an 'official' name, but the area is 'interesting' enough (>= 6 regions) that she used
+      SLGI's "transitory name" for the area.
   includes:
     - 913-914/1220-1222
 
 A528:  # Virtual New York? Cannot get in
+  metadata:
+    name_source: Claire Morgenthau + SLGI
+    name_lore: >-
+      Claire failed to find an 'official' name, but the area is 'interesting' enough (>= 6 regions) that she used
+      SLGI's "transitory name" for the area.
   includes:
     - 1153-1155/973-974
 
 AlbaIslands:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      Name chosen because 5 of the 6 regions in the area begin their names with "Alba"
   includes:
     - 710-711/1032-1034
 
 AlphaBay:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      Name deduced from a visit
   includes:
     - 664-668/1148-1151
 
 AmazonRiver:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      Name deduced from a visit
   includes:
     - [832, 969, 835, 972]
 
 AMEstate:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      Name deduced from a visit
   includes:
     - [604, 1164, 610, 1169]
 
 AngelManor:
+  metadata:
+    name_source: SLGI
+    name_lore: >-
+      Historically named by SLGI in July 2015
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Angel_Manor_Microcontinent
   includes:
     - [1054, 1397, 1056, 1400]
 
 AntiquityLand:
+  metadata:
+    name_source: SLGI
+    name_lore: >-
+      Historically named by SLGI in late 2013
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Antiquity_Microcontinent
   includes:
     - [763, 909, 766, 913]
 
@@ -619,14 +1032,28 @@ AntiquityLand:
 #    - [763, 915, 765, 917]
 
 AstoriaEstate:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      Name deduced from a visit
   includes:
     - 680-682/1026-1029
 
 AussieShores:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      Name deduced from a visit
   includes:
     - 660-662/1188-1189
 
 AzureIslands:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      Name deduced from a visit
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Azure_Islands
   includes:
     - 1143-1155/1064-1074
   excludes:
@@ -638,14 +1065,32 @@ AzureIslands:
 #    - [977, 959, 989, 966]
 
 Bauer:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      The majority of regions that make up this area have names starting with "Bauer".
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Bauer
   includes:
     - 899-903/1198-1202
 
 Baunatal:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      In-world 'official' name of the area, as recorded in SLGI (see list of articles).
+      The "Gemeinde" part is dropped because it simply means "municipality (of)"
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Gemeinde_Baunatal
   includes:
     - 715-718/922-924
 
 Bellisseri:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      The majority of regions that make up this area have names starting with "Bellisseri". Not to be confused with
+      "Bellisseria"
   includes:
     - 878-880/1025-1026
 
@@ -655,6 +1100,13 @@ Bellisseri:
 #    - [615, 1058, 617, 1060]
 
 BlakeSeaSurrounding:
+  metadata:
+    name_source: Atlan Bade, then Claire Morgenthau
+    name_lore: >-
+      The name was based on the title of the map that Atlan Bade created back in 2018 [https://www.flickr.com/photos/atlanbade/14522194465/]
+      and linked to from SLGI article listed.
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Blake_Sea
   includes:
     - [1131, 1036, 1152, 1061]
   excludes:
@@ -673,42 +1125,108 @@ BlakeSeaSurrounding:
     - [1134, 1054, 1134, 1054]
 
 BlakeSeaSurrounding_NoSuppress:
+  metadata:
+    name_source: Atlan Bade, then Claire Morgenthau
+    name_lore: >-
+      Exact same lore as "BlakeSeaSurrounding"; the "_NoSuppress" suffix is added to indicate that this map does not apply
+      transparency for regions not actually part of the Blake Sea proper.
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Blake_Sea
   includes:
     - [1131, 1036, 1152, 1061]
 
 BookClubIsland:
+  metadata:
+    name_source: SLGI
+    name_lore: >-
+      Named by SLGI in 2023, likely because all regions in this area begin with "Book Club Island"
+    also_known_as:
+      - SecondLifeBookClub
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Book_Club_Island
   includes:
     - 1055/1389-1392
 
 Boystown:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      The majority of regions that make up this area have names starting with "Boystown".
   includes:
     - 505-506/1396-1400
 
 BriarwoodEstates:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      The majority of regions that make up this area have names starting with "Briarwood", AND based on information
+      deduced from in-world visit.
   includes:
     - 1067-1071/1159-1162
 
 Burn2:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      The majority of regions that make up this area have names starting with "Burn2"
+    description:
+      This area hosts the annual "Burn2" event. It grows when the event comes near, and shrinks when the event is
+      completed.
   includes:
     - 1022-1024/1023-1026
 
 CalasGaladhonPark:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      Name chosen because some regions in this area seems to be migrated from an older "Calas Galadhon" microcontinent.
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/A455_Microcontinent
+      - https://slgi.fandom.com/wiki/Calas_Galadhon_Microcontinent
   includes:
     - [709, 1110, 713, 1113]
 
 Caledon:
+  metadata:
+    name_source: SLGI
+    name_lore: >-
+      One of the oldest named area in SL, formerly part of the Caledon-Winterfel continent.
+      All regions in the area have "Caledon" as part of their name, so the area name comes from that.
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Caledon
+      - https://slgi.fandom.com/wiki/Caledon_-_Winterfel
   includes:
     - 905-909/1021-1025
 
 CDP_USU:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      Name deduced from in-world visit.
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/CDP_Microcontinent
   includes:
     - 539-542/1008-1010
 
 CDS-Etopia:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      Originally two separate areas, Confederation of Democratic Simulators (CDS) and Etopia. They merged sometime in 2023
+      to become a sizable area. Claire named the combined area "CDS-Etopia", but it is not known if in-world the area
+      is called that.
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Confederation_of_Democratic_Simulators
   includes:
     - [1135, 1311, 1139, 1317]
 
 CedarCreek:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      Name deduced from in-world visit.
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Cedar_Creek_Township
   includes:
     - [849, 1342, 853, 1346]
 
@@ -718,50 +1236,121 @@ CedarCreek:
 #    - 1126-1127/1242-1245
 
 Coeur:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      The majority of regions that make up this area have names containing with "Coeur".
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Coeur_Microcontinent
   includes:
     - [554, 1117, 559, 1124]
 
 CoralOcean:
+  metadata:
+    name_source: SLGI
+    name_lore: >-
+      After discovered by Claire and submitted as C034 to SLGI, the Institute decided to call this continent "Coral
+      Ocean"
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Coral_Ocean
   includes:
     - [479, 1270, 487, 1280]
 
 CosyIsles:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      Name deduced from in-world visit.
   includes:
     - 710-712/943-947
 
 CrackDen:
+  metadata:
+    name_source: Crack Den Community
+    name_lore: >-
+      https://thecrackden.com/
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Crack_Den
   includes:
     - [742, 1389, 745, 1391]
 
 CuddlesHomes:
+  metadata:
+    name_source: (Owner of the Area)
+    name_lore: >-
+      Claire Morgenthau met with the owner of the area in-world, and after a pleasant discussion, the Owner requested
+      that the area be called "Cuddles Homes"
+    also_known_as:
+      - Cuddles
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Cuddles
   includes:
     - 874-877/1301-1304
 
 DANAANEstate:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      Name deduced from in-world visit.
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Danaan
   includes:
     - 671-672/1309-1311
 
 EdenFruitIslands:
+  metadata:
+    name_source: Claire Morgenthau from SLGI
+    name_lore: >-
+      Claire decided to joint 2 significant subareas, "Eden" and "Fruit Islands", listed in SLGI.
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Eden_Continent
   includes:
     - [459, 1700, 481, 1720]
 
 ElvenIsle:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      "Elven Isle" starts all region names in this area.
+      Claire couldn't visit any of the comprising regions so the name cannot be verified in-world
   includes:
     - 980/1129-1134
 
 Enarah:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      The majority of regions that make up this area have names containing "Enarah".
+      Claire couldn't visit any of the comprising regions so the name cannot be verified in-world
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Enarah
   includes:
     - 762-767/1143-1148
 
 EndOfTime:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      Name deduced from in-world visit.
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/End_Of_Time
   includes:
     - [500, 1027, 503, 1030]
 
 EroticaIslands:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      Name deduced from a sky-painting declaring "Erotica Islands" even when the underlying region is named "Ocean 6" (see April 2024 Edition).
   includes:
     - 941-947/1081-1086
 
 EtherealCity:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      "Ethereal City" starts all region names in this area.
+      In-world visit is inconclusive.
   includes:
     - 1054-1056/1161-1163
 
@@ -771,6 +1360,13 @@ EtherealCity:
 #    - [1136, 1314, 1138, 1317]
 
 FairChang:
+  metadata:
+    name_source: SLGI, probably from owner
+    name_lore: >-
+      Many regions in this area have names starting with "FairChang".
+      In addition, SLGI has a complete record of how this region ended up where it is now.
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/FairChang_Subcontinent
   includes:
     - [1102, 1048, 1110, 1060]
   excludes:
@@ -779,26 +1375,59 @@ FairChang:
     - [1110, 1052, 1110, 1054]
 
 FantasyLands:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      Name is guessed based on the theme of the regions.
+      In-world visit is inconclusive.
   includes:
     - [841, 1001, 846, 1010]
 
 FirestormGateway:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      Name was deduced from the fact that new FireStorm users will land in this area.
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Firestorm_Gateway
   includes:
     - 651-656/1112-1115
 
 FoxValley:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      Name deduced from in-world visit.
   includes:
     - 933-936/908-910
 
 Freedom:
+  metadata:
+    name_source: (founders?) then SLGI
+    name_lore: >-
+      This is the 'official' name of the area, or to be more precise, "Freedom Continent".
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Freedom_Microcontinent
   includes:
     - [750, 1013, 758, 1020]
 
 GianfarPeaks:
+  metadata:
+    name_source: SLGI
+    name_lore: >-
+      Historically named in July 2015 by SLGI.
+    also_known_as:
+      - Gianfar
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Gianfar_Microcontinent
   includes:
     - 979-980/1069-1071
 
 GoombahSL:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      Name deduced from in-world visit.
   includes:
     - 1104-1108/1119-1129
 
@@ -809,187 +1438,458 @@ GoombahSL:
 
 # Originally "A518"
 GoreanLands:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      Name deduced from in-world visit.
   includes:
     - [1014, 1175, 1019, 1178]
 
 HavenOfDreams:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      Name deduced from in-world visit.
   includes:
     - 830-832/1155-1158
 
 HawaiianIslands:
+  metadata:
+    name_source: SLGI
+    name_lore: >-
+      Historical - Feb 2023 survey by SLGI.
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Hawaiian_Islands
   includes:
     - 507-511/1230-1232
 
 IndecentEstates:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      Name deduced from in-world visit.
   includes:
     - 855-858/1015-1018
 
 Indochina1970RP:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      Name deduced from in-world visit. Further strengthened by discovery of a roleplaying community:
+      https://secondlife.com/destination/uss-kitty-hawk
+    also_known_as:
+      - South China Sea (SLGI)
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Indochina
   includes:
     - 932-935/1083-1084
 
 IsleOfWyrms:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      Name deduced from in-world visit.
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Isle_of_Wyrms_Microcontinent
   includes:
     - [545, 1059, 548, 1063]
 
 JunkyardBlues:
+  metadata:
+    name_source: SLGI
+    name_lore: >-
+      Historically named by SLGI based on their survey ca. 2015
+    also_known_as:
+      - Junkyard (Claire in-world survey)
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Junkyard_Blues
+    other_references:
+      - https://secondlife.com/destination/junkyard-blues
   includes:
     - 749-751/1214-1216
 
 Ko-Ro-Ba:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      Name deduced from in-world visit.
   includes:
     - 639/1222-1225
 
 Labyrinth:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      Name deduced from in-world visit.
   includes:
     - 786-789/1216-1218
 
 LagoonRetreat:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      Name deduced from in-world visit.
   includes:
     - 618-623/1293-1294
 
 LeChateau:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      Name deduced from in-world visit.
   includes:
     - 576-580/1328-1332
 
 LondonCity:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      "London City" starts all region names in this area.
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/London_City
   includes:
     - 850-851/895-897
 
 LuanesWorld:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      Name deduced from in-world visit.
   includes:
     - 1078-1081/1279-1281
 
 LunasEmpire:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      Name deduced from in-world visit.
   includes:
     - 1001-1002/1100-1102
 
 LuxeLA:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      Majority of regions in this area have names that start with "Luxe LA"
   includes:
     - 765-767/1201-1205
 
 Luxory:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      Name deduced from in-world visit.
+    also_known_as:
+      - Ko Microcontinent (SLGI)
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Luxory_Continent
   includes:
     - [621, 1033, 632, 1050]
 
 MacedoniaEstate:
+  metadata:
+    name_source: SLGI
+    name_lore: >-
+      Historically named by SLGI in 2020.
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Macedonia_Estate
   includes:
     - [540, 1182, 544, 1185]
 
 Madison:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      Name deduced from in-world visit.
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Madison
   includes:
     - [850, 1320, 852, 1323]
 
 #Originally "AllenCommunity"
 MagnoliaEstates:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      Name deduced from in-world visit.
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Magnolia_Estates
   includes:
     - 902-906/1372-1376
 
 Maple:
+  metadata:
+    name_source: SLGI
+    name_lore: >-
+      Historically named by SLGI in 2020.
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Maple
   includes:
     - [878, 927, 882, 928]
 
 MauiIslandEstates:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      Name deduced from in-world visit.
+      Also, majority of regions in this area have names that start with "Maui"
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Maui_Microcontinent
   includes:
     - [548, 1137, 551, 1140]
 
 MayaLake:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      Majority of regions in this area have names that start with "Maya Lake"
   includes:
     - [979, 1198, 981, 1200]
 
 MeisterbastlerKreis:
+  metadata:
+    name_source: Second Life Aviation Wiki
+    name_lore: >-
+      Historical name
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Meisterbastler-Kreis_Microcontinent
   includes:
     - 1105-1114/1382-1388
 
 MerfolkHaven:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      From in-world visit, it is found that the area was built for merfolks, and all regions have "Haven" in their
+      names.
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Merfolk_Haven
   includes:
     - 729-731/1138-1139
 
 Mieville:
+  metadata:
+    name_source: SLGI
+    name_lore: >-
+      Historically named by SLGI in March 2014.
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Mieville_Microcontinent
   includes:
     - [533, 1196, 537, 1202]
 
 MorningwoodAcres:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      Name deduced from in-world visit.
   includes:
     - 806-807/1315-1317
 
 Mythera:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      Name deduced from in-world visit.
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Mythera_Microcontinent
   includes:
     - [720, 1324, 722, 1328]
 
 NakedEstates:
+  metadata:
+    name_source: SLGI & Claire Morgenthau
+    name_lore: >-
+      Historically named by SLGI in 2014.
+      Modified Name deduced from in-world visit.
+    also_known_as:
+      - Naked Microcontinent
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Naked_Microcontinent
   includes:
     - [1038, 1161, 1042, 1163]
 
 NativeIslands:
+  metadata:
+    name_source: Claire Morgenthau & SLGI
+    name_lore: >-
+      Majority of regions comprising this area have names that begin with "Native"
+      In-world visit was not possible.
+    also_known_as:
+      - Native Microcontinent
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Naked_Microcontinent
   includes:
     - [733, 1367, 738, 1371]
 
 NewBabbage:
+  metadata:
+    name_source: City of New Babbage
+    name_lore: >-
+      The official name as indicated in [https://secondlife.com/destination/new-babbage] and [https://cityofnewbabbage.net/]
+    also_known_as:
+      - Babbage Microcontinent
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Babbage_Microcontinent
   includes:
     - [630, 1004, 633, 1007]
 
 NewHaven:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      Name deduced from in-world visit and feedback on X/Twitter
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/New_Haven_Microcontinent
   includes:
     - [597, 1181, 603, 1186]
 
 Olni:
+  metadata:
+    name_source: SLGI
+    name_lore: >-
+      Historically named by SLGI in February 2023.
   includes:
     - [655, 1291, 658, 1293]
 
 # Originally "1700"
 Pirates1700:
+  metadata:
+    name_source: Claire Morgenthau & SLGI
+    name_lore: >-
+      SLGI originally named this region just "1700", but this potentially causes problems because the name looks like
+      an integer and JavaScript will too-happily coerce that to integer.
+      Claire recognized that the names of the regions in the areas are well-known pirate strongholds, either IRL or in
+      fictional stories.
+      These considerations, plus the existence of a centrally-positioned "Pirates Harbor" region, led her to name
+      the regions "Pirates1700" instead of just "1700"
+    also_known_as:
+      - "1700"
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/1700_Microcontinent
   includes:
     - [940, 1174, 942, 1177]
 
 PlayaIsles:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      Most of the regions in the area have names beginning with "Playa"
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Playa_Isles
   includes:
     - [824, 1207, 831, 1217]
 
 Progeny:
+  metadata:
+    name_source: SLGI
+    name_lore: >-
+      Historically named by SLGI in 2023.
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Progeny_Microcontinent
   includes:
     - 686-691/1289-1290
 
 Raglan:
+  metadata:
+    name_source: Historical
+    name_lore: >-
+      Name exists since 2008.
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Raglan_Microcontinent
   includes:
     - [1083, 1296, 1086, 1299]
 
 Rockcliffe:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      Deduced from in-world visit.
   includes:
     - 1151-1153/1307-1308
 
 Romanum:
+  metadata:
+    name_source: SLGI
+    name_lore:
+      Named by SLGI in 2013.
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Romanum_Microcontinent
   includes:
     - [747, 1079, 749, 1083]
 
 Rosehaven:
+  metadata:
+    name_source: SLGI
+    name_lore:
+      Named by SLGI in 2019, likely because all regions have "Rosehaven" in their names.
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Rosehaven
   includes:
     - [906, 1029, 908, 1034]
 
 SaltyGoat:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      Name chosen because nearly all regions start with "SG", and the central region is called "Salty Goat", which
+      likely is the meaning of "SG"
   includes:
     - 921-923/1013-1016
 
 Schindleria:
+  metadata:
+    name_source: SLGI
+    name_lore: >-
+      Named by SLGI in 2023, likely because all regions in this area starts with "Schindleria"
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Schindleria
   includes:
     - [527, 1027, 529, 1029]
 
 SciLands:
+  metadata:
+    name_source: NASA?
+    name_lore: >-
+      NASA eEducation Island declares that they are located in "SciLands"
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/A199_-_Science
+    other_references:
+      - https://maps.secondlife.com/?q=nasa&s=Places
   includes:
     - [1138, 1296, 1160, 1317]
   excludes:
     - 1138-1139/1311-1317
 
 SeabirdIslands:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      Named because all regions in this area are seabirds of some kinds.
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Seabirds_Microcontinent
   includes:
     - [686, 920, 692, 928]
 
 # Originally called "UnityMaxim"
 Sanctuary:
+  metadata:
+    name_source: SLGI?
+    name_lore:
+      Named by SLGI in 2015.
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Sanctuary_Microcontinent
+    other_references:
+      - https://secondlife.com/destination/sanctuary
   includes:
     - 1060-1062/1325-1328
 
 SecondNorway:
+  metadata:
+    name_source: Historical
+    name_lore: >-
+      Name already in use since Blake Sea was established in 2008.
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Second_Norway
   includes:
     - [1149, 1041, 1165, 1063]
   excludes:
@@ -998,92 +1898,220 @@ SecondNorway:
     - 1150/1050
 
 SecondScotland:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      Name chosen by Claire to kind of mirror the Second Norway area. Actual 'official' name is "Scotland in SL", but
+      even residents living in the area refers to the area sometimes as "Second Scotland".
+    also_known_as:
+      - Scotland in SL
+      - Highlands of Scotland
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Scotland_in_SL
   includes:
     - 751-753/1125-1127
 
 SeductionEstate:
+  metadata:
+    name_source: Claire Morgenthau & SLGI
+    name_lore: >-
+      Name deduced from in-world visit, which added "Estate" behind the "Seduction" name already established by SLGI.
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Seduction_Microcontinent
   includes:
     - [757, 926, 763, 932]
 
 Shadowfall:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      Originally called Eerie by SLGI (because the majority of regions start with "Eerie").
+      However, in-world visit indicates that all parcels in the area are prefixed with "Shadowfall 2401".
+      A deeper investigation led to the renaming of the area to "Shadowfall" because the area is owned, designed, and
+      operated by a roleplaying group that invariably uses the word "Shadowfall" in all their roleplaying themes.
+    also_known_as:
+      - Shadowfall2401
+      - Shadowfall 2401
+      - "Shadowfall: Nightmare"
+      - Shadowfall Township
+      - Eerie
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Shadowfall
   includes:
     - 708-710/1185-1186
 
 Shopping:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      Deduced from in-world visit. Claire decided to reuse the "Shopping" name because every region in this area is
+      built to host different sellers/shops, acting as a megamall.
   includes:
     - 1071-1073/1168-1170
 
 SLEA:
+  metadata:
+    name_source: Linden Lab?
+    name_lore: >-
+      Region name stands for "Second Life Endowment for the Arts", and is a Linden Lab initiative to provide some sort
+      of 'sponsorship' for artists who create virtual / digital art.
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/SLEA_Sim_Cluster
   includes:
     - 695-699/1405-1410
 
 SomeonesDream:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      Name deduced from in-world visit.
   includes:
     - 637-640/942-945
 
 SpiaggiaTromonto:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      Name deduced from in-world visit.
   includes:
     - 617-619/1184-1186
 
 SturbridgeGrove:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      Name deduced from in-world visit.
   includes:
     - 1114-1117/1210-1212
 
 SnugHarbor:
+  metadata:
+    name_source: Historical / SLGI
+    name_lore: >-
+      According to SLGI, Snug Harbor was established soon after Blake Sea was established.
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Snug_Harbor
   includes:
     - [1146, 1052, 1149, 1056]
   excludes:
     - [1146, 1056, 1146, 1056]
 
 Sunweaver:
+  metadata:
+    name_source: SLGI
+    name_lore: >-
+      Historically named by SLGI in 2015.
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Sunweaver
   includes:
     - [876, 987, 878, 990]
 
 TalunaContinent:
+  metadata:
+    name_source: https://web.archive.org/web/20230328182635/http://www.wangao.org/?page_id=41
+    name_lore: >-
+      After investigation by Claire Morgenthau, this area is identified as "Taluna Continent" belonging to the Wa Ngao
+      tribe (a gorean roleplay community)
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Taluna_Continent
   includes:
     - [1097, 949, 1099, 951]
 
 Templeton:
+  metadata:
+    name_source: SLGI
+    name_lore: >-
+      Named by SLGI in 2023. Originally called "Templeton Cove" which is just one region inside, though possibly
+      Claire deduced the name from an in-world visit. But it has lost many regions since.
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Templeton
   includes:
     - [1027, 1240, 1030, 1242]
 
 THAPLUG:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      Deduced from in-world visit
   includes:
     - 749-751/1197-1199
 
 FaeryCrossing:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      Deduced from in-world visit
   includes:
     - 559-561/1059-1061
 
 TheGroveEstate:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      Deduced from in-world visit
   includes:
     - [1000, 1166, 1009, 1171]
 
 TheHavens:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      Deduced from in-world visit
   includes:
     - 549/1059-1061
 
 TheJungle:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      Deduced from in-world visit
   includes:
     - 1187-1189/919-920
 
 TheSignShopping:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      Most regions in this area have names starting with "The Sign". In addition, in-world investigation revealed that
+      the area is a megamall of sorts, similar to the area known as "Shopping".
   includes:
     - 1043-1046/1136-1137
 
 TheWastelands:
+  metadata:
+    name_source: Historical
+    name_lore: >-
+      This is a historical area where post-apocalyptic roleplay happens, still to this day. Established by NeoBokrug Elytis
   includes:
     - [785, 1036, 787, 1039]
 
 ToorEstate:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      Name chosen because all regions comprising this area have names starting with "Toor"
   includes:
     - 549-551/1358-1360
 
 TortugaIslands:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      Deduced from in-world visit.
   includes:
     - [500, 1010, 504, 1013]
 
 TuaruaFiji:
+  metadata:
+    name_source: Historical/Owner
+    name_lore: >-
+      Previously Irish-Bonaire, then just Bonaire, then Seychelles, and finally Tuarua Fiji.
+    also_known_as:
+      - Seychelles
+      - Bonaire
+      - Irish-Bonaire
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Tuarua_Fiji
   includes:
     - [1132, 1063, 1154, 1083]
   excludes:
@@ -1107,38 +2135,96 @@ TuaruaFiji:
 #    - 1135/1066-1068
 
 Uhre:
+  metadata:
+    name_source: Historical/Owner
+    name_lore: >-
+      Historically and publicly named as Uhre since at least 2013.
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Uhre_Microcontinent
+    other_references:
+      - https://community.secondlife.com/forums/topic/311546-uhre-welcomes-all-new-comers/
+      - https://secondlife.com/destination/uhre-dragonheart
   includes:
     - [860, 984, 865, 989]
 
 VegvisirCollective:
+  metadata:
+    name_source: Twitter -> Resident
+    name_lore: >-
+      In-world visit inconclusive. Someone on Twitter provided leads to a quasi-official name.
+    other_references:
+      - https://twitter.com/SRougefeu/status/1752367491295141892
+      - https://twitter.com/SRougefeu/status/1752696390126596213
+      - https://my.secondlife.com/alba.amore/picks/7434ef7b-e02a-b43a-848d-34b67eff093c
   includes:
     - 811-813/1351-1353
 
 VWBPE:
+  metadata:
+    name_source: Historical
+    name_lore: >-
+      All regions in this are have names starting with "VWBPE", which likely stands for Virtual Worlds Best Practice in Education
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/VWBPE
   includes:
     - [1102, 1312, 1106, 1314]
 
 WesternTerritories:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      Deduced from in-world visit
+    SLGI_articles:
+      - https://slgi.fandom.com/wiki/Western_Territories
   includes:
     - [963, 1144, 967, 1149]
 
 WillowdaleTrails1:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      All regions in this area have names starting with "WillowdaleTrails1"
   includes:
     - 1186-1188/1050-1052
 
+WillowdaleTrails2:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      All regions in this area have names starting with "WillowdaleTrails1"
+    first_added: 2024-04-29
+  includes:
+    - 1182-1184/1050-1052
+
 WoodlandGrove:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      Deduced from in-world visit
   includes:
     - 1030-1033/1391-1395
 
 WW2RP:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      All parcels in the area starts with "WWII RP"
   includes:
     - 642/1268-1272
 
 XCESSEstates:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      Parcels in the area seems to be managed by "XCESS Estate"
   includes:
     - 756-759/908-911
 
 Yumix:
+  metadata:
+    name_source: Claire Morgenthau
+    name_lore: >-
+      All regions in the area have names starting with "Yumix"
   includes:
     - 653-658/1244-1250
 
