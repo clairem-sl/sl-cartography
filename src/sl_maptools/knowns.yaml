@@ -984,6 +984,11 @@ SecondLifeBookClub:
   includes:
     - 1055/1389-1392
 
+# Originally called "UnityMaxim"
+Sanctuary:
+  includes:
+    - 1060-1062/1325-1328
+
 SecondNorway:
   includes:
     - [1149, 1041, 1165, 1063]
@@ -1104,10 +1109,6 @@ TuaruaFiji:
 Uhre:
   includes:
     - [860, 984, 865, 989]
-
-UnityMaxim:
-  includes:
-    - 1060-1062/1325-1328
 
 VegvisirCollective:
   includes:
