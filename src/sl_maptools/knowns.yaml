@@ -676,6 +676,10 @@ BlakeSeaSurrounding_NoSuppress:
   includes:
     - [1131, 1036, 1152, 1061]
 
+BookClubIsland:
+  includes:
+    - 1055/1389-1392
+
 Boystown:
   includes:
     - 505-506/1396-1400
@@ -979,10 +983,6 @@ SciLands:
 SeabirdIslands:
   includes:
     - [686, 920, 692, 928]
-
-SecondLifeBookClub:
-  includes:
-    - 1055/1389-1392
 
 # Originally called "UnityMaxim"
 Sanctuary:
