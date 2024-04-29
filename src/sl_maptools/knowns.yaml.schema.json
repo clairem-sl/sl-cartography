@@ -1,0 +1,170 @@
+{
+    "$schema": "https://json-schema.org/draft-07/schema",
+    "title": "knowns.yaml",
+    "description": "YAML file containing data for creating Second Life maps, as used by sl-cartography",
+    "type": "object",
+    "flowStyle": "block",
+    "$comment": "We do not define any 'properties' for the top-level object, because they are actual Region Names and we cannot exhaustively list them. And the names are dynamic anyways, while we want the schema file to be static.",
+    "propertyNames": {
+        "$comment": "Forces each area name to follow a certain pattern: Must start with uppercase or number, only alphanums or dash, and underscore acts only as suffix.",
+        "type": "string",
+        "pattern": "^[A-Z0-9][A-Za-z0-9-]+(_[A-Za-z0-9]+)?$"
+    },
+    "minProperties": 1,
+    "additionalProperties": {
+        "$comment": "Per-area data structure is defined here",
+        "type": "object",
+        "required": [
+            "metadata",
+            "includes"
+        ],
+        "additionalProperties": false,
+        "properties": {
+            "metadata": {
+                "$comment": "(Required) Data about the data point itself",
+                "type": "object",
+                "flowStyle": "block",
+                "required": [
+                    "name_source",
+                    "name_lore"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                    "name_source": {
+                        "$comment": "(Required) Who defined the name of the area.",
+                        "type": "string",
+                        "style": "inline",
+                        "minLength": 1
+                    },
+                    "name_lore": {
+                        "$comment": "(Required) The story behind how the name is defined. NOT the lore of the area itself",
+                        "type": "string",
+                        "style": "folded",
+                        "minLength": 1
+                    },
+                    "first_added": {
+                        "$comment": "Date when first added",
+                        "type": "string",
+                        "style": "folded",
+                        "format": "date",
+                        "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}"
+                    },
+                    "description": {
+                        "$comment": "(Optional) Description of the purpose of the region",
+                        "type": "string",
+                        "style": "folded",
+                        "minLength": 1
+                    },
+                    "also_known_as": {
+                        "$comment": "(Optional) Other possible or historical names of the area",
+                        "type": "array",
+                        "flowStyle": "block",
+                        "minItems": 1,
+                        "items": {
+                            "type": "string",
+                            "style": "inline"
+                        }
+                    },
+                    "SLGI_articles": {
+                        "$comment": "(Optional) Related SLGI articles about the area",
+                        "type": "array",
+                        "flowStyle": "block",
+                        "minItems": 1,
+                        "items": {
+                            "type": "string",
+                            "style": "inline",
+                            "format": "uri",
+                            "pattern": "^https://slgi\\.fandom\\.com/wiki/.+$"
+                        }
+                    },
+                    "other_references": {
+                        "$comment": "Other publicly-accessible references",
+                        "type": "array",
+                        "flowStyle": "block",
+                        "minItems": 1,
+                        "items": {
+                            "type": "string",
+                            "style": "inline",
+                            "format": "uri",
+                            "pattern": "^https?://"
+                        }
+                    }
+                }
+            },
+            "includes": {
+                "$comment": "(Required) A list of the (inclusive) boundary coordinates of the area",
+                "type": "array",
+                "flowStyle": "block",
+                "minItems": 1,
+                "items": {
+                    "anyOf": [
+                        {
+                            "$comment": "The older [x1, y1, x2, y2] format",
+                            "type": "array",
+                            "flowStyle": "flow",
+                            "items": [
+                                {"type": "integer", "multipleOf": 1, "minimum": 0},
+                                {"type": "integer", "multipleOf": 1, "minimum": 0},
+                                {"type": "integer", "multipleOf": 1, "minimum": 0},
+                                {"type": "integer", "multipleOf": 1, "minimum": 0}
+                            ],
+                            "additionalItems": false
+                        },
+                        {
+                            "$comment": "The SLGI x1-x2/y1-y2 format, which should be the format used for newer entries",
+                            "type": "string",
+                            "style": "inline",
+                            "pattern": "^[0-9]+(-[0-9]+)?/[0-9]+(-[0-9]+)?$"
+                        }
+                    ]
+                }
+            },
+            "excludes": {
+                "$comment": "(Optional) A list of the (inclusive) boundary coordinates of regions that must be excluded from the area",
+                "type": "array",
+                "flowStyle": "block",
+                "minItems": 1,
+                "items": {
+                    "anyOf": [
+                        {
+                            "$comment": "The older [x1, y1, x2, y2] format",
+                            "type": "array",
+                            "flowStyle": "flow",
+                            "items": [
+                                {"type": "integer", "multipleOf": 1, "minimum": 0},
+                                {"type": "integer", "multipleOf": 1, "minimum": 0},
+                                {"type": "integer", "multipleOf": 1, "minimum": 0},
+                                {"type": "integer", "multipleOf": 1, "minimum": 0}
+                            ],
+                            "additionalItems": false
+                        },
+                        {
+                            "$comment": "The SLGI x1-x2/y1-y2 format, which should be the format used for newer entries",
+                            "type": "string",
+                            "style": "inline",
+                            "pattern": "^[0-9]+(-[0-9]+)?/[0-9]+(-[0-9]+)?$"
+                        }
+                    ]
+                }
+            },
+            "pragma": {
+                "$comment": "(Optional) Directives on how to process this data point",
+                "type": "object",
+                "flowStyle": "block",
+                "additionalProperties": false,
+                "properties": {
+                    "automatic": {
+                        "$comment": "(Optional) If false, do not generate the map for this area automatically. Default = True",
+                        "type": "boolean",
+                        "default": true
+                    },
+                    "validate": {
+                        "$comment": "(Optional) If false, do not validate the existence of regions in this area. Default = True",
+                        "type": "boolean",
+                        "default": true
+                    }
+                }
+            }
+        }
+    }
+}
