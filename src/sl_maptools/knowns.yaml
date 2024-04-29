@@ -672,7 +672,7 @@ BlakeSeaSurrounding:
     - [1133, 1055, 1134, 1061]
     - [1134, 1054, 1134, 1054]
 
-BlakeSeaSurroundingNoSuppress:
+BlakeSeaSurrounding_NoSuppress:
   includes:
     - [1131, 1036, 1152, 1061]
 
