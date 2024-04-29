@@ -1035,7 +1035,7 @@ SnugHarbor:
   excludes:
     - [1146, 1056, 1146, 1056]
 
-SunIslands:
+Sunweaver:
   includes:
     - [876, 987, 878, 990]
 
