@@ -828,7 +828,7 @@ IsleOfWyrms:
   includes:
     - [545, 1059, 548, 1063]
 
-Junkyard:
+JunkyardBlues:
   includes:
     - 749-751/1214-1216
 
