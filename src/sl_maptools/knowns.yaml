@@ -970,7 +970,7 @@ Schindleria:
   includes:
     - [527, 1027, 529, 1029]
 
-ScienceCluster:
+SciLands:
   includes:
     - [1138, 1296, 1160, 1317]
   excludes:
