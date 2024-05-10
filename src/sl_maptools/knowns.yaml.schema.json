@@ -52,7 +52,7 @@
         "additionalProperties": false,
         "properties": {
             "metadata": {
-                "$comment": "(Required) Data about the data point itself",
+                "description": "(Required) Data about the data point itself",
                 "type": "object",
                 "flowStyle": "block",
                 "required": [
@@ -62,32 +62,32 @@
                 "additionalProperties": false,
                 "properties": {
                     "name_source": {
-                        "$comment": "(Required) Who defined the name of the area.",
+                        "description": "(Required) Who defined the name of the area.",
                         "type": "string",
                         "style": "inline",
                         "minLength": 1
                     },
                     "name_lore": {
-                        "$comment": "(Required) The story behind how the name is defined. NOT the lore of the area itself",
+                        "description": "(Required) The story behind how the name is defined. NOT the lore of the area itself",
                         "type": "string",
                         "style": "folded",
                         "minLength": 1
                     },
                     "first_added": {
-                        "$comment": "Date when first added",
+                        "description": "Date when first added",
                         "type": "string",
                         "style": "folded",
                         "format": "date",
                         "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}"
                     },
                     "description": {
-                        "$comment": "(Optional) Description of the purpose of the region",
+                        "description": "(Optional) Description of the purpose of the region",
                         "type": "string",
                         "style": "folded",
                         "minLength": 1
                     },
                     "also_known_as": {
-                        "$comment": "(Optional) Other possible or historical names of the area",
+                        "description": "(Optional) Other possible or historical names of the area",
                         "type": "array",
                         "flowStyle": "block",
                         "minItems": 1,
@@ -97,7 +97,7 @@
                         }
                     },
                     "SLGI_articles": {
-                        "$comment": "(Optional) Related SLGI articles about the area",
+                        "description": "(Optional) Related SLGI articles about the area. Must be a list of URLs.",
                         "type": "array",
                         "flowStyle": "block",
                         "minItems": 1,
@@ -109,7 +109,7 @@
                         }
                     },
                     "other_references": {
-                        "$comment": "Other publicly-accessible references",
+                        "description": "Other publicly-accessible references. Must be a list of URLs.",
                         "type": "array",
                         "flowStyle": "block",
                         "minItems": 1,
@@ -123,26 +123,26 @@
                 }
             },
             "includes": {
-                "$comment": "(Required) A list of the (inclusive) boundary coordinates of the area",
+                "description": "(Required) A list of the (inclusive) boundary coordinates of the area. May be overlapping.",
                 "$ref": "#/$defs/area_list"
             },
             "excludes": {
-                "$comment": "(Optional) A list of the (inclusive) boundary coordinates of regions that must be excluded from the area",
+                "description": "(Optional) A list of the (inclusive) boundary coordinates of regions that must be excluded from the area. May be overlapping.",
                 "$ref": "#/$defs/area_list"
             },
             "pragma": {
-                "$comment": "(Optional) Directives on how to process this data point",
+                "description": "(Optional) Directives on how to process this data point",
                 "type": "object",
                 "flowStyle": "block",
                 "additionalProperties": false,
                 "properties": {
                     "automatic": {
-                        "$comment": "(Optional) If false, do not generate the map for this area automatically. Default = True",
+                        "description": "(Optional) If false, do not generate the map for this area automatically. Default = True",
                         "type": "boolean",
                         "default": true
                     },
                     "validate": {
-                        "$comment": "(Optional) If false, do not validate the existence of regions in this area. Default = True",
+                        "description": "(Optional) If false, do not validate the existence of regions in this area. Default = True",
                         "type": "boolean",
                         "default": true
                     }
