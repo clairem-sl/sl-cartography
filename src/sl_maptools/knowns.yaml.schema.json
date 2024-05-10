@@ -16,15 +16,9 @@
             "$comment": "The older [x1, y1, x2, y2] format",
             "type": "array",
             "flowStyle": "flow",
-            "items": [
-                {"type": "integer", "multipleOf": 1, "minimum": 0},
-                {"type": "integer", "multipleOf": 1, "minimum": 0},
-                {"type": "integer", "multipleOf": 1, "minimum": 0},
-                {"type": "integer", "multipleOf": 1, "minimum": 0}
-            ],
+            "items": {"type": "integer", "multipleOf": 1, "minimum": 0},
             "minItems": 4,
-            "maxItems": 4,
-            "additionalItems": false
+            "maxItems": 4
         },
         "area_slgi": {
             "$comment": "The SLGI x1-x2/y1-y2 format, which should be the format used for newer entries",
