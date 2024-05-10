@@ -11,6 +11,37 @@
         "pattern": "^[A-Z0-9][A-Za-z0-9-]+(_[A-Za-z0-9]+)?$"
     },
     "minProperties": 1,
+    "$defs": {
+        "area_corners": {
+            "$comment": "The older [x1, y1, x2, y2] format",
+            "type": "array",
+            "flowStyle": "flow",
+            "items": [
+                {"type": "integer", "multipleOf": 1, "minimum": 0},
+                {"type": "integer", "multipleOf": 1, "minimum": 0},
+                {"type": "integer", "multipleOf": 1, "minimum": 0},
+                {"type": "integer", "multipleOf": 1, "minimum": 0}
+            ],
+            "additionalItems": false
+        },
+        "area_slgi": {
+            "$comment": "The SLGI x1-x2/y1-y2 format, which should be the format used for newer entries",
+            "type": "string",
+            "style": "inline",
+            "pattern": "^[0-9]+(-[0-9]+)?/[0-9]+(-[0-9]+)?$"
+        },
+        "area_list": {
+            "type": "array",
+            "flowStyle": "block",
+            "minItems": 1,
+            "items": {
+                "anyOf": [
+                    {"$ref": "#/$defs/area_corners"},
+                    {"$ref": "#/$defs/area_slgi"}
+                ]
+            }
+        }
+    },
     "additionalProperties": {
         "$comment": "Per-area data structure is defined here",
         "type": "object",
@@ -93,59 +124,11 @@
             },
             "includes": {
                 "$comment": "(Required) A list of the (inclusive) boundary coordinates of the area",
-                "type": "array",
-                "flowStyle": "block",
-                "minItems": 1,
-                "items": {
-                    "anyOf": [
-                        {
-                            "$comment": "The older [x1, y1, x2, y2] format",
-                            "type": "array",
-                            "flowStyle": "flow",
-                            "items": [
-                                {"type": "integer", "multipleOf": 1, "minimum": 0},
-                                {"type": "integer", "multipleOf": 1, "minimum": 0},
-                                {"type": "integer", "multipleOf": 1, "minimum": 0},
-                                {"type": "integer", "multipleOf": 1, "minimum": 0}
-                            ],
-                            "additionalItems": false
-                        },
-                        {
-                            "$comment": "The SLGI x1-x2/y1-y2 format, which should be the format used for newer entries",
-                            "type": "string",
-                            "style": "inline",
-                            "pattern": "^[0-9]+(-[0-9]+)?/[0-9]+(-[0-9]+)?$"
-                        }
-                    ]
-                }
+                "$ref": "#/$defs/area_list"
             },
             "excludes": {
                 "$comment": "(Optional) A list of the (inclusive) boundary coordinates of regions that must be excluded from the area",
-                "type": "array",
-                "flowStyle": "block",
-                "minItems": 1,
-                "items": {
-                    "anyOf": [
-                        {
-                            "$comment": "The older [x1, y1, x2, y2] format",
-                            "type": "array",
-                            "flowStyle": "flow",
-                            "items": [
-                                {"type": "integer", "multipleOf": 1, "minimum": 0},
-                                {"type": "integer", "multipleOf": 1, "minimum": 0},
-                                {"type": "integer", "multipleOf": 1, "minimum": 0},
-                                {"type": "integer", "multipleOf": 1, "minimum": 0}
-                            ],
-                            "additionalItems": false
-                        },
-                        {
-                            "$comment": "The SLGI x1-x2/y1-y2 format, which should be the format used for newer entries",
-                            "type": "string",
-                            "style": "inline",
-                            "pattern": "^[0-9]+(-[0-9]+)?/[0-9]+(-[0-9]+)?$"
-                        }
-                    ]
-                }
+                "$ref": "#/$defs/area_list"
             },
             "pragma": {
                 "$comment": "(Optional) Directives on how to process this data point",
